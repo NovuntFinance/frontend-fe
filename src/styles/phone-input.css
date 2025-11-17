@@ -1,0 +1,142 @@
+/* Custom styles for react-phone-number-input to match design system */
+
+.PhoneInput {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  color: hsl(var(--foreground));
+  padding: 0;
+}
+
+.PhoneInputInput::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.PhoneInputCountryIcon {
+  width: 1.5rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.PhoneInputCountrySelect {
+  /* Force native select styling for better browser compatibility */
+  appearance: auto;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  outline: none;
+  font-weight: 500;
+  min-width: 4.5rem;
+  max-width: 5rem;
+}
+
+.PhoneInputCountrySelect:hover {
+  background-color: hsl(var(--accent));
+  border-color: hsl(var(--ring));
+}
+
+.PhoneInputCountrySelect:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-color: hsl(var(--ring));
+}
+
+/* Style the dropdown options - limited browser support but helps where possible */
+.PhoneInputCountrySelect option {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.PhoneInputCountrySelect option:hover {
+  background-color: hsl(var(--accent));
+}
+
+.PhoneInputCountrySelect option:checked {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: none;
+}
+
+/* Separator between country and number */
+.PhoneInputCountry::after {
+  content: "";
+  width: 1px;
+  height: 1.5rem;
+  background-color: hsl(var(--border));
+  margin-left: 0.25rem;
+}
+
+/* Dark mode specific fixes */
+.dark .PhoneInputCountrySelect {
+  background-color: hsl(var(--background));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.dark .PhoneInputCountrySelect option {
+  background-color: hsl(220 13% 10%);
+  color: hsl(var(--foreground));
+}
+
+.dark .PhoneInputCountrySelect option:checked {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* Light mode specific fixes */
+.light .PhoneInputCountrySelect {
+  background-color: hsl(var(--background));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.light .PhoneInputCountrySelect option {
+  background-color: white;
+  color: hsl(var(--foreground));
+}
+
+.light .PhoneInputCountrySelect option:checked {
+  background-color: hsl(var(--primary));
+  color: white;
+}
+
+/* Ensure dropdown is on top */
+.PhoneInputCountrySelect:focus {
+  z-index: 10;
+  position: relative;
+}
+

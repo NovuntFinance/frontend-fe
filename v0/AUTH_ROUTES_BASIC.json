@@ -1,0 +1,345 @@
+{
+  "auth_routes_basic": {
+    "legacy_auth_routes": {
+      "base_path": "/api/v1/auth",
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/register",
+          "handler": "register",
+          "controller": "auth.controller.ts",
+          "description": "User registration with email verification",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/verify-email",
+          "handler": "resendVerificationCode",
+          "controller": "auth.controller.ts",
+          "description": "Resend email verification code",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/complete-registration",
+          "handler": "completeRegistration",
+          "controller": "auth.controller.ts",
+          "description": "Complete registration after email verification",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/login",
+          "handler": "login",
+          "controller": "auth.controller.ts",
+          "description": "User login with email/username and password",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/verify-2fa",
+          "handler": "verify2FA",
+          "controller": "auth.controller.ts",
+          "description": "Verify 2FA code during login",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/generate-2fa-secret",
+          "handler": "generate2FASecret",
+          "controller": "auth.controller.ts",
+          "description": "Generate 2FA secret for setup",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/enable-2fa",
+          "handler": "enable2FA",
+          "controller": "auth.controller.ts",
+          "description": "Enable 2FA for user account",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/refresh-token",
+          "handler": "refreshAccessToken",
+          "controller": "auth.controller.ts",
+          "description": "Refresh access token using refresh token",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/revoke-token",
+          "handler": "revokeRefreshToken",
+          "controller": "auth.controller.ts",
+          "description": "Revoke a specific refresh token",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/logout-all-devices",
+          "handler": "revokeAllRefreshTokens",
+          "controller": "auth.controller.ts",
+          "description": "Revoke all refresh tokens (logout from all devices)",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/logout",
+          "handler": "logout",
+          "controller": "auth.controller.ts",
+          "description": "User logout",
+          "authentication_required": true
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/auth/password",
+          "handler": "updatePassword",
+          "controller": "auth.controller.ts",
+          "description": "Update user password (when authenticated)",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/reset-password/request",
+          "handler": "sendResetPasswordOTP",
+          "controller": "auth.controller.ts",
+          "description": "Request password reset OTP",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/reset-password",
+          "handler": "resetPassword",
+          "controller": "auth.controller.ts",
+          "description": "Reset password using OTP",
+          "authentication_required": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/auth/referral-info",
+          "handler": "getReferralInfo",
+          "controller": "auth.controller.ts",
+          "description": "Get user referral information",
+          "authentication_required": true
+        }
+      ]
+    },
+    "better_auth_routes": {
+      "base_path": "/api/v1/better-auth",
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/register",
+          "handler": "register",
+          "controller": "betterAuth.controller.ts",
+          "description": "User registration with BetterAuth",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/login",
+          "handler": "login",
+          "controller": "betterAuth.controller.ts",
+          "description": "User login with BetterAuth",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/verify-email",
+          "handler": "verifyEmail",
+          "controller": "betterAuth.controller.ts",
+          "description": "Verify email address",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/resend-verification",
+          "handler": "resendVerification",
+          "controller": "betterAuth.controller.ts",
+          "description": "Resend email verification code",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/verify-mfa",
+          "handler": "verifyMFA",
+          "controller": "betterAuth.controller.ts",
+          "description": "Verify MFA code during login",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/refresh-token",
+          "handler": "refreshToken",
+          "controller": "betterAuth.controller.ts",
+          "description": "Refresh access token",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/request-password-reset",
+          "handler": "requestPasswordReset",
+          "controller": "betterAuth.controller.ts",
+          "description": "Request password reset",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/reset-password",
+          "handler": "resetPassword",
+          "controller": "betterAuth.controller.ts",
+          "description": "Reset password with token",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/logout",
+          "handler": "logout",
+          "controller": "betterAuth.controller.ts",
+          "description": "User logout",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/mfa/setup",
+          "handler": "setupMFA",
+          "controller": "betterAuth.controller.ts",
+          "description": "Setup MFA for user account",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/mfa/verify",
+          "handler": "completeMFASetup",
+          "controller": "betterAuth.controller.ts",
+          "description": "Complete MFA setup verification",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/better-auth/change-password",
+          "handler": "changePassword",
+          "controller": "betterAuth.controller.ts",
+          "description": "Change user password when authenticated",
+          "authentication_required": true
+        }
+      ]
+    },
+    "biometric_auth_routes": {
+      "base_path": "/api/v1/biometric",
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/api/v1/biometric/registration/challenge",
+          "handler": "generateRegistrationChallenge",
+          "controller": "biometric.controller.ts",
+          "description": "Generate WebAuthn registration challenge for new biometric device",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/biometric/registration/complete",
+          "handler": "registerBiometricDevice",
+          "controller": "biometric.controller.ts",
+          "description": "Complete biometric device registration with WebAuthn credential",
+          "authentication_required": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/biometric/authentication/challenge",
+          "handler": "generateAuthenticationChallenge",
+          "controller": "biometric.controller.ts",
+          "description": "Generate WebAuthn authentication challenge",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/biometric/authentication/verify",
+          "handler": "authenticateWithBiometric",
+          "controller": "biometric.controller.ts",
+          "description": "Authenticate user using biometric data (WebAuthn/FIDO2)",
+          "authentication_required": false
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/biometric/authentication/backup-pin",
+          "handler": "authenticateWithBackupPin",
+          "controller": "biometric.controller.ts",
+          "description": "Authenticate using backup PIN when biometric fails",
+          "authentication_required": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/biometric/devices",
+          "handler": "getUserBiometricDevices",
+          "controller": "biometric.controller.ts",
+          "description": "Get list of user's registered biometric devices",
+          "authentication_required": true
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/v1/biometric/devices/:deviceId",
+          "handler": "removeBiometricDevice",
+          "controller": "biometric.controller.ts",
+          "description": "Remove a registered biometric device",
+          "authentication_required": true
+        },
+        {
+          "method": "PUT",
+          "path": "/api/v1/biometric/settings",
+          "handler": "updateBiometricSettings",
+          "controller": "biometric.controller.ts",
+          "description": "Update biometric authentication settings",
+          "authentication_required": true
+        }
+      ]
+    },
+    "social_verification_routes": {
+      "base_path": "/api/v1/social-media",
+      "routes": [
+        {
+          "method": "GET",
+          "path": "/api/v1/social-media/visit/:platform",
+          "handler": "visitSocialPlatform",
+          "controller": "socialMedia.controller.ts",
+          "description": "Visit social platform for registration bonus verification (redirects to platform)",
+          "authentication_required": true,
+          "notes": "Platform parameter can be: facebook, twitter, instagram, youtube, tiktok"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/social-media/confirm/:platform",
+          "handler": "confirmSocialPlatform",
+          "controller": "socialMedia.controller.ts",
+          "description": "Confirm social platform visit after dwell-time requirement",
+          "authentication_required": true,
+          "notes": "Required for registration bonus qualification"
+        }
+      ]
+    },
+    "summary": {
+      "total_routes": 39,
+      "legacy_auth_routes_count": 15,
+      "better_auth_routes_count": 12,
+      "biometric_routes_count": 8,
+      "social_verification_routes_count": 2,
+      "public_routes": 25,
+      "protected_routes": 14,
+      "authentication_systems": [
+        "Legacy JWT-based authentication",
+        "BetterAuth (enhanced security with MFA)",
+        "WebAuthn/FIDO2 biometric authentication",
+        "Social media verification (for bonus eligibility)"
+      ],
+      "notes": [
+        "Legacy auth routes (/api/v1/auth) are the original authentication system",
+        "BetterAuth routes (/api/v1/better-auth) offer enhanced security features",
+        "Biometric routes support WebAuthn/FIDO2 for passwordless authentication",
+        "Social media routes are for registration bonus verification, NOT OAuth login",
+        "No OAuth/social login integration found in the codebase",
+        "Both legacy and BetterAuth systems coexist for migration purposes"
+      ]
+    }
+  }
+}

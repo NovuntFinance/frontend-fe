@@ -1,0 +1,808 @@
+{
+  "schemas": {
+    "RefreshToken": {
+      "modelName": "RefreshToken",
+      "collectionName": "refreshtokens",
+      "description": "JWT refresh tokens for BetterAuth authentication with automatic expiration",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "token": {"type": "String", "required": true, "unique": true},
+        "jti": {"type": "String", "required": true, "unique": true, "description": "JWT ID for token revocation"},
+        "expiresAt": {"type": "Date", "required": true},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "ipAddress": {"type": "String"},
+        "userAgent": {"type": "String"},
+        "isRevoked": {"type": "Boolean", "default": false}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "userId",
+        "token (unique)",
+        "jti (unique)",
+        "expiresAt (TTL index - auto-delete after expiration)",
+        "userId, isRevoked"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd799439131",
+        "userId": "507f1f77bcf86cd799439011",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "jti": "uuid-token-id-123",
+        "expiresAt": "2024-10-17T10:00:00.000Z",
+        "ipAddress": "192.168.1.1",
+        "userAgent": "Mozilla/5.0...",
+        "isRevoked": false,
+        "createdAt": "2024-10-10T10:00:00.000Z"
+      }
+    },
+    "BiometricDevice": {
+      "modelName": "BiometricDevice",
+      "collectionName": "biometricdevices",
+      "description": "WebAuthn/FIDO2 biometric device registrations for passwordless authentication",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "credentialId": {"type": "String", "required": true, "unique": true},
+        "publicKey": {"type": "String", "required": true, "description": "Public key for WebAuthn"},
+        "counter": {"type": "Number", "required": true, "default": 0, "description": "Signature counter for replay protection"},
+        "deviceInfo": {
+          "type": "Object",
+          "fields": {
+            "userAgent": {"type": "String", "required": true},
+            "platform": {"type": "String", "required": true},
+            "authenticatorType": {"type": "String", "enum": ["platform", "cross-platform"], "required": true},
+            "deviceName": "String",
+            "browserVersion": "String",
+            "operatingSystem": "String"
+          }
+        },
+        "backupPin": {"type": "String", "description": "Hashed backup PIN"},
+        "isActive": {"type": "Boolean", "default": true},
+        "registeredAt": {"type": "Date", "default": "Date.now"},
+        "lastUsed": {"type": "Date", "default": "Date.now"},
+        "deactivatedAt": {"type": "Date"},
+        "failedAttempts": {"type": "Number", "default": 0},
+        "requiresDeviceRegistration": {"type": "Boolean", "default": true},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "virtuals": {
+        "displayName": {"type": "String", "description": "Device friendly name"}
+      },
+      "methods": {
+        "needsReregistration": "Check if device needs re-registration after 30 days"
+      },
+      "statics": {
+        "getUserActiveDevices": "Get all active devices for user",
+        "cleanupOldDevices": "Deactivate devices unused for 90 days"
+      },
+      "indexes": [
+        "userId",
+        "credentialId (unique)",
+        "userId, isActive",
+        "userId, lastUsed (descending)",
+        "credentialId, isActive",
+        "deactivatedAt (TTL - delete after 90 days)"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd799439141",
+        "userId": "507f1f77bcf86cd799439011",
+        "credentialId": "base64_credential_id",
+        "publicKey": "base64_public_key",
+        "counter": 5,
+        "deviceInfo": {
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "platform": "Windows",
+          "authenticatorType": "platform",
+          "deviceName": "Windows Hello",
+          "operatingSystem": "Windows 10"
+        },
+        "isActive": true,
+        "registeredAt": "2024-01-15T10:00:00.000Z",
+        "lastUsed": "2024-10-10T14:00:00.000Z"
+      }
+    },
+    "SecurityLog": {
+      "modelName": "SecurityLog",
+      "collectionName": "securitylogs",
+      "description": "Audit log for security-related events (login, 2FA, withdrawal, etc.)",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "user": {"type": "ObjectId", "ref": "User", "required": true},
+        "action": {"type": "String", "required": true, "description": "login, 2fa-verify, withdrawal-request, etc."},
+        "status": {"type": "String", "enum": ["success", "failure"], "required": true},
+        "ipAddress": {"type": "String"},
+        "userAgent": {"type": "String"},
+        "details": {"type": "String"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "user": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": ["user", "action", "status", "createdAt (descending)"],
+      "example": {
+        "_id": "507f1f77bcf86cd799439151",
+        "user": "507f1f77bcf86cd799439011",
+        "action": "login",
+        "status": "success",
+        "ipAddress": "192.168.1.1",
+        "userAgent": "Mozilla/5.0...",
+        "details": "Successful login with 2FA",
+        "createdAt": "2024-10-10T09:00:00.000Z"
+      }
+    },
+    "AchievementBadge": {
+      "modelName": "AchievementBadge",
+      "collectionName": "achievementbadges",
+      "description": "Gamification badges awarded for milestones (staking, referrals, ranks, earnings)",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "badgeType": {
+          "type": "String",
+          "enum": [
+            "first_stake", "stake_100", "stake_500", "stake_1000", "stake_5000", "stake_10000",
+            "rank_associate_stakeholder", "rank_principal_strategist", "rank_elite_capitalist", "rank_wealth_architect", "rank_finance_titan",
+            "team_builder_5", "team_builder_10", "team_builder_25", "team_builder_50", "team_builder_100",
+            "profit_starter", "profit_maker", "profit_master", "profit_champion", "profit_legend",
+            "referral_champion", "referral_master", "referral_legend",
+            "early_adopter", "consistent_staker", "team_motivator", "network_builder", "empire_creator"
+          ],
+          "required": true
+        },
+        "title": {"type": "String", "required": true},
+        "description": {"type": "String", "required": true},
+        "icon": {"type": "String", "required": true, "default": "🏆"},
+        "rarity": {"type": "String", "enum": ["common", "rare", "epic", "legendary"], "default": "common"},
+        "awardedAt": {"type": "Date", "default": "Date.now"},
+        "progress": {
+          "type": "Object",
+          "fields": {
+            "current": {"type": "Number", "default": 0},
+            "required": {"type": "Number", "default": 0},
+            "percentage": {"type": "Number", "default": 0}
+          }
+        },
+        "metadata": {"type": "Mixed", "default": {}, "description": "Badge-specific data"},
+        "isDisplayed": {"type": "Boolean", "default": true},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "userId, badgeType (unique)",
+        "userId, awardedAt (descending)",
+        "badgeType",
+        "rarity"
+      ],
+      "notes": [
+        "Badge Categories:",
+        "- Staking Achievements (first stake, $100, $500, $1K, $5K, $10K)",
+        "- Rank Achievements (all 5 ranks)",
+        "- Team Building (5, 10, 25, 50, 100 referrals)",
+        "- Earnings ($100, $500, $1K, $5K, $10K profit)",
+        "- Referral Bonuses ($1K, $5K, $10K in bonuses)",
+        "- Special (early adopter, consistent, motivator, builder, creator)"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd799439161",
+        "userId": "507f1f77bcf86cd799439011",
+        "badgeType": "stake_1000",
+        "title": "💰 Stake 1000",
+        "description": "Total stakes reached 1000 USDT",
+        "icon": "💰",
+        "rarity": "rare",
+        "awardedAt": "2024-09-15T10:00:00.000Z",
+        "progress": {
+          "current": 1000,
+          "required": 1000,
+          "percentage": 100
+        },
+        "metadata": {
+          "stakingAmount": 1000
+        },
+        "isDisplayed": true
+      }
+    },
+    "ChatConversation": {
+      "modelName": "ChatConversation",
+      "collectionName": "chatconversations",
+      "description": "AI chatbot conversations with sentiment analysis and support escalation",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User"},
+        "sessionId": {"type": "String", "required": true, "description": "For anonymous users"},
+        "telegramChatId": {"type": "Number", "sparse": true, "description": "For Telegram integration"},
+        "messages": {
+          "type": "Array<Object>",
+          "itemFields": {
+            "role": {"type": "String", "enum": ["user", "assistant", "system"], "required": true},
+            "content": {"type": "String", "required": true},
+            "timestamp": {"type": "Date", "default": "Date.now"}
+          }
+        },
+        "sentiment": {"type": "String", "enum": ["positive", "neutral", "negative"], "default": "neutral"},
+        "resolved": {"type": "Boolean", "default": false},
+        "needsHumanSupport": {"type": "Boolean", "default": false},
+        "tags": {"type": "Array<String>", "default": [], "description": "e.g., ['staking', 'withdrawal', 'technical']"},
+        "isActive": {"type": "Boolean", "default": true},
+        "lastMessageAt": {"type": "Date", "default": "Date.now"},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "sessionId, lastMessageAt (descending)",
+        "userId, lastMessageAt (descending)",
+        "telegramChatId",
+        "lastMessageAt (TTL - auto-delete after 30 days)"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd799439171",
+        "userId": "507f1f77bcf86cd799439011",
+        "sessionId": "session_abc123",
+        "messages": [
+          {
+            "role": "user",
+            "content": "How do I create a stake?",
+            "timestamp": "2024-10-10T10:00:00.000Z"
+          },
+          {
+            "role": "assistant",
+            "content": "To create a stake, go to the Staking page...",
+            "timestamp": "2024-10-10T10:00:05.000Z"
+          }
+        ],
+        "sentiment": "positive",
+        "resolved": true,
+        "needsHumanSupport": false,
+        "tags": ["staking"],
+        "isActive": false,
+        "lastMessageAt": "2024-10-10T10:05:00.000Z"
+      }
+    },
+    "AdminActivityLog": {
+      "modelName": "AdminActivityLog",
+      "collectionName": "adminactivitylogs",
+      "description": "Audit log for admin actions on the platform",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "admin": {"type": "ObjectId", "ref": "User", "required": true},
+        "action": {"type": "String", "required": true},
+        "target": {"type": "ObjectId", "ref": "User"},
+        "metadata": {"type": "Object"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "admin": {"type": "many-to-one", "model": "User"},
+        "target": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": ["admin", "action", "target", "createdAt (descending)"],
+      "example": {
+        "_id": "507f1f77bcf86cd799439181",
+        "admin": "507f1f77bcf86cd799439012",
+        "action": "approve_withdrawal",
+        "target": "507f1f77bcf86cd799439011",
+        "metadata": {
+          "amount": 100,
+          "withdrawalId": "507f1f77bcf86cd799439081"
+        },
+        "createdAt": "2024-10-05T14:30:00.000Z"
+      }
+    },
+    "RankAchievement": {
+      "modelName": "RankAchievement",
+      "collectionName": "rankachievements",
+      "description": "Historical record of rank achievements and current qualification status",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "previousRank": {"type": "String", "required": true},
+        "newRank": {"type": "String", "required": true},
+        "achievedAt": {"type": "Date", "required": true, "default": "Date.now"},
+        "personalStakeAtAchievement": {"type": "Number", "required": true, "min": 0},
+        "teamStakeAtAchievement": {"type": "Number", "required": true, "min": 0},
+        "directDownlinesAtAchievement": {"type": "Number", "required": true, "min": 0},
+        "lowerRankDownlinesAtAchievement": {"type": "Number", "required": true, "min": 0},
+        "isQualified": {"type": "Boolean", "required": true, "default": true},
+        "isActive": {"type": "Boolean", "required": true, "default": true},
+        "lastVerificationDate": {"type": "Date", "default": "Date.now"},
+        "shortfalls": {
+          "type": "Object",
+          "fields": {
+            "personalStake": {"type": "Number", "min": 0},
+            "teamStake": {"type": "Number", "min": 0},
+            "directDownlines": {"type": "Number", "min": 0},
+            "lowerRankDownlines": {"type": "Number", "min": 0}
+          }
+        },
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "hooks": {
+        "pre-save": ["Update updatedAt timestamp"]
+      },
+      "indexes": [
+        "userId, achievedAt (descending)",
+        "newRank, isActive",
+        "isQualified, isActive"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd799439191",
+        "userId": "507f1f77bcf86cd799439011",
+        "previousRank": "Stakeholder",
+        "newRank": "Associate Stakeholder",
+        "achievedAt": "2024-08-01T00:00:00.000Z",
+        "personalStakeAtAchievement": 600,
+        "teamStakeAtAchievement": 2500,
+        "directDownlinesAtAchievement": 4,
+        "lowerRankDownlinesAtAchievement": 2,
+        "isQualified": true,
+        "isActive": true,
+        "lastVerificationDate": "2024-10-10T00:00:00.000Z"
+      }
+    },
+    "BonusHistory": {
+      "modelName": "BonusHistory",
+      "collectionName": "bonushistories",
+      "description": "Historical record of all bonuses earned by users",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "user": {"type": "ObjectId", "ref": "User", "required": true, "unique": true},
+        "amount": {"type": "Number", "required": true},
+        "bonusType": {
+          "type": "String",
+          "enum": ["Deposit Bonus", "Referral Bonus", "Stake Bonus", "Level Bonus", "Finance Titan Pool", "Level 2 Restake"],
+          "required": true
+        },
+        "source": {"type": "String", "required": true, "description": "e.g., 'Finance Titan Pool', 'Level 2 Restake'"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "user": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": ["user (unique)", "bonusType", "createdAt (descending)"],
+      "example": {
+        "_id": "507f1f77bcf86cd7994391a1",
+        "user": "507f1f77bcf86cd799439011",
+        "amount": 75,
+        "bonusType": "Referral Bonus",
+        "source": "Level 2 Restake",
+        "createdAt": "2024-09-20T10:00:00.000Z"
+      }
+    },
+    "WeeklyProfit": {
+      "modelName": "WeeklyProfit",
+      "collectionName": "weeklyprofits",
+      "description": "Three-tier pool system: Stake Pool (proportional), Performance Pool (equal), Premium Pool (leadership)",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "weekNumber": {"type": "Number", "required": true, "unique": true},
+        "stakePoolAmount": {"type": "Number", "required": true, "min": 0, "description": "TIER 1: Proportional to all stakes"},
+        "performancePoolAmount": {"type": "Number", "default": 0, "min": 0, "description": "TIER 2: Equal within ranks (Blue Tick)"},
+        "premiumPoolAmount": {"type": "Number", "default": 0, "min": 0, "description": "TIER 3: Leadership qualified (Green Tick)"},
+        "totalPoolAmount": {"type": "Number", "required": true, "min": 0, "description": "Sum of all three pools"},
+        "profitAmount": {"type": "Number", "description": "Deprecated: Use stakePoolAmount"},
+        "profitPercentage": {"type": "Number", "description": "Deprecated: Old percentage model"},
+        "startDate": {"type": "Date", "required": true},
+        "endDate": {"type": "Date", "required": true},
+        "isDistributed": {"type": "Boolean", "default": false},
+        "distributedAt": {"type": "Date"},
+        "distributedBy": {"type": "ObjectId", "ref": "User", "description": "Admin who triggered distribution"},
+        "declaredBy": {"type": "ObjectId", "ref": "User"},
+        "declaredAt": {"type": "Date"},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "distributedBy": {"type": "many-to-one", "model": "User"},
+        "declaredBy": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "weekNumber (unique)",
+        "weekNumber, isDistributed",
+        "isDistributed, createdAt (descending)"
+      },
+      "notes": [
+        "THREE-TIER POOL SYSTEM:",
+        "1. STAKE POOL (Tier 1): Distributed proportionally to all active stakes",
+        "2. PERFORMANCE POOL (Tier 2): Equal distribution among rank-qualified users (Blue Tick)",
+        "3. PREMIUM POOL (Tier 3): Distribution to leadership-qualified users (Green Tick)",
+        "All pools distributed weekly based on admin declaration"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd7994391b1",
+        "weekNumber": 40,
+        "stakePoolAmount": 8000,
+        "performancePoolAmount": 1500,
+        "premiumPoolAmount": 500,
+        "totalPoolAmount": 10000,
+        "startDate": "2024-09-30T00:00:00.000Z",
+        "endDate": "2024-10-06T23:59:59.000Z",
+        "isDistributed": true,
+        "distributedAt": "2024-10-07T12:00:00.000Z",
+        "distributedBy": "507f1f77bcf86cd799439012",
+        "createdAt": "2024-10-07T10:00:00.000Z"
+      }
+    },
+    "RankDeclaration": {
+      "modelName": "RankDeclaration",
+      "collectionName": "rankdeclarations",
+      "description": "Rank verification declarations for pool distributions",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "rank": {"type": "String", "required": true},
+        "declarationDate": {"type": "Date", "required": true},
+        "status": {"type": "String", "enum": ["pending", "verified", "rejected"], "default": "pending"},
+        "verifiedBy": {"type": "ObjectId", "ref": "User"},
+        "verifiedAt": {"type": "Date"},
+        "personalStake": {"type": "Number", "required": true},
+        "teamStake": {"type": "Number", "required": true},
+        "directDownlines": {"type": "Number", "required": true},
+        "qualificationNotes": {"type": "String"},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"},
+        "verifiedBy": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "userId, declarationDate (descending)",
+        "status",
+        "rank"
+      ]
+    },
+    "Newsletter": {
+      "modelName": "Newsletter",
+      "collectionName": "newsletters",
+      "description": "Newsletter subscriptions and campaign tracking",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "email": {"type": "String", "required": true, "unique": true},
+        "userId": {"type": "ObjectId", "ref": "User"},
+        "isSubscribed": {"type": "Boolean", "default": true},
+        "subscribedAt": {"type": "Date", "default": "Date.now"},
+        "unsubscribedAt": {"type": "Date"},
+        "preferences": {
+          "type": "Object",
+          "fields": {
+            "weeklyUpdates": {"type": "Boolean", "default": true},
+            "productNews": {"type": "Boolean", "default": true},
+            "promotions": {"type": "Boolean", "default": true}
+          }
+        },
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "one-to-one", "model": "User"}
+      },
+      "indexes": [
+        "email (unique)",
+        "userId",
+        "isSubscribed"
+      ],
+      "example": {
+        "_id": "507f1f77bcf86cd7994391c1",
+        "email": "user@example.com",
+        "userId": "507f1f77bcf86cd799439011",
+        "isSubscribed": true,
+        "preferences": {
+          "weeklyUpdates": true,
+          "productNews": true,
+          "promotions": false
+        }
+      }
+    },
+    "PlatformActivity": {
+      "modelName": "PlatformActivity",
+      "collectionName": "platformactivities",
+      "description": "Platform-wide activity metrics and analytics",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "activityType": {"type": "String", "required": true},
+        "count": {"type": "Number", "required": true, "default": 0},
+        "totalAmount": {"type": "Number", "default": 0},
+        "date": {"type": "Date", "required": true},
+        "metadata": {"type": "Mixed", "default": {}},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "activityType, date (descending)",
+        "date (descending)"
+      ]
+    },
+    "ContextualText": {
+      "modelName": "ContextualText",
+      "collectionName": "contextualtexts",
+      "description": "Dynamic text content for tooltips, help text, and contextual information",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "key": {"type": "String", "required": true, "unique": true},
+        "category": {"type": "String", "required": true},
+        "title": {"type": "String"},
+        "content": {"type": "String", "required": true},
+        "placement": {"type": "String", "enum": ["tooltip", "modal", "inline", "banner"]},
+        "isActive": {"type": "Boolean", "default": true},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "key (unique)",
+        "category",
+        "isActive"
+      ]
+    },
+    "AdminTooltip": {
+      "modelName": "AdminTooltip",
+      "collectionName": "admintooltips",
+      "description": "Admin dashboard tooltips and help information",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "tooltipKey": {"type": "String", "required": true, "unique": true},
+        "title": {"type": "String", "required": true},
+        "content": {"type": "String", "required": true},
+        "page": {"type": "String", "required": true},
+        "section": {"type": "String"},
+        "isActive": {"type": "Boolean", "default": true},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "tooltipKey (unique)",
+        "page",
+        "isActive"
+      ]
+    },
+    "AdminApprovalWorkflow": {
+      "modelName": "AdminApprovalWorkflow",
+      "collectionName": "adminapprovalworkflows",
+      "description": "Multi-step approval workflows for critical admin operations",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "workflowType": {"type": "String", "required": true},
+        "entityType": {"type": "String", "required": true},
+        "entityId": {"type": "ObjectId", "required": true},
+        "initiatedBy": {"type": "ObjectId", "ref": "User", "required": true},
+        "status": {"type": "String", "enum": ["pending", "approved", "rejected", "cancelled"], "default": "pending"},
+        "approvals": {
+          "type": "Array<Object>",
+          "itemFields": {
+            "approver": {"type": "ObjectId", "ref": "User", "required": true},
+            "decision": {"type": "String", "enum": ["approved", "rejected"]},
+            "comment": "String",
+            "timestamp": "Date"
+          }
+        },
+        "requiredApprovals": {"type": "Number", "default": 1},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "completedAt": {"type": "Date"}
+      },
+      "relationships": {
+        "initiatedBy": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "workflowType, status",
+        "initiatedBy",
+        "createdAt (descending)"
+      ]
+    },
+    "AdminAnalytics": {
+      "modelName": "AdminAnalytics",
+      "collectionName": "adminanalytics",
+      "description": "Aggregated analytics data for admin dashboards",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "metricType": {"type": "String", "required": true},
+        "metricValue": {"type": "Number", "required": true},
+        "date": {"type": "Date", "required": true},
+        "period": {"type": "String", "enum": ["hourly", "daily", "weekly", "monthly"], "required": true},
+        "breakdown": {"type": "Mixed", "default": {}},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "metricType, date (descending)",
+        "period, date (descending)"
+      ]
+    },
+    "BusinessRule": {
+      "modelName": "BusinessRule",
+      "collectionName": "businessrules",
+      "description": "Configurable business rules and validation logic",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "ruleKey": {"type": "String", "required": true, "unique": true},
+        "ruleName": {"type": "String", "required": true},
+        "description": {"type": "String"},
+        "ruleType": {"type": "String", "enum": ["validation", "calculation", "workflow", "eligibility"]},
+        "conditions": {"type": "Mixed", "required": true},
+        "actions": {"type": "Mixed", "required": true},
+        "isActive": {"type": "Boolean", "default": true},
+        "priority": {"type": "Number", "default": 0},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "ruleKey (unique)",
+        "ruleType, isActive",
+        "priority (descending)"
+      ]
+    },
+    "SocialClickToken": {
+      "modelName": "SocialClickToken",
+      "collectionName": "socialclicktokens",
+      "description": "Temporary tokens for social media follow verification",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "platform": {"type": "String", "enum": ["youtube", "facebook", "tiktok", "instagram", "telegram"], "required": true},
+        "token": {"type": "String", "required": true, "unique": true},
+        "expiresAt": {"type": "Date", "required": true},
+        "isUsed": {"type": "Boolean", "default": false},
+        "usedAt": {"type": "Date"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "token (unique)",
+        "userId, platform",
+        "expiresAt (TTL index)"
+      ]
+    },
+    "SpecialFundsSettings": {
+      "modelName": "SpecialFundsSettings",
+      "collectionName": "specialfundssettings",
+      "description": "Configuration for special funds and contracts",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "fundType": {"type": "String", "required": true, "unique": true},
+        "isActive": {"type": "Boolean", "default": true},
+        "minAmount": {"type": "Number", "default": 0},
+        "maxAmount": {"type": "Number"},
+        "interestRate": {"type": "Number"},
+        "duration": {"type": "Number"},
+        "settings": {"type": "Mixed", "default": {}},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "fundType (unique)",
+        "isActive"
+      ]
+    },
+    "SpecialFundsContract": {
+      "modelName": "SpecialFundsContract",
+      "collectionName": "specialfundscontracts",
+      "description": "User contracts for special fund products",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "fundType": {"type": "String", "required": true},
+        "amount": {"type": "Number", "required": true},
+        "interestRate": {"type": "Number", "required": true},
+        "startDate": {"type": "Date", "required": true},
+        "endDate": {"type": "Date", "required": true},
+        "status": {"type": "String", "enum": ["active", "completed", "cancelled"], "default": "active"},
+        "totalReturns": {"type": "Number", "default": 0},
+        "createdAt": {"type": "Date", "default": "Date.now"},
+        "updatedAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "userId, status",
+        "fundType, status",
+        "endDate"
+      ]
+    },
+    "UniqueTransactionId": {
+      "modelName": "UniqueTransactionId",
+      "collectionName": "uniquetransactionids",
+      "description": "Ensures uniqueness of transaction IDs across the system",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "transactionId": {"type": "String", "required": true, "unique": true},
+        "type": {"type": "String", "required": true},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "transactionId (unique)",
+        "type"
+      ]
+    },
+    "TempUser": {
+      "modelName": "TempUser",
+      "collectionName": "tempusers",
+      "description": "Temporary user data during registration process",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "email": {"type": "String", "required": true, "unique": true},
+        "verificationCode": {"type": "String", "required": true},
+        "expiresAt": {"type": "Date", "required": true},
+        "userData": {"type": "Mixed", "description": "Pending user registration data"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "indexes": [
+        "email (unique)",
+        "expiresAt (TTL index - auto-delete after expiration)"
+      ]
+    },
+    "DepositBonus": {
+      "modelName": "DepositBonus",
+      "collectionName": "depositbonuses",
+      "description": "Deposit bonus records",
+      "fields": {
+        "_id": {"type": "ObjectId", "required": true},
+        "userId": {"type": "ObjectId", "ref": "User", "required": true},
+        "depositAmount": {"type": "Number", "required": true},
+        "bonusAmount": {"type": "Number", "required": true},
+        "bonusPercentage": {"type": "Number", "required": true},
+        "status": {"type": "String", "enum": ["pending", "active", "completed"], "default": "pending"},
+        "createdAt": {"type": "Date", "default": "Date.now"}
+      },
+      "relationships": {
+        "userId": {"type": "many-to-one", "model": "User"}
+      },
+      "indexes": [
+        "userId",
+        "status"
+      ]
+    }
+  },
+  "summary": {
+    "totalSchemas": 42,
+    "categories": {
+      "authentication": ["User", "RefreshToken", "BiometricDevice", "TempUser"],
+      "profiles": ["UserProfile", "UserPreferences"],
+      "financial": ["UserWallet", "Transaction", "WithdrawalRequest", "FinancialLedger"],
+      "staking": ["Stake", "Goal", "WeeklyDeclaration", "WeeklyProfit"],
+      "referrals": ["ReferralBonus", "RegistrationBonus"],
+      "ranks": ["RankSystem", "RankAchievement", "RankDeclaration", "PoolDistribution"],
+      "notifications": ["Notification", "ActivityFeed"],
+      "security": ["SecurityLog", "AdminActivityLog"],
+      "gamification": ["AchievementBadge", "BonusHistory"],
+      "support": ["ChatConversation", "KYCSubmission"],
+      "admin": ["AdminTooltip", "AdminApprovalWorkflow", "AdminAnalytics", "SystemSettings"],
+      "configuration": ["ContextualText", "BusinessRule", "SpecialFundsSettings"],
+      "misc": ["Newsletter", "PlatformActivity", "SocialClickToken", "SpecialFundsContract", "UniqueTransactionId", "DepositBonus"]
+    },
+    "keyRelationships": {
+      "User": "Central model linked to: UserWallet, UserProfile, UserPreferences, Stakes, Goals, Transactions, Notifications, Referrals, Ranks",
+      "Stake": "Linked to: User, Goal, RegistrationBonus, WeeklyReturns",
+      "Transaction": "Linked to: User, Wallet operations",
+      "ReferralBonus": "5-level system (5%, 2%, 1.5%, 1%, 0.5%)",
+      "RegistrationBonus": "10% of first stake within 7 days with requirements"
+    },
+    "twoWalletSystem": {
+      "fundedWallet": "Deposits + P2P transfers → Can ONLY stake",
+      "earningWallet": "All earnings (pools, bonuses, referrals) → Can stake + withdraw"
+    },
+    "threeTierPools": {
+      "stakePool": "Tier 1: Proportional distribution to all active stakes",
+      "performancePool": "Tier 2: Equal distribution among rank-qualified users (Blue Tick)",
+      "premiumPool": "Tier 3: Distribution to leadership-qualified users (Green Tick)"
+    },
+    "indexingStrategy": {
+      "mostIndexed": ["User", "Stake", "Transaction", "FinancialLedger"],
+      "ttlIndexes": ["RefreshToken", "Notification", "ActivityFeed", "ChatConversation", "TempUser"],
+      "uniqueConstraints": ["User.email", "User.username", "UserWallet.userId", "Transaction.reference", "etc."]
+    }
+  }
+}

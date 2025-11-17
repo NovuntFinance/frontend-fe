@@ -1,0 +1,710 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-10-12",
+  "description": "Complete business logic, constraints, and system rules for Novunt API",
+  "systemConfiguration": {
+    "timezone": {
+      "official": "Baker Island Time (BIT) - UTC-12",
+      "purpose": "All timestamps, deadlines, and distributions use Baker Island Time",
+      "weeklyDistribution": "Mondays at 00:00 BIT (12:00 PM UTC Sunday)",
+      "dailyLimits": "Reset at 00:00 UTC (noon BIT)",
+      "important": "Frontend should display times in user's local timezone but backend always uses BIT for calculations"
+    },
+    "weekDefinition": {
+      "startDay": "Monday 00:00 BIT",
+      "endDay": "Sunday 23:59 BIT",
+      "distributionDay": "Monday 00:00 BIT",
+      "weekNumbering": "ISO 8601 week numbering"
+    }
+  },
+  "walletSystem": {
+    "architecture": "Two-wallet system with strict routing rules",
+    "wallets": {
+      "fundedWallet": {
+        "name": "Funded Wallet (Deposit Wallet)",
+        "purpose": "Holds deposits and P2P transfer receipts",
+        "canReceive": ["Deposits from NowPayments", "P2P transfers from other users"],
+        "canSpend": ["Create stakes ONLY"],
+        "cannotWithdraw": true,
+        "reasoning": "Separation of invested capital from earnings for regulatory compliance"
+      },
+      "earningWallet": {
+        "name": "Earning Wallet (Earnings Wallet)",
+        "purpose": "Holds all earned money from platform activities",
+        "canReceive": [
+          "Weekly ROI payouts",
+          "Referral bonuses (5-level)",
+          "Registration bonus",
+          "Rank pool bonuses",
+          "Redistribution pool bonuses"
+        ],
+        "canSpend": ["Create stakes", "Withdraw to external wallet", "P2P transfer (FREE)"],
+        "withdrawalOnly": "Withdrawals ONLY from this wallet",
+        "reasoning": "Earnings can be withdrawn or reinvested, providing flexibility"
+      }
+    },
+    "routing": {
+      "deposit": {
+        "source": "NowPayments (BEP20/TRC20)",
+        "destination": "fundedWallet",
+        "note": "All cryptocurrency deposits go to fundedWallet"
+      },
+      "roi_payout": {
+        "source": "Weekly distribution system",
+        "destination": "earningWallet",
+        "note": "All ROI earnings go to earningWallet"
+      },
+      "referral_bonus": {
+        "source": "Referral system",
+        "destination": "earningWallet",
+        "note": "All referral bonuses (L1-L5) go to earningWallet"
+      },
+      "registration_bonus": {
+        "source": "First stake within 7 days",
+        "destination": "Creates separate bonus stake (not wallet credit)",
+        "note": "10% bonus creates a new stake, not direct wallet credit"
+      },
+      "stake_creation": {
+        "sources": ["fundedWallet (deposit/transfer funds)", "earningWallet (earnings)"],
+        "deduction": "Stakes deduct from specified wallet",
+        "preference": "User can choose which wallet to stake from"
+      },
+      "withdrawal": {
+        "source": "earningWallet ONLY",
+        "destination": "External crypto wallet",
+        "restriction": "Cannot withdraw from fundedWallet",
+        "reasoning": "Regulatory separation of capital and earnings"
+      },
+      "p2p_transfer": {
+        "source": "earningWallet (sender)",
+        "destination": "fundedWallet (recipient)",
+        "fee": "FREE (0%)",
+        "note": "Sender's earningWallet debited, recipient's fundedWallet credited"
+      }
+    }
+  },
+  "stakingSystem": {
+    "stakeTypes": {
+      "regular": {
+        "type": "regular",
+        "roiTarget": "200% (stake amount + 100% profit)",
+        "source": "User's wallet (fundedWallet or earningWallet)",
+        "example": "1000 USDT stake → Target 2000 USDT total (1000 original + 1000 profit)"
+      },
+      "bonus": {
+        "type": "bonus",
+        "roiTarget": "100% (stake amount returned, no profit)",
+        "source": "Registration bonus (10% of first stake)",
+        "example": "100 USDT bonus stake → Target 100 USDT total (original amount only)",
+        "note": "Bonus stakes do NOT earn 100% profit, only return original amount"
+      }
+    },
+    "constraints": {
+      "minimumStake": {
+        "amount": 50,
+        "currency": "USDT",
+        "note": "Configurable by admin, default 50 USDT"
+      },
+      "maximumStake": {
+        "amount": null,
+        "note": "No maximum limit"
+      },
+      "permanentStakes": {
+        "canUnstake": false,
+        "canWithdrawPrincipal": false,
+        "onlyRoi": "Users only receive weekly ROI payouts, never principal back",
+        "completion": "Stake completes when ROI reaches 200% (regular) or 100% (bonus)"
+      }
+    },
+    "roiDistribution": {
+      "frequency": "Weekly",
+      "distributionDay": "Monday 00:00 BIT",
+      "calculation": "Based on platform's trading performance",
+      "proportional": "ROI distributed proportionally to stake amounts",
+      "destination": "earningWallet",
+      "proRating": {
+        "description": "First week earnings are pro-rated based on days active",
+        "formula": "First Week ROI = Full Week ROI × (Days Active / 7)",
+        "examples": [
+          {
+            "stakeDay": "Monday (after distribution)",
+            "daysActive": 6,
+            "proRateFactor": "6/7 = 85.71%",
+            "calculation": "If full week ROI is 100 USDT, first week gets 85.71 USDT"
+          },
+          {
+            "stakeDay": "Wednesday",
+            "daysActive": 4,
+            "proRateFactor": "4/7 = 57.14%",
+            "calculation": "If full week ROI is 100 USDT, first week gets 57.14 USDT"
+          },
+          {
+            "stakeDay": "Sunday",
+            "daysActive": 0,
+            "proRateFactor": "0/7 = 0%",
+            "calculation": "Stakes created on Sunday get 0 ROI that week, full ROI next week"
+          }
+        ],
+        "subsequentWeeks": "All subsequent weeks receive 100% (full 7 days)"
+      }
+    },
+    "stakeCompletion": {
+      "regular": {
+        "completesAt": "200% of stake amount",
+        "example": "1000 USDT stake completes when totalReturnsEarned >= 2000 USDT",
+        "afterCompletion": "Stake becomes inactive, no more ROI payouts"
+      },
+      "bonus": {
+        "completesAt": "100% of stake amount",
+        "example": "100 USDT bonus stake completes when totalReturnsEarned >= 100 USDT",
+        "afterCompletion": "Bonus stake becomes inactive"
+      }
+    }
+  },
+  "referralSystem": {
+    "structure": "5-level cascading bonus system",
+    "bonusPercentages": {
+      "level1": {
+        "percentage": 5,
+        "description": "Direct referral (person you referred)"
+      },
+      "level2": {
+        "percentage": 2,
+        "description": "Referral of your referral"
+      },
+      "level3": {
+        "percentage": 1.5,
+        "description": "Third level down"
+      },
+      "level4": {
+        "percentage": 1,
+        "description": "Fourth level down"
+      },
+      "level5": {
+        "percentage": 0.5,
+        "description": "Fifth level down"
+      }
+    },
+    "trigger": {
+      "event": "When referred user creates a stake",
+      "calculation": "Bonus = stake amount × level percentage",
+      "destination": "Referrer's earningWallet",
+      "immediate": "Bonuses credited immediately when stake is created"
+    },
+    "depletionMechanism": {
+      "description": "Bonuses deplete if referred user doesn't stake within 7 days",
+      "activationDeadline": "7 days from referred user's registration",
+      "depletionRate": "10% per week",
+      "depletionSchedule": [
+        { "week": 0, "remainingBonus": "100%", "status": "Protected if stake made within 7 days" },
+        { "week": 1, "remainingBonus": "90%", "status": "Week 1: -10%" },
+        { "week": 2, "remainingBonus": "80%", "status": "Week 2: -10%" },
+        { "week": 3, "remainingBonus": "70%", "status": "Week 3: -10%" },
+        { "week": 4, "remainingBonus": "60%", "status": "Week 4: -10%" },
+        { "week": 5, "remainingBonus": "50%", "status": "Week 5: -10%" },
+        { "week": 6, "remainingBonus": "40%", "status": "Week 6: -10%" },
+        { "week": 7, "remainingBonus": "30%", "status": "Week 7: -10%" },
+        { "week": 8, "remainingBonus": "20%", "status": "Week 8: -10%" },
+        { "week": 9, "remainingBonus": "10%", "status": "Week 9: -10%" },
+        { "week": 10, "remainingBonus": "0%", "status": "Week 10: Fully depleted" }
+      ],
+      "protection": "If referred user stakes within 7 days, bonus is permanently protected from depletion",
+      "warningNotification": "Sent 3 days before depletion starts (day 4)"
+    },
+    "example": {
+      "scenario": "User A refers User B, User B stakes 1000 USDT",
+      "bonuses": {
+        "level1": {
+          "user": "User A (direct referrer)",
+          "calculation": "1000 × 5% = 50 USDT",
+          "destination": "User A's earningWallet"
+        },
+        "level2": {
+          "user": "User who referred User A",
+          "calculation": "1000 × 2% = 20 USDT",
+          "destination": "Their earningWallet"
+        },
+        "level3": {
+          "user": "User who referred level2",
+          "calculation": "1000 × 1.5% = 15 USDT",
+          "destination": "Their earningWallet"
+        },
+        "level4": {
+          "user": "User who referred level3",
+          "calculation": "1000 × 1% = 10 USDT",
+          "destination": "Their earningWallet"
+        },
+        "level5": {
+          "user": "User who referred level4",
+          "calculation": "1000 × 0.5% = 5 USDT",
+          "destination": "Their earningWallet"
+        }
+      },
+      "totalBonusPaid": "100 USDT (10% of stake amount distributed across 5 levels)"
+    }
+  },
+  "registrationBonus": {
+    "description": "One-time 10% bonus on first stake for new users",
+    "percentage": 10,
+    "deadline": "7 days from registration",
+    "requirements": {
+      "profileCompletion": {
+        "required": true,
+        "fields": ["fullName", "phone", "address", "dateOfBirth", "gender"],
+        "allRequired": "All 5 fields must be completed"
+      },
+      "socialMediaVerification": {
+        "required": true,
+        "platforms": ["YouTube", "Facebook", "TikTok", "Instagram", "Telegram"],
+        "allRequired": "All 5 platforms must be verified",
+        "verification": "User must click visit link and confirm for each platform"
+      },
+      "firstStake": {
+        "required": true,
+        "deadline": "Within 7 days of registration",
+        "note": "Only FIRST stake qualifies for bonus"
+      }
+    },
+    "bonusCalculation": {
+      "bonusAmount": "10% of first stake amount",
+      "bonusStakeCreation": "Creates separate bonus stake with 100% ROI target",
+      "example": {
+        "firstStake": "1000 USDT",
+        "bonusAmount": "100 USDT",
+        "result": "Creates bonus stake of 100 USDT with 100% target (not 200%)",
+        "earnings": "Bonus stake earns weekly ROI until it reaches 100 USDT total"
+      }
+    },
+    "timing": {
+      "registrationDate": "Day 0",
+      "deadline": "Day 7 at 23:59 BIT",
+      "bonusActivation": "Immediately when first stake is created (if requirements met)",
+      "expiration": "If no stake by day 7, bonus is forfeited permanently"
+    },
+    "statusChecking": {
+      "endpoint": "GET /api/registration-bonus/status",
+      "returns": {
+        "status": "pending | requirements_met | bonus_active | expired | completed",
+        "daysRemaining": "Number of days until deadline",
+        "requirements": {
+          "profileCompletion": "true/false with field breakdown",
+          "socialMediaVerifications": "true/false with platform breakdown",
+          "firstStake": "true/false"
+        }
+      }
+    }
+  },
+  "rankSystem": {
+    "description": "6-tier rank system with pool distribution",
+    "ranks": [
+      {
+        "name": "Stakeholder",
+        "level": 1,
+        "requirements": {
+          "personalStake": 0,
+          "teamStake": 0,
+          "directDownlines": 0,
+          "lowerRankRequirement": 0
+        },
+        "rankBonusPercent": 0,
+        "note": "Default rank for all users"
+      },
+      {
+        "name": "Associate Stakeholder",
+        "level": 2,
+        "requirements": {
+          "personalStake": 10000,
+          "teamStake": 50000,
+          "directDownlines": 10,
+          "lowerRankRequirement": 3,
+          "lowerRankType": "Stakeholder"
+        },
+        "rankBonusPercent": 2,
+        "note": "Must have 3 direct Stakeholders + meet stake requirements"
+      },
+      {
+        "name": "Senior Stakeholder",
+        "level": 3,
+        "requirements": {
+          "personalStake": 25000,
+          "teamStake": 150000,
+          "directDownlines": 20,
+          "lowerRankRequirement": 5,
+          "lowerRankType": "Associate Stakeholder"
+        },
+        "rankBonusPercent": 3.5,
+        "note": "Must have 5 direct Associate Stakeholders"
+      },
+      {
+        "name": "Lead Stakeholder",
+        "level": 4,
+        "requirements": {
+          "personalStake": 50000,
+          "teamStake": 500000,
+          "directDownlines": 30,
+          "lowerRankRequirement": 7,
+          "lowerRankType": "Senior Stakeholder"
+        },
+        "rankBonusPercent": 5,
+        "note": "Must have 7 direct Senior Stakeholders"
+      },
+      {
+        "name": "Master Stakeholder",
+        "level": 5,
+        "requirements": {
+          "personalStake": 100000,
+          "teamStake": 1500000,
+          "directDownlines": 40,
+          "lowerRankRequirement": 10,
+          "lowerRankType": "Lead Stakeholder"
+        },
+        "rankBonusPercent": 7,
+        "note": "Must have 10 direct Lead Stakeholders"
+      },
+      {
+        "name": "Principal Stakeholder",
+        "level": 6,
+        "requirements": {
+          "personalStake": 250000,
+          "teamStake": 5000000,
+          "directDownlines": 50,
+          "lowerRankRequirement": 15,
+          "lowerRankType": "Master Stakeholder"
+        },
+        "rankBonusPercent": 10,
+        "note": "Highest rank, must have 15 direct Master Stakeholders"
+      }
+    ],
+    "verification": {
+      "icons": {
+        "blue": "Qualified for rank pool distribution",
+        "green": "Qualified for redistribution pool distribution",
+        "red": "Had rank but no longer meets requirements (shortfall)"
+      },
+      "qualificationRules": {
+        "rankPool": "Meet all requirements for your rank",
+        "redistributionPool": "Must have at least one direct downline of same rank",
+        "shortfall": "Previously achieved rank but lost qualification (stake decreased, downlines left, etc.)"
+      }
+    },
+    "poolDistribution": {
+      "frequency": "Weekly (Monday 00:00 BIT)",
+      "pools": {
+        "rankPool": {
+          "allocation": "Percentage of weekly profits allocated to rank pool",
+          "distribution": "Equal distribution among all rank-qualified users",
+          "qualification": "Must meet all rank requirements (blue icon)",
+          "example": "If 5000 USDT allocated and 100 qualified users, each gets 50 USDT"
+        },
+        "redistributionPool": {
+          "allocation": "Percentage of weekly profits allocated to redistribution pool",
+          "distribution": "Equal distribution among redistribution-qualified users",
+          "qualification": "Must have at least one direct downline of same rank (green icon)",
+          "example": "If 2000 USDT allocated and 45 qualified users, each gets 44.44 USDT",
+          "note": "More exclusive than rank pool, fewer qualify"
+        }
+      },
+      "destination": "Both pools credit to earningWallet",
+      "timing": "Distributed same time as weekly ROI"
+    },
+    "rankCalculation": {
+      "personalStake": "Sum of user's own active stakes",
+      "teamStake": "Sum of all downline active stakes (all levels, unlimited depth)",
+      "directDownlines": "Count of users directly referred (level 1 only)",
+      "lowerRankRequirement": "Number of direct downlines who must have specific lower rank",
+      "automatic": "Rank is calculated automatically, no manual declaration needed"
+    }
+  },
+  "withdrawalSystem": {
+    "source": "earningWallet ONLY",
+    "restrictions": {
+      "walletRestriction": "Cannot withdraw from fundedWallet",
+      "minimumAmount": {
+        "amount": 10,
+        "currency": "USDT",
+        "note": "Configurable by admin"
+      },
+      "dailyLimit": {
+        "count": 2,
+        "resetTime": "00:00 UTC (noon BIT)",
+        "note": "Maximum 2 withdrawals per day"
+      },
+      "adminApproval": {
+        "required": true,
+        "note": "All withdrawals require admin approval before processing"
+      }
+    },
+    "fees": {
+      "percentage": 5,
+      "calculation": "Fee = withdrawal amount × 5%",
+      "deduction": "Fee deducted from withdrawal amount",
+      "example": {
+        "requestedAmount": 100,
+        "fee": 5,
+        "amountSent": 95,
+        "deductedFromWallet": 100
+      },
+      "note": "Fee is configurable by admin, default 5%"
+    },
+    "process": {
+      "step1": "User requests withdrawal with 2FA verification",
+      "step2": "System checks balance, daily limit, and minimum amount",
+      "step3": "Creates pending withdrawal transaction",
+      "step4": "Admin reviews and approves/rejects",
+      "step5": "If approved, NowPayments processes withdrawal",
+      "step6": "Transaction marked as completed, wallet updated"
+    },
+    "networks": {
+      "supported": ["BEP20 (Binance Smart Chain)", "TRC20 (Tron)"],
+      "currency": "USDT only"
+    },
+    "statuses": {
+      "pending": "Awaiting admin approval",
+      "approved": "Admin approved, processing with NowPayments",
+      "completed": "Funds sent to external wallet",
+      "rejected": "Admin rejected, funds returned to earningWallet",
+      "failed": "NowPayments failed to process, funds returned"
+    }
+  },
+  "transferSystem": {
+    "type": "P2P transfer between users",
+    "fee": "FREE (0%)",
+    "routing": {
+      "source": "Sender's earningWallet",
+      "destination": "Recipient's fundedWallet",
+      "note": "Money moves from earnings to funded (investment capital)"
+    },
+    "restrictions": {
+      "minimumAmount": {
+        "amount": 10,
+        "currency": "USDT",
+        "note": "Configurable by admin"
+      },
+      "maximumAmount": {
+        "amount": 10000,
+        "currency": "USDT",
+        "note": "Configurable by admin"
+      },
+      "selfTransfer": "Cannot transfer to yourself",
+      "recipientValidation": "Recipient must exist and have active account",
+      "doubleSpendingPrevention": "Transaction locking prevents concurrent transfers"
+    },
+    "process": {
+      "step1": "User initiates transfer with recipient ID and amount",
+      "step2": "System validates balance, limits, and recipient",
+      "step3": "Double-spending lock acquired",
+      "step4": "Deduct from sender's earningWallet",
+      "step5": "Credit to recipient's fundedWallet",
+      "step6": "Create transaction records for both users",
+      "step7": "Release double-spending lock",
+      "step8": "Send notifications to both users"
+    },
+    "rateLimiting": {
+      "enabled": true,
+      "note": "Rate limiting applies to prevent abuse"
+    }
+  },
+  "depositSystem": {
+    "provider": "NowPayments",
+    "networks": ["BEP20 (Binance Smart Chain)", "TRC20 (Tron)"],
+    "currency": "USDT",
+    "minimumDeposit": {
+      "amount": 10,
+      "currency": "USDT",
+      "note": "Configurable by admin"
+    },
+    "destination": "fundedWallet",
+    "process": {
+      "step1": "User initiates deposit with amount and network",
+      "step2": "2FA verification required",
+      "step3": "NowPayments creates invoice with payment address",
+      "step4": "User sends crypto to provided address",
+      "step5": "NowPayments webhook confirms deposit",
+      "step6": "System validates webhook signature and prevents replay",
+      "step7": "Credits fundedWallet",
+      "step8": "Creates deposit transaction record",
+      "step9": "Sends confirmation notification"
+    },
+    "webhookSecurity": {
+      "signatureValidation": "Validates NowPayments signature",
+      "replayPrevention": "Prevents duplicate webhook processing",
+      "rateLimiting": "Limits webhook requests to prevent flooding"
+    }
+  },
+  "securityConstraints": {
+    "authentication": {
+      "method": "BetterAuth with JWT tokens",
+      "2FA": {
+        "type": "Google Authenticator (TOTP)",
+        "requiredFor": ["Deposits", "Withdrawals", "Sensitive settings changes"],
+        "setupRequired": "Users should enable 2FA for enhanced security"
+      },
+      "sessionExpiry": "24 hours for financial operations",
+      "accountLockout": {
+        "failedAttempts": 5,
+        "lockoutDuration": "15 minutes",
+        "note": "Account locked after 5 failed login attempts"
+      }
+    },
+    "rateLimiting": {
+      "generalApi": {
+        "limit": 100,
+        "window": "15 minutes"
+      },
+      "financialOperations": {
+        "limit": 10,
+        "window": "1 hour",
+        "appliesTo": ["Stakes", "Withdrawals", "Transfers"]
+      },
+      "webhooks": {
+        "limit": 100,
+        "window": "15 minutes"
+      },
+      "emailVerification": {
+        "limit": 1,
+        "window": "1 minute"
+      }
+    },
+    "doubleSpendingPrevention": {
+      "mechanism": "Transaction locking with version control",
+      "lockTimeout": "30 seconds",
+      "retryBehavior": "Return conflict error if lock cannot be acquired",
+      "note": "Prevents concurrent operations on same wallet"
+    },
+    "fraudPrevention": {
+      "riskScoring": {
+        "enabled": true,
+        "threshold": 80,
+        "action": "Block transaction if risk score >= 80"
+      },
+      "behavioralMonitoring": {
+        "enabled": true,
+        "tracks": ["Login patterns", "Transaction patterns", "IP changes", "Device changes"]
+      }
+    }
+  },
+  "timingConstraints": {
+    "weeklyDistribution": {
+      "day": "Monday",
+      "time": "00:00 BIT (Baker Island Time)",
+      "utcEquivalent": "12:00 UTC Sunday",
+      "includes": ["ROI payouts", "Rank pool distribution", "Redistribution pool distribution"]
+    },
+    "dailyLimits": {
+      "resetTime": "00:00 UTC",
+      "appliesTo": ["Withdrawal count (2/day)"]
+    },
+    "registrationBonus": {
+      "deadline": "7 days from registration",
+      "countFrom": "Registration timestamp",
+      "timezone": "BIT (Baker Island Time)"
+    },
+    "referralDepletion": {
+      "startDelay": "7 days from referred user registration",
+      "depletionRate": "10% per week",
+      "jobFrequency": "Daily check at 00:00 BIT"
+    },
+    "proRating": {
+      "firstWeekOnly": "Pro-rating applies only to first week after stake creation",
+      "calculation": "Days active in week / 7",
+      "example": "Stake created Wednesday = 4 days active = 4/7 = 57.14% of full week ROI"
+    }
+  },
+  "calculationFormulas": {
+    "weeklyRoi": {
+      "description": "ROI per stake per week",
+      "formula": "(Weekly Profit Pool × Stake Amount) / Total Active Stakes",
+      "proRating": "First Week ROI × (Days Active / 7)",
+      "destination": "earningWallet",
+      "accumulation": "Continues until stake reaches 200% (regular) or 100% (bonus)"
+    },
+    "referralBonus": {
+      "formula": "Referred User Stake Amount × Level Percentage",
+      "levels": {
+        "L1": "Stake × 5%",
+        "L2": "Stake × 2%",
+        "L3": "Stake × 1.5%",
+        "L4": "Stake × 1%",
+        "L5": "Stake × 0.5%"
+      },
+      "totalPaid": "Sum of all levels = 10% of stake amount",
+      "destination": "Each referrer's earningWallet"
+    },
+    "registrationBonus": {
+      "formula": "First Stake Amount × 10%",
+      "bonusStake": "Bonus Amount with 100% ROI target",
+      "example": "1000 USDT first stake → 100 USDT bonus stake → earns until reaches 100 USDT"
+    },
+    "withdrawalFee": {
+      "formula": "Withdrawal Amount × Fee Percentage",
+      "defaultFee": "5%",
+      "netAmount": "Withdrawal Amount - Fee",
+      "example": "100 USDT withdrawal → 5 USDT fee → 95 USDT sent to external wallet"
+    },
+    "rankPoolDistribution": {
+      "formula": "Total Rank Pool / Number of Qualified Users",
+      "qualification": "Must meet all rank requirements",
+      "distribution": "Equal distribution",
+      "example": "5000 USDT pool ÷ 100 qualified users = 50 USDT each"
+    },
+    "redistributionPoolDistribution": {
+      "formula": "Total Redistribution Pool / Number of Qualified Users",
+      "qualification": "Must have at least one same-rank direct downline",
+      "distribution": "Equal distribution",
+      "example": "2000 USDT pool ÷ 45 qualified users = 44.44 USDT each"
+    }
+  },
+  "frontendGuidance": {
+    "displayPrecision": {
+      "amounts": "2 decimal places (e.g., 1234.56 USDT)",
+      "percentages": "2 decimal places (e.g., 5.75%)",
+      "roiProgress": "2 decimal places (e.g., 45.23%)"
+    },
+    "timezoneHandling": {
+      "backend": "All calculations use BIT (UTC-12)",
+      "frontend": "Display in user's local timezone",
+      "deadlines": "Show countdown timers for deadlines (registration bonus, distribution time)",
+      "example": "Backend stores 'Monday 00:00 BIT', frontend shows 'Sunday 12:00 PM UTC' or user's local equivalent"
+    },
+    "walletDisplay": {
+      "fundedWallet": {
+        "label": "Funded Wallet (Investment Capital)",
+        "usage": "For staking only",
+        "helpText": "Deposits and P2P transfers go here. Can only be used to create stakes."
+      },
+      "earningWallet": {
+        "label": "Earning Wallet (Your Earnings)",
+        "usage": "For withdrawal, transfer, or staking",
+        "helpText": "ROI and bonuses go here. Can withdraw, transfer, or stake."
+      }
+    },
+    "stakeProgress": {
+      "formula": "(Total Returns Earned / ROI Target) × 100",
+      "display": "Progress bar with percentage",
+      "example": {
+        "regular": "1000 USDT stake, earned 450 USDT → 450/2000 = 22.5%",
+        "bonus": "100 USDT bonus stake, earned 45 USDT → 45/100 = 45%"
+      }
+    },
+    "referralTree": {
+      "levels": "Display up to 5 levels",
+      "information": "Show username, rank, total stake, referral count per level",
+      "bonusTracking": "Show bonuses earned from each referral",
+      "depletionWarning": "Highlight referrals with depleting bonuses"
+    },
+    "rankDisplay": {
+      "currentRank": "Show rank name with icon",
+      "verificationIcon": "Blue (rank pool), Green (redistribution pool), Red (shortfall)",
+      "progress": "Show progress to next rank with requirements breakdown",
+      "tooltip": "Explain what each requirement means"
+    },
+    "notifications": {
+      "priority": {
+        "high": "Withdrawal approved/rejected, rank achieved, stake completed",
+        "medium": "ROI payout, referral bonus, rank pool bonus",
+        "low": "Profile completion reminder, social media verification"
+      },
+      "channels": ["In-app", "Email", "Push notification (PWA)"]
+    }
+  }
+}

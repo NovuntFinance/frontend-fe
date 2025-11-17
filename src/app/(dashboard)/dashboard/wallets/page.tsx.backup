@@ -1,0 +1,373 @@
+'use client';
+
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Wallet,
+  ArrowRight,
+  TrendingUp,
+  DollarSign,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  Plus,
+} from 'lucide-react';
+import { useWalletBalance, useTransactions } from '@/lib/queries';
+import { formatCurrency } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DepositDialog } from '@/components/wallet/DepositDialog';
+
+/**
+ * Wallets Page
+ * Manage funded and earnings wallets
+ */
+export default function WalletsPage() {
+  const [showBalance, setShowBalance] = useState(true);
+  const { data: walletBalance, isLoading: balanceLoading } = useWalletBalance();
+  const { data: transactions = [] } = useTransactions();
+
+  // Filter transactions by wallet type
+  const fundedTransactions = transactions.filter(
+    (t) => t.type === 'withdrawal' || t.type === 'stake_created' || t.type === 'transfer'
+  );
+  
+  const earningsTransactions = transactions.filter(
+    (t) => t.type === 'stake_roi' || t.type === 'referral_bonus' || t.type === 'registration_bonus'
+  );
+
+  if (balanceLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Wallets</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your funded and earnings wallets
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowBalance(!showBalance)}
+        >
+          {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Wallet Cards */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Funded Wallet */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent" />
+            
+            <CardHeader className="relative">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                    <Wallet className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Funded Wallet</CardTitle>
+                    <CardDescription>Main staking wallet</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="success">Active</Badge>
+              </div>
+            </CardHeader>
+
+            <CardContent className="relative space-y-6">
+              {/* Balance */}
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Total Balance</p>
+                <p className="text-3xl font-bold">
+                  {showBalance
+                    ? formatCurrency(walletBalance?.funded.balance || 0)
+                    : '••••••••'}
+                </p>
+              </div>
+
+              {/* Balance Breakdown */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Available</p>
+                  <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    {showBalance
+                      ? formatCurrency(walletBalance?.funded.availableBalance || 0)
+                      : '••••••'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Locked</p>
+                  <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                    {showBalance
+                      ? formatCurrency(walletBalance?.funded.lockedBalance || 0)
+                      : '••••••'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <DepositDialog
+                  trigger={(
+                    <Button className="flex-1" size="sm" disabled={balanceLoading}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Deposit
+                    </Button>
+                  )}
+                />
+                <Button variant="outline" className="flex-1" size="sm">
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Transfer
+                </Button>
+              </div>
+
+              {/* Info */}
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  Use this wallet to create stakes and manage your stakes.
+                  Locked balance represents funds currently staked.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Earnings Wallet */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent" />
+            
+            <CardHeader className="relative">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20">
+                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Earnings Wallet</CardTitle>
+                    <CardDescription>ROS and rewards</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="success">Active</Badge>
+              </div>
+            </CardHeader>
+
+            <CardContent className="relative space-y-6">
+              {/* Balance */}
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Total Balance</p>
+                <p className="text-3xl font-bold">
+                  {showBalance
+                    ? formatCurrency(walletBalance?.earnings.balance || 0)
+                    : '••••••••'}
+                </p>
+              </div>
+
+              {/* Balance Breakdown */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Available</p>
+                  <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    {showBalance
+                      ? formatCurrency(walletBalance?.earnings.availableBalance || 0)
+                      : '••••••'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Locked</p>
+                  <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                    {showBalance
+                      ? formatCurrency(walletBalance?.earnings.lockedBalance || 0)
+                      : '••••••'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button className="flex-1" size="sm">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Withdraw
+                </Button>
+                <Button variant="outline" className="flex-1" size="sm">
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Transfer
+                </Button>
+              </div>
+
+              {/* Info */}
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                <TrendingUp className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  All your stake ROS, referral bonuses, and rewards are credited here.
+                  Withdraw to your bank or transfer to funded wallet.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Transfer Between Wallets */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle>Transfer Between Wallets</CardTitle>
+                <CardDescription>
+                  Move funds between your funded and earnings wallets
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center gap-4 p-6 rounded-lg bg-muted/50">
+              <div className="text-center">
+                <Wallet className="h-8 w-8 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
+                <p className="text-sm font-medium">Funded</p>
+              </div>
+              <RefreshCw className="h-6 w-6 text-muted-foreground" />
+              <div className="text-center">
+                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
+                <p className="text-sm font-medium">Earnings</p>
+              </div>
+            </div>
+            <div className="flex justify-center mt-4">
+              <Button>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Start Transfer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Recent Transactions */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Funded Wallet Transactions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                Funded Wallet Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {fundedTransactions.length > 0 ? (
+                <div className="space-y-3">
+                  {fundedTransactions.slice(0, 5).map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div>
+                        <p className="text-sm font-medium capitalize">
+                          {transaction.type.replace('_', ' ')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {transaction.reference}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                        -{formatCurrency(transaction.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No recent transactions
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Earnings Wallet Transactions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                Earnings Wallet Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {earningsTransactions.length > 0 ? (
+                <div className="space-y-3">
+                  {earningsTransactions.slice(0, 5).map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div>
+                        <p className="text-sm font-medium capitalize">
+                          {transaction.type.replace('_', ' ')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {transaction.reference}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                        +{formatCurrency(transaction.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No recent earnings
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,645 @@
+/**
+ * React Query Mutations
+ * Mutation functions for data modifications
+ */
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from './api';
+import { authService, normalizeUser } from './authService';
+import type {
+  RegisterPayload,
+  RegisterResponse,
+  VerifyEmailPayload,
+  VerifyEmailResponse,
+  ResendVerificationPayload,
+  ResendVerificationResponse,
+  LoginPayload,
+  LoginResponse,
+  VerifyMFAPayload,
+  VerifyMFAResponse,
+  RequestPasswordResetPayload,
+  RequestPasswordResetResponse,
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+  ChangePasswordPayload,
+  ChangePasswordResponse,
+  MFASetupResponse,
+  CompleteMFASetupPayload,
+  CompleteMFASetupResponse,
+  LogoutResponse,
+} from './authService';
+import { queryKeys } from './queries';
+import { toast } from 'sonner';
+import { UpdateProfilePayload, type User } from '@/types/user';
+import { CreateStakePayload, WithdrawEarlyPayload } from '@/types/stake';
+import {
+  TransferBetweenWalletsPayload,
+  InitiateDepositPayload,
+  InitiateDepositResponse,
+} from '@/types/wallet';
+import { WithdrawalRequest } from '@/types/withdrawal';
+import { useAuthStore } from '@/store/authStore';
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+
+  return fallback;
+};
+
+// ============================================
+// AUTH MUTATIONS - BetterAuth Implementation
+// ============================================
+
+export function useLogin() {
+  const { setUser, setTokens } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: async (credentials: LoginPayload) => {
+      console.log('[useLogin] Attempting login:', { email: credentials.email });
+      return authService.login(credentials);
+    },
+    onSuccess: (response) => {
+      console.log('[useLogin] Login successful:', response);
+      
+      // Check if MFA is required
+      if (response.data.mfaRequired && response.data.mfaToken) {
+        console.log('[useLogin] MFA required');
+        toast.info('MFA Required', {
+          description: 'Please enter your two-factor authentication code',
+        });
+        // Don't set user/tokens yet, MFA flow will handle it
+        return;
+      }
+      
+      // Normal login flow
+      const { token, refreshToken, user } = response.data;
+      
+      // Normalize user (fname/lname to firstName/lastName)
+      const normalizedUser = normalizeUser(user);
+      
+      setUser(normalizedUser as User);
+      setTokens(token, refreshToken);
+      
+      toast.success('Welcome back!', {
+        description: `Logged in as ${user.fname} ${user.lname}`,
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useLogin] Login failed:', error);
+      toast.error('Login failed', {
+        description: getErrorMessage(error, 'Invalid credentials'),
+      });
+    },
+  });
+}
+
+export function useSignup() {
+  return useMutation({
+    mutationFn: async (credentials: RegisterPayload) => {
+      console.log('[useSignup] Registering user:', { email: credentials.email });
+      return authService.register(credentials);
+    },
+    onSuccess: (response) => {
+      console.log('[useSignup] Registration successful:', response);
+      toast.success('Account created!', {
+        description: response.message || 'Please verify your email to continue',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useSignup] Registration failed:', error);
+      toast.error('Signup failed', {
+        description: getErrorMessage(error, 'Could not create account'),
+      });
+    },
+    retry: false,
+  });
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: async (payload: VerifyEmailPayload) => {
+      console.log('[useVerifyEmail] Verifying email:', payload.email);
+      return authService.verifyEmail(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useVerifyEmail] Email verified successfully:', response);
+      toast.success('Email verified!', {
+        description: response.message || 'You can now log in to your account',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useVerifyEmail] Verification failed:', error);
+      toast.error('Verification failed', {
+        description: getErrorMessage(error, 'Invalid or expired code'),
+      });
+    },
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: async (payload: ResendVerificationPayload) => {
+      console.log('[useResendVerification] Resending verification code:', payload.email);
+      return authService.resendVerification(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useResendVerification] Code resent successfully');
+      toast.success('Code sent!', {
+        description: response.message || 'Check your email for the verification code',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useResendVerification] Resend failed:', error);
+      toast.error('Resend failed', {
+        description: getErrorMessage(error, 'Could not resend verification code'),
+      });
+    },
+  });
+}
+
+export function useVerifyMFA() {
+  const { setUser, setTokens } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: async (payload: VerifyMFAPayload) => {
+      console.log('[useVerifyMFA] Verifying MFA code');
+      return authService.verifyMFA(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useVerifyMFA] MFA verified successfully');
+      
+      const { token, refreshToken, user } = response.data;
+      const normalizedUser = normalizeUser(user);
+      
+      setUser(normalizedUser as User);
+      setTokens(token, refreshToken);
+      
+      toast.success('Welcome back!', {
+        description: `Logged in as ${user.fname} ${user.lname}`,
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useVerifyMFA] MFA verification failed:', error);
+      toast.error('Verification failed', {
+        description: getErrorMessage(error, 'Invalid MFA code'),
+      });
+    },
+  });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: async (payload: RequestPasswordResetPayload) => {
+      console.log('[useRequestPasswordReset] Requesting password reset:', payload.email);
+      return authService.requestPasswordReset(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useRequestPasswordReset] Reset code sent');
+      toast.success('Reset code sent!', {
+        description: response.message || 'Check your email for the reset code',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useRequestPasswordReset] Request failed:', error);
+      toast.error('Request failed', {
+        description: getErrorMessage(error, 'Could not send reset code'),
+      });
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (payload: ResetPasswordPayload) => {
+      console.log('[useResetPassword] Resetting password');
+      return authService.resetPassword(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useResetPassword] Password reset successful');
+      toast.success('Password reset!', {
+        description: response.message || 'You can now log in with your new password',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useResetPassword] Reset failed:', error);
+      toast.error('Reset failed', {
+        description: getErrorMessage(error, 'Could not reset password'),
+      });
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (payload: ChangePasswordPayload) => {
+      console.log('[useChangePassword] Changing password');
+      return authService.changePassword(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useChangePassword] Password changed successfully');
+      toast.success('Password changed!', {
+        description: response.message || 'Your password has been updated',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useChangePassword] Change failed:', error);
+      toast.error('Change failed', {
+        description: getErrorMessage(error, 'Could not change password'),
+      });
+    },
+  });
+}
+
+export function useSetupMFA() {
+  return useMutation({
+    mutationFn: async () => {
+      console.log('[useSetupMFA] Setting up MFA');
+      return authService.setupMFA();
+    },
+    onSuccess: (response) => {
+      console.log('[useSetupMFA] MFA setup initiated:', response);
+      toast.success('MFA Setup', {
+        description: 'Scan the QR code with your authenticator app',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useSetupMFA] Setup failed:', error);
+      toast.error('Setup failed', {
+        description: getErrorMessage(error, 'Could not initialize MFA setup'),
+      });
+    },
+  });
+}
+
+export function useCompleteMFASetup() {
+  const { updateUser } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: async (payload: CompleteMFASetupPayload) => {
+      console.log('[useCompleteMFASetup] Completing MFA setup');
+      return authService.completeMFASetup(payload);
+    },
+    onSuccess: (response) => {
+      console.log('[useCompleteMFASetup] MFA setup completed');
+      
+      updateUser({ twoFAEnabled: response.data.twoFAEnabled } as Partial<User>);
+      
+      toast.success('MFA Enabled!', {
+        description: 'Two-factor authentication is now active',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useCompleteMFASetup] Completion failed:', error);
+      toast.error('Setup failed', {
+        description: getErrorMessage(error, 'Could not complete MFA setup'),
+      });
+    },
+  });
+}
+
+export function useLogout() {
+  const { logout: clearAuth } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: async () => {
+      console.log('[useLogout] Logging out');
+      return authService.logout();
+    },
+    onSuccess: () => {
+      console.log('[useLogout] Logout successful');
+      clearAuth();
+      toast.success('Logged out', {
+        description: 'You have been logged out successfully',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useLogout] Logout failed:', error);
+      // Clear auth anyway on logout error
+      clearAuth();
+      toast.info('Logged out', {
+        description: 'You have been logged out',
+      });
+    },
+  });
+}
+      clearAuth();
+      toast.info('Logged out', {
+        description: 'You have been logged out',
+      });
+    },
+  });
+}
+
+export function useUpdateProfile() {
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (payload: ResendVerificationPayload) =>
+      api.post<ResendVerificationResponse>('/auth/resend-verification', payload),
+    onSuccess: (response) => {
+      // apiRequest unwraps to ResendVerificationResponse.data
+      toast.success('Verification code sent', {
+        description: `Check your email. Code expires in ${response.expiresIn}`,
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to resend code', {
+        description: getErrorMessage(error, 'Could not send verification code'),
+      });
+    },
+  });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: (payload: RequestPasswordResetPayload) =>
+      api.post<RequestPasswordResetResponse>('/better-auth/request-password-reset', payload),
+    onSuccess: (response) => {
+      // apiRequest unwraps to RequestPasswordResetResponse.data
+      toast.success('Reset link sent', {
+        description: `Check your email. Link expires in ${response.expiresIn}`,
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to send reset link', {
+        description: getErrorMessage(error, 'Could not send password reset link'),
+      });
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (payload: ResetPasswordPayload) =>
+      api.post<ResetPasswordResponse>('/better-auth/reset-password', payload),
+    onSuccess: () => {
+      toast.success('Password reset successful', {
+        description: 'You can now login with your new password',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Password reset failed', {
+        description: getErrorMessage(error, 'Could not reset password'),
+      });
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (payload: ChangePasswordPayload) =>
+      api.post<ChangePasswordResponse>('/better-auth/change-password', payload),
+    onSuccess: () => {
+      toast.success('Password changed', {
+        description: 'Your password has been updated successfully',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to change password', {
+        description: getErrorMessage(error, 'Could not change password'),
+      });
+    },
+  });
+}
+
+export function useVerifyMFA() {
+  const { setUser, setTokens } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: (payload: VerifyMFAPayload) =>
+      api.post<VerifyMFAResponse>('/better-auth/verify-mfa', payload),
+    onSuccess: (response) => {
+      const { data } = response;
+      setUser(data.user);
+      setTokens(data.token, data.refreshToken);
+      toast.success('MFA verified', {
+        description: 'Successfully authenticated',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('MFA verification failed', {
+        description: getErrorMessage(error, 'Invalid MFA code'),
+      });
+    },
+  });
+}
+
+export function useSetupMFA() {
+  return useMutation({
+    mutationFn: () =>
+      api.post<MFASetupResponse>('/better-auth/mfa/setup'),
+    onSuccess: () => {
+      toast.success('MFA setup initiated', {
+        description: 'Scan the QR code with your authenticator app',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to setup MFA', {
+        description: getErrorMessage(error, 'Could not initialize MFA setup'),
+      });
+    },
+  });
+}
+
+export function useCompleteMFASetup() {
+  return useMutation({
+    mutationFn: (payload: CompleteMFASetupPayload) =>
+      api.post<CompleteMFASetupResponse>('/better-auth/mfa/verify', payload),
+    onSuccess: () => {
+      toast.success('MFA enabled', {
+        description: 'Two-factor authentication is now active. Save your backup codes!',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to complete MFA setup', {
+        description: getErrorMessage(error, 'Invalid verification code'),
+      });
+    },
+  });
+}
+
+export function useLogout() {
+  const { logout } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: () =>
+      api.post<LogoutResponse>('/better-auth/logout'),
+    onSuccess: () => {
+      logout();
+      toast.success('Logged out', {
+        description: 'You have been logged out successfully',
+      });
+    },
+    onError: (error: unknown) => {
+      // Still logout locally even if API call fails
+      logout();
+      console.error('Logout error:', error);
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
+  
+  return useMutation({
+    mutationFn: (payload: UpdateProfilePayload) =>
+      api.patch<User>('/better-auth/profile', payload),
+    onSuccess: (data) => {
+      updateUser(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
+      toast.success('Profile updated', {
+        description: 'Your profile has been updated successfully',
+      });
+    },
+  });
+}
+
+// ============================================
+// STAKE MUTATIONS
+// ============================================
+
+export function useCreateStake() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (payload: CreateStakePayload) =>
+      api.post('/staking/create', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeStakes });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stakeStats });
+      queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+      
+      // Show confetti and success message
+      toast.success('Stake created successfully! 🎉', {
+        description: 'Your investment journey has begun!',
+        duration: 5000,
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to create stake', {
+        description: getErrorMessage(error, 'Could not process your stake'),
+      });
+    },
+  });
+}
+
+export function useWithdrawEarly() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (payload: WithdrawEarlyPayload) =>
+      api.post(`/staking/${payload.stakeId}/withdraw-early`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeStakes });
+      queryClient.invalidateQueries({ queryKey: queryKeys.completedStakes });
+      queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+      
+      toast.success('Early withdrawal processed', {
+        description: 'Funds have been returned to your wallet',
+      });
+    },
+  });
+}
+
+// ============================================
+// WALLET MUTATIONS
+// ============================================
+
+export function useTransferBetweenWallets() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (payload: TransferBetweenWalletsPayload) =>
+      api.post('/wallet/transfer', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+      
+      toast.success('Transfer successful', {
+        description: 'Funds transferred between wallets',
+      });
+    },
+  });
+}
+
+export function useInitiateDeposit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: InitiateDepositPayload) =>
+      api.post<InitiateDepositResponse>('/wallets/deposit', {
+        amount: payload.amount,
+        currency: payload.currency ?? 'USDT',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+      toast.success('Deposit initialized', {
+        description: 'Send funds to the generated address to complete your deposit.',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Deposit initialization failed', {
+        description: getErrorMessage(error, 'Unable to create deposit address'),
+      });
+    },
+  });
+}
+
+// ============================================
+// WITHDRAWAL MUTATIONS
+// ============================================
+
+export function useRequestWithdrawal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (payload: WithdrawalRequest) =>
+      api.post('/withdrawal/request', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
+      queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+      queryClient.invalidateQueries({ queryKey: queryKeys.withdrawalStats });
+      
+      toast.success('Withdrawal requested', {
+        description: 'Your withdrawal request is being processed',
+      });
+    },
+  });
+}
+
+export function useCancelWithdrawal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/withdrawal/${id}/cancel`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
+      
+      toast.success('Withdrawal cancelled', {
+        description: 'Your withdrawal request has been cancelled',
+      });
+    },
+  });
+}
+
+// ============================================
+// SESSION MANAGEMENT
+// ============================================
+
+export function useTerminateSession() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (sessionId: string) =>
+      api.delete(`/auth/sessions/${sessionId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
+      toast.success('Session terminated');
+    },
+  });
+}

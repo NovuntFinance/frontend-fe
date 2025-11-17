@@ -1,0 +1,55 @@
+{
+  "name": "Novunt – Wealth Growth Platform",
+  "short_name": "Novunt",
+  "description": "Stake stablecoins, grow with performance pools, and track your wealth in a premium banking-grade experience.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#040712",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "lang": "en",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-monochrome.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/vault-bg.jpg",
+      "type": "image/jpeg",
+      "sizes": "1920x1080",
+      "form_factor": "wide",
+      "label": "Novunt landing hero"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Jump straight into your growth dashboard.",
+      "url": "/(dashboard)/dashboard"
+    },
+    {
+      "name": "Stake",
+      "short_name": "Stake",
+      "description": "Create a new stake and set a growth milestone.",
+      "url": "/(dashboard)/stakes"
+    }
+  ]
+}

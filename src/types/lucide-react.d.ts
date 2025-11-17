@@ -1,0 +1,81 @@
+// Type declarations for lucide-react
+declare module 'lucide-react' {
+  import { FC, SVGProps } from 'react';
+  
+  export type IconProps = SVGProps<SVGSVGElement> & {
+    size?: number | string;
+    strokeWidth?: number | string;
+    color?: string;
+  };
+  
+  export type Icon = FC<IconProps>;
+  
+  export const Mail: Icon;
+  export const AtSign: Icon;
+  export const Lock: Icon;
+  export const Eye: Icon;
+  export const EyeOff: Icon;
+  export const AlertCircle: Icon;
+  export const Loader2: Icon;
+  export const Check: Icon;
+  export const X: Icon;
+  export const Moon: Icon;
+  export const Sun: Icon;
+  export const User: Icon;
+  export const LogOut: Icon;
+  export const Settings: Icon;
+  export const Bell: Icon;
+  export const Menu: Icon;
+  export const ChevronDown: Icon;
+  export const ChevronRight: Icon;
+  export const ChevronLeft: Icon;
+  export const ArrowRight: Icon;
+  export const ArrowLeft: Icon;
+  export const Plus: Icon;
+  export const Minus: Icon;
+  export const Home: Icon;
+  export const Wallet: Icon;
+  export const TrendingUp: Icon;
+  export const DollarSign: Icon;
+  export const Gift: Icon;
+  export const Users: Icon;
+  export const FileText: Icon;
+  export const CreditCard: Icon;
+  export const Copy: Icon;
+  export const Download: Icon;
+  export const Upload: Icon;
+  export const Search: Icon;
+  export const Filter: Icon;
+  export const MoreVertical: Icon;
+  export const Edit: Icon;
+  export const Trash: Icon;
+  export const Star: Icon;
+  export const Heart: Icon;
+  export const Share: Icon;
+  export const ExternalLink: Icon;
+  export const Info: Icon;
+  export const HelpCircle: Icon;
+  export const CheckCircle: Icon;
+  export const XCircle: Icon;
+  export const AlertTriangle: Icon;
+  export const Shield: Icon;
+  export const Key: Icon;
+  export const Smartphone: Icon;
+  export const QrCode: Icon;
+  export const Phone: Icon;
+  export const CheckCircle2: Icon;
+  export const Send: Icon;
+  export const RefreshCw: Icon;
+  export const Calendar: Icon;
+  export const Clock: Icon;
+  export const TestTube: Icon;
+  export const TestTube2: Icon;
+  export const ChevronUp: Icon;
+  export const Fingerprint: Icon;
+  export const ArrowUpRight: Icon;
+  export const ArrowDownRight: Icon;
+  export const Target: Icon;
+  export const TrendingDown: Icon;
+  export const Circle: Icon;
+  export const ShieldCheck: Icon;
+}

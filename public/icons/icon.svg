@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="45%" stop-color="#6d28d9" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feOffset dx="0" dy="18" in="SourceAlpha" result="offset" />
+      <feGaussianBlur stdDeviation="22" in="offset" result="blur" />
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.08 0 0 0 0 0.08 0 0 0 0 0.16 0 0 0 0.28 0" />
+      <feBlend in="SourceGraphic" in2="blur" mode="normal" />
+    </filter>
+  </defs>
+  <rect width="440" height="440" x="36" y="36" rx="128" ry="128" fill="url(#grad)" filter="url(#shadow)" />
+  <g transform="translate(96 120)" fill="white">
+    <path d="M160 0c88.365 0 160 71.635 160 160s-71.635 160-160 160S0 248.365 0 160 71.635 0 160 0zm0 40c-66.274 0-120 53.726-120 120s53.726 120 120 120 120-53.726 120-120S226.274 40 160 40z" opacity="0.75" />
+    <path d="M159.834 82.835c42.266 0 76.571 34.305 76.571 76.571 0 42.265-34.305 76.57-76.57 76.57-16.277 0-31.362-5.122-43.73-13.818l-41.148 41.147c-5.857 5.857-15.355 5.857-21.213 0-5.858-5.857-5.858-15.355 0-21.213l41.147-41.147c-8.695-12.368-13.818-27.453-13.818-43.73 0-42.266 34.305-76.57 76.57-76.57zm0 30.6c-25.348 0-45.97 20.622-45.97 45.97 0 25.347 20.622 45.969 45.97 45.969 25.347 0 45.969-20.622 45.969-45.97 0-25.347-20.622-45.969-45.97-45.969z" />
+    <path d="M244 132h72c8.837 0 16 7.163 16 16s-7.163 16-16 16h-72c-8.837 0-16-7.163-16-16s7.163-16 16-16z" opacity="0.75" />
+  </g>
+</svg>

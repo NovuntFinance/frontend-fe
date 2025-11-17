@@ -1,0 +1,811 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-10-12",
+  "description": "Complete transaction, referral, and bonus documentation for Novunt API",
+  "baseUrl": "/api",
+  "referralSystem": {
+    "description": "5-level referral bonus system with depletion mechanism",
+    "bonusPercentages": {
+      "level1": "5% (direct referral)",
+      "level2": "2%",
+      "level3": "1.5%",
+      "level4": "1%",
+      "level5": "0.5%"
+    },
+    "trigger": "Referral bonuses are triggered when referred user stakes",
+    "destination": "Bonuses go to earningWallet (can stake + withdraw)",
+    "depletionMechanism": {
+      "condition": "If referred user doesn't stake within 7 days of registration",
+      "depletionRate": "10% per week",
+      "duration": "10 weeks until fully depleted",
+      "protection": "Bonus protected if referred user stakes within 7 days"
+    },
+    "calculation": "Based on referred user's stake amount",
+    "example": "User stakes $1000 → L1 gets $50, L2 gets $20, L3 gets $15, L4 gets $10, L5 gets $5"
+  },
+  "registrationBonus": {
+    "description": "10% bonus on first stake within 7 days of registration",
+    "percentage": "10%",
+    "requirements": [
+      "Complete profile (full name, phone, address, DOB, gender)",
+      "Follow all 5 social media platforms (YouTube, Facebook, TikTok, Instagram, Telegram)",
+      "First stake within 7 days of registration"
+    ],
+    "activation": "Bonus activates when all requirements met + first stake made",
+    "bonusCalculation": "10% of first stake amount",
+    "bonusStake": "Creates separate bonus stake targeting 100% ROI (not 200%)",
+    "deadline": "7 days from registration",
+    "example": "First stake $1000 → Bonus $100 → Bonus stake of $100 with 100% target"
+  },
+  "transactionEndpoints": {
+    "baseUrl": "/api/transaction",
+    "description": "Transaction management, deposit, and history endpoints",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/transaction/deposit",
+        "description": "Initiate cryptocurrency deposit via NowPayments",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User",
+        "middleware": ["authenticateUser", "financialOpsLimiter", "validateDepositAmount", "financialSecurityCheck", "verify2FA"],
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "requestBody": {
+          "amount": 100,
+          "currency": "USDT",
+          "network": "BEP20"
+        },
+        "requestValidation": {
+          "amount": {
+            "required": true,
+            "type": "number",
+            "min": 10,
+            "description": "Deposit amount in USD"
+          },
+          "currency": {
+            "required": true,
+            "type": "string",
+            "enum": ["USDT"],
+            "description": "Currency for deposit"
+          },
+          "network": {
+            "required": true,
+            "type": "string",
+            "enum": ["BEP20", "TRC20"],
+            "description": "Blockchain network"
+          }
+        },
+        "successResponse": {
+          "code": 201,
+          "body": {
+            "success": true,
+            "message": "Deposit initiated successfully",
+            "data": {
+              "invoiceId": "nowpayments_invoice_id",
+              "paymentUrl": "https://nowpayments.io/payment/...",
+              "amount": 100,
+              "currency": "USDT",
+              "network": "BEP20",
+              "depositAddress": "0x1234567890abcdef1234567890abcdef12345678",
+              "expiresAt": "2024-10-12T11:00:00.000Z",
+              "qrCodeUrl": "https://nowpayments.io/qr/...",
+              "status": "pending"
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 400, "description": "Invalid amount or currency" },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 403, "description": "2FA verification required" },
+          { "code": 429, "description": "Too many deposit requests" },
+          { "code": 500, "description": "Failed to initiate deposit" }
+        ],
+        "businessLogic": {
+          "minimumDeposit": "10 USDT (configurable)",
+          "destination": "Deposits go to fundedWallet (can only stake)",
+          "provider": "NowPayments integration",
+          "networks": "BEP20 (Binance Smart Chain) and TRC20 (Tron)",
+          "confirmation": "Webhook confirms deposit automatically",
+          "2FARequired": "User must verify 2FA before deposit"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/transaction/deposit/status/:invoiceId",
+        "description": "Check deposit status by invoice ID",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own deposits)",
+        "pathParameters": {
+          "invoiceId": "NowPayments invoice ID"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "invoiceId": "nowpayments_invoice_id",
+              "status": "confirmed",
+              "amount": 100,
+              "currency": "USDT",
+              "network": "BEP20",
+              "txHash": "0xabcdef1234567890...",
+              "confirmedAt": "2024-10-12T10:45:00.000Z",
+              "walletUpdated": true
+            }
+          }
+        },
+        "depositStatuses": {
+          "pending": "Waiting for blockchain confirmation",
+          "confirmed": "Deposit confirmed and credited to fundedWallet",
+          "failed": "Deposit failed or expired",
+          "expired": "Payment window expired"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/transaction/webhook/deposit",
+        "description": "NowPayments webhook for deposit confirmation (internal use)",
+        "authentication": "Not required (webhook signature validation)",
+        "middleware": ["webhookRateLimit", "logWebhookActivity", "validateNowPaymentsWebhook", "preventWebhookReplay"],
+        "note": "This endpoint is called by NowPayments, not by frontend",
+        "securityMeasures": {
+          "signatureValidation": "Validates NowPayments signature",
+          "replayPrevention": "Prevents duplicate webhook processing",
+          "rateLimiting": "Prevents webhook flooding",
+          "activityLogging": "Logs all webhook attempts"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/transaction/history",
+        "description": "Get user's complete transaction history with filtering",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own transactions)",
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "queryParameters": {
+          "type": "Filter by transaction type (deposit, withdrawal, transfer, bonus, stake, roi)",
+          "status": "Filter by status (pending, confirmed, failed)",
+          "startDate": "Filter from this date (ISO format)",
+          "endDate": "Filter to this date (ISO format)",
+          "page": "Page number (default: 1)",
+          "limit": "Items per page (default: 20, max: 100)"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "transactions": [
+                {
+                  "_id": "transaction_id",
+                  "type": "deposit",
+                  "amount": 500,
+                  "status": "confirmed",
+                  "reference": "TXN-2024-001234",
+                  "timestamp": "2024-10-01T10:30:00.000Z",
+                  "note": "Deposit via NowPayments",
+                  "txId": "nowpay_abc123xyz",
+                  "method": "nowpayments"
+                },
+                {
+                  "_id": "transaction_id_2",
+                  "type": "roi",
+                  "amount": 50,
+                  "status": "confirmed",
+                  "reference": "TXN-2024-001235",
+                  "timestamp": "2024-10-07T00:00:00.000Z",
+                  "note": "Weekly ROI payout - Week 40"
+                },
+                {
+                  "_id": "transaction_id_3",
+                  "type": "bonus",
+                  "amount": 25,
+                  "status": "confirmed",
+                  "reference": "TXN-2024-001236",
+                  "timestamp": "2024-10-01T10:35:00.000Z",
+                  "note": "Referral bonus - Level 1",
+                  "fromUser": "referrer_user_id"
+                }
+              ],
+              "summary": {
+                "totalDeposits": 1500,
+                "totalWithdrawals": 200,
+                "totalBonuses": 375,
+                "totalROI": 450,
+                "totalStaked": 1000,
+                "netBalance": 2125
+              },
+              "pagination": {
+                "currentPage": 1,
+                "totalPages": 3,
+                "totalTransactions": 52,
+                "limit": 20
+              }
+            }
+          }
+        },
+        "transactionTypes": {
+          "deposit": "Cryptocurrency deposit to fundedWallet",
+          "withdrawal": "Withdrawal from earningWallet",
+          "transfer": "P2P transfer to another user",
+          "bonus": "Referral or registration bonus",
+          "stake": "Stake creation",
+          "roi": "Weekly ROI payout"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/transaction/stakes",
+        "description": "Get all stakes (user's own stakes)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own stakes)",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "stakes": [
+                {
+                  "_id": "stake_id",
+                  "userId": "user_id",
+                  "amount": 1000,
+                  "type": "regular",
+                  "status": "active",
+                  "startDate": "2024-09-15T10:00:00.000Z",
+                  "totalReturnsEarned": 450,
+                  "maxReturnMultiplier": 2,
+                  "progress": "22.50%"
+                }
+              ],
+              "totalStaked": 1000,
+              "totalEarned": 450,
+              "activeStakesCount": 1
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/transaction/stakes/history/:userId",
+        "description": "Get stake history for a specific user (admin or own data)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data) or Admin",
+        "pathParameters": {
+          "userId": "User ID to get stakes for"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "stakes": [
+                {
+                  "_id": "stake_id",
+                  "amount": 1000,
+                  "type": "regular",
+                  "status": "active",
+                  "startDate": "2024-09-15T10:00:00.000Z",
+                  "totalReturnsEarned": 450,
+                  "roiPayouts": [
+                    {
+                      "week": "2024-W40",
+                      "amount": 50,
+                      "date": "2024-10-07T00:00:00.000Z"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/transaction/stakes/bonus",
+        "description": "Get bonus stakes (created from registration bonus)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own bonus stakes)",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "bonusStakes": [
+                {
+                  "_id": "bonus_stake_id",
+                  "amount": 100,
+                  "type": "bonus",
+                  "status": "active",
+                  "startDate": "2024-09-16T10:00:00.000Z",
+                  "totalReturnsEarned": 45,
+                  "maxReturnMultiplier": 1,
+                  "progress": "45.00%",
+                  "note": "10% registration bonus stake - targets 100% ROI (not 200%)"
+                }
+              ]
+            }
+          }
+        },
+        "businessLogic": {
+          "bonusStakeTarget": "100% ROI (not 200% like regular stakes)",
+          "creation": "Created automatically when registration bonus activates",
+          "earnings": "Weekly ROI same as regular stakes",
+          "completion": "Completes at 100% (original amount returned)"
+        }
+      }
+    ]
+  },
+  "referralEndpoints": {
+    "baseUrl": "/api/referral",
+    "description": "Referral code validation endpoint",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/referral/validate",
+        "description": "Validate a referral code during registration",
+        "authentication": "Not required",
+        "queryParameters": {
+          "code": "Referral code to validate"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Referral code is valid",
+            "data": {
+              "isValid": true,
+              "referrerId": "user_id",
+              "referrerUsername": "referrer_name",
+              "bonusInfo": {
+                "level1": "5%",
+                "level2": "2%",
+                "level3": "1.5%",
+                "level4": "1%",
+                "level5": "0.5%"
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          {
+            "code": 404,
+            "description": "Invalid referral code",
+            "body": {
+              "success": false,
+              "message": "Referral code not found",
+              "data": {
+                "isValid": false
+              }
+            }
+          }
+        ],
+        "frontendUsage": {
+          "timing": "Validate on blur or on submit of registration form",
+          "display": "Show referrer's username if valid",
+          "error": "Show 'Invalid referral code' message if not found",
+          "optional": "Referral code is optional during registration"
+        }
+      }
+    ]
+  },
+  "bonusEndpoints": {
+    "baseUrl": "/api/bonus",
+    "description": "Bonus viewing and management endpoints",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/bonus/",
+        "description": "Get all bonuses (admin only - all users' bonuses)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "note": "For user's own bonuses, use /transaction/history?type=bonus",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "bonuses": [
+                {
+                  "_id": "bonus_id",
+                  "user": "user_id",
+                  "referredUser": "referred_user_id",
+                  "amount": 50,
+                  "level": 1,
+                  "stakeActivatedByDeadline": true,
+                  "depletedPercent": 0,
+                  "fullyDepleted": false,
+                  "createdAt": "2024-10-01T10:35:00.000Z"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/bonus/:id",
+        "description": "Get bonus by ID",
+        "authentication": "Required (JWT or Session)",
+        "pathParameters": {
+          "id": "Bonus ID"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "bonus": {
+                "_id": "bonus_id",
+                "user": "user_id",
+                "referredUser": "referred_user_id",
+                "amount": 50,
+                "level": 1,
+                "stakeActivatedByDeadline": true,
+                "depletionStartedAt": null,
+                "depletedPercent": 0,
+                "fullyDepleted": false,
+                "createdAt": "2024-10-01T10:35:00.000Z"
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/bonus/referrals/",
+        "description": "Get all referral bonuses (admin only)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "referralBonuses": [
+                {
+                  "_id": "bonus_id",
+                  "user": "user_id",
+                  "referredUser": "referred_user_id",
+                  "amount": 50,
+                  "level": 1,
+                  "createdAt": "2024-10-01T10:35:00.000Z"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/bonus/referral/:id",
+        "description": "Get referral bonus by ID",
+        "authentication": "Required (JWT or Session)",
+        "pathParameters": {
+          "id": "Referral bonus ID"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "referralBonus": {
+                "_id": "bonus_id",
+                "user": "user_id",
+                "referredUser": "referred_user_id",
+                "amount": 50,
+                "level": 1,
+                "stakeActivatedByDeadline": true,
+                "depletedPercent": 0,
+                "createdAt": "2024-10-01T10:35:00.000Z"
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/bonus/user/:id",
+        "description": "Get all bonuses for a specific user",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own bonuses) or Admin",
+        "pathParameters": {
+          "id": "User ID"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "bonuses": [
+                {
+                  "_id": "bonus_id",
+                  "referredUser": {
+                    "userId": "referred_user_id",
+                    "username": "referred_username"
+                  },
+                  "amount": 50,
+                  "level": 1,
+                  "stakeActivatedByDeadline": true,
+                  "depletedPercent": 0,
+                  "status": "active",
+                  "createdAt": "2024-10-01T10:35:00.000Z"
+                },
+                {
+                  "_id": "bonus_id_2",
+                  "referredUser": {
+                    "userId": "referred_user_id_2",
+                    "username": "referred_username_2"
+                  },
+                  "amount": 20,
+                  "level": 2,
+                  "stakeActivatedByDeadline": false,
+                  "depletedPercent": 30,
+                  "status": "depleting",
+                  "depletionStartedAt": "2024-09-25T10:00:00.000Z",
+                  "createdAt": "2024-09-18T10:35:00.000Z"
+                }
+              ],
+              "summary": {
+                "totalBonuses": 375,
+                "activeBonuses": 325,
+                "depletedBonuses": 50,
+                "bonusByLevel": {
+                  "level1": 250,
+                  "level2": 80,
+                  "level3": 30,
+                  "level4": 10,
+                  "level5": 5
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/bonus/new-rank-pool",
+        "description": "Apply rank pool bonuses (Admin only - manual distribution)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "note": "Prefer using /api/weekly-distribution endpoints for automated distribution",
+        "requestBody": {
+          "amount": 5000,
+          "weekNumber": 41,
+          "year": 2024
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Rank pool bonuses applied successfully",
+            "data": {
+              "distributedAmount": 4875,
+              "recipientsCount": 125,
+              "distributions": [
+                {
+                  "userId": "user_id",
+                  "rank": "Associate Stakeholder",
+                  "amount": 39
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/bonus/new-redistribution-pool",
+        "description": "Apply redistribution pool bonuses (Admin only - manual distribution)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "note": "Prefer using /api/weekly-distribution endpoints for automated distribution",
+        "requestBody": {
+          "amount": 2000,
+          "weekNumber": 41,
+          "year": 2024
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Redistribution pool bonuses applied successfully",
+            "data": {
+              "distributedAmount": 1950,
+              "recipientsCount": 45,
+              "distributions": [
+                {
+                  "userId": "user_id",
+                  "rank": "Senior Stakeholder",
+                  "amount": 43.33
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/bonus/trigger-full-distribution",
+        "description": "Trigger full pool distribution (Admin only - combines rank + redistribution)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "requestBody": {
+          "rankPoolAmount": 5000,
+          "redistributionPoolAmount": 2000,
+          "weekNumber": 41,
+          "year": 2024
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Full pool distribution completed successfully",
+            "data": {
+              "rankPoolDistributed": 4875,
+              "redistributionPoolDistributed": 1950,
+              "totalDistributed": 6825,
+              "totalRecipients": 145
+            }
+          }
+        }
+      }
+    ]
+  },
+  "registrationBonusEndpoints": {
+    "baseUrl": "/api/registration-bonus",
+    "description": "Registration bonus management endpoints",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/registration-bonus/status",
+        "description": "Get registration bonus status and requirements completion",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own status)",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "status": "requirements_met",
+              "bonusPercentage": 10,
+              "deadline": "2024-01-22T10:30:00.000Z",
+              "daysRemaining": 3,
+              "requirements": {
+                "profileCompletion": {
+                  "completed": true,
+                  "fields": {
+                    "fullName": true,
+                    "phone": true,
+                    "address": true,
+                    "dateOfBirth": true,
+                    "gender": true
+                  },
+                  "completionPercentage": 100
+                },
+                "socialMediaVerifications": {
+                  "completed": true,
+                  "platforms": [
+                    { "platform": "youtube", "isVerified": true, "verifiedAt": "2024-01-16T10:00:00.000Z" },
+                    { "platform": "facebook", "isVerified": true, "verifiedAt": "2024-01-16T10:02:00.000Z" },
+                    { "platform": "tiktok", "isVerified": true, "verifiedAt": "2024-01-16T10:03:00.000Z" },
+                    { "platform": "instagram", "isVerified": true, "verifiedAt": "2024-01-16T10:04:00.000Z" },
+                    { "platform": "telegram", "isVerified": true, "verifiedAt": "2024-01-16T10:05:00.000Z" }
+                  ],
+                  "verifiedCount": 5,
+                  "requiredCount": 5
+                },
+                "firstStake": {
+                  "completed": false,
+                  "note": "Make your first stake to activate 10% bonus"
+                }
+              },
+              "eligibility": {
+                "eligible": true,
+                "reason": "All requirements met. Make your first stake to activate bonus."
+              }
+            }
+          }
+        },
+        "bonusStatuses": {
+          "pending": "User registered, requirements not yet met",
+          "requirements_met": "All requirements completed, waiting for first stake",
+          "bonus_active": "Bonus stake created and active",
+          "expired": "Deadline passed without first stake",
+          "completed": "Bonus stake reached 100% ROI",
+          "cancelled": "User not eligible or bonus cancelled"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/registration-bonus/process-stake",
+        "description": "Process first stake for bonus calculation and activation (internal - called by stake creation)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own stake)",
+        "note": "This endpoint is called automatically by the stake creation process",
+        "requestBody": {
+          "stakeId": "stake_id",
+          "stakeAmount": 1000
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Registration bonus activated successfully!",
+            "data": {
+              "bonusAmount": 100,
+              "bonusStake": {
+                "_id": "bonus_stake_id",
+                "amount": 100,
+                "type": "bonus",
+                "status": "active",
+                "maxReturnMultiplier": 1,
+                "targetReturn": 100,
+                "note": "10% registration bonus - targets 100% ROI"
+              },
+              "requirements": {
+                "profileCompleted": true,
+                "socialMediaVerified": true,
+                "firstStakeCompleted": true,
+                "completedWithinDeadline": true
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 400, "description": "Requirements not met or deadline expired" },
+          { "code": 404, "description": "Registration bonus record not found" },
+          { "code": 409, "description": "Bonus already activated" }
+        ]
+      }
+    ]
+  },
+  "frontendImplementationGuide": {
+    "transactionHistory": {
+      "display": "Tabular format with type badges (color-coded)",
+      "typeColors": {
+        "deposit": "green",
+        "withdrawal": "orange",
+        "transfer": "blue",
+        "bonus": "purple",
+        "stake": "indigo",
+        "roi": "teal"
+      },
+      "filtering": "Dropdown for type, date range picker",
+      "pagination": "Show 20 per page with page navigation",
+      "summary": "Display total deposits, withdrawals, bonuses, ROI at top"
+    },
+    "depositFlow": {
+      "step1": "Amount and network selection",
+      "step2": "2FA verification",
+      "step3": "Call /transaction/deposit",
+      "step4": "Show QR code and payment URL",
+      "step5": "Poll /transaction/deposit/status/:invoiceId every 10 seconds",
+      "step6": "Show success when status becomes 'confirmed'"
+    },
+    "referralDashboard": {
+      "referralCode": "Display user's referral code prominently with copy button",
+      "referralLink": "Generate and display referral link",
+      "bonusesList": "Show all referral bonuses with depletion status",
+      "depletionWarning": "Highlight bonuses that are depleting (depletedPercent > 0)",
+      "statistics": "Show total bonuses earned, bonuses by level, active vs depleted"
+    },
+    "registrationBonusTracker": {
+      "progressBar": "Show requirements completion percentage",
+      "checklist": "Display profile completion and social media verification status",
+      "deadline": "Show countdown timer to 7-day deadline",
+      "callToAction": "Prominent 'Make First Stake' button when requirements met",
+      "celebration": "Confetti animation when bonus activates"
+    },
+    "bonusVisualization": {
+      "referralTree": "Visual tree showing downline up to 5 levels",
+      "bonusByLevel": "Pie chart or bar chart showing bonus distribution by level",
+      "depletionTimeline": "Timeline showing bonuses and their depletion status",
+      "totalEarnings": "Large number display for total bonus earnings"
+    }
+  }
+}

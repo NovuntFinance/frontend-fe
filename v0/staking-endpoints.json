@@ -1,0 +1,951 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-10-12",
+  "description": "Complete staking system documentation for Novunt API - Goal-based staking with 200% ROI target",
+  "baseUrl": "/api",
+  "stakingModel": {
+    "concept": "Goal-Based Staking",
+    "description": "Users stake funds to achieve financial goals with 200% total return target (100% profit)",
+    "permanentStakes": true,
+    "returnTarget": "200% (initial stake + 100% profit)",
+    "distributionModel": "Weekly ROI based on Novunt trading performance",
+    "noUnstaking": "Stakes are permanent investments. Funds are never returned to users.",
+    "earningsDestination": "Weekly ROI goes to earningWallet (can stake + withdraw)",
+    "minimumStake": "20 USDT (configurable via system settings)",
+    "maximumStake": "Configurable via system settings (default: no limit)",
+    "twoWalletSystem": {
+      "fundedWallet": "Deposits + P2P transfers → Can ONLY stake",
+      "earningWallet": "ROI + bonuses → Can stake + withdraw"
+    }
+  },
+  "stakingEndpoints": {
+    "baseUrl": "/api/staking",
+    "description": "Staking management endpoints for creating stakes, viewing dashboard, and analytics",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/staking/dashboard",
+        "description": "Get comprehensive staking dashboard with wallet info, active stakes, and history",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "wallets": {
+                "fundedWallet": 500,
+                "earningWallet": 1250.75,
+                "totalAvailableBalance": 1750.75,
+                "description": {
+                  "fundedWallet": "Available for staking only (deposits + P2P transfers)",
+                  "earningWallet": "Available for withdrawal + staking (ROI + bonuses)"
+                }
+              },
+              "activeStakes": [
+                {
+                  "id": "stake_id",
+                  "amount": 1000,
+                  "targetReturn": 2000,
+                  "startDate": "2024-09-15T10:00:00.000Z",
+                  "earned": 450,
+                  "progress": "22.50%",
+                  "nextPayout": "2024-10-14T00:00:00.000Z",
+                  "model": "Weekly ROI based on Novunt trading performance"
+                }
+              ],
+              "stakeHistory": [
+                {
+                  "id": "transaction_id",
+                  "type": "stake",
+                  "amount": 1000,
+                  "timestamp": "2024-09-15T10:00:00.000Z",
+                  "note": "Goal stake created"
+                },
+                {
+                  "id": "transaction_id_2",
+                  "type": "roi",
+                  "amount": 50,
+                  "timestamp": "2024-10-07T00:00:00.000Z",
+                  "note": "Weekly ROI payout"
+                }
+              ],
+              "summary": {
+                "totalActiveStakes": 1000,
+                "totalStakesSinceInception": 1000,
+                "totalEarnedFromROI": 450,
+                "targetTotalReturns": 2000,
+                "progressToTarget": "22.50%",
+                "stakingModel": "Weekly ROI based on Novunt trading performance until 200% returns",
+                "note": "Stakes are permanent investments. You benefit through weekly ROI payouts to your Earning Wallet until 200% maturity."
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 401, "description": "Unauthorized - Invalid or missing token" },
+          { "code": 404, "description": "User wallet not found" },
+          { "code": 500, "description": "Internal server error" }
+        ],
+        "frontendGuidance": {
+          "display": "Show wallet balances prominently with clear labels",
+          "activeStakes": "Display as cards with progress bars showing % to 200% target",
+          "history": "Show recent transactions (last 10) with type badges (stake/roi)",
+          "summary": "Display overall progress to 200% goal with visual indicator"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/staking/analytics",
+        "description": "Get detailed staking analytics and performance metrics",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "totalStaked": 2500,
+              "totalEarned": 875,
+              "averageWeeklyROI": 125,
+              "stakingDuration": "12 weeks",
+              "projectedCompletion": {
+                "weeksRemaining": 13,
+                "estimatedCompletionDate": "2025-01-15T00:00:00.000Z"
+              },
+              "performanceByStake": [
+                {
+                  "stakeId": "stake_id",
+                  "amount": 1000,
+                  "earned": 450,
+                  "progress": 22.5,
+                  "weeklyAverage": 37.5,
+                  "weeksActive": 12
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/staking/roi-history",
+        "description": "Get detailed ROI payout history",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "queryParameters": {
+          "page": "Page number (default: 1)",
+          "limit": "Items per page (default: 20)",
+          "startDate": "Filter from this date (ISO format)",
+          "endDate": "Filter to this date (ISO format)"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "roiPayouts": [
+                {
+                  "weekNumber": 41,
+                  "year": 2024,
+                  "payoutDate": "2024-10-07T00:00:00.000Z",
+                  "amount": 50,
+                  "stakeBreakdown": [
+                    {
+                      "stakeId": "stake_id",
+                      "stakeAmount": 1000,
+                      "roiReceived": 50,
+                      "percentageOfTotal": "100%"
+                    }
+                  ],
+                  "cumulativeEarnings": 450
+                }
+              ],
+              "summary": {
+                "totalPayouts": 12,
+                "totalEarned": 450,
+                "averageWeeklyPayout": 37.5,
+                "highestPayout": 65,
+                "lowestPayout": 25
+              },
+              "pagination": {
+                "currentPage": 1,
+                "totalPages": 1,
+                "totalPayouts": 12,
+                "limit": 20
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/staking/preview",
+        "description": "Preview a stake before creating it - shows current balances and deduction plan",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "requestBody": {
+          "amount": 500,
+          "duration": 0,
+          "sourceWallet": "auto"
+        },
+        "requestValidation": {
+          "amount": {
+            "required": true,
+            "type": "number",
+            "min": 20,
+            "description": "Stake amount in USD (minimum 20 USDT)"
+          },
+          "duration": {
+            "required": true,
+            "type": "number",
+            "value": 0,
+            "description": "Always 0 - stakes are permanent until 200% target"
+          },
+          "sourceWallet": {
+            "required": true,
+            "type": "string",
+            "value": "auto",
+            "description": "Always 'auto' - system uses fundedWallet first, then earningWallet"
+          }
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "stakeAmount": 500,
+              "targetReturn": 1000,
+              "currentWalletBalances": {
+                "fundedWallet": 300,
+                "earningWallet": 250,
+                "totalBalance": 550,
+                "canStake": true
+              },
+              "stakingModel": {
+                "description": "You will receive weekly ROI based on Novunt trading performance",
+                "paymentMethod": "Weekly distributions proportional to your stake",
+                "completionTarget": "1000 USDT (200% of your stake)",
+                "note": "Your stake is permanent. You benefit through weekly ROI until 200% total returns."
+              },
+              "deductionNote": "Staking will automatically use funds from both wallets if needed (minimum 20 USDT required)"
+            }
+          }
+        },
+        "errorResponses": [
+          {
+            "code": 400,
+            "description": "Invalid request or insufficient funds",
+            "examples": [
+              "Amount is required",
+              "Amount below minimum (20 USDT)",
+              "Insufficient funds. Available: 450 USDT, Required: 500 USDT"
+            ]
+          },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 404, "description": "User wallet not found" }
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/staking/create",
+        "description": "Create a new stake (PERMANENT - funds locked forever, earn weekly ROI until 200%)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User",
+        "middleware": ["authenticateUser", "validateRequestBody"],
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "requestBody": {
+          "amount": 500,
+          "duration": 0,
+          "sourceWallet": "auto"
+        },
+        "requestValidation": {
+          "amount": {
+            "required": true,
+            "type": "number",
+            "min": 20,
+            "description": "Stake amount in USD"
+          },
+          "duration": {
+            "required": true,
+            "type": "number",
+            "value": 0,
+            "description": "Must be 0 (permanent stake)"
+          },
+          "sourceWallet": {
+            "required": true,
+            "type": "string",
+            "value": "auto",
+            "description": "Must be 'auto' for automatic deduction"
+          }
+        },
+        "successResponse": {
+          "code": 201,
+          "body": {
+            "success": true,
+            "message": "Stake created successfully",
+            "data": {
+              "stake": {
+                "_id": "stake_id",
+                "userId": "user_id",
+                "amount": 500,
+                "targetReturn": 1000,
+                "status": "active",
+                "type": "regular",
+                "startDate": "2024-10-12T10:00:00.000Z",
+                "totalReturnsEarned": 0,
+                "maxReturnMultiplier": 2,
+                "progress": "0%"
+              },
+              "walletAfterStake": {
+                "fundedWallet": 0,
+                "earningWallet": 50,
+                "totalBalance": 50
+              },
+              "deductionBreakdown": {
+                "fromFundedWallet": 300,
+                "fromEarningWallet": 200,
+                "total": 500
+              },
+              "isFirstStake": true,
+              "registrationBonusEligible": true
+            }
+          }
+        },
+        "errorResponses": [
+          {
+            "code": 400,
+            "description": "Invalid request or insufficient funds",
+            "examples": [
+              "Amount is required",
+              "Amount below minimum (20 USDT)",
+              "Insufficient funds",
+              "Amount exceeds available balance"
+            ]
+          },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 404, "description": "User wallet not found" },
+          { "code": 500, "description": "Transaction failed - funds not deducted" }
+        ],
+        "businessLogic": {
+          "permanentStake": "Funds are NEVER returned to user. This is a permanent investment.",
+          "deductionOrder": "1. fundedWallet → 2. earningWallet (automatic)",
+          "roiPayouts": "Weekly distributions to earningWallet based on trading performance",
+          "targetCompletion": "200% total returns (stake + 100% profit)",
+          "afterCompletion": "Stake becomes Novunt property, user keeps all earnings",
+          "firstStake": "First stake triggers registration bonus eligibility check",
+          "referralBonuses": "Stake triggers 5-level referral bonuses for upline"
+        },
+        "sideEffects": {
+          "walletUpdate": "Deducts from fundedWallet first, then earningWallet",
+          "stakeCreation": "Creates active stake record",
+          "transactionLog": "Creates 'stake' transaction in history",
+          "referralTrigger": "Processes 5-level referral bonuses (5%, 2%, 1.5%, 1%, 0.5%)",
+          "qualificationUpdate": "Updates user's rank qualification status",
+          "registrationBonus": "May activate 10% registration bonus if first stake within 7 days"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/staking/plans",
+        "description": "Get available staking plans (public endpoint)",
+        "authentication": "Not required",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "plans": [
+                {
+                  "name": "Goal-Based Staking",
+                  "description": "Permanent stake with 200% ROI target",
+                  "minimumStake": 20,
+                  "maximumStake": null,
+                  "returnTarget": "200% (100% profit)",
+                  "payoutFrequency": "Weekly",
+                  "features": [
+                    "Weekly ROI based on trading performance",
+                    "Permanent investment (no unstaking)",
+                    "Earn until 200% total returns",
+                    "ROI goes to earningWallet (withdrawable)"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/staking/calculator",
+        "description": "Calculate estimated staking earnings (public endpoint)",
+        "authentication": "Not required",
+        "requestBody": {
+          "amount": 1000,
+          "duration": 52
+        },
+        "requestValidation": {
+          "amount": {
+            "required": true,
+            "type": "number",
+            "min": 20,
+            "description": "Stake amount in USD"
+          },
+          "duration": {
+            "required": true,
+            "type": "number",
+            "description": "Number of weeks for estimation"
+          }
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "stakeAmount": 1000,
+              "targetReturn": 2000,
+              "profitTarget": 1000,
+              "estimatedWeeks": 52,
+              "averageWeeklyROI": "~19.23 USDT",
+              "note": "Actual returns vary based on weekly trading performance",
+              "disclaimer": "Estimates are projections only. Actual earnings depend on Novunt trading performance each week."
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/staking/rates",
+        "description": "Get current staking rates and performance data (public endpoint)",
+        "authentication": "Not required",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "currentWeek": 41,
+              "year": 2024,
+              "performanceMetrics": {
+                "lastWeekROI": "1.8%",
+                "averageWeeklyROI": "1.92%",
+                "last4WeeksAverage": "2.1%",
+                "last12WeeksAverage": "1.95%"
+              },
+              "totalActiveStakes": 250000,
+              "totalDistributedThisWeek": 4500,
+              "note": "ROI varies weekly based on Novunt trading performance"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "goalEndpoints": {
+    "baseUrl": "/api/goal",
+    "description": "Financial goal management linked to stakes",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/goal/create",
+        "description": "Create a goal-based stake with motivational tracking",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User",
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "requestBody": {
+          "title": "Buy a House",
+          "category": "Real Estate",
+          "amount": 1000,
+          "description": "Saving for my dream home"
+        },
+        "requestValidation": {
+          "title": {
+            "required": true,
+            "type": "string",
+            "maxLength": 100,
+            "description": "Goal title"
+          },
+          "category": {
+            "required": true,
+            "type": "string",
+            "description": "Goal category (predefined or custom)"
+          },
+          "amount": {
+            "required": true,
+            "type": "number",
+            "min": 20,
+            "description": "Stake amount in USD"
+          },
+          "description": {
+            "required": false,
+            "type": "string",
+            "maxLength": 500,
+            "description": "Optional goal description"
+          }
+        },
+        "successResponse": {
+          "code": 201,
+          "body": {
+            "message": "Goal stake created successfully!",
+            "goal": {
+              "id": "goal_id",
+              "title": "Buy a House",
+              "description": "Saving for my dream home",
+              "category": "Real Estate",
+              "isCustomGoal": false,
+              "initialStakeAmount": 1000,
+              "progressPercentage": 100,
+              "status": "active",
+              "targetTotalAmount": 2000,
+              "remainingToTarget": 1000
+            },
+            "timing": {
+              "stakeDate": "2024-10-12 10:00 AM BIT",
+              "earningStartDate": "2024-10-13 00:00 AM BIT",
+              "nextEarningDate": "2024-10-14 00:00 AM BIT",
+              "currentWeekEarning": false,
+              "proRatingFactor": 0,
+              "explanation": "Stake created after weekly cutoff. Earnings start next week."
+            },
+            "goalExplanation": {
+              "message": "You will receive weekly returns until you reach 200% (100% profit)",
+              "currentTotal": "1000 USDT (100%)",
+              "targetTotal": "2000 USDT (200%)",
+              "profitToEarn": "1000 USDT (100% profit)"
+            },
+            "motivational": {
+              "quote": "Every journey begins with a single step. You're on your way!",
+              "nextMilestone": "125% - Quarter of the way there!",
+              "showConfetti": false,
+              "percentageComplete": 100
+            }
+          }
+        },
+        "errorResponses": [
+          {
+            "code": 400,
+            "description": "Invalid request data",
+            "examples": [
+              "Title, category, and amount are required",
+              "Stake amount must be between 20 and 10000 USDT",
+              "Insufficient wallet balance"
+            ]
+          },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 500, "description": "Internal server error" }
+        ],
+        "businessLogic": {
+          "bakerIslandTime": "All times are in Baker Island Time (UTC-12)",
+          "earningStartDate": "Next day at 00:00 BIT after stake creation",
+          "weeklyDistribution": "Mondays at 00:00 BIT",
+          "proRating": "First week may be pro-rated based on stake timing",
+          "goalCategories": "Configurable via system settings",
+          "customGoals": "Users can create custom goal categories",
+          "walletDeduction": "Uses fundedWallet first, then earningWallet",
+          "referralBonuses": "Triggers 5-level referral system",
+          "motivationalQuotes": "Dynamic quotes based on progress milestones"
+        },
+        "sideEffects": {
+          "goalCreation": "Creates Goal record linked to stake",
+          "walletUpdate": "Deducts from wallets (fundedWallet → earningWallet)",
+          "referralProcessing": "Processes immediate referral bonuses to upline",
+          "qualificationUpdate": "Updates user's stake qualification status"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/goal/my-goals",
+        "description": "Get all user's goals with progress tracking",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "queryParameters": {
+          "status": "Filter by status (active/completed)",
+          "page": "Page number (default: 1)",
+          "limit": "Items per page (default: 10)"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "goals": [
+                {
+                  "_id": "goal_id",
+                  "title": "Buy a House",
+                  "category": "Real Estate",
+                  "initialStakeAmount": 1000,
+                  "totalReturnsReceived": 250,
+                  "progressPercentage": 125,
+                  "status": "active",
+                  "remainingToTarget": 750,
+                  "weeksActive": 10,
+                  "nextEarningDate": "2024-10-14T00:00:00.000Z",
+                  "lastMotivationalQuote": "You're 25% of the way to your goal!",
+                  "createdAt": "2024-08-01T10:00:00.000Z"
+                }
+              ],
+              "summary": {
+                "totalGoals": 3,
+                "activeGoals": 2,
+                "completedGoals": 1,
+                "totalStaked": 2500,
+                "totalEarned": 875,
+                "overallProgress": "135%"
+              },
+              "pagination": {
+                "currentPage": 1,
+                "totalPages": 1,
+                "totalGoals": 3,
+                "limit": 10
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/goal/:goalId",
+        "description": "Get detailed information about a specific goal",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own goal only)",
+        "pathParameters": {
+          "goalId": "ID of the goal to retrieve"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "goal": {
+                "_id": "goal_id",
+                "title": "Buy a House",
+                "description": "Saving for my dream home",
+                "category": "Real Estate",
+                "isCustomGoal": false,
+                "initialStakeAmount": 1000,
+                "totalReturnsReceived": 250,
+                "progressPercentage": 125,
+                "status": "active",
+                "targetTotalAmount": 2000,
+                "remainingToTarget": 750,
+                "weeksActive": 10,
+                "stakeDate": "2024-08-01T10:00:00.000Z",
+                "earningStartDate": "2024-08-02T00:00:00.000Z",
+                "nextEarningDate": "2024-10-14T00:00:00.000Z",
+                "lastMotivationalQuote": "You're 25% of the way to your goal!"
+              },
+              "earningsHistory": [
+                {
+                  "weekNumber": 41,
+                  "year": 2024,
+                  "amount": 25,
+                  "distributionDate": "2024-10-07T00:00:00.000Z",
+                  "cumulativeTotal": 250
+                }
+              ],
+              "milestones": {
+                "reached": [
+                  { "percentage": 100, "description": "Goal started!", "reachedAt": "2024-08-01T10:00:00.000Z" },
+                  { "percentage": 125, "description": "Quarter of the way!", "reachedAt": "2024-09-20T00:00:00.000Z" }
+                ],
+                "upcoming": [
+                  { "percentage": 150, "description": "Halfway there!", "estimatedDate": "2024-11-15T00:00:00.000Z" },
+                  { "percentage": 175, "description": "Three-quarters done!", "estimatedDate": "2024-12-30T00:00:00.000Z" },
+                  { "percentage": 200, "description": "Goal complete! 🎉", "estimatedDate": "2025-02-10T00:00:00.000Z" }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/goal/wallet-info",
+        "description": "Get wallet information in goal context",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "User (own data)",
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "fundedWallet": 500,
+              "earningWallet": 1250.75,
+              "totalBalance": 1750.75,
+              "canCreateGoal": true,
+              "minimumStakeAmount": 20,
+              "maximumStakeAmount": 10000
+            }
+          }
+        }
+      }
+    ]
+  },
+  "weeklyDistributionEndpoints": {
+    "baseUrl": "/api/weekly-distribution",
+    "description": "Admin endpoints for declaring and distributing weekly ROI",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/weekly-distribution/declare",
+        "description": "Declare weekly returns amount (Admin only)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "middleware": ["authenticateUser", "checkAdmin", "validateRequestBody"],
+        "requestHeaders": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "requestBody": {
+          "declaredAmount": 5000
+        },
+        "requestValidation": {
+          "declaredAmount": {
+            "required": true,
+            "type": "number",
+            "min": 0,
+            "description": "Total amount to distribute this week (USDT)"
+          }
+        },
+        "successResponse": {
+          "code": 201,
+          "body": {
+            "success": true,
+            "message": "Weekly returns declared successfully",
+            "data": {
+              "declaration": {
+                "_id": "declaration_id",
+                "weekNumber": 41,
+                "year": 2024,
+                "weekStartDate": "2024-10-07T00:00:00.000Z",
+                "weekEndDate": "2024-10-13T23:59:59.999Z",
+                "declaredAmount": 5000,
+                "status": "pending",
+                "eligibleGoalsCount": 125,
+                "declaredBy": "admin_user_id",
+                "bakerIslandTime": "2024-10-12T10:00:00.000Z"
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 400, "description": "Declared amount is required" },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 403, "description": "Forbidden - Admin access required" },
+          { "code": 500, "description": "Internal server error" }
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/weekly-distribution/approve/:declarationId",
+        "description": "Approve a weekly declaration (Super Admin only)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "SuperAdmin",
+        "middleware": ["authenticateUser", "checkSuperAdmin"],
+        "pathParameters": {
+          "declarationId": "ID of the declaration to approve"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Weekly declaration approved successfully",
+            "data": {
+              "declaration": {
+                "_id": "declaration_id",
+                "status": "approved",
+                "approvedBy": "superadmin_user_id",
+                "auditTrail": {
+                  "declaredAt": "2024-10-12T10:00:00.000Z",
+                  "approvedAt": "2024-10-12T11:00:00.000Z"
+                }
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 400, "description": "Declaration already approved or distributed" },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 403, "description": "Forbidden - Super Admin access required" },
+          { "code": 404, "description": "Declaration not found" },
+          { "code": 500, "description": "Internal server error" }
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/weekly-distribution/distribute/:declarationId",
+        "description": "Process weekly distribution to all eligible goals (Super Admin only)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "SuperAdmin",
+        "middleware": ["authenticateUser", "checkSuperAdmin"],
+        "pathParameters": {
+          "declarationId": "ID of the approved declaration to distribute"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "message": "Weekly distribution processed successfully",
+            "data": {
+              "declaration": {
+                "_id": "declaration_id",
+                "status": "distributed",
+                "totalDistributed": 4875.50,
+                "distributionDate": "2024-10-12T12:00:00.000Z",
+                "eligibleGoalsCount": 125,
+                "auditTrail": {
+                  "declaredAt": "2024-10-12T10:00:00.000Z",
+                  "approvedAt": "2024-10-12T11:00:00.000Z",
+                  "distributedAt": "2024-10-12T12:00:00.000Z"
+                }
+              },
+              "distributionSummary": {
+                "goalsUpdated": 125,
+                "walletsUpdated": 125,
+                "transactionsCreated": 125,
+                "averagePayoutPerGoal": 39.00,
+                "completedGoals": 3,
+                "failedDistributions": 0
+              }
+            }
+          }
+        },
+        "errorResponses": [
+          { "code": 400, "description": "Declaration not approved or already distributed" },
+          { "code": 401, "description": "Unauthorized" },
+          { "code": 403, "description": "Forbidden - Super Admin access required" },
+          { "code": 404, "description": "Declaration not found" },
+          { "code": 500, "description": "Distribution processing failed" }
+        ],
+        "businessLogic": {
+          "proportionalDistribution": "ROI distributed proportionally based on stake amounts",
+          "earningWalletUpdate": "All ROI goes to earningWallet (withdrawable)",
+          "goalProgressUpdate": "Updates totalReturnsReceived and progressPercentage",
+          "completionCheck": "Goals reaching 200% are marked as completed",
+          "transactionLogging": "Creates 'roi' transaction for each distribution",
+          "notificationTrigger": "Sends notifications to users about their ROI payout"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/weekly-distribution/declarations",
+        "description": "Get all weekly declarations with filtering (Admin only)",
+        "authentication": "Required (JWT or Session)",
+        "authorization": "Admin",
+        "queryParameters": {
+          "status": "Filter by status (pending/approved/distributed/rejected)",
+          "year": "Filter by year",
+          "weekNumber": "Filter by week number",
+          "page": "Page number (default: 1)",
+          "limit": "Items per page (default: 20)"
+        },
+        "successResponse": {
+          "code": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "declarations": [
+                {
+                  "_id": "declaration_id",
+                  "weekNumber": 41,
+                  "year": 2024,
+                  "declaredAmount": 5000,
+                  "totalDistributed": 4875.50,
+                  "status": "distributed",
+                  "eligibleGoalsCount": 125,
+                  "declaredBy": {
+                    "userId": "admin_id",
+                    "username": "admin_user"
+                  },
+                  "approvedBy": {
+                    "userId": "superadmin_id",
+                    "username": "super_admin"
+                  },
+                  "auditTrail": {
+                    "declaredAt": "2024-10-12T10:00:00.000Z",
+                    "approvedAt": "2024-10-12T11:00:00.000Z",
+                    "distributedAt": "2024-10-12T12:00:00.000Z"
+                  }
+                }
+              ],
+              "summary": {
+                "totalDeclarations": 40,
+                "pendingDeclarations": 1,
+                "approvedDeclarations": 0,
+                "distributedDeclarations": 39,
+                "totalDistributedAllTime": 195000
+              },
+              "pagination": {
+                "currentPage": 1,
+                "totalPages": 2,
+                "totalDeclarations": 40,
+                "limit": 20
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "frontendImplementationGuide": {
+    "stakingDashboard": {
+      "layout": "Grid layout with wallet info at top, active stakes in cards below",
+      "walletDisplay": "Show both wallets with clear labels and balances",
+      "stakeCards": "Display each stake with progress bar, earnings to date, next payout date",
+      "stakingButton": "Prominent 'Create New Stake' button",
+      "history": "Recent transactions table/list with type badges"
+    },
+    "createStakeFlow": {
+      "step1": "Amount input with min/max validation (20 USDT minimum)",
+      "step2": "Call /staking/preview to show current balances",
+      "step3": "Display 200% target clearly (e.g., 'Stake 500 → Target 1000')",
+      "step4": "Warn about permanent stake ('Funds cannot be withdrawn')",
+      "step5": "User confirms → Call /staking/create",
+      "step6": "Show success with updated balances and new stake"
+    },
+    "goalStakeFlow": {
+      "step1": "Goal category selection (dropdown + custom option)",
+      "step2": "Title and description input",
+      "step3": "Amount input with wallet preview",
+      "step4": "Call /goal/create",
+      "step5": "Show motivational quote and goal timeline",
+      "step6": "Display next earning date and pro-rating info"
+    },
+    "roiTracking": {
+      "weeklyPayouts": "Show calendar view of ROI payouts",
+      "progressVisualization": "Circular or linear progress bar showing % to 200%",
+      "earningsGraph": "Line chart showing cumulative earnings over time",
+      "milestonesDisplay": "Show achieved and upcoming milestones with celebrations"
+    },
+    "adminDistribution": {
+      "declarationForm": "Input for weekly amount with eligible goals count",
+      "approvalWorkflow": "Super admin approval screen with declaration details",
+      "distributionButton": "Execute distribution with confirmation dialog",
+      "resultsSummary": "Show distribution results (goals updated, failed, completed)"
+    },
+    "errorHandling": {
+      "insufficientFunds": "Show clear message with available balance vs required",
+      "belowMinimum": "Highlight minimum stake requirement (20 USDT)",
+      "permanentStakeWarning": "Display prominent warning before stake creation",
+      "distributionErrors": "Show admin which goals failed and why"
+    },
+    "notifications": {
+      "roiPayout": "Push notification when weekly ROI is distributed",
+      "goalMilestone": "Celebrate when user reaches 125%, 150%, 175%, 200%",
+      "goalCompletion": "Special celebration when goal reaches 200%"
+    }
+  }
+}
