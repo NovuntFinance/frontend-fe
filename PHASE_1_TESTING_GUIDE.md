@@ -36,7 +36,7 @@ http://localhost:5000
 ### 3. Start Frontend Dev Server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Frontend will run on: `http://localhost:3000`

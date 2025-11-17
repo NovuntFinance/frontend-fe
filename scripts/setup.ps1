@@ -1,11 +1,11 @@
 # PowerShell setup script for Novunt frontend
 # Run from project root in PowerShell: ./scripts/setup.ps1
 
-Write-Host "1/6 - Installing npm dependencies (this may take a few minutes)" -ForegroundColor Cyan
-npm install
+Write-Host "1/6 - Installing dependencies with pnpm (this may take a few minutes)" -ForegroundColor Cyan
+pnpm install
 
 Write-Host "2/6 - Installing Tailwind plugins (devDependencies)" -ForegroundColor Cyan
-npm install -D tailwindcss-animate
+pnpm install -D tailwindcss-animate
 
 Write-Host "3/6 - Creating recommended folder structure" -ForegroundColor Cyan
 New-Item -Path "src/lib" -ItemType Directory -Force | Out-Null
@@ -59,4 +59,4 @@ Write-Host "5/6 - Adding shadcn components" -ForegroundColor Cyan
 npx shadcn-ui@latest add button card dialog input select toast tabs switch dropdown-menu avatar badge skeleton form label
 if ($LASTEXITCODE -ne 0) { Write-Host "shadcn add exited with non-zero code" -ForegroundColor Yellow }
 
-Write-Host "6/6 - Setup complete. Start the dev server with 'npm run dev'" -ForegroundColor Green
+Write-Host "6/6 - Setup complete. Start the dev server with 'pnpm dev'" -ForegroundColor Green

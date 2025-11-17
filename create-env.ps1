@@ -29,7 +29,7 @@ if (Test-Path ".env.local") {
     Write-Host "─────────────────────────────────────────────────────" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Next step: Restart your dev server" -ForegroundColor Cyan
-    Write-Host "  npm run dev" -ForegroundColor White
+    Write-Host "  pnpm dev" -ForegroundColor White
 } else {
     Write-Host "❌ ERROR: Failed to create .env.local file" -ForegroundColor Red
     Write-Host "Please create it manually" -ForegroundColor Yellow

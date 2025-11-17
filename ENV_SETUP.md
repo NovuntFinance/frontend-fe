@@ -32,7 +32,7 @@ echo "NEXT_PUBLIC_API_URL=https://api.novunt.com/api/v1" > .env.local
 echo "NEXT_PUBLIC_USE_PROXY=false" >> .env.local
 
 # Restart dev server
-npm run dev
+pnpm dev
 ```
 
 ## 🔒 Security Notes

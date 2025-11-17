@@ -24,7 +24,7 @@ if exist .env.local (
     echo ------------------------------------------------------------
     echo.
     echo [36mNext step: Restart your dev server[0m
-    echo   npm run dev
+    echo   pnpm dev
 ) else (
     echo.
     echo [31mERROR: Failed to create .env.local file[0m

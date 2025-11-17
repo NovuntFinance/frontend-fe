@@ -4,11 +4,11 @@ set -euo pipefail
 # Setup script for Novunt frontend (Bash)
 # Run from project root: bash ./scripts/setup.sh
 
-echo "1/6 - Installing npm dependencies (this may take a few minutes)"
-npm install
+echo "1/6 - Installing dependencies with pnpm (this may take a few minutes)"
+pnpm install
 
 echo "2/6 - Installing Tailwind plugins (devDependencies)"
-npm install -D tailwindcss-animate
+pnpm install -D tailwindcss-animate
 
 echo "3/6 - Creating recommended folder structure"
 mkdir -p src/lib src/hooks src/store src/types src/styles
@@ -25,8 +25,8 @@ echo "5/6 - Adding shadcn components (non-interactive)"
 npx shadcn-ui@latest add button card dialog input select toast tabs switch dropdown-menu avatar badge skeleton form label || true
 
 echo "6/6 - Starting dev server"
-echo "Run 'npm run dev' yourself after the script finishes if you prefer not to start it from the script."
+echo "Run 'pnpm dev' yourself after the script finishes if you prefer not to start it from the script."
 # Uncomment the next line if you want this script to start the dev server automatically
-# npm run dev
+# pnpm dev
 
 echo "Setup script finished. If any step above failed, please run the failed command manually and follow any interactive prompts."

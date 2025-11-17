@@ -40,7 +40,7 @@ NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1
    ```
    NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1
    ```
-3. **Restart your dev server** (stop and run `npm run dev` again)
+3. **Restart your dev server** (stop and run `pnpm dev` again)
 
 ### 3. Use Alternative Backend URL
 
@@ -98,7 +98,7 @@ If backend is running but CORS fails, the backend needs to allow:
 ```bash
 # Stop the server (Ctrl+C)
 # Then restart
-npm run dev
+pnpm dev
 ```
 
 ### Solution 2: Recreate .env.local
@@ -112,7 +112,7 @@ NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1
 "@ | Out-File -FilePath .env.local -Encoding utf8
 
 # Restart dev server
-npm run dev
+pnpm dev
 ```
 
 ### Solution 3: Use Proxy (Temporary Workaround)

@@ -185,7 +185,7 @@ Added missing Lucide React icons to type declarations:
 ## 🛠️ Dependencies Installed
 
 ```bash
-npm install @radix-ui/react-avatar @radix-ui/react-dropdown-menu @radix-ui/react-progress
+pnpm add @radix-ui/react-avatar @radix-ui/react-dropdown-menu @radix-ui/react-progress
 ```
 
 ---

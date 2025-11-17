@@ -121,7 +121,7 @@
    - Each domain (auth, dashboard, stakes, wallets, referrals, admin) has dedicated `src/app/(domain)` routes, shared hooks (`src/hooks`), and UI modules.
 
 3. **Quality & Tooling**
-   - Enforce lint (`npm run lint`), typecheck, tests (`npm run test`) in CI.
+   - Enforce lint (`pnpm lint`), typecheck, tests (`pnpm test`) in CI.
    - Add Storybook or Ladle for component QA.
    - Set up Playwright for end-to-end critical journeys.
 

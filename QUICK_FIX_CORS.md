@@ -10,7 +10,7 @@ The environment variable is set correctly, but Next.js needs a restart to pick i
 1. **Stop the dev server** (Press `Ctrl+C` in the terminal)
 2. **Start it again:**
    ```bash
-   npm run dev
+   pnpm dev
    ```
 3. **Clear browser cache** (F12 → Right-click refresh → "Empty Cache and Hard Reload")
 4. **Try again**

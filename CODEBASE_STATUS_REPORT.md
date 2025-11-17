@@ -104,7 +104,7 @@ NEXT_PUBLIC_USE_PROXY=false
 
 **Note:** Make sure to restart your dev server after any `.env.local` changes:
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ---

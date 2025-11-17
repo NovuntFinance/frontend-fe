@@ -904,19 +904,19 @@ interface KYCSubmission {
 ### To Install
 ```bash
 # Charts
-npm install recharts
+pnpm add recharts
 
 # Tables
-npm install @tanstack/react-table
+pnpm add @tanstack/react-table
 
 # Excel export
-npm install xlsx
+pnpm add xlsx
 
 # PDF generation
-npm install jspdf jspdf-autotable
+pnpm add jspdf jspdf-autotable
 
 # JSON viewer
-npm install react-json-view
+pnpm add react-json-view
 ```
 
 ---

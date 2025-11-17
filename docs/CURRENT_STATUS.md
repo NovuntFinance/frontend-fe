@@ -143,19 +143,19 @@ Use `phase-4-testing-checklist.md` to verify all features:
 ### Quick Commands
 ```bash
 # Development server (already running)
-npm run dev
+pnpm dev
 
 # Type checking
-npm run type-check
+pnpm type-check
 
 # Build for production
-npm run build
+pnpm build
 
 # Run tests (when added)
 npm test
 
 # Install new dependencies (for Phase 5)
-npm install recharts @tanstack/react-table xlsx jspdf
+pnpm add recharts @tanstack/react-table xlsx jspdf
 ```
 
 ---
