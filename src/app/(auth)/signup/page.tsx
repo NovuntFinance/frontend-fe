@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -44,10 +44,10 @@ const STEPS = [
 ];
 
 /**
- * Signup Page
+ * Signup Page Component (wrapped in Suspense)
  * Multi-step registration form with validation
  */
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const signupMutation = useSignup();
@@ -734,5 +734,16 @@ export default function SignupPage() {
         }}
       />
     </div>
+  );
+}
+
+/**
+ * Signup Page - Wrapped with Suspense for useSearchParams
+ */
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<NovuntSpinner size="lg" />}>
+      <SignupPageContent />
+    </Suspense>
   );
 }
