@@ -28,6 +28,11 @@ export interface DepositResponse {
     step3: string;
     step4: string;
   };
+  // Alternative field names from different payment providers (NowPayments, etc.)
+  pay_address?: string;
+  payAddress?: string;
+  address?: string;
+  paymentAddress?: string;
 }
 
 export interface WithdrawRequest {
