@@ -11,6 +11,16 @@ export interface DepositRequest {
   network: 'BEP20' | 'TRC20';
 }
 
+export type DepositStatus =
+  | 'pending'
+  | 'processing'
+  | 'confirming'
+  | 'awaiting_payment'
+  | 'completed'
+  | 'confirmed'
+  | 'failed'
+  | 'expired';
+
 export interface DepositResponse {
   transactionId: string;
   invoiceId: string;
@@ -19,20 +29,28 @@ export interface DepositResponse {
   currency: string;
   network: string;
   expiresAt: string;
-  status: 'pending' | 'confirming' | 'completed' | 'failed' | 'expired';
+  status: DepositStatus | string;
   paymentUrl?: string;
+  paymentAddress?: string;
   qrCodeUrl?: string;
-  instructions?: {
-    step1: string;
-    step2: string;
-    step3: string;
-    step4: string;
-  };
+  statusLabel?: string;
+  mockMode?: boolean;
+  details?: Record<string, unknown>;
+  instructions?:
+    | string
+    | string[]
+    | {
+        step1?: string;
+        step2?: string;
+        step3?: string;
+        step4?: string;
+        [key: string]: string | undefined;
+      };
   // Alternative field names from different payment providers (NowPayments, etc.)
   pay_address?: string;
   payAddress?: string;
   address?: string;
-  paymentAddress?: string;
+  paymentAddressLegacy?: string;
 }
 
 export interface WithdrawRequest {
@@ -78,14 +96,21 @@ export interface P2PTransferResponse {
 }
 
 export interface TransactionStatusResponse {
-  transactionId: string;
+  transactionId?: string;
+  invoiceId?: string;
   status: string;
-  amount: number;
+  amount?: number;
   fee?: number;
   confirmations?: number;
   actualAmount?: number;
   completedAt?: string;
   rejectionReason?: string;
+  network?: string;
+  paymentAddress?: string;
+  qrCodeUrl?: string;
+  statusLabel?: string;
+  mockMode?: boolean;
+  details?: Record<string, unknown>;
 }
 
 export interface UserSearchResult {
@@ -125,6 +150,12 @@ export function useInitiateDeposit() {
         const depositData = response.data || response;
 
         console.log('[useInitiateDeposit] ✅ Deposit data:', depositData);
+        if (depositData?.details) {
+          console.log('[useInitiateDeposit] ℹ️ Backend details:', depositData.details);
+        }
+        if (depositData?.status) {
+          console.log('[useInitiateDeposit] 🔁 Initial deposit status:', depositData.status);
+        }
 
         return depositData;
       } catch (error: any) {
@@ -285,7 +316,7 @@ export function pollDepositStatus(
   let isCancelled = false;
 
   // Final statuses per backend: confirmed, failed, expired
-  const finalStatuses = ['confirmed', 'failed', 'expired'];
+  const finalStatuses = ['confirmed', 'completed', 'failed', 'expired'];
 
   const poll = async () => {
     if (isCancelled) return;
@@ -302,7 +333,10 @@ export function pollDepositStatus(
       onUpdate(status);
 
       // Check if status is final
-      if (finalStatuses.includes(status.status.toLowerCase())) {
+      const normalizedStatus = status.status
+        ? status.status.toLowerCase()
+        : '';
+      if (finalStatuses.includes(normalizedStatus)) {
         onComplete(status);
         return;
       }
