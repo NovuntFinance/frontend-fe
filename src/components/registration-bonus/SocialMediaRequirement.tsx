@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { socialMediaApi } from '@/services/socialMediaApi';
+import { SocialMediaConfirmDialog } from './SocialMediaConfirmDialog';
 
 /**
  * Social Media Requirement Component
@@ -25,6 +26,9 @@ export function SocialMediaRequirement({
 }: SocialMediaRequirementProps) {
   const [verifyingPlatform, setVerifyingPlatform] = useState<string | null>(null);
   const [visitTokens, setVisitTokens] = useState<Record<string, string>>({});
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingPlatform, setPendingPlatform] = useState<SocialMediaPlatform | null>(null);
+  const [pendingToken, setPendingToken] = useState<string | undefined>(undefined);
 
 
 
@@ -67,18 +71,12 @@ export function SocialMediaRequirement({
       const platformUrl = visitResponse.data?.url || config.url;
       window.open(platformUrl, '_blank', 'noopener,noreferrer');
 
-      // Show confirmation dialog after delay (give user time to follow)
+      // Show branded confirmation dialog after delay (give user time to follow)
       setTimeout(() => {
-        const confirmed = window.confirm(
-          `Did you follow ${config.name}? Click OK to verify.`
-        );
-
-        if (confirmed) {
-          handleConfirmPlatform(platform, token);
-        } else {
-          setVerifyingPlatform(null);
-        }
-      }, 2000);
+        setPendingPlatform(platform);
+        setPendingToken(token);
+        setShowConfirmDialog(true);
+      }, 1500);
     } catch (error: any) {
       console.error('[SocialMediaRequirement] Failed to visit platform:', error);
       
@@ -261,6 +259,22 @@ export function SocialMediaRequirement({
     }
   };
 
+  const handleDialogConfirm = () => {
+    if (pendingPlatform) {
+      handleConfirmPlatform(pendingPlatform, pendingToken);
+    }
+    setShowConfirmDialog(false);
+    setPendingPlatform(null);
+    setPendingToken(undefined);
+  };
+
+  const handleDialogCancel = () => {
+    setShowConfirmDialog(false);
+    setPendingPlatform(null);
+    setPendingToken(undefined);
+    setVerifyingPlatform(null);
+  };
+
   const isComplete = socialData.completed >= socialData.minimumRequired;
   
   // Always display all platforms (all 5 social media accounts)
@@ -269,6 +283,13 @@ export function SocialMediaRequirement({
     : []; // Fallback to empty if no details provided
 
   return (
+    <>
+      <SocialMediaConfirmDialog
+        isOpen={showConfirmDialog}
+        platform={pendingPlatform}
+        onConfirm={handleDialogConfirm}
+        onCancel={handleDialogCancel}
+      />
     <Card
       id="social-media-requirement"
       className={cn(
@@ -367,5 +388,6 @@ export function SocialMediaRequirement({
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
