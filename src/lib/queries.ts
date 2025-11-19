@@ -16,7 +16,7 @@ import { referralApi } from '@/services/referralApi';
 import { TeamInfo, RankInfo, NextRankRequirements, PoolDistributionsData, IncentiveWallet } from '@/types/teamRank';
 import { teamRankApi } from '@/services/teamRankApi';
 import { registrationBonusApi } from '@/services/registrationBonusApi';
-import { RegistrationBonusStatusResponse } from '@/types/registrationBonus';
+import { RegistrationBonusStatusResponse, BonusPayoutHistoryResponse } from '@/types/registrationBonus';
 import { AdminDashboardData, AdminDashboardTimeframe } from '@/types/admin';
 import { useAuthStore } from '@/store/authStore';
 
@@ -71,6 +71,7 @@ export const queryKeys = {
   // Registration Bonus
   registrationBonus: ['registrationBonus'] as const,
   registrationBonusStatus: ['registrationBonus', 'status'] as const,
+  bonusPayoutHistory: (page?: number, limit?: number) => ['registrationBonus', 'payout-history', page, limit] as const,
   
   // KYC
   kycStatus: ['kyc', 'status'] as const,
@@ -1005,6 +1006,35 @@ export function useRegistrationBonusStatus() {
     },
     refetchOnWindowFocus: true,
     staleTime: 10000, // Consider data stale after 10 seconds
+    retry: (failureCount, error: any) => {
+      const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
+      
+      // Don't retry network errors aggressively
+      const isNetworkError = err?.code === 'ERR_NETWORK' || 
+                            err?.message?.includes('Network Error') ||
+                            err?.message?.includes('Failed to fetch') ||
+                            (!err?.response && !err?.statusCode);
+      if (isNetworkError) {
+        return failureCount < 1; // Only retry once for network errors
+      }
+      
+      return failureCount < 2;
+    },
+    retryDelay: 1000,
+  });
+}
+
+/**
+ * Get bonus payout history with pagination
+ * GET /api/v1/registration-bonus/payout-history
+ */
+export function useBonusPayoutHistory(page: number = 1, limit: number = 10) {
+  return useQuery<BonusPayoutHistoryResponse>({
+    queryKey: queryKeys.bonusPayoutHistory(page, limit),
+    queryFn: async () => {
+      return await registrationBonusApi.getPayoutHistory(page, limit);
+    },
+    staleTime: 60000, // 1 minute
     retry: (failureCount, error: any) => {
       const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
       

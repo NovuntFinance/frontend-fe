@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, DollarSign, Target, Plus, Wallet, AlertCircle } from 'lucide-react';
+import type { Stake } from '@/lib/queries/stakingQueries';
 import { Button } from '@/components/ui/button';
 import { useStakingDashboard } from '@/lib/queries/stakingQueries';
 import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
@@ -32,35 +33,82 @@ export default function StakesPage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Failed to Load Stakes
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             {error instanceof Error ? error.message : 'Please try again later'}
           </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
-  const { activeStakes = [], stakeHistory = [], summary, wallets } = stakingData?.data || {};
-  const hasStakes = activeStakes.length > 0;
+  // Debug: Log what we actually received
+  console.log('[Stakes Page] stakingData received:', stakingData);
+  
+  // The query returns the dashboard data directly (already unwrapped by the query function)
+  // Structure: { wallets: {...}, activeStakes: [...], stakeHistory: [...], summary: {...} }
+  const { 
+    activeStakes = [] as Stake[], 
+    stakeHistory = [] as Stake[], 
+    summary = {} as { 
+      totalActiveStakes?: number; 
+      totalStakesSinceInception?: number; 
+      totalEarnedFromROS?: number;
+      targetTotalReturns?: number;
+      progressToTarget?: string;
+      stakingModel?: string;
+      note?: string;
+    }, 
+    wallets = {
+      fundedWallet: 0,
+      earningWallet: 0,
+      totalAvailableBalance: 0,
+      description: {
+        fundedWallet: '',
+        earningWallet: ''
+      }
+    } as {
+      fundedWallet: number;
+      earningWallet: number;
+      totalAvailableBalance: number;
+      description: {
+        fundedWallet: string;
+        earningWallet: string;
+      };
+    }
+  } = stakingData || {};
+  const hasStakes = activeStakes && activeStakes.length > 0;
+  
+  console.log('[Stakes Page] Extracted data:', {
+    activeStakesCount: activeStakes.length,
+    hasWallets: !!wallets,
+    hasSummary: !!summary
+  });
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
             My Stakes
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Track your investments and ROI progress
+          <p className="text-gray-600 dark:text-gray-400">
+            Track your stakes and ROS progress
           </p>
         </div>
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+          className="gap-2"
+          size="lg"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Stake
+          <Plus className="w-5 h-5" />
+          Create New Stake
         </Button>
       </div>
 
@@ -97,9 +145,9 @@ export default function StakesPage() {
               <DollarSign className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Earned (ROI)</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Earned (ROS)</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">
-            ${summary?.totalEarnedFromROI?.toFixed(2) || '0.00'}
+            ${summary?.totalEarnedFromROS?.toFixed(2) || '0.00'}
           </p>
         </motion.div>
 
@@ -222,7 +270,7 @@ export default function StakesPage() {
               No Active Stakes Yet
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Start earning with Novunt's 200% ROI staking model. Create your first stake and receive weekly payouts!
+              Start earning with Novunt's 200% ROS staking model. Create your first stake and receive weekly payouts!
             </p>
             <Button
               onClick={() => setIsCreateModalOpen(true)}
@@ -270,10 +318,10 @@ export default function StakesPage() {
               How Novunt Staking Works
             </h3>
             <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
-              {summary?.stakingModel || 'Weekly ROI based on Novunt trading performance until 200% returns'}
+              {summary?.stakingModel || 'Weekly ROS based on Novunt trading performance until 200% returns'}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              {summary?.note || 'Stakes are permanent investments. You benefit through weekly ROI payouts to your Earning Wallet until 200% maturity.'}
+              {summary?.note || 'Stakes are permanent commitments. You benefit through weekly ROS payouts to your Earning Wallet until 200% maturity.'}
             </p>
           </div>
         </div>

@@ -75,7 +75,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Progress to 200% ROI</span>
+            <span className="text-gray-600 dark:text-gray-400">Progress to 200% ROS</span>
             <span className="font-semibold text-gray-900 dark:text-white">
               {stake.progressToTarget}
             </span>
@@ -150,11 +150,20 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         </div>
       )}
 
+      {/* Goal Badge */}
+      {stake.goal && (
+        <div className="mt-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 border border-purple-200 dark:border-purple-800">
+          <p className="text-xs text-center font-medium text-purple-900 dark:text-purple-100">
+            🎯 Goal: {stake.goal}
+          </p>
+        </div>
+      )}
+
       {/* Completed Badge */}
       {isCompleted && (
         <div className="mt-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg p-3 border border-emerald-200 dark:border-emerald-800">
           <p className="text-sm text-center font-medium text-emerald-900 dark:text-emerald-100">
-            🎉 200% ROI Target Achieved!
+            🎉 200% ROS Target Achieved!
           </p>
         </div>
       )}

@@ -6,10 +6,11 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Gift, TrendingUp, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 import { BonusActivatedCardProps } from '@/types/registrationBonus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,48 @@ import { formatCurrency } from '@/lib/utils';
  */
 export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
   const router = useRouter();
+
+  useEffect(() => {
+    // Trigger confetti celebration when component mounts
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { 
+      startVelocity: 30, 
+      spread: 360, 
+      ticks: 60, 
+      zIndex: 0,
+      colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
+    };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      
+      // Emit from left and right
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      });
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      });
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="relative overflow-hidden border-2 border-novunt-gold-500/30 bg-gradient-to-br from-novunt-gold-500/10 via-novunt-gold-500/5 to-background shadow-lg shadow-novunt-gold-500/10">
@@ -87,7 +130,7 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
             </p>
           </motion.div>
 
-          {/* Bonus Amount */}
+          {/* Bonus Amount with Progress */}
           {bonusData.bonusAmount && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -104,9 +147,66 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
               <div className="text-4xl md:text-5xl font-bold text-novunt-gold-600 dark:text-novunt-gold-500 mb-1">
                 {formatCurrency(bonusData.bonusAmount)}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Bonus stake earning weekly profits
+              <p className="text-xs text-muted-foreground mb-4">
+                Bonus paid out gradually with weekly ROS
               </p>
+
+              {/* Progress Tracking */}
+              {bonusData.bonus && (
+                <div className="space-y-3 pt-4 border-t border-novunt-gold-500/20">
+                  {/* Progress Stats */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="text-left">
+                      <p className="text-muted-foreground mb-1">Paid Out</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(bonusData.bonus.bonusPaidOut || 0)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted-foreground mb-1">Remaining</p>
+                      <p className="font-semibold text-blue-600 dark:text-blue-400">
+                        {formatCurrency(bonusData.bonus.remainingBonus || bonusData.bonusAmount)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="relative">
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ 
+                          width: `${((bonusData.bonus.bonusPaidOut || 0) / bonusData.bonusAmount) * 100}%` 
+                        }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"
+                      />
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground mt-1">
+                      {((bonusData.bonus.bonusPaidOut || 0) / bonusData.bonusAmount * 100).toFixed(1)}% paid out
+                    </p>
+                  </div>
+
+                  {/* Weekly Payout Info */}
+                  {bonusData.bonus.weeklyPayoutCount !== undefined && (
+                    <div className="text-xs text-center text-muted-foreground">
+                      {bonusData.bonus.weeklyPayoutCount} {bonusData.bonus.weeklyPayoutCount === 1 ? 'payment' : 'payments'} received
+                    </div>
+                  )}
+
+                  {/* Completion Badge */}
+                  {bonusData.bonus.completedAt && (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full text-xs font-medium text-emerald-700 dark:text-emerald-400"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Fully Paid Out
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
 

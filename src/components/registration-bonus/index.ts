@@ -12,5 +12,6 @@ export { ProfileRequirement } from './ProfileRequirement';
 export { StakeRequirement } from './StakeRequirement';
 export { BonusActivatedCard } from './BonusActivatedCard';
 export { BonusExpiredCard } from './BonusExpiredCard';
+export { BonusPayoutHistory } from './BonusPayoutHistory';
 export { ErrorState } from './ErrorState';
 

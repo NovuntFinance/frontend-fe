@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Confetti from 'react-confetti';
-import { useBonusHistory, useClaimBonus } from '@/lib/queries';
+import { useBonusHistory, useClaimBonus, useRegistrationBonusStatus } from '@/lib/queries';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { BonusPayoutHistory } from '@/components/registration-bonus';
 
 // Bonus type definitions
 interface Bonus {
@@ -513,6 +514,55 @@ export default function BonusesPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Registration Bonus Payout History */}
+      <RegistrationBonusSection />
     </div>
+  );
+}
+
+/**
+ * Registration Bonus Section
+ * Shows payout history for the registration bonus
+ */
+function RegistrationBonusSection() {
+  const { data: bonusStatus, isLoading } = useRegistrationBonusStatus();
+
+  // Only show if bonus is active or completed with payouts
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mt-8"
+      >
+        <Skeleton className="h-10 w-64 mb-4" />
+        <Skeleton className="h-96 w-full" />
+      </motion.div>
+    );
+  }
+
+  // Only show if user has or had a bonus
+  const status = bonusStatus?.data?.status;
+  if (!status || (status !== 'bonus_active' && status !== 'completed')) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="mt-8 space-y-4"
+    >
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Registration Bonus</h2>
+        <p className="text-muted-foreground mt-1">
+          Track your registration bonus payout history
+        </p>
+      </div>
+      <BonusPayoutHistory pageSize={10} />
+    </motion.div>
   );
 }

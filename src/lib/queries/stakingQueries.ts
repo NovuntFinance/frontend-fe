@@ -17,6 +17,7 @@ export interface Stake {
   totalEarned: number;
   progressToTarget: string; // "45.50%"
   remainingToTarget: number;
+  goal?: string; // Goal for this stake (e.g., "Wedding", "Housing")
   weeklyPayouts: Array<{
     week: number;
     amount: number;
@@ -42,7 +43,7 @@ export interface StakingDashboard {
     summary: {
       totalActiveStakes: number;
       totalStakesSinceInception: number;
-      totalEarnedFromROI: number;
+      totalEarnedFromROS: number;
       targetTotalReturns: number;
       progressToTarget: string;
       stakingModel: string;
@@ -76,47 +77,53 @@ export const stakingQueryKeys = {
  * - Summary statistics
  */
 export function useStakingDashboard() {
-  return useQuery<StakingDashboard>({
+  return useQuery<StakingDashboard['data']>({
     queryKey: stakingQueryKeys.dashboard,
     queryFn: async () => {
       try {
         console.log('[Staking] 🔄 Fetching staking dashboard...');
         const response = await api.get<StakingDashboard>('/staking/dashboard');
+        
+        // Log the actual response structure for debugging
+        console.log('[Staking] 📊 Raw API response:', response);
+        
+        // The API returns { success: true, data: { wallets, activeStakes, etc } }
+        // But api.get already unwraps it, so response.data contains the full structure
+        const dashboardData = response.data || response;
+        
         console.log('[Staking] ✅ Dashboard loaded:', {
-          activeStakes: response.data.activeStakes.length,
-          totalStaked: response.data.summary.totalActiveStakes,
-          totalEarned: response.data.summary.totalEarnedFromROI,
+          hasData: !!dashboardData,
+          activeStakesCount: dashboardData?.activeStakes?.length || 0,
+          hasWallets: !!dashboardData?.wallets,
         });
-        return response;
+        
+        return dashboardData;
       } catch (error: unknown) {
         // Handle 404 gracefully - user has no wallet yet (new user)
         const err = error as { response?: { status?: number }; statusCode?: number };
         if (err?.response?.status === 404 || err?.statusCode === 404) {
           console.log('[Staking] ⚠️ No wallet found - returning empty dashboard');
-          // Return empty dashboard structure
+          // Return empty dashboard structure (matches what the API would return)
           return {
-            success: true,
-            data: {
-              wallets: {
-                fundedWallet: 0,
-                earningWallet: 0,
-                totalAvailableBalance: 0,
-                description: {
-                  fundedWallet: 'Available for staking only (deposits + P2P transfers)',
-                  earningWallet: 'Available for withdrawal + staking (ROI + bonuses)',
-                },
+            wallets: {
+              fundedWallet: 0,
+              earningWallet: 0,
+              totalAvailableBalance: 0,
+              description: {
+                fundedWallet: 'Available for staking only (deposits + P2P transfers)',
+                earningWallet: 'Available for withdrawal + staking (ROS + bonuses)',
               },
-              activeStakes: [],
-              stakeHistory: [],
-              summary: {
-                totalActiveStakes: 0,
-                totalStakesSinceInception: 0,
-                totalEarnedFromROI: 0,
-                targetTotalReturns: 0,
-                progressToTarget: '0.00%',
-                stakingModel: 'Weekly ROI based on Novunt trading performance until 200% returns',
-                note: 'Stakes are permanent investments. You benefit through weekly ROI payouts to your Earning Wallet until 200% maturity.',
-              },
+            },
+            activeStakes: [],
+            stakeHistory: [],
+            summary: {
+              totalActiveStakes: 0,
+              totalStakesSinceInception: 0,
+              totalEarnedFromROS: 0,
+              targetTotalReturns: 0,
+              progressToTarget: '0.00%',
+              stakingModel: 'Weekly ROS based on Novunt trading performance until 200% returns',
+              note: 'Stakes are permanent commitments. You benefit through weekly ROS payouts to your Earning Wallet until 200% maturity.',
             },
           };
         }

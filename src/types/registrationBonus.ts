@@ -44,7 +44,22 @@ export interface RegistrationBonusData {
   // Status Information
   status: RegistrationBonusStatus;
   bonusPercentage: number;        // e.g., 10
-  bonusAmount: number | null;     // Calculated bonus amount (null until activated)
+  
+  // Bonus Credit Tracking (NEW - for gradual payout mechanism)
+  bonus?: {
+    bonusAmount: number;          // Total bonus earned (e.g., 1000 for 10% of $10k stake)
+    bonusPaidOut: number;         // Amount already paid via weekly ROS (e.g., 350)
+    remainingBonus: number;       // Amount still to be paid (e.g., 650)
+    payoutPercentage: number;     // Percentage paid out (e.g., 35)
+    activatedAt: string;          // ISO 8601 date when bonus was activated
+    completedAt?: string | null;  // ISO 8601 date when fully paid out
+    weeklyPayoutCount?: number;   // Number of payouts made
+    lastPayoutDate?: string | null;  // Last payout date
+    nextPayoutDate?: string | null;  // Next expected payout date
+  } | null;                        // null if not yet activated
+  
+  // DEPRECATED: bonusAmount at root level (kept for backward compatibility)
+  bonusAmount?: number | null;    // Use bonus.bonusAmount instead
   
   // Timeline (new API structure)
   daysRemaining: number;          // Days remaining until expiration
@@ -52,6 +67,13 @@ export interface RegistrationBonusData {
   
   // Progress Tracking (calculated from requirements)
   progressPercentage?: number;    // 0, 25, 50, 75, 100 (calculated: 25% per requirement met)
+  
+  // First Stake Information (NEW)
+  firstStake?: {
+    stakeId: string;              // ID of the first stake
+    amount: number;               // Amount staked (e.g., 10000)
+    createdAt: string;            // ISO 8601 date
+  } | null;
   
   // Requirements Breakdown (new API structure)
   requirements: {
@@ -98,7 +120,8 @@ export interface RegistrationBonusData {
     details: ProfileCompletionField[];
   };
   
-  firstStake?: {
+  // DEPRECATED: Use requirements.firstStake and firstStake at root instead
+  firstStakeOld?: {
     completed: boolean;
     amount: number | null;
     stakeId: string | null;
@@ -109,6 +132,31 @@ export interface RegistrationBonusData {
     suspicionScore: number;
     isApproved: boolean;
   };
+}
+
+// ============================================
+// Bonus Payout History Types (NEW)
+// ============================================
+
+export interface BonusPayoutHistoryResponse {
+  success: boolean;
+  data?: BonusPayoutHistoryData;
+  message?: string;
+}
+
+export interface BonusPayoutHistoryData {
+  bonusAmount: number;            // Total bonus earned
+  totalPaidOut: number;           // Total paid so far
+  remainingBonus: number;         // Remaining to be paid
+  payouts: BonusPayout[];         // Individual payout records
+}
+
+export interface BonusPayout {
+  week: number;                   // Week number since activation
+  date: string;                   // ISO 8601 date of payout
+  roiPercentage: number;          // Declared ROI % for that week
+  amount: number;                 // Bonus amount paid that week
+  remainingAfter: number;         // Remaining bonus after this payout
 }
 
 export interface SocialMediaVerification {
@@ -207,6 +255,45 @@ export interface StakeRequirementProps {
   };
   onComplete: () => void;
 }
+
+// ============================================
+// Bonus Payout History Types (NEW)
+// ============================================
+
+export interface BonusPayout {
+  _id: string;
+  userId: string;
+  registrationBonusId: string;
+  weekNumber: number;
+  paidAt: string;
+  rosPercentage: number;
+  amountPaid: number;
+  remainingBalance: number;
+  status: 'completed' | 'pending' | 'failed';
+  createdAt: string;
+}
+
+export interface BonusPayoutHistoryData {
+  payouts: BonusPayout[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  totalPaidOut: number;
+  totalRemaining: number;
+}
+
+export interface BonusPayoutHistoryResponse {
+  success: boolean;
+  data?: BonusPayoutHistoryData;
+}
+
+// ============================================
+// Component Props
+// ============================================
 
 export interface BonusActivatedCardProps {
   bonusData: RegistrationBonusData;

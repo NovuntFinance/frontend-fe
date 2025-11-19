@@ -8,6 +8,7 @@ import type {
   RegistrationBonusStatusResponse,
   ProcessStakeRequest,
   ProcessStakeResponse,
+  BonusPayoutHistoryResponse,
 } from '@/types/registrationBonus';
 import { SocialMediaPlatform } from '@/types/registrationBonus';
 
@@ -125,6 +126,7 @@ export const registrationBonusApi = {
           // Map socialMediaVerification to legacy socialMedia structure
           // Create complete list of all 5 platforms with verification status
           const verifiedPlatforms = data.requirements.socialMediaVerification?.platforms || [];
+          
           const allPlatforms = [
             SocialMediaPlatform.FACEBOOK,
             SocialMediaPlatform.INSTAGRAM,
@@ -134,7 +136,11 @@ export const registrationBonusApi = {
           ];
           
           const platformDetails = allPlatforms.map((platformName) => {
-            const isVerified = verifiedPlatforms.includes(platformName);
+            // Case-insensitive comparison (backend might send 'Instagram' or 'instagram')
+            const isVerified = verifiedPlatforms.some((p: string) => 
+              p?.toLowerCase() === platformName.toLowerCase()
+            );
+            
             return {
               platform: platformName,
               isVerified,
@@ -150,10 +156,10 @@ export const registrationBonusApi = {
             details: platformDetails,
           };
           
-          // Map firstStake to legacy structure
-          data.firstStake = {
+          // Map firstStake to legacy structure using firstStakeOld for backward compatibility
+          data.firstStakeOld = {
             completed: data.requirements.firstStake?.completed || false,
-            amount: null, // Not provided in new API
+            amount: 0, // Not provided in new API - use 0 as placeholder
             stakeId: data.requirements.firstStake?.stakeId || null,
           };
         }
@@ -169,22 +175,7 @@ export const registrationBonusApi = {
           progressPercentage: normalizedResponse.data?.progressPercentage,
         });
         
-        // Detailed progress debugging
-        if (normalizedResponse.data) {
-          const data = normalizedResponse.data;
-          console.log('[registrationBonusApi] 🔍 Progress Debug:', {
-            overallProgress: data.progressPercentage,
-            currentStep: data.currentStep,
-            profileCompletion: data.requirements?.profileCompletion?.percentage ?? data.profile?.completionPercentage ?? 0,
-            profileDetails: data.profile?.details?.map((d: any) => ({
-              field: d.fieldName,
-              completed: d.isCompleted,
-            })) || [],
-            socialCompleted: data.requirements?.socialMediaVerification?.verifiedCount ?? data.socialMedia?.completed ?? 0,
-            socialRequired: data.requirements?.socialMediaVerification?.totalRequired ?? data.socialMedia?.minimumRequired ?? 5,
-            stakeCompleted: data.requirements?.firstStake?.completed ?? data.firstStake?.completed ?? false,
-          });
-        }
+
       }
       
       return normalizedResponse;
@@ -240,6 +231,35 @@ export const registrationBonusApi = {
       return response;
     } catch (error: any) {
       console.error('[registrationBonusApi] Failed to process stake:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get bonus payout history with pagination
+   * GET /api/v1/registration-bonus/payout-history
+   * @param page - Page number (default: 1)
+   * @param limit - Items per page (default: 10)
+   * @returns Paginated list of bonus payouts
+   */
+  async getPayoutHistory(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<BonusPayoutHistoryResponse> {
+    try {
+      console.log('[registrationBonusApi] Fetching payout history:', { page, limit });
+      
+      const response = await api.get<BonusPayoutHistoryResponse>(
+        '/registration-bonus/payout-history',
+        {
+          params: { page, limit }
+        }
+      );
+      
+      console.log('[registrationBonusApi] Payout history fetched:', response);
+      return response;
+    } catch (error: any) {
+      console.error('[registrationBonusApi] Failed to fetch payout history:', error);
       throw error;
     }
   },

@@ -16,9 +16,22 @@ interface CreateStakeModalProps {
   onClose: () => void;
 }
 
+const STAKING_GOALS = [
+  { value: 'wedding', label: '💍 Wedding', icon: '💍' },
+  { value: 'housing', label: '🏠 Housing', icon: '🏠' },
+  { value: 'vehicle', label: '🚗 Vehicle', icon: '🚗' },
+  { value: 'travel', label: '✈️ Travel', icon: '✈️' },
+  { value: 'education', label: '🎓 Education', icon: '🎓' },
+  { value: 'emergency', label: '🚨 Emergency Fund', icon: '🚨' },
+  { value: 'retirement', label: '🏖️ Retirement', icon: '🏖️' },
+  { value: 'business', label: '💼 Business', icon: '💼' },
+  { value: 'other', label: '🎯 Other', icon: '🎯' },
+];
+
 export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
   const [amount, setAmount] = useState('');
   const [source, setSource] = useState<'funded' | 'earning' | 'both'>('both');
+  const [goal, setGoal] = useState<string>('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -26,7 +39,7 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
   const createStake = useCreateStake();
 
   const amountNum = parseFloat(amount) || 0;
-  const targetReturn = amountNum * 2; // 200% ROI
+  const targetReturn = amountNum * 2; // 200% ROS
   const minStake = 20;
   const requires2FA = amountNum > 500;
 
@@ -61,17 +74,20 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
       const response = await createStake.mutateAsync({
         amount: amountNum,
         source,
+        ...(goal && { goal }),
         ...(requires2FA && twoFactorCode && { twoFactorCode }),
       });
 
+      const goalText = goal ? ` towards your ${STAKING_GOALS.find(g => g.value === goal)?.label || 'goal'}` : '';
       toast.success('Stake Created Successfully! 🎉', {
-        description: `You've staked $${amountNum.toFixed(2)} USDT. Target return: $${targetReturn.toFixed(2)}`,
+        description: `You've staked $${amountNum.toFixed(2)} USDT${goalText}. Target return: $${targetReturn.toFixed(2)}`,
         duration: 5000,
       });
 
       // Reset form
       setAmount('');
       setSource('both');
+      setGoal('');
       setTwoFactorCode('');
       setShowConfirm(false);
       onClose();
@@ -128,12 +144,13 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
                           Create New Stake
                         </h2>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Earn 200% ROI through weekly payouts
+                          Earn 200% ROS through weekly payouts
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={handleClose}
+                      aria-label="Close modal"
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                       disabled={createStake.isPending}
                     >
@@ -200,10 +217,42 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
                           </span>
                         </div>
                         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                          You'll receive weekly ROI payouts to your Earnings Wallet until you reach this amount
+                          You'll receive weekly ROS payouts to your Earnings Wallet until you reach this amount
                         </p>
                       </motion.div>
                     )}
+
+                    {/* Goal Selection */}
+                    <div className="space-y-2">
+                      <Label className="text-gray-900 dark:text-white">Stake Goal (Optional)</Label>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        What are you staking towards?
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {STAKING_GOALS.map((goalOption) => (
+                          <button
+                            key={goalOption.value}
+                            type="button"
+                            onClick={() => setGoal(goal === goalOption.value ? '' : goalOption.value)}
+                            aria-label={goalOption.label}
+                            className={`p-3 rounded-lg border-2 transition-all text-center ${
+                              goal === goalOption.value
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <div className="text-2xl mb-1">{goalOption.icon}</div>
+                            <span className={`text-xs font-medium ${
+                              goal === goalOption.value
+                                ? 'text-emerald-900 dark:text-emerald-100'
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}>
+                              {goalOption.label.replace(/^[^\s]+\s/, '')}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
                     {/* Source Selection */}
                     <div className="space-y-2">
@@ -264,10 +313,10 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
                             Important Information
                           </p>
                           <ul className="text-xs text-amber-800 dark:text-amber-200 space-y-1">
-                            <li>• Stakes are permanent investments (principal cannot be withdrawn)</li>
-                            <li>• You'll receive weekly ROI payouts to your Earnings Wallet</li>
+                            <li>• Stakes are permanent commitments (principal cannot be withdrawn)</li>
+                            <li>• You'll receive weekly ROS payouts to your Earnings Wallet</li>
                             <li>• Payouts continue until you reach 200% total return</li>
-                            <li>• ROI percentages vary based on Novunt trading performance</li>
+                            <li>• ROS percentages vary based on Novunt trading performance</li>
                           </ul>
                         </div>
                       </div>
@@ -332,6 +381,14 @@ export function CreateStakeModal({ isOpen, onClose }: CreateStakeModalProps) {
                           {source === 'both' ? 'Both Wallets' : `${source} Wallet`}
                         </span>
                       </div>
+                      {goal && (
+                        <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                          <span className="text-gray-600 dark:text-gray-400">Staking Goal</span>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {STAKING_GOALS.find(g => g.value === goal)?.label || goal}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center py-3">
                         <span className="text-gray-600 dark:text-gray-400">Payout Frequency</span>
                         <span className="font-medium text-gray-900 dark:text-white">

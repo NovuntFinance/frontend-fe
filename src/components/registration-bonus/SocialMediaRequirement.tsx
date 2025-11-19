@@ -26,6 +26,8 @@ export function SocialMediaRequirement({
   const [verifyingPlatform, setVerifyingPlatform] = useState<string | null>(null);
   const [visitTokens, setVisitTokens] = useState<Record<string, string>>({});
 
+
+
   const handlePlatformClick = async (platform: SocialMediaPlatform) => {
     const config = PLATFORM_CONFIG[platform];
     if (!config) return;

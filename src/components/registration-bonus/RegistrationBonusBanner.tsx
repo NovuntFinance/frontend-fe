@@ -152,7 +152,7 @@ export function RegistrationBonusBanner() {
       if (profileCompletionPercentage === 100) progress += 25; // Profile complete = +25%
       const socialCompleted = bonusData.socialMedia?.completed ?? bonusData.requirements?.socialMediaVerification?.verifiedCount ?? 0;
       if (socialCompleted >= 1) progress += 25; // Social verified (at least 1) = +25%
-      const stakeCompleted = bonusData.firstStake?.completed ?? bonusData.requirements?.firstStake?.completed ?? false;
+      const stakeCompleted = (bonusData.firstStake && 'stakeId' in bonusData.firstStake && bonusData.firstStake.stakeId) ?? bonusData.requirements?.firstStake?.completed ?? false;
       if (stakeCompleted) progress += 25; // First stake = +25%
       return progress;
     })();
@@ -172,13 +172,13 @@ export function RegistrationBonusBanner() {
         })),
       },
       socialCompleted: `${bonusData.socialMedia?.completed ?? bonusData.requirements?.socialMediaVerification?.verifiedCount ?? 0}/${bonusData.socialMedia?.minimumRequired ?? bonusData.requirements?.socialMediaVerification?.totalRequired ?? 5}`,
-      stakeCompleted: bonusData.firstStake?.completed ?? bonusData.requirements?.firstStake?.completed ?? false,
+      stakeCompleted: (bonusData.firstStake && 'stakeId' in bonusData.firstStake && bonusData.firstStake.stakeId) ?? bonusData.requirements?.firstStake?.completed ?? false,
       expectedOverallProgress: `${expectedOverallProgress}%`,
       progressBreakdown: {
         registration: '25% (automatic)',
         profile: profileCompletionPercentage === 100 ? '+25%' : '+0%',
         social: (bonusData.socialMedia?.completed ?? bonusData.requirements?.socialMediaVerification?.verifiedCount ?? 0) >= 1 ? '+25%' : '+0%',
-        stake: (bonusData.firstStake?.completed ?? bonusData.requirements?.firstStake?.completed ?? false) ? '+25%' : '+0%',
+        stake: ((bonusData.firstStake && 'stakeId' in bonusData.firstStake && bonusData.firstStake.stakeId) ?? bonusData.requirements?.firstStake?.completed ?? false) ? '+25%' : '+0%',
         total: `${expectedOverallProgress}%`,
       },
       fullData: bonusData,

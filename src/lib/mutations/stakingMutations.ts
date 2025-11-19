@@ -9,7 +9,10 @@ import { queryKeys } from '@/lib/queries';
 
 export interface CreateStakeRequest {
   amount: number;
-  source?: 'funded' | 'earning' | 'both'; // Default: 'both'
+  source?: 'funded' | 'earning' | 'both'; // Frontend uses this
+  sourceWallet?: 'funded' | 'earning' | 'both'; // Backend expects this
+  duration?: string; // Backend requires this field
+  goal?: string; // Optional goal for this stake (e.g., 'wedding', 'housing', etc.)
   twoFactorCode?: string; // Required if 2FA enabled and amount > $500
 }
 
@@ -24,6 +27,7 @@ export interface CreateStakeResponse {
     createdAt: string;
     status: 'active';
     source: string;
+    goal?: string; // Optional goal field
     weeklyPayouts: Array<{
       week: number;
       expectedAmount: number;
@@ -59,6 +63,7 @@ export function useCreateStake() {
       console.log('[Staking Mutation] 🔄 Creating stake...', {
         amount: data.amount,
         source: data.source || 'both',
+        goal: data.goal || 'none',
         has2FA: !!data.twoFactorCode,
       });
 
@@ -67,7 +72,9 @@ export function useCreateStake() {
         '/staking/create',
         {
           amount: data.amount,
-          source: data.source || 'both',
+          sourceWallet: data.source || 'both', // Backend expects 'sourceWallet', not 'source'
+          duration: 'permanent', // Backend requires duration field - stakes are permanent
+          ...(data.goal && { goal: data.goal }),
           ...(data.twoFactorCode && { twoFactorCode: data.twoFactorCode }),
         }
       );
@@ -93,6 +100,10 @@ export function useCreateStake() {
       
       // Invalidate dashboard overview
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardOverview });
+      
+      // Invalidate registration bonus (first stake activates 10% bonus - paid gradually through weekly ROS)
+      queryClient.invalidateQueries({ queryKey: queryKeys.registrationBonusStatus });
+      console.log('[Staking Mutation] 🎁 Registration bonus status will be refetched');
       
       console.log('[Staking Mutation] ✅ All queries invalidated and refetched');
     },
