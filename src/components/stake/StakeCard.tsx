@@ -11,7 +11,7 @@ interface StakeCardProps {
 }
 
 export function StakeCard({ stake, onClick }: StakeCardProps) {
-  const progress = parseFloat(stake.progressToTarget.replace('%', ''));
+  const progress = stake.progressToTarget ? parseFloat(stake.progressToTarget.replace('%', '')) : 0;
   const isCompleted = stake.status === 'completed';
 
   // Format date
@@ -66,7 +66,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
             : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
         }`}>
-          {stake.status.charAt(0).toUpperCase() + stake.status.slice(1)}
+          {stake.status ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1) : 'Unknown'}
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Progress to 200% ROS</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {stake.progressToTarget}
+              {stake.progressToTarget || '0%'}
             </span>
           </div>
           <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -101,7 +101,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
               </span>
             </div>
             <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-              ${stake.totalEarned.toFixed(2)}
+              ${(stake.totalEarned || 0).toFixed(2)}
             </p>
           </div>
 
@@ -114,7 +114,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
               </span>
             </div>
             <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-              ${stake.targetReturn.toFixed(2)}
+              ${(stake.targetReturn || 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -138,14 +138,14 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
       )}
 
       {/* Remaining to Target */}
-      {!isCompleted && stake.remainingToTarget > 0 && (
+      {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
         <div className="mt-3 flex items-center justify-between text-sm">
           <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Remaining
           </span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            ${stake.remainingToTarget.toFixed(2)}
+            ${(stake.remainingToTarget || 0).toFixed(2)}
           </span>
         </div>
       )}

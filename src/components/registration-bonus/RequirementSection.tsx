@@ -59,6 +59,7 @@ export function RequirementSection({
         }
       } else if (!requirements.firstStake?.completed) {
         router.push('/dashboard/stakes');
+        // Modal will be opened on stakes page
       }
     }
   };

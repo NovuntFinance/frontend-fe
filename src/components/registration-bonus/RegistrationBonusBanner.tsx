@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, Star, CheckCircle2, Clock } from 'lucide-react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
@@ -21,6 +21,7 @@ import { BonusExpiredCard } from './BonusExpiredCard';
 import { ErrorState } from './ErrorState';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 /**
  * Premium Gold Registration Bonus Banner
@@ -29,6 +30,56 @@ import { toast } from 'sonner';
 export function RegistrationBonusBanner() {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
   const [isDismissed, setIsDismissed] = useState(false);
+  const [hasShownConfetti, setHasShownConfetti] = useState(false);
+  
+  // Listen for bonus completion event (triggered when stake is created and progress reaches 100%)
+  useEffect(() => {
+    const handleBonusCompleted = (event: any) => {
+      const { bonusAmount } = event.detail || {};
+      console.log('[RegistrationBonusBanner] 🎉 Bonus completed event received!', { bonusAmount });
+      
+      // Trigger confetti celebration
+      if (!hasShownConfetti) {
+        triggerConfetti();
+        setHasShownConfetti(true);
+        
+        // Show success toast
+        toast.success('🎉 Bonus Activated!', {
+          description: `Congratulations! You've unlocked your ${bonusAmount ? `$${bonusAmount}` : '10%'} registration bonus!`,
+          duration: 7000,
+        });
+        
+        // Refetch to show updated progress
+        setTimeout(() => refetch(), 1000);
+      }
+    };
+    
+    window.addEventListener('registrationBonusCompleted', handleBonusCompleted);
+    return () => {
+      window.removeEventListener('registrationBonusCompleted', handleBonusCompleted);
+    };
+  }, [hasShownConfetti, refetch]);
+  
+  // Trigger confetti when progress reaches 100% (also handles page refresh case)
+  useEffect(() => {
+    const progressPercentage = data?.data?.progressPercentage ?? 0;
+    const status = data?.data?.status;
+    
+    // Show confetti if progress is 100% and we haven't shown it yet
+    // and status is transitioning to bonus_active or requirements_met
+    if (progressPercentage === 100 && !hasShownConfetti && 
+        (status === RegistrationBonusStatus.REQUIREMENTS_MET || 
+         status === RegistrationBonusStatus.BONUS_ACTIVE)) {
+      console.log('[RegistrationBonusBanner] 🎉 Progress reached 100%, triggering confetti!');
+      triggerConfetti();
+      setHasShownConfetti(true);
+      
+      toast.success('🎉 Bonus Requirements Complete!', {
+        description: 'Congratulations! You\'ve completed all requirements for your registration bonus!',
+        duration: 7000,
+      });
+    }
+  }, [data?.data?.progressPercentage, data?.data?.status, hasShownConfetti]);
   
   // Check if dismissed in localStorage, but only respect it for completed/expired/cancelled bonuses
   React.useEffect(() => {
@@ -366,6 +417,50 @@ export function RegistrationBonusBanner() {
         </AnimatePresence>
       );
   }
+}
+
+/**
+ * Trigger confetti celebration
+ */
+function triggerConfetti() {
+  const duration = 3000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { 
+    startVelocity: 30, 
+    spread: 360, 
+    ticks: 60, 
+    zIndex: 9999,
+    colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
+  };
+
+  const randomInRange = (min: number, max: number) => {
+    return Math.random() * (max - min) + min;
+  };
+
+  const interval = setInterval(() => {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      return;
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    
+    // Fire confetti from left side
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+    });
+    
+    // Fire confetti from right side
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+    });
+  }, 250);
 }
 
 /**

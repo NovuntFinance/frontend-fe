@@ -649,112 +649,14 @@ export default function DashboardPage() {
           <QuickActions />
         </motion.div>
 
-        {/* Portfolio Chart & Active Stakes */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Portfolio Chart - 2 columns */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="lg:col-span-2"
-          >
-            <PortfolioChart />
-          </motion.div>
-
-          {/* Active Stakes - 1 column */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-            className="h-full"
-          >
-            <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col">
-              {/* Animated Background Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-transparent" />
-              
-              {/* Floating Blob */}
-              <motion.div
-                animate={{
-                  x: [0, 20, 0],
-                  y: [0, -15, 0],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -top-16 -right-16 w-32 h-32 bg-purple-500/20 rounded-full blur-2xl"
-              />
-              
-              <CardHeader className="relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm"
-                    >
-                      <Target className="h-6 w-6 text-purple-500" />
-                    </motion.div>
-                    <div>
-                      <CardTitle className="text-lg font-bold">Active Stakes</CardTitle>
-                      <CardDescription className="text-xs">
-                        Your staking positions
-                      </CardDescription>
-                    </div>
-                  </div>
-                  {activeStakes && activeStakes.length > 0 && (
-                    <Badge className="bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30">
-                      {activeStakes.length}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                {stakesLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-20 w-full" />
-                    ))}
-                  </div>
-                ) : activeStakes && activeStakes.length > 0 ? (
-                  <div className="space-y-3">
-                    {activeStakes.slice(0, 3).map((stake) => (
-                      <StakeCard key={stake.id} stake={stake} compact />
-                    ))}
-                    {activeStakes.length > 3 && (
-                      <Button
-                        variant="outline"
-                        className="w-full group"
-                        asChild
-                      >
-                        <Link href="/dashboard/stakes">
-                          View All {activeStakes.length} Stakes
-                          <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="inline-flex p-4 rounded-full bg-primary/10 mb-4">
-                      <Target className="h-8 w-8 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      No active stakes yet
-                    </p>
-                    <Button asChild className="group">
-                      <Link href="/dashboard/stakes/new">
-                        Create Your First Stake
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+        {/* Portfolio Performance - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <PortfolioChart />
+        </motion.div>
 
         {/* Recent Activity */}
         <motion.div

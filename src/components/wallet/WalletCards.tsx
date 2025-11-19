@@ -199,8 +199,8 @@ export function WalletCards() {
   const earningsWallet = wallet?.earnings?.balance || 0;
 
   const handleCreateStake = () => {
-    // Navigate to create stake page
-    router.push('/dashboard/stakes/new');
+    // Navigate to stakes page where user can open the create stake modal
+    router.push('/dashboard/stakes');
   };
 
   const handleWithdraw = () => {

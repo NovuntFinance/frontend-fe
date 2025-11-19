@@ -182,6 +182,8 @@ export interface ProcessStakeResponse {
   success: boolean;
   message: string;
   bonusAmount?: number;
+  bonusActivated?: boolean; // True when all requirements met and bonus is activated (100% progress)
+  progressPercentage?: number; // Updated progress after processing stake
 }
 
 // ============================================

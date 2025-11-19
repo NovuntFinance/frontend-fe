@@ -27,6 +27,7 @@ export function StakeRequirement({
 
   const handleStakeClick = () => {
     router.push('/dashboard/stakes');
+    // Modal will be opened on stakes page
   };
 
   if (isComplete) {

@@ -7,6 +7,7 @@ import { Download, Upload, Send, TrendingUp, ArrowRight } from 'lucide-react';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
 import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
+import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 
 interface QuickAction {
   title: string;
@@ -125,11 +126,7 @@ export function QuickActions() {
   const [modalOpen, setModalOpen] = React.useState<string | null>(null);
 
   const handleAction = (actionType: string) => {
-    if (actionType === 'stake') {
-      router.push('/dashboard/stakes/new');
-    } else {
-      setModalOpen(actionType);
-    }
+    setModalOpen(actionType);
   };
 
   return (
@@ -156,6 +153,10 @@ export function QuickActions() {
       />
       <TransferModal
         isOpen={modalOpen === 'transfer'}
+        onClose={() => setModalOpen(null)}
+      />
+      <CreateStakeModal
+        isOpen={modalOpen === 'stake'}
         onClose={() => setModalOpen(null)}
       />
     </>

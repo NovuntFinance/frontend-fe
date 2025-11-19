@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
 import { stakingQueryKeys } from '@/lib/queries/stakingQueries';
 import { queryKeys } from '@/lib/queries';
+import { registrationBonusApi } from '@/services/registrationBonusApi';
 
 /**
  * Create Stake Request/Response Types
@@ -67,16 +68,24 @@ export function useCreateStake() {
         has2FA: !!data.twoFactorCode,
       });
 
+      // Backend has a validation bug where duration: 0 is treated as missing
+      // Send duration explicitly to ensure it's included in the request
+      const payload = {
+        amount: data.amount,
+        sourceWallet: 'auto', // Backend requires 'auto' for automatic wallet deduction
+        duration: 0, // Backend requires 0 for permanent stake (200% ROS)
+      };
+      
+      // Add optional fields
+      if (data.goal) payload.goal = data.goal;
+      if (data.twoFactorCode) payload.twoFactorCode = data.twoFactorCode;
+
+      console.log('[Staking Mutation] 📦 Final payload being sent:', JSON.stringify(payload, null, 2));
+
       const response = await apiRequest<CreateStakeResponse>(
         'post',
         '/staking/create',
-        {
-          amount: data.amount,
-          sourceWallet: data.source || 'both', // Backend expects 'sourceWallet', not 'source'
-          duration: 'permanent', // Backend requires duration field - stakes are permanent
-          ...(data.goal && { goal: data.goal }),
-          ...(data.twoFactorCode && { twoFactorCode: data.twoFactorCode }),
-        }
+        payload
       );
 
       console.log('[Staking Mutation] ✅ Stake created successfully:', {
@@ -89,7 +98,28 @@ export function useCreateStake() {
       return response;
     },
     onSuccess: async (data) => {
-      console.log('[Staking Mutation] ✅ Stake created, invalidating queries...');
+      console.log('[Staking Mutation] ✅ Stake created, processing for registration bonus...');
+      
+      // Process stake for registration bonus (this will update progress to 100% if it's the first stake)
+      try {
+        const bonusResponse = await registrationBonusApi.processStake(
+          data.stake._id,
+          data.stake.amount
+        );
+        console.log('[Staking Mutation] 🎁 Registration bonus processed:', bonusResponse);
+        
+        // If bonus was activated (100% progress reached), trigger confetti
+        if (bonusResponse.success && bonusResponse.bonusActivated) {
+          console.log('[Staking Mutation] 🎉 Bonus activated! Progress reached 100%');
+          // Dispatch custom event to trigger confetti in banner
+          window.dispatchEvent(new CustomEvent('registrationBonusCompleted', {
+            detail: { bonusAmount: bonusResponse.bonusAmount }
+          }));
+        }
+      } catch (error) {
+        console.error('[Staking Mutation] ⚠️ Failed to process stake for bonus (non-critical):', error);
+        // Don't fail the whole stake creation if bonus processing fails
+      }
       
       // Invalidate all staking-related queries
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.dashboard });
@@ -101,9 +131,8 @@ export function useCreateStake() {
       // Invalidate dashboard overview
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardOverview });
       
-      // Invalidate registration bonus (first stake activates 10% bonus - paid gradually through weekly ROS)
+      // Invalidate registration bonus status to show updated progress
       queryClient.invalidateQueries({ queryKey: queryKeys.registrationBonusStatus });
-      console.log('[Staking Mutation] 🎁 Registration bonus status will be refetched');
       
       console.log('[Staking Mutation] ✅ All queries invalidated and refetched');
     },

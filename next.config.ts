@@ -42,10 +42,50 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb'
-    }
+    },
+    // Optimize package imports to reduce bundle size
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      'framer-motion',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toast',
+      'recharts'
+    ],
+    // Speed up Fast Refresh
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   // Standalone output for optimized production builds
   output: 'standalone',
+  // Optimize webpack for faster builds
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      // Faster development builds
+      config.watchOptions = {
+        poll: false,
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+      };
+    }
+    
+    // Optimize module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    };
+    
+    return config;
+  },
   images: {
     remotePatterns: [
       {
