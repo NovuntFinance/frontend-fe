@@ -54,15 +54,17 @@ export function SocialMediaConfirmDialog({
   const IconComponent = config.icon;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100]">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onCancel}
       />
 
-      {/* Dialog */}
-      <div className="relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300">
+      {/* Dialog Container - Centered */}
+      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        {/* Dialog */}
+        <div className="relative w-full max-w-md pointer-events-auto animate-in fade-in zoom-in-95 duration-300">
         <div className="relative bg-gradient-to-br from-background via-background to-novunt-gold-500/5 border-2 border-novunt-gold-500/30 rounded-2xl shadow-2xl shadow-novunt-gold-500/20 overflow-hidden">
           {/* Close button */}
           <button
@@ -179,6 +181,7 @@ export function SocialMediaConfirmDialog({
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
