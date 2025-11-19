@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Download, Copy, CheckCircle2, AlertCircle, ExternalLink, Clock } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import QRCodeLib from 'qrcode';
 import { useInitiateDeposit, pollDepositStatus } from '@/lib/mutations/transactionMutations';
@@ -21,6 +21,35 @@ interface DepositModalProps {
 }
 
 type DepositStep = 'amount' | 'payment' | 'confirming' | 'success';
+
+const MOCK_PAYMENTS_ENABLED = process.env.NEXT_PUBLIC_MOCK_PAYMENTS === 'true';
+
+const STATUS_CLASSES: Record<string, string> = {
+  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200',
+  confirmed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200',
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-300/10 dark:text-amber-100',
+  processing: 'bg-amber-100 text-amber-800 dark:bg-amber-300/10 dark:text-amber-100',
+  confirming: 'bg-blue-100 text-blue-800 dark:bg-blue-300/10 dark:text-blue-100',
+  awaiting_payment: 'bg-blue-100 text-blue-800 dark:bg-blue-300/10 dark:text-blue-100',
+  failed: 'bg-red-100 text-red-800 dark:bg-red-400/10 dark:text-red-200',
+  expired: 'bg-slate-200 text-slate-700 dark:bg-slate-700/60 dark:text-slate-100',
+};
+
+const PENDING_STATUSES = new Set(['pending', 'processing', 'confirming', 'awaiting_payment']);
+const SUCCESS_STATUSES = new Set(['confirmed', 'completed']);
+const FAILURE_STATUSES = new Set(['failed', 'expired']);
+
+const formatStatusLabel = (status?: string | null) => {
+  if (!status) return 'Unknown';
+  return status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getStatusClass = (status?: string | null) => {
+  if (!status) {
+    return 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-100';
+  }
+  return STATUS_CLASSES[status] || 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-100';
+};
 
 /**
  * Deposit Modal - Full NowPayments Integration Flow
@@ -37,6 +66,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
   const MIN_DEPOSIT = 1; // Production mode: Real crypto testing with small amounts
@@ -44,6 +74,41 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // Mutation hooks and query client for refreshing wallet balance
   const queryClient = useQueryClient();
   const initiateMutation = useInitiateDeposit();
+
+  const normalizedStatus = depositData?.status?.toLowerCase?.() || '';
+  const statusBadgeClass = getStatusClass(normalizedStatus);
+  const statusDisplayLabel = depositData?.statusLabel || formatStatusLabel(depositData?.status);
+  const isPendingStatus = PENDING_STATUSES.has(normalizedStatus);
+  const isSuccessStatus = SUCCESS_STATUSES.has(normalizedStatus);
+  const showMockBanner = !!depositData && (depositData.mockMode || (MOCK_PAYMENTS_ENABLED && isSuccessStatus));
+  const successAmount = depositData?.amount ?? amount;
+  const successNetwork = depositData?.network ?? network;
+  const successStatusLabel = formatStatusLabel(depositData?.status || 'completed');
+
+  const instructionList = useMemo(() => {
+    if (!depositData?.instructions) return [];
+    if (Array.isArray(depositData.instructions)) {
+      return depositData.instructions.filter((instruction) => Boolean(instruction && instruction.trim()));
+    }
+    if (typeof depositData.instructions === 'string') {
+      return depositData.instructions
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+    return Object.values(depositData.instructions)
+      .map((line) => (typeof line === 'string' ? line.trim() : line))
+      .filter((line): line is string => Boolean(line));
+  }, [depositData?.instructions]);
+
+  const formattedExpiry = useMemo(() => {
+    if (!depositData?.expiresAt) return null;
+    try {
+      return new Date(depositData.expiresAt).toLocaleString();
+    } catch {
+      return depositData.expiresAt;
+    }
+  }, [depositData?.expiresAt]);
 
   // Reset on open and cleanup on close
   useEffect(() => {
@@ -54,12 +119,14 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setDepositData(null);
       setError('');
       setQrCodeUrl('');
+      setIsPolling(false);
     } else {
       // Cancel polling when modal closes
       if (pollCancelRef.current) {
         pollCancelRef.current();
         pollCancelRef.current = null;
       }
+      setIsPolling(false);
     }
     
     // Cleanup on unmount
@@ -68,6 +135,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         pollCancelRef.current();
         pollCancelRef.current = null;
       }
+      setIsPolling(false);
     };
   }, [isOpen]);
 
@@ -93,61 +161,100 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
   }, [depositData]);
 
-  // Poll for deposit confirmation
+  // Poll for deposit confirmation automatically when invoice is available
   useEffect(() => {
-    if (step === 'confirming' && depositData?.invoiceId) {
-      // Start polling for deposit status using invoiceId
-      const cancel = pollDepositStatus(
-        depositData.invoiceId,
-        // On update
-        () => {
-          // Status update callback (reserved for future use)
-        },
-        // On complete
-        (status) => {
-          if (status.status === 'confirmed' || status.status === 'completed') {
-            // Refresh wallet balance when deposit is confirmed
-            queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
-            
-            setStep('success');
-            toast.success('Deposit confirmed!', {
-              description: `${status.amount} USDT credited to your Funded Wallet`,
-            });
-          } else if (status.status === 'failed' || status.status === 'expired') {
-            setError(`Deposit ${status.status}. Please try again.`);
-            setStep('amount');
-          }
-        },
-        // On error
-        (error) => {
-          console.error('Status check error:', error);
-          toast.error('Failed to check deposit status');
-        },
-        30000 // Poll every 30 seconds (real mode)
-      );
-      
-      // Stop polling after 1 hour
-      const timeoutId = setTimeout(() => {
-        cancel();
-        if (step === 'confirming') {
-          setError('Deposit timeout. Please check transaction status manually.');
-          toast.error('Payment window expired', {
-            description: 'Transaction may still complete. Check your wallet balance.',
-          });
-        }
-      }, 3600000); // 1 hour
-      
-      pollCancelRef.current = () => {
-        cancel();
-        clearTimeout(timeoutId);
-      };
-
-      return () => {
-        cancel();
-        clearTimeout(timeoutId);
-      };
+    if (!depositData?.invoiceId) {
+      setIsPolling(false);
+      return;
     }
-  }, [step, depositData, queryClient]);
+
+    const normalizedStatus = depositData.status?.toLowerCase?.() || '';
+
+    if (!PENDING_STATUSES.has(normalizedStatus)) {
+      setIsPolling(false);
+      return;
+    }
+
+    setIsPolling(true);
+
+    const cancel = pollDepositStatus(
+      depositData.invoiceId,
+      (statusUpdate) => {
+        setDepositData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: statusUpdate.status as DepositResponse['status'],
+            transactionId: statusUpdate.transactionId || prev.transactionId,
+            amount: statusUpdate.amount ?? prev.amount,
+            paymentAddress: statusUpdate.paymentAddress || prev.paymentAddress,
+            qrCodeUrl: statusUpdate.qrCodeUrl || prev.qrCodeUrl,
+          };
+        });
+      },
+      (finalStatus) => {
+        setIsPolling(false);
+        const finalNormalized = finalStatus.status?.toLowerCase?.() || '';
+
+        setDepositData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: finalStatus.status as DepositResponse['status'],
+            transactionId: finalStatus.transactionId || prev.transactionId,
+            amount: finalStatus.amount ?? prev.amount,
+            paymentAddress: finalStatus.paymentAddress || prev.paymentAddress,
+            qrCodeUrl: finalStatus.qrCodeUrl || prev.qrCodeUrl,
+            mockMode: finalStatus.mockMode ?? prev.mockMode,
+          };
+        });
+
+        if (SUCCESS_STATUSES.has(finalNormalized)) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+          queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+
+          setStep('success');
+          toast.success('Deposit confirmed!', {
+            description: `${finalStatus.amount ?? depositData.amount} USDT credited to your Funded Wallet`,
+          });
+        } else if (FAILURE_STATUSES.has(finalNormalized)) {
+          setError(`Deposit ${finalNormalized}. Please try again.`);
+          toast.error('Deposit update', {
+            description: `Status: ${formatStatusLabel(finalNormalized)}`,
+          });
+          setStep('amount');
+        }
+      },
+      (pollError) => {
+        setIsPolling(false);
+        console.error('Status check error:', pollError);
+        toast.error('Failed to check deposit status');
+      },
+      15000 // Poll every 15 seconds
+    );
+
+    // Safety timeout after 1 hour
+    const timeoutId = setTimeout(() => {
+      cancel();
+      setIsPolling(false);
+      setError('Deposit status check timed out. Please verify from transaction history.');
+      toast.error('Payment window expired', {
+        description: 'We stopped polling after 60 minutes. Check your wallet balance manually.',
+      });
+    }, 3600000);
+
+    pollCancelRef.current = () => {
+      cancel();
+      clearTimeout(timeoutId);
+      setIsPolling(false);
+    };
+
+    return () => {
+      cancel();
+      clearTimeout(timeoutId);
+      setIsPolling(false);
+    };
+  }, [depositData?.invoiceId, depositData?.status, depositData?.amount, queryClient]);
 
   const handleInitiateDeposit = async () => {
     const amountNum = parseFloat(amount);
@@ -171,6 +278,9 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       console.log('[DepositModal] ✅ Deposit initiated successfully:', response);
       console.log('[DepositModal] 📊 Response status:', response?.status);
       console.log('[DepositModal] 📦 Full response object:', JSON.stringify(response, null, 2));
+      if (response?.details) {
+        console.log('[DepositModal] 🧾 Backend details object:', response.details);
+      }
       
       // Extract deposit address from various possible field names
       // NowPayments API uses 'pay_address', some backends might use 'address' or 'paymentAddress'
@@ -178,7 +288,8 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         || response.pay_address 
         || response.payAddress 
         || response.address 
-        || response.paymentAddress;
+        || response.paymentAddress 
+        || response.paymentAddressLegacy;
       
       console.log('[DepositModal] 🔍 Extracted address:', depositAddress);
       console.log('[DepositModal] 🔍 Available fields:', Object.keys(response));
@@ -190,13 +301,33 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         throw new Error('Backend did not return a deposit address. Backend is not calling NowPayments API correctly.');
       }
       
+      const normalizedStatus = response.status?.toLowerCase?.() || '';
+
       // Normalize the response to use depositAddress
       const finalDepositData = {
         ...response,
         depositAddress: depositAddress,
+        mockMode: response.mockMode ?? (MOCK_PAYMENTS_ENABLED && SUCCESS_STATUSES.has(normalizedStatus)),
       };
       
       setDepositData(finalDepositData);
+      const normalizedNetworkResponse = response.network?.toUpperCase?.();
+      if (normalizedNetworkResponse === 'BEP20' || normalizedNetworkResponse === 'TRC20') {
+        setNetwork(normalizedNetworkResponse);
+      }
+
+      // Handle immediate success (mock mode)
+      if (SUCCESS_STATUSES.has(normalizedStatus)) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+        queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+
+        setIsPolling(false);
+        setStep('success');
+        toast.success('Deposit confirmed!', {
+          description: `${response.amount} USDT credited instantly.`,
+        });
+        return;
+      }
       
       // Show payment screen with QR code and address
       console.log('[DepositModal] 📄 Showing payment step (status:', response?.status, ')');
@@ -211,6 +342,9 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         response: err?.response?.data,
         statusCode: err?.statusCode || err?.response?.status,
       });
+      if (err?.response?.data?.details) {
+        console.error('[DepositModal] Backend validation details:', err.response.data.details);
+      }
       
       // Extract detailed error message
       let errorMessage = 'Failed to initiate deposit';
@@ -242,6 +376,21 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Failed to copy');
+    }
+  };
+
+  const openPaymentPortal = () => {
+    if (!depositData?.paymentUrl) return;
+    try {
+      const newWindow = window.open(depositData.paymentUrl, '_blank', 'noopener,noreferrer');
+      if (!newWindow || newWindow.closed) {
+        throw new Error('Popup blocked');
+      }
+    } catch (err) {
+      console.error('[DepositModal] ❌ Unable to open payment URL:', err);
+      toast.error('Could not open payment page', {
+        description: 'Please allow popups for this site or copy the URL manually.',
+      });
     }
   };
 
@@ -397,6 +546,58 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </AlertDescription>
                     </Alert>
 
+                    {showMockBanner && (
+                      <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        <div>
+                          <AlertTitle>Sandbox Mode</AlertTitle>
+                          <AlertDescription>
+                            Payment auto-confirmed in mock mode. Funds are credited instantly for testing only.
+                          </AlertDescription>
+                        </div>
+                      </Alert>
+                    )}
+
+                    <div className="rounded-2xl border border-border/70 bg-muted/30 p-4 space-y-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Current status</p>
+                          <p className="text-lg font-semibold">{statusDisplayLabel}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass}`}>
+                          {statusDisplayLabel}
+                        </span>
+                      </div>
+                      {isPendingStatus && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5" />
+                          Monitoring confirmations automatically. You can keep this tab open or return later.
+                        </p>
+                      )}
+                      <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                        <span>
+                          Invoice ID:{' '}
+                          <strong className="break-all text-foreground">{depositData.invoiceId}</strong>
+                        </span>
+                        <span>
+                          Transaction ID:{' '}
+                          <strong className="break-all text-foreground">
+                            {depositData.transactionId || 'Pending'}
+                          </strong>
+                        </span>
+                        <span>
+                          Expires:{' '}
+                          <strong className="text-foreground">
+                            {formattedExpiry || 'Not provided'}
+                          </strong>
+                        </span>
+                        <span>
+                          Network:{' '}
+                          <strong className="text-foreground">{depositData.network}</strong>
+                        </span>
+                      </div>
+                    </div>
+
                     {/* QR Code */}
                     {qrCodeUrl && (
                       <div className="flex justify-center p-6 bg-muted rounded-2xl">
@@ -432,15 +633,27 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </div>
                     </div>
 
+                    {depositData.paymentUrl && (
+                      <div className="space-y-2">
+                        <Label>Payment Portal</Label>
+                        <Button variant="outline" className="w-full justify-between" onClick={openPaymentPortal}>
+                          <span>Open payment instructions</span>
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                        <p className="text-xs text-muted-foreground break-all">
+                          {depositData.paymentUrl}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Instructions from backend */}
-                    {depositData.instructions && (
+                    {instructionList.length > 0 && (
                       <div className="bg-muted p-4 rounded-xl space-y-2 text-sm">
                         <p className="font-semibold">Instructions:</p>
                         <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                          <li>{depositData.instructions.step1}</li>
-                          <li>{depositData.instructions.step2}</li>
-                          <li>{depositData.instructions.step3}</li>
-                          <li>{depositData.instructions.step4}</li>
+                          {instructionList.map((instruction, index) => (
+                            <li key={index}>{instruction}</li>
+                          ))}
                         </ol>
                       </div>
                     )}
@@ -462,7 +675,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </Button>
                       
                       <p className="text-xs text-center text-muted-foreground">
-                        ⏱️ Confirmation takes 5-15 minutes. Your balance will update automatically.
+                        ⏱️ Confirmation typically takes 5-15 minutes. We&apos;re monitoring the blockchain automatically.
                       </p>
                     </div>
                   </motion.div>
@@ -473,18 +686,18 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="py-12 text-center space-y-6"
+                    className="py-12 space-y-6"
                   >
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                      className="inline-flex p-6 rounded-full bg-primary/10"
+                      className="mx-auto inline-flex p-6 rounded-full bg-primary/10"
                     >
                       <NovuntSpinner size="lg" />
                     </motion.div>
 
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">
+                    <div className="text-center space-y-2">
+                      <h3 className="text-xl font-semibold">
                         Waiting for Confirmation
                       </h3>
                       <p className="text-muted-foreground">
@@ -495,11 +708,40 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </p>
                     </div>
 
-                    <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-4 text-sm text-muted-foreground">
                       <p>✓ Transaction broadcasted to blockchain</p>
                       <p>⏳ Waiting for network confirmations...</p>
-                      <p className="text-xs">Invoice ID: {depositData?.invoiceId}</p>
+                      <p className="text-xs break-all">Invoice ID: {depositData?.invoiceId}</p>
+                      <p className="text-xs break-all">Transaction ID: {depositData?.transactionId || 'Pending'}</p>
                     </div>
+
+                    {depositData && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Deposit Address</Label>
+                          <div className="flex items-center gap-2">
+                            <Input value={depositData.depositAddress} readOnly className="font-mono text-sm" />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => copyToClipboard(depositData.depositAddress)}
+                            >
+                              {copied ? (
+                                <CheckCircle2 className="h-4 w-4 text-success" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        {qrCodeUrl && (
+                          <div className="flex justify-center p-4 bg-muted rounded-2xl">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={qrCodeUrl} alt="Deposit Address QR Code" className="w-48 h-48 rounded-lg" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -524,26 +766,48 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         Deposit Confirmed!
                       </h3>
                       <p className="text-lg text-muted-foreground">
-                        {amount} USDT has been credited to your Funded Wallet
+                        {successAmount} USDT has been credited to your Funded Wallet
                       </p>
                       <p className="text-sm text-muted-foreground mt-2">
                         Your balance has been updated
                       </p>
                     </div>
 
+                    {showMockBanner && (
+                      <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 text-left max-w-xl mx-auto">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        <div>
+                          <AlertTitle>Sandbox Mode</AlertTitle>
+                          <AlertDescription>Payment auto-confirmed in mock mode. These funds are for testing only.</AlertDescription>
+                        </div>
+                      </Alert>
+                    )}
+
                     <div className="p-4 bg-muted rounded-xl space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">{amount} USDT</span>
+                        <span className="font-semibold">{successAmount} USDT</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Network:</span>
-                        <span className="font-semibold">{network}</span>
+                        <span className="font-semibold">{successNetwork}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Status:</span>
-                        <span className="text-success font-semibold">✓ Completed</span>
+                        <span className="text-success font-semibold">{successStatusLabel}</span>
                       </div>
+                      {depositData?.transactionId && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Transaction ID:</span>
+                          <span className="font-mono break-all text-right">{depositData.transactionId}</span>
+                        </div>
+                      )}
+                      {depositData?.invoiceId && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Invoice ID:</span>
+                          <span className="font-mono break-all text-right">{depositData.invoiceId}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-3">
