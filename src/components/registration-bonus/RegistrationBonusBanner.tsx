@@ -385,21 +385,21 @@ export function RegistrationBonusBanner() {
                   </div>
                   <div className="relative h-3 overflow-hidden rounded-full bg-muted/50 border border-novunt-gold-500/20">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-novunt-gold-500 via-novunt-gold-600 to-novunt-gold-500"
+                      className="h-full bg-gradient-to-r from-novunt-gold-500 via-novunt-gold-600 to-novunt-gold-500 shadow-lg shadow-novunt-gold-500/50"
                       initial={{ width: 0 }}
                       animate={{ width: `${safeProgressPercentage}%` }}
                       transition={{ duration: 0.8, ease: 'easeOut' }}
                     />
-                    {/* Shimmer effect on progress bar */}
+                    {/* Subtle glow effect on progress bar */}
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                      animate={{
-                        x: ['-100%', '200%'],
-                      }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none"
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '200%' }}
                       transition={{
-                        duration: 2,
+                        duration: 3,
+                        ease: 'easeInOut',
                         repeat: Infinity,
-                        repeatDelay: 1,
+                        repeatDelay: 3,
                       }}
                     />
                   </div>

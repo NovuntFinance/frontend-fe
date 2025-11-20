@@ -23,6 +23,7 @@ import {
   Star,
   Gift,
   Send,
+  CheckCircle2,
 } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
@@ -256,10 +257,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="space-y-6">
-        {/* Registration Bonus Banner */}
-        <RegistrationBonusBanner />
-        
-        {/* Hero Section */}
+        {/* Hero Section - Welcome Card */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -301,11 +299,8 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between mb-8">
               <div className="flex-1">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-foreground tracking-tight mb-3">
-                  Welcome back, {user?.firstName || 'Stakeholder'}! 👋
+                  Welcome back, {user?.firstName ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1) : 'Stakeholder'}! 👋
                 </h1>
-                <p className="text-primary-foreground/70 text-sm sm:text-base">
-                  Here&apos;s your portfolio overview
-                </p>
               </div>
 
               {/* Action Buttons */}
@@ -336,47 +331,42 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* User Status Badges - Strategically Placed */}
-            <div className="flex flex-wrap items-center gap-3 mb-8">
-              <Badge 
-                variant="secondary" 
-                className="bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 px-4 py-2 text-sm font-bold"
-              >
-                <span className="font-normal mr-2">Rank:</span>
-                <span className="font-bold">{user?.rank || 'Stakeholder'}</span>
-              </Badge>
-              {user?.emailVerified && (
-                <Badge 
-                  variant="default" 
-                  className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30 px-4 py-2 text-sm"
-                >
-                  ✓ Email Verified
-                </Badge>
-              )}
-              {/* Weekly Profit Percentage - Strategically Placed */}
-              {lastWeekProfitChange !== 0 && (
-                <Badge 
-                  variant={lastWeekProfitChange >= 0 ? "default" : "destructive"}
-                  className={`${
-                    lastWeekProfitChange >= 0 
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30" 
-                      : "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30"
-                  } px-4 py-2 text-sm font-semibold`}
-                >
-                  <TrendingUp className={`h-3.5 w-3.5 mr-1.5 ${lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400 rotate-180'}`} />
-                  <span className="font-normal mr-1">Weekly Profit:</span>
-                  <span className="font-bold">
-                    {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}%
+            {/* User Status - Redesigned with Verification Icon */}
+            <div className="mb-8 space-y-3">
+              {/* Rank with Verification Badge */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+                  {user?.emailVerified && (
+                    <CheckCircle2 className="h-4 w-4 text-blue-400 fill-blue-400" />
+                  )}
+                  <span className="text-base font-bold text-primary-foreground">
+                    {user?.rank || 'Stakeholder'}
                   </span>
-                </Badge>
-              )}
+                </div>
+                
+                {/* Weekly Profit Badge */}
+                {lastWeekProfitChange !== 0 && (
+                  <Badge 
+                    variant={lastWeekProfitChange >= 0 ? "default" : "destructive"}
+                    className={`${
+                      lastWeekProfitChange >= 0 
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30" 
+                        : "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30"
+                    } px-3 py-1 text-sm font-semibold`}
+                  >
+                    <TrendingUp className={`h-3.5 w-3.5 mr-1.5 ${lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400 rotate-180'}`} />
+                    <span className="font-bold">
+                      {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}%
+                    </span>
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Date Joined */}
               {user?.createdAt && (
-                <Badge 
-                  variant="outline" 
-                  className="border-primary-foreground/30 text-primary-foreground/70 px-4 py-2 text-sm"
-                >
-                  Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </Badge>
+                <div className="text-sm text-primary-foreground/70">
+                  Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
               )}
             </div>
 
@@ -389,7 +379,7 @@ export default function DashboardPage() {
                     <Info className="h-3.5 w-3.5 text-primary-foreground/40 hover:text-primary-foreground/60" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>This represents the combined value of all your stakes.</p>
+                    <p>Sum of deposits, transfers, earnings (registration bonus + pool earnings), and active stakes</p>
                   </TooltipContent>
                 </Tooltip>
               </p>
@@ -467,6 +457,151 @@ export default function DashboardPage() {
 
           {/* Glass Morphism Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
+        </motion.div>
+
+        {/* Registration Bonus Banner */}
+        <RegistrationBonusBanner />
+
+        {/* Rank Progress - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-transparent" />
+            
+            {/* Multiple Animated Floating Blobs */}
+            <motion.div
+              animate={{
+                x: [0, 20, 0],
+                y: [0, -20, 0],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 7,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="absolute -top-12 -right-12 w-32 h-32 bg-yellow-500/30 rounded-full blur-3xl"
+            />
+            <motion.div
+              animate={{
+                x: [0, -10, 0],
+                y: [0, 15, 0],
+                scale: [1, 0.9, 1],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: 0.5,
+              }}
+              className="absolute -bottom-8 -left-8 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl"
+            />
+            
+            <CardHeader className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 15 }}
+                  className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/30 to-orange-500/20 backdrop-blur-sm shadow-lg"
+                >
+                  <Target className="h-6 w-6 text-yellow-500" />
+                </motion.div>
+                <div>
+                  <CardTitle className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                    Rank Progress
+                  </CardTitle>
+                  <CardDescription className="text-xs">Your journey to the next level</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="relative space-y-4">
+              {/* Current and Next Rank */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Current Rank */}
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                      scale: [1, 1.05, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                      ease: 'easeInOut',
+                    }}
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-yellow-500/50 ring-4 ring-yellow-500/20"
+                  >
+                    <span className="text-2xl">🏆</span>
+                  </motion.div>
+                  <div>
+                    <motion.p
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.9 }}
+                      className="text-lg font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                    >
+                      {user?.rank || 'Stakeholder'}
+                    </motion.p>
+                    <p className="text-xs text-muted-foreground">Current</p>
+                  </div>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+
+                {/* Next Rank */}
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-lg font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-right">
+                      Associate
+                    </p>
+                    <p className="text-xs text-muted-foreground text-right">Next</p>
+                  </div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/50 ring-4 ring-emerald-500/20 opacity-60"
+                  >
+                    <span className="text-2xl">💎</span>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Progress to Next Rank */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Progress to Next Rank</span>
+                  <span className="font-bold text-yellow-600 dark:text-yellow-500">60%</span>
+                </div>
+                <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '60%' }}
+                    transition={{ delay: 1, duration: 1, ease: 'easeOut' }}
+                    className="h-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-emerald-500 rounded-full shadow-lg shadow-yellow-500/50"
+                  />
+                  {/* Shimmer effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{
+                      duration: 2.5,
+                      ease: 'easeInOut',
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  $2,000 more in stakes to reach Associate level
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Stats Grid - Premium Cards */}
@@ -816,99 +951,6 @@ export default function DashboardPage() {
                     }`}
                   />
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Rank Card */}
-          <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-transparent" />
-            
-            {/* Multiple Animated Floating Blobs */}
-            <motion.div
-              animate={{
-                x: [0, 20, 0],
-                y: [0, -20, 0],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 7,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -top-12 -right-12 w-32 h-32 bg-yellow-500/30 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{
-                x: [0, -10, 0],
-                y: [0, 15, 0],
-                scale: [1, 0.9, 1],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: 0.5,
-              }}
-              className="absolute -bottom-8 -left-8 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl"
-            />
-            
-            <CardHeader className="relative">
-              <div className="flex items-center gap-3 mb-2">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 15 }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/30 to-orange-500/20 backdrop-blur-sm shadow-lg"
-                >
-                  <Target className="h-6 w-6 text-yellow-500" />
-                </motion.div>
-                <div>
-                  <CardTitle className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                    Your Rank
-                  </CardTitle>
-                  <CardDescription className="text-xs">Stakeholder level</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="flex items-center gap-4">
-                <motion.div
-                  animate={{
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.05, 1],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatDelay: 2,
-                    ease: 'easeInOut',
-                  }}
-                  className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-yellow-500/50 ring-4 ring-yellow-500/20"
-                >
-                  <span className="text-3xl">🏆</span>
-                </motion.div>
-                <div className="flex-1">
-                  <motion.p
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                    className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-1"
-                  >
-                    Gold
-                  </motion.p>
-                  <p className="text-xs text-muted-foreground">
-                    Top 15% of stakeholders
-                  </p>
-                  {/* Mini progress bar */}
-                  <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '85%' }}
-                      transition={{ delay: 1, duration: 1 }}
-                      className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full shadow-sm shadow-yellow-500/50"
-                    />
-                  </div>
-                </div>
               </div>
             </CardContent>
           </Card>

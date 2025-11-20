@@ -122,7 +122,7 @@ export default function AuthLayout({
               alt="Novunt"
               width={180}
               height={48}
-                className="h-10 w-auto object-contain transition-transform"
+                className="h-10 w-auto object-contain transition-transform brightness-0 invert"
             />
             </motion.div>
           </Link>
@@ -240,7 +240,7 @@ export default function AuthLayout({
               alt="Novunt"
               width={160}
               height={42}
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto object-contain dark:brightness-0 dark:invert"
             />
           </Link>
         </div>

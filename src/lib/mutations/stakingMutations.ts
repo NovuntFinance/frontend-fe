@@ -99,13 +99,20 @@ export function useCreateStake() {
     },
     onSuccess: async (data) => {
       console.log('[Staking Mutation] ✅ Stake created, processing for registration bonus...');
+      console.log('[Staking Mutation] Response data:', JSON.stringify(data, null, 2));
       
       // Process stake for registration bonus (this will update progress to 100% if it's the first stake)
       try {
-        const bonusResponse = await registrationBonusApi.processStake(
-          data.stake._id,
-          data.stake.amount
-        );
+        const stakeId = data?.stake?._id;
+        const stakeAmount = data?.stake?.amount;
+        
+        if (!stakeId || !stakeAmount) {
+          console.error('[Staking Mutation] ⚠️ Missing stakeId or amount:', { stakeId, stakeAmount, data });
+          throw new Error('Stake ID or amount is missing from response');
+        }
+        
+        console.log('[Staking Mutation] Processing stake for bonus:', { stakeId, stakeAmount });
+        const bonusResponse = await registrationBonusApi.processStake(stakeId, stakeAmount);
         console.log('[Staking Mutation] 🎁 Registration bonus processed:', bonusResponse);
         
         // If bonus was activated (100% progress reached), trigger confetti

@@ -264,9 +264,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
     // This is just for form state consistency
     // Force refetch to ensure consistency
     refetchProfile();
-    // Show success message
-    toast.success('Avatar updated successfully!');
-    // Force reload to update all avatar instances
+    // Force reload to update all avatar instances (toast removed to avoid duplicate before reload)
     setTimeout(() => {
       window.location.href = window.location.href;
     }, 500);
@@ -387,7 +385,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       console.log('[ProfileEditModal] Submitting profile update:', payloadWithUserId);
       console.log('[ProfileEditModal] User ID:', payloadWithUserId.userId);
       await updateProfileMutation.mutateAsync(payloadWithUserId);
-      toast.success('Profile updated successfully!');
+      // Toast is shown by the mutation itself - no need for duplicate
       refetchProfile();
     } catch (error: any) {
       // Better error logging with serialization

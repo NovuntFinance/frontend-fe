@@ -69,7 +69,7 @@ export default function LandingPage() {
               alt="Novunt - No limits to value, net worth, and growth" 
               width={180} 
               height={48}
-              className="h-8 w-auto sm:h-10 md:h-12 object-contain transition-transform group-hover:scale-105"
+              className="h-8 w-auto sm:h-10 md:h-12 object-contain transition-transform group-hover:scale-105 brightness-0 invert"
               priority
             />
           </Link>
