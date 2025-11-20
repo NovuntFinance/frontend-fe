@@ -474,14 +474,15 @@ apiClient.interceptors.response.use(
       
       // Special logging for 400 validation errors
       if (error.response?.status === 400) {
+        const responseData = error.response?.data as any;
         console.error('🔴 [400 VALIDATION ERROR]', {
           url: originalRequest.url,
           method: originalRequest.method,
           requestPayload: originalRequest.data,
-          responseData: error.response?.data,
-          validationErrors: error.response?.data?.errors || error.response?.data?.validationErrors,
-          message: error.response?.data?.message || error.response?.data?.error?.message,
-          fullResponse: JSON.stringify(error.response?.data, null, 2),
+          responseData: responseData,
+          validationErrors: responseData?.errors || responseData?.validationErrors,
+          message: responseData?.message || responseData?.error?.message,
+          fullResponse: JSON.stringify(responseData, null, 2),
         });
       }
       

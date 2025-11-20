@@ -70,7 +70,7 @@ export function useCreateStake() {
 
       // Backend has a validation bug where duration: 0 is treated as missing
       // Send duration explicitly to ensure it's included in the request
-      const payload = {
+      const payload: any = {
         amount: data.amount,
         sourceWallet: 'auto', // Backend requires 'auto' for automatic wallet deduction
         duration: 0, // Backend requires 0 for permanent stake (200% ROS)
