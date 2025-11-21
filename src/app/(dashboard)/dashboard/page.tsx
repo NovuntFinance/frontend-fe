@@ -41,6 +41,8 @@ import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RegistrationBonusBanner } from '@/components/registration-bonus/RegistrationBonusBanner';
+import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
+import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { useUser } from '@/hooks/useUser';
 
 /**
@@ -56,7 +58,7 @@ export default function DashboardPage() {
     email: string;
   } | null>(null);
   const { user } = useUser();
-  
+
   // Check for first-time login and show welcome modal
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -91,13 +93,13 @@ export default function DashboardPage() {
       localStorage.removeItem('novunt_new_user');
     }
   };
-  
+
   // Fetch data
   const { data: walletBalance, isLoading: balanceLoading, error: balanceError, refetch } = useWalletBalance();
   const { data: activeStakes, isLoading: stakesLoading, error: stakesError } = useActiveStakes();
   const { data: transactions, isLoading: transactionsLoading, error: transactionsError } = useTransactions();
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useDashboardOverview();
-  
+
   // Platform ranks
   const ranks = React.useMemo(() => [
     'Stakeholder',
@@ -113,16 +115,16 @@ export default function DashboardPage() {
     const generateMaskedName = () => {
       const firstNames = ['John', 'Sarah', 'Mike', 'Emma', 'David', 'Lisa', 'Chris', 'Anna', 'Tom', 'Rachel', 'James', 'Sophie', 'Mark', 'Nina', 'Paul', 'Grace', 'Peter', 'Kate', 'Alex', 'Maria', 'Dan', 'Eva', 'Ryan', 'Zoe', 'Luke', 'Mia', 'Ben', 'Ella', 'Sam', 'Amy', 'Jack', 'Lily', 'Max', 'Ruby', 'Leo', 'Ivy', 'Noah', 'Lucy', 'Jake', 'Aria', 'Owen', 'Maya', 'Cole', 'Leah', 'Ian', 'Nora', 'Eric', 'Jade', 'Sean', 'Rose'];
       const lastNames = ['Anderson', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Taylor', 'Thomas', 'Moore', 'Jackson', 'Martin', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'King', 'Wright', 'Scott', 'Green', 'Baker', 'Adams', 'Nelson', 'Carter', 'Mitchell', 'Roberts', 'Turner', 'Phillips', 'Campbell', 'Parker', 'Evans'];
-      
+
       const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      
+
       const maskName = (name: string) => {
         if (name.length <= 2) return name;
         const asteriskCount = Math.floor(Math.random() * (name.length - 2)) + 1;
         return name[0] + '*'.repeat(asteriskCount) + name[name.length - 1];
       };
-      
+
       return `${maskName(firstName)} ${lastName[0]}.`;
     };
     const activityTypes = [
@@ -185,10 +187,10 @@ export default function DashboardPage() {
     ];
 
     const activity = activityTypes[Math.floor(Math.random() * activityTypes.length)];
-    const amount = activity.amountRange 
+    const amount = activity.amountRange
       ? Math.floor(Math.random() * (activity.amountRange[1] - activity.amountRange[0])) + activity.amountRange[0]
       : null;
-    
+
     // Generate random time (1-60 minutes ago)
     const minutes = Math.floor(Math.random() * 60) + 1;
     const timeStr = minutes === 1 ? '1 min ago' : `${minutes} min ago`;
@@ -215,12 +217,12 @@ export default function DashboardPage() {
   }, [generateRandomActivity]);
 
   // Check if ALL queries have failed (indicating auth issue)
-  const allQueriesFailed = 
-    !balanceLoading && !walletBalance && 
+  const allQueriesFailed =
+    !balanceLoading && !walletBalance &&
     !stakesLoading && !activeStakes &&
     !transactionsLoading && !transactions &&
     !overviewLoading && !overview;
-  
+
   // If all queries failed and we're not loading, show auth error
   if (allQueriesFailed && (balanceError || stakesError || transactionsError || overviewError)) {
     return <AuthErrorFallback />;
@@ -258,351 +260,24 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="space-y-6">
         {/* Hero Section - Welcome Card */}
+        {/* Hero Section - Welcome Card */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-foreground/10 p-8 shadow-2xl"
         >
-          {/* Animated Background Blobs */}
-          <div className="absolute inset-0 overflow-hidden">
-            <motion.div
-              animate={{
-                x: [0, 30, 0],
-                y: [0, -20, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -top-24 -right-24 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{
-                x: [0, -20, 0],
-                y: [0, 30, 0],
-                scale: [1, 0.9, 1],
-              }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl"
-            />
-          </div>
-
-          {/* Content */}
-          <div className="relative z-10">
-            {/* Header with Action Buttons */}
-            <div className="flex items-start justify-between mb-8">
-              <div className="flex-1">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-foreground tracking-tight mb-3">
-                  Welcome back, {user?.firstName ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1) : 'Stakeholder'}! 👋
-                </h1>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setBalanceVisible(!balanceVisible)}
-                  className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                >
-                  {balanceVisible ? (
-                    <Eye className="h-5 w-5" />
-                  ) : (
-                    <EyeOff className="h-5 w-5" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => refetch()}
-                  disabled={isRefetching}
-                  className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                >
-                  <RefreshCw
-                    className={`h-5 w-5 ${isRefetching ? 'animate-spin' : ''}`}
-                  />
-                </Button>
-              </div>
-            </div>
-
-            {/* User Status - Redesigned with Verification Icon */}
-            <div className="mb-8 space-y-3">
-              {/* Rank with Verification Badge */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-lg px-3 py-1.5 backdrop-blur-sm">
-                  {user?.emailVerified && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-400 fill-blue-400" />
-                  )}
-                  <span className="text-base font-bold text-primary-foreground">
-                    {user?.rank || 'Stakeholder'}
-                  </span>
-                </div>
-                
-                {/* Weekly Profit Badge */}
-                {lastWeekProfitChange !== 0 && (
-                  <Badge 
-                    variant={lastWeekProfitChange >= 0 ? "default" : "destructive"}
-                    className={`${
-                      lastWeekProfitChange >= 0 
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30" 
-                        : "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30"
-                    } px-3 py-1 text-sm font-semibold`}
-                  >
-                    <TrendingUp className={`h-3.5 w-3.5 mr-1.5 ${lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400 rotate-180'}`} />
-                    <span className="font-bold">
-                      {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}%
-                    </span>
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Date Joined */}
-              {user?.createdAt && (
-                <div className="text-sm text-primary-foreground/70">
-                  Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </div>
-              )}
-            </div>
-
-            {/* Total Portfolio Value */}
-            <div className="mb-8">
-              <p className="text-primary-foreground/60 text-sm mb-2 flex items-center gap-2">
-                Total Portfolio Value
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-3.5 w-3.5 text-primary-foreground/40 hover:text-primary-foreground/60" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Sum of deposits, transfers, earnings (registration bonus + pool earnings), and active stakes</p>
-                  </TooltipContent>
-                </Tooltip>
-              </p>
-              {balanceVisible ? (
-                <motion.h2
-                  key="portfolio"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-5xl sm:text-6xl lg:text-7xl font-bold text-primary-foreground tracking-tight"
-                >
-                  ${totalPortfolioValue.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </motion.h2>
-              ) : (
-                <motion.div
-                  key="hidden"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-5xl sm:text-6xl lg:text-7xl font-bold text-primary-foreground"
-                >
-                  ••••••••
-                </motion.div>
-              )}
-            </div>
-
-            {/* Social Media Links */}
-            <div className="mt-6 pt-6 border-t border-primary-foreground/10">
-              <p className="text-primary-foreground/60 text-xs sm:text-sm mb-4">You can also keep up with us here</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://www.facebook.com/share/16oLeHcQkH/', '_blank')}
-                >
-                  <FaFacebook className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://www.instagram.com/novunt_hq?igsh=bGxoaGV3d3B0MWd5', '_blank')}
-                >
-                  <FaInstagram className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://www.tiktok.com/@novuntofficial?_t=ZS-8ymrJsyJBk9&_r=1', '_blank')}
-                >
-                  <SiTiktok className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4', '_blank')}
-                >
-                  <FaYoutube className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://t.me/novunt', '_blank')}
-                >
-                  <FaTelegram className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Glass Morphism Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
+          <WelcomeBackCard
+            user={user}
+            balanceVisible={balanceVisible}
+            setBalanceVisible={setBalanceVisible}
+            refetch={refetch}
+            isRefetching={isRefetching}
+            totalPortfolioValue={totalPortfolioValue}
+            lastWeekProfitChange={lastWeekProfitChange}
+          />
         </motion.div>
 
         {/* Registration Bonus Banner */}
         <RegistrationBonusBanner />
-
-        {/* Rank Progress - Full Width */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-transparent" />
-            
-            {/* Multiple Animated Floating Blobs */}
-            <motion.div
-              animate={{
-                x: [0, 20, 0],
-                y: [0, -20, 0],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 7,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -top-12 -right-12 w-32 h-32 bg-yellow-500/30 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{
-                x: [0, -10, 0],
-                y: [0, 15, 0],
-                scale: [1, 0.9, 1],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: 0.5,
-              }}
-              className="absolute -bottom-8 -left-8 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl"
-            />
-            
-            <CardHeader className="relative">
-              <div className="flex items-center gap-3 mb-2">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 15 }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/30 to-orange-500/20 backdrop-blur-sm shadow-lg"
-                >
-                  <Target className="h-6 w-6 text-yellow-500" />
-                </motion.div>
-                <div>
-                  <CardTitle className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                    Rank Progress
-                  </CardTitle>
-                  <CardDescription className="text-xs">Your journey to the next level</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative space-y-4">
-              {/* Current and Next Rank */}
-              <div className="flex items-center justify-between gap-4">
-                {/* Current Rank */}
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    animate={{
-                      rotate: [0, 10, -10, 0],
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      repeatDelay: 2,
-                      ease: 'easeInOut',
-                    }}
-                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-yellow-500/50 ring-4 ring-yellow-500/20"
-                  >
-                    <span className="text-2xl">🏆</span>
-                  </motion.div>
-                  <div>
-                    <motion.p
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.9 }}
-                      className="text-lg font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
-                    >
-                      {user?.rank || 'Stakeholder'}
-                    </motion.p>
-                    <p className="text-xs text-muted-foreground">Current</p>
-                  </div>
-                </div>
-
-                {/* Arrow */}
-                <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-
-                {/* Next Rank */}
-                <div className="flex items-center gap-3">
-                  <div>
-                    <p className="text-lg font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-right">
-                      Associate
-                    </p>
-                    <p className="text-xs text-muted-foreground text-right">Next</p>
-                  </div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/50 ring-4 ring-emerald-500/20 opacity-60"
-                  >
-                    <span className="text-2xl">💎</span>
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Progress to Next Rank */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress to Next Rank</span>
-                  <span className="font-bold text-yellow-600 dark:text-yellow-500">60%</span>
-                </div>
-                <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '60%' }}
-                    transition={{ delay: 1, duration: 1, ease: 'easeOut' }}
-                    className="h-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-emerald-500 rounded-full shadow-lg shadow-yellow-500/50"
-                  />
-                  {/* Shimmer effect */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '200%' }}
-                    transition={{
-                      duration: 2.5,
-                      ease: 'easeInOut',
-                      repeat: Infinity,
-                      repeatDelay: 2,
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  $2,000 more in stakes to reach Associate level
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {/* Stats Grid - Premium Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -686,7 +361,7 @@ export default function DashboardPage() {
               <Card className="relative overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
                 {/* Gradient Background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5`} />
-                
+
                 <CardContent className="relative pt-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className={`p-3 rounded-xl ${stat.iconBg} group-hover:scale-110 transition-transform`}>
@@ -784,6 +459,15 @@ export default function DashboardPage() {
           <QuickActions />
         </motion.div>
 
+        {/* Rank Progress */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <RankProgressCard />
+        </motion.div>
+
         {/* Portfolio Performance - Full Width */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -825,7 +509,7 @@ export default function DashboardPage() {
           <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-transparent" />
-            
+
             {/* Animated Floating Blob */}
             <motion.div
               animate={{
@@ -840,7 +524,7 @@ export default function DashboardPage() {
               }}
               className="absolute -top-12 -right-12 w-24 h-24 bg-green-500/30 rounded-full blur-2xl"
             />
-            
+
             <CardHeader className="relative">
               <div className="flex items-center gap-3 mb-2">
                 <motion.div
@@ -875,7 +559,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 Compared to last month
               </p>
-              
+
               {/* Progress bar */}
               <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -892,7 +576,7 @@ export default function DashboardPage() {
           <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-            
+
             {/* Animated Floating Blob */}
             <motion.div
               animate={{
@@ -907,7 +591,7 @@ export default function DashboardPage() {
               }}
               className="absolute -bottom-12 -left-12 w-24 h-24 bg-blue-500/30 rounded-full blur-2xl"
             />
-            
+
             <CardHeader className="relative">
               <div className="flex items-center gap-3 mb-2">
                 <motion.div
@@ -944,11 +628,10 @@ export default function DashboardPage() {
                     animate={{ scaleY: 1, opacity: 1 }}
                     transition={{ delay: 0.9 + i * 0.1, type: 'spring' }}
                     whileHover={{ scaleY: 1.2 }}
-                    className={`h-10 flex-1 rounded-lg transition-all ${
-                      i < 6
-                        ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
-                        : 'bg-muted/50'
-                    }`}
+                    className={`h-10 flex-1 rounded-lg transition-all ${i < 6
+                      ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
+                      : 'bg-muted/50'
+                      }`}
                   />
                 ))}
               </div>
@@ -958,15 +641,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Welcome Modal for First-Time Users */}
-      {newUserInfo && (
-        <WelcomeModal
-          isOpen={showWelcomeModal}
-          onClose={handleWelcomeModalClose}
-          firstName={newUserInfo.firstName}
-          lastName={newUserInfo.lastName}
-          email={newUserInfo.email}
-        />
-      )}
-    </div>
+      {
+        newUserInfo && (
+          <WelcomeModal
+            isOpen={showWelcomeModal}
+            onClose={handleWelcomeModalClose}
+            firstName={newUserInfo.firstName}
+            lastName={newUserInfo.lastName}
+            email={newUserInfo.email}
+          />
+        )
+      }
+    </div >
   );
 }
