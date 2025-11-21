@@ -45,8 +45,8 @@ const WalletCard: React.FC<WalletCardProps> = ({
       className={`
         relative overflow-hidden rounded-2xl p-6
         bg-gradient-to-br
-        ${isDeposit 
-          ? 'from-card via-card to-accent/5 border-accent/20' 
+        ${isDeposit
+          ? 'from-card via-card to-accent/5 border-accent/20'
           : 'from-card via-card to-secondary/5 border-secondary/20'
         }
         border shadow-lg hover:shadow-xl
@@ -130,8 +130,8 @@ const WalletCard: React.FC<WalletCardProps> = ({
           disabled={actionDisabled}
           className={`
             w-full group
-            ${isDeposit 
-              ? 'bg-accent hover:bg-accent/90' 
+            ${isDeposit
+              ? 'bg-accent hover:bg-accent/90'
               : 'bg-secondary hover:bg-secondary/90'
             }
           `}
@@ -146,9 +146,8 @@ const WalletCard: React.FC<WalletCardProps> = ({
             <span className="text-muted-foreground">
               {isDeposit ? 'Can withdraw' : 'Can withdraw'}
             </span>
-            <span className={`font-semibold ${
-              isDeposit ? 'text-destructive' : 'text-success'
-            }`}>
+            <span className={`font-semibold ${isDeposit ? 'text-destructive' : 'text-success'
+              }`}>
               {isDeposit ? '❌ No' : '✅ Yes'}
             </span>
           </div>
@@ -189,61 +188,43 @@ export function WalletCards() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Skeleton className="h-80 rounded-2xl" />
-        <Skeleton className="h-80 rounded-2xl" />
-      </div>
-    );
-  }
-
-  const depositWallet = wallet?.funded?.balance || 0;
-  const earningsWallet = wallet?.earnings?.balance || 0;
-
-  const handleCreateStake = () => {
-    // Navigate to stakes page where user can open the create stake modal
-    router.push('/dashboard/stakes');
-  };
-
-  const handleWithdraw = () => {
-    // Navigate to wallets page where withdraw modal can be opened
-    // The QuickActions component on the wallets page handles the modal
-    router.push('/dashboard/wallets');
     // Note: The actual modal opening is handled by QuickActions component
     // This navigation ensures user is on the right page
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="grid grid-cols-1 md:grid-cols-2 gap-6"
-    >
-      {/* Deposit Wallet */}
-      <WalletCard
-        title="Deposit Wallet"
-        balance={depositWallet}
-        description="For staking only"
-        icon={<Wallet className="h-6 w-6 text-accent" />}
-        actionLabel="Create Stake"
-        onAction={handleCreateStake}
-        actionDisabled={depositWallet === 0}
-        variant="deposit"
-        tooltip="Receives deposits and P2P transfers. Funds can only be used for staking, not for withdrawals."
-      />
+        return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          {/* Deposit Wallet */}
+          <WalletCard
+            title="Deposit Wallet"
+            balance={depositWallet}
+            description="For staking only"
+            icon={<Wallet className="h-6 w-6 text-accent" />}
+            actionLabel="Create Stake"
+            onAction={handleCreateStake}
+            actionDisabled={depositWallet === 0}
+            variant="deposit"
+            tooltip="Receives deposits and P2P transfers. Funds can only be used for staking, not for withdrawals."
+          />
 
-      {/* Earnings Wallet */}
-      <WalletCard
-        title="Earnings Wallet"
-        balance={earningsWallet}
-        description="Withdrawable funds"
-        icon={<TrendingUp className="h-6 w-6 text-secondary" />}
-        actionLabel="Withdraw Funds"
-        onAction={handleWithdraw}
-        actionDisabled={earningsWallet === 0}
-        variant="earnings"
-        tooltip="Receives ROS earnings, referral commissions, and bonuses. Can be withdrawn, transferred, or used for staking."
-      />
-    </motion.div>
-  );
+          {/* Earnings Wallet */}
+          <WalletCard
+            title="Earnings Wallet"
+            balance={earningsWallet}
+            description="Withdrawable funds"
+            icon={<TrendingUp className="h-6 w-6 text-secondary" />}
+            actionLabel="Withdraw Funds"
+            onAction={handleWithdraw}
+            actionDisabled={earningsWallet === 0}
+            variant="earnings"
+            tooltip="Receives ROS earnings, referral commissions, and bonuses. Can be withdrawn, transferred, or used for staking."
+          />
+        </motion.div>
+        );
 }
 

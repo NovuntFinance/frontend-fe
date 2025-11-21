@@ -2,16 +2,17 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, DollarSign, Target, Plus, Wallet, AlertCircle } from 'lucide-react';
+import { TrendingUp, DollarSign, Target, Plus, Wallet, AlertCircle, Calendar } from 'lucide-react';
 import type { Stake } from '@/lib/queries/stakingQueries';
 import { Button } from '@/components/ui/button';
 import { useStakingDashboard } from '@/lib/queries/stakingQueries';
-import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
+import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 
 export default function StakesPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { openModal } = useUIStore();
   const { data: stakingData, isLoading, error } = useStakingDashboard();
 
   if (isLoading) {
@@ -49,21 +50,21 @@ export default function StakesPage() {
 
   // Debug: Log what we actually received
   console.log('[Stakes Page] stakingData received:', stakingData);
-  
+
   // The query returns the dashboard data directly (already unwrapped by the query function)
   // Structure: { wallets: {...}, activeStakes: [...], stakeHistory: [...], summary: {...} }
-  const { 
-    activeStakes = [] as Stake[], 
-    stakeHistory = [] as Stake[], 
-    summary = {} as { 
-      totalActiveStakes?: number; 
-      totalStakesSinceInception?: number; 
+  const {
+    activeStakes = [] as Stake[],
+    stakeHistory = [] as Stake[],
+    summary = {} as {
+      totalActiveStakes?: number;
+      totalStakesSinceInception?: number;
       totalEarnedFromROS?: number;
       targetTotalReturns?: number;
       progressToTarget?: string;
       stakingModel?: string;
       note?: string;
-    }, 
+    },
     wallets = {
       fundedWallet: 0,
       earningWallet: 0,
@@ -83,11 +84,34 @@ export default function StakesPage() {
     }
   } = stakingData || {};
   const hasStakes = activeStakes && activeStakes.length > 0;
-  
+
+  // Calculate This Week's Profit
+  const today = new Date();
+  const startOfCurrentWeek = startOfWeek(today);
+  const endOfCurrentWeek = endOfWeek(today);
+
+  const thisWeekProfit = activeStakes.reduce((total, stake) => {
+    if (!stake.weeklyPayouts) return total;
+
+    const weeklyAmount = stake.weeklyPayouts.reduce((weekTotal, payout) => {
+      // Check if payout date is valid and within current week
+      if (payout.date && payout.status === 'paid') {
+        const payoutDate = parseISO(payout.date);
+        if (isWithinInterval(payoutDate, { start: startOfCurrentWeek, end: endOfCurrentWeek })) {
+          return weekTotal + (payout.amount || 0);
+        }
+      }
+      return weekTotal;
+    }, 0);
+
+    return total + weeklyAmount;
+  }, 0);
+
   console.log('[Stakes Page] Extracted data:', {
     activeStakesCount: activeStakes.length,
     hasWallets: !!wallets,
-    hasSummary: !!summary
+    hasSummary: !!summary,
+    thisWeekProfit
   });
 
   return (
@@ -102,29 +126,10 @@ export default function StakesPage() {
             Track your stakes and ROS progress
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => window.location.href = '/dashboard/wallets'}
-            variant="outline"
-            className="gap-2"
-            size="lg"
-          >
-            <Wallet className="w-5 h-5" />
-            Deposit Funds
-          </Button>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="gap-2 bg-novunt-blue-600 hover:bg-novunt-blue-700"
-            size="lg"
-          >
-            <Plus className="w-5 h-5" />
-            Create New Stake
-          </Button>
-        </div>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Total Stakes Count */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -160,6 +165,25 @@ export default function StakesPage() {
           <p className="text-sm opacity-90 mb-1">Total Amount Staked</p>
           <p className="text-3xl font-bold">
             ${(activeStakes.reduce((sum, stake) => sum + (stake.amount || 0), 0)).toFixed(2)}
+          </p>
+        </motion.div>
+
+        {/* This Week Profit */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 rounded-lg">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <span className="text-sm font-medium opacity-90">Weekly</span>
+          </div>
+          <p className="text-sm opacity-90 mb-1">This Week Profit</p>
+          <p className="text-3xl font-bold">
+            ${thisWeekProfit.toFixed(2)}
           </p>
         </motion.div>
 
@@ -254,7 +278,7 @@ export default function StakesPage() {
                 ${wallets.totalAvailableBalance?.toFixed(2) || '0.00'}
               </p>
               <Button
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => openModal('create-stake')}
                 variant="outline"
                 size="sm"
                 className="mt-2"
@@ -303,7 +327,7 @@ export default function StakesPage() {
               Start earning with Novunt's 200% ROS staking model. Create your first stake and receive weekly payouts!
             </p>
             <Button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => openModal('create-stake')}
               size="lg"
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
             >
@@ -356,12 +380,6 @@ export default function StakesPage() {
           </div>
         </div>
       </motion.div>
-
-      {/* Create Stake Modal */}
-      <CreateStakeModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
     </div>
   );
 }

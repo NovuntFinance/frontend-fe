@@ -8,17 +8,19 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight, Eye, EyeOff, Loader2, Send } from 'lucide-react';
+import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight, Eye, EyeOff, Loader2, Send, DollarSign } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils/wallet';
-import { DepositModal } from './DepositModal';
 import { WithdrawalModal } from './WithdrawalModal';
 import { TransferModal } from './modals/TransferModal';
 import { WalletBreakdown } from './WalletBreakdown';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { useUIStore } from '@/store/uiStore';
+
+import { useStakingDashboard } from '@/lib/queries/stakingQueries';
 
 /**
  * Animated balance counter
@@ -59,7 +61,7 @@ function AnimatedBalance({ value, isLoading }: { value: number; isLoading: boole
       animate={{ opacity: 1, scale: 1 }}
       className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
     >
-      {formatCurrency(displayValue, { showCurrency: false })}
+      ${formatCurrency(displayValue, { showCurrency: false })}
     </motion.span>
   );
 }
@@ -69,10 +71,17 @@ function AnimatedBalance({ value, isLoading }: { value: number; isLoading: boole
  */
 export function WalletDashboard() {
   const { wallet, isLoading, error, refetch } = useWallet();
+  const { data: stakingData } = useStakingDashboard();
+  const { openModal } = useUIStore();
+
   const [balanceVisible, setBalanceVisible] = useState(true);
-  const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+
+  // Calculate total active staked amount to match Stakes Page
+  const activeStakes = stakingData?.activeStakes || [];
+  const totalActiveStaked = activeStakes.reduce((sum, stake) => sum + (stake.amount || 0), 0);
+  const totalEarned = stakingData?.summary?.totalEarnedFromROS || 0;
 
   if (isLoading) {
     return <WalletDashboardSkeleton />;
@@ -146,7 +155,6 @@ export function WalletDashboard() {
                   ) : (
                     <span className="text-4xl md:text-5xl font-bold">••••••</span>
                   )}
-                  <span className="text-xl text-muted-foreground">USDT</span>
                 </div>
               </div>
               <Button
@@ -176,7 +184,7 @@ export function WalletDashboard() {
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 <Button
-                  onClick={() => setDepositModalOpen(true)}
+                  onClick={() => openModal('deposit')}
                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                   size="lg"
                 >
@@ -250,7 +258,7 @@ export function WalletDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-2 md:grid-cols-3 gap-4"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
         <StatCard
           label="Total Deposited"
@@ -266,15 +274,19 @@ export function WalletDashboard() {
         />
         <StatCard
           label="Total Staked"
-          value={wallet.statistics.totalStaked}
+          value={totalActiveStaked}
           icon={<TrendingUp className="h-4 w-4" />}
           color="text-primary"
-          className="col-span-2 md:col-span-1"
+        />
+        <StatCard
+          label="Total Earned"
+          value={totalEarned}
+          icon={<DollarSign className="h-4 w-4" />}
+          color="text-emerald-500"
         />
       </motion.div>
 
       {/* Modals */}
-      <DepositModal open={depositModalOpen} onOpenChange={setDepositModalOpen} />
       <WithdrawalModal open={withdrawalModalOpen} onOpenChange={setWithdrawalModalOpen} />
       <TransferModal isOpen={transferModalOpen} onClose={() => setTransferModalOpen(false)} />
     </div>

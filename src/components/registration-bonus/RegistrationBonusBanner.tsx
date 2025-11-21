@@ -31,56 +31,56 @@ export function RegistrationBonusBanner() {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasShownConfetti, setHasShownConfetti] = useState(false);
-  
+
   // Listen for bonus completion event (triggered when stake is created and progress reaches 100%)
   useEffect(() => {
     const handleBonusCompleted = (event: any) => {
       const { bonusAmount } = event.detail || {};
       console.log('[RegistrationBonusBanner] 🎉 Bonus completed event received!', { bonusAmount });
-      
+
       // Trigger confetti celebration
       if (!hasShownConfetti) {
         triggerConfetti();
         setHasShownConfetti(true);
-        
+
         // Show success toast
         toast.success('🎉 Bonus Activated!', {
           description: `Congratulations! You've unlocked your ${bonusAmount ? `$${bonusAmount}` : '10%'} registration bonus!`,
           duration: 7000,
         });
-        
+
         // Refetch to show updated progress
         setTimeout(() => refetch(), 1000);
       }
     };
-    
+
     window.addEventListener('registrationBonusCompleted', handleBonusCompleted);
     return () => {
       window.removeEventListener('registrationBonusCompleted', handleBonusCompleted);
     };
   }, [hasShownConfetti, refetch]);
-  
+
   // Trigger confetti when progress reaches 100% (also handles page refresh case)
   useEffect(() => {
     const progressPercentage = data?.data?.progressPercentage ?? 0;
     const status = data?.data?.status;
-    
+
     // Show confetti if progress is 100% and we haven't shown it yet
     // and status is transitioning to bonus_active or requirements_met
-    if (progressPercentage === 100 && !hasShownConfetti && 
-        (status === RegistrationBonusStatus.REQUIREMENTS_MET || 
-         status === RegistrationBonusStatus.BONUS_ACTIVE)) {
+    if (progressPercentage === 100 && !hasShownConfetti &&
+      (status === RegistrationBonusStatus.REQUIREMENTS_MET ||
+        status === RegistrationBonusStatus.BONUS_ACTIVE)) {
       console.log('[RegistrationBonusBanner] 🎉 Progress reached 100%, triggering confetti!');
       triggerConfetti();
       setHasShownConfetti(true);
-      
+
       toast.success('🎉 Bonus Requirements Complete!', {
         description: 'Congratulations! You\'ve completed all requirements for your registration bonus!',
         duration: 7000,
       });
     }
   }, [data?.data?.progressPercentage, data?.data?.status, hasShownConfetti]);
-  
+
   // Check if dismissed in localStorage, but only respect it for completed/expired/cancelled bonuses
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -89,9 +89,9 @@ export function RegistrationBonusBanner() {
       // If bonus is still pending/active, always show it to encourage completion
       if (dismissed === 'true' && data?.data) {
         const status = data.data.status;
-        const isFinalState = status === RegistrationBonusStatus.COMPLETED || 
-                            status === RegistrationBonusStatus.EXPIRED || 
-                            status === RegistrationBonusStatus.CANCELLED;
+        const isFinalState = status === RegistrationBonusStatus.COMPLETED ||
+          status === RegistrationBonusStatus.EXPIRED ||
+          status === RegistrationBonusStatus.CANCELLED;
         if (isFinalState) {
           setIsDismissed(true);
         } else {
@@ -105,13 +105,13 @@ export function RegistrationBonusBanner() {
       }
     }
   }, [data, isLoading]);
-  
+
   // Listen for refetch event (triggered after profile update)
   React.useEffect(() => {
     const handleRefetch = () => {
       refetch();
     };
-    
+
     window.addEventListener('refetchRegistrationBonus', handleRefetch);
     return () => {
       window.removeEventListener('refetchRegistrationBonus', handleRefetch);
@@ -142,7 +142,7 @@ export function RegistrationBonusBanner() {
   // Error state
   if (error) {
     const status = (error as any)?.response?.status;
-    
+
     if (status === 404) {
       if (process.env.NODE_ENV === 'development') {
         return (
@@ -160,7 +160,7 @@ export function RegistrationBonusBanner() {
       }
       return null;
     }
-    
+
     return (
       <ErrorState
         message="Unable to load bonus status"
@@ -187,7 +187,7 @@ export function RegistrationBonusBanner() {
 
   const bonusData = data.data;
   const { status, progressPercentage, bonusPercentage } = bonusData;
-  
+
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
     // Use legacy profile field if available, otherwise use requirements.profileCompletion
@@ -195,7 +195,7 @@ export function RegistrationBonusBanner() {
     const profileCompletionPercentage = bonusData.profile?.completionPercentage ?? bonusData.requirements?.profileCompletion?.percentage ?? 0;
     const completedFields = profileDetails.filter((d: any) => d.isCompleted).length;
     const totalFields = profileDetails.length;
-    
+
     // Calculate expected overall progress based on correct logic:
     // 25% (registration) + 25% (profile) + 25% (social - at least 1) + 25% (stake) = 100%
     const expectedOverallProgress = (() => {
@@ -207,7 +207,7 @@ export function RegistrationBonusBanner() {
       if (stakeCompleted) progress += 25; // First stake = +25%
       return progress;
     })();
-    
+
     console.log('[RegistrationBonusBanner] 🔍 Data Debug:', {
       status,
       progressPercentage: `${progressPercentage}% (Expected: ${expectedOverallProgress}%)`,
@@ -235,7 +235,7 @@ export function RegistrationBonusBanner() {
       fullData: bonusData,
     });
   }
-  
+
   // Ensure we have valid numbers (fallback to 0 if undefined/null)
   const safeProgressPercentage = typeof progressPercentage === 'number' ? progressPercentage : 0;
   const safeProfileCompletion = bonusData.profile?.completionPercentage ?? bonusData.requirements?.profileCompletion?.percentage ?? 0;
@@ -243,11 +243,11 @@ export function RegistrationBonusBanner() {
   // Handle dismiss - only allow dismissal for final states
   const handleDismiss = () => {
     const status = bonusData?.status;
-    const isFinalState = status === RegistrationBonusStatus.COMPLETED || 
-                        status === RegistrationBonusStatus.EXPIRED || 
-                        status === RegistrationBonusStatus.CANCELLED ||
-                        status === RegistrationBonusStatus.BONUS_ACTIVE;
-    
+    const isFinalState = status === RegistrationBonusStatus.COMPLETED ||
+      status === RegistrationBonusStatus.EXPIRED ||
+      status === RegistrationBonusStatus.CANCELLED ||
+      status === RegistrationBonusStatus.BONUS_ACTIVE;
+
     // Only allow dismissal if bonus is in a final state
     // Don't allow dismissal for pending/requirements_met bonuses (users should complete them)
     if (isFinalState) {
@@ -340,7 +340,7 @@ export function RegistrationBonusBanner() {
                     >
                       <Gift className="h-6 w-6 text-novunt-gold-600 dark:text-novunt-gold-500" />
                     </motion.div>
-                    
+
                     {/* Title */}
                     <div>
                       <h2 className="text-xl md:text-2xl font-bold text-foreground mb-0.5">
@@ -425,10 +425,10 @@ export function RegistrationBonusBanner() {
 function triggerConfetti() {
   const duration = 3000;
   const animationEnd = Date.now() + duration;
-  const defaults = { 
-    startVelocity: 30, 
-    spread: 360, 
-    ticks: 60, 
+  const defaults = {
+    startVelocity: 30,
+    spread: 360,
+    ticks: 60,
     zIndex: 9999,
     colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
   };
@@ -446,14 +446,14 @@ function triggerConfetti() {
     }
 
     const particleCount = 50 * (timeLeft / duration);
-    
+
     // Fire confetti from left side
     confetti({
       ...defaults,
       particleCount,
       origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
     });
-    
+
     // Fire confetti from right side
     confetti({
       ...defaults,

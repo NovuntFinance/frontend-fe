@@ -44,6 +44,13 @@ import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
 import { NotificationsModal } from '@/components/settings/NotificationsModal';
 import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
 import { BiometricModal } from '@/components/settings/BiometricModal';
+import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+import { useUIStore } from '@/store/uiStore';
+import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
+import { DepositModal } from '@/components/wallet/modals/DepositModal';
+import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
+import { TransferModal } from '@/components/wallet/modals/TransferModal';
 
 interface NavItem {
   name: string;
@@ -69,15 +76,16 @@ const navigation: NavItem[] = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  
+  const { isModalOpen, closeModal } = useUIStore();
+
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  
+
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {
     const handleOpenProfileModal = () => {
       setProfileModalOpen(true);
     };
-    
+
     window.addEventListener('openProfileModal', handleOpenProfileModal);
     return () => {
       window.removeEventListener('openProfileModal', handleOpenProfileModal);
@@ -88,7 +96,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user } = useUser();
   const { data: overview } = useDashboardOverview();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // Get weekly profit percentage
   const overviewData = overview as { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } } | undefined;
   const lastWeekProfitChange = overviewData?.analytics?.lastWeekProfitChange ?? 0;
@@ -96,6 +104,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [biometricModalOpen, setBiometricModalOpen] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
 
   // Handle logout
   const handleLogout = () => {
@@ -114,22 +124,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <DashboardGuard>
       <div className="min-h-screen bg-background">
-      {/* Mobile sidebar backdrop */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
+        {/* Mobile sidebar backdrop */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Sidebar */}
-      <aside
-        className={`
+        {/* Sidebar */}
+        <aside
+          className={`
           fixed inset-y-0 left-0 z-50 w-64
           bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl backdrop-saturate-150
           border-r border-white/30 dark:border-white/10
@@ -137,237 +147,295 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transform transition-all duration-300 ease-out lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
-      >
-        <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-between px-4 border-b border-white/20 dark:border-white/10">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <span className="text-3xl font-black tracking-tight leading-none text-foreground">
-                NOVUNT
-              </span>
-              <div className="w-12 h-12 relative flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
-                <Image 
-                  src="/icons/novunt_short.png" 
-                  alt="Novunt Logo" 
-                  fill
-                  className="object-contain invert dark:invert-0"
-                />
-              </div>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
-                    transition-all duration-200 relative overflow-hidden
-                    touch-manipulation active:scale-[0.98]
-                    ${
-                      active
-                        ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30'
-                        : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-gray-800/50 hover:backdrop-blur-sm hover:text-foreground hover:shadow-md'
-                    }
-                  `}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="flex-1">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="secondary" className="h-5 min-w-5 px-1 text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User profile card */}
-          <div className="p-4 border-t border-white/20 dark:border-white/10">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/30 dark:border-white/10 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200">
-              <Avatar className="h-10 w-10">
-                {user?.avatar ? (
-                <img 
-                    src={user.avatar}
-                  alt={user?.firstName || 'User'} 
-                  className="w-full h-full object-cover rounded-full"
-                />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
-                    {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                )}
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.email}
-                </p>
-                {/* Weekly Profit Percentage - Strategically Placed on Profile Card */}
-                {lastWeekProfitChange !== 0 && (
-                  <div className={`flex items-center gap-1 mt-1.5 ${
-                    lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400'
-                  }`}>
-                    {lastWeekProfitChange >= 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    <span className="text-xs font-semibold">
-                      {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}% this week
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 h-16 border-b border-white/30 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl backdrop-saturate-150 shadow-sm shadow-black/5 dark:shadow-black/10">
-          <div className="flex h-full items-center justify-between px-4">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-
-            {/* Page title - hidden on mobile, shown on desktop */}
-            <div className="hidden lg:block">
-              <h1 className="text-xl font-semibold">
-                {navigation.find((item) => isActive(item.href))?.name || 'Dashboard'}
-              </h1>
-            </div>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-2">
-              {/* Theme toggle */}
+        >
+          <div className="flex h-full flex-col">
+            {/* Logo */}
+            <div className="flex h-16 items-center justify-between px-4 border-b border-white/20 dark:border-white/10">
+              <Link href="/dashboard" className="flex items-center gap-2 group">
+                <span className="text-3xl font-black tracking-tight leading-none text-foreground">
+                  NOVUNT
+                </span>
+                <div className="w-12 h-12 relative flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
+                  <Image
+                    src="/icons/novunt_short.png"
+                    alt="Novunt Logo"
+                    fill
+                    className="object-contain invert dark:invert-0"
+                  />
+                </div>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(false)}
               >
-                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <X className="h-5 w-5" />
               </Button>
+            </div>
 
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </Button>
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-              {/* User menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full p-0 h-10 w-10">
-                    <Avatar className="h-10 w-10">
-                      {user?.avatar ? (
-                      <img 
-                          src={user.avatar}
-                        alt={user?.firstName || 'User'} 
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
-                          {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                        </div>
-                      )}
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">
-                        {user?.firstName} {user?.lastName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.email}
-                      </p>
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`
+                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                    transition-all duration-200 relative overflow-hidden
+                    touch-manipulation active:scale-[0.98]
+                    ${active
+                        ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30'
+                        : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-gray-800/50 hover:backdrop-blur-sm hover:text-foreground hover:shadow-md'
+                      }
+                  `}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="flex-1">{item.name}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="h-5 min-w-5 px-1 text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* User profile card */}
+            <div className="p-4 border-t border-white/20 dark:border-white/10">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/30 dark:border-white/10 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200">
+                <Avatar className="h-10 w-10">
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user?.firstName || 'User'}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
+                      {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
                     </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setProfileModalOpen(true)}>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setNotificationsModalOpen(true)}>
-                    <Bell className="mr-2 h-4 w-4" />
-                    Notifications
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTwoFactorModalOpen(true)}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Two-Factor Authentication
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setBiometricModalOpen(true)}>
-                    <Fingerprint className="mr-2 h-4 w-4" />
-                    Biometric Authentication
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  )}
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
+                  {/* Weekly Profit Percentage - Strategically Placed on Profile Card */}
+                  {lastWeekProfitChange !== 0 && (
+                    <div className={`flex items-center gap-1 mt-1.5 ${lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400'
+                      }`}>
+                      {lastWeekProfitChange >= 0 ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      )}
+                      <span className="text-xs font-semibold">
+                        {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}% this week
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </header>
+        </aside>
 
-        {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        {/* Main content */}
+        <div className="lg:pl-64">
+          {/* Top bar */}
+          <header className="sticky top-0 z-30 h-16 border-b border-white/30 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl backdrop-saturate-150 shadow-sm shadow-black/5 dark:shadow-black/10">
+            <div className="flex h-full items-center justify-between px-4">
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
+              {/* Page title - hidden on mobile, shown on desktop */}
+              <div className="hidden lg:block">
+                <h1 className="text-xl font-semibold">
+                  {navigation.find((item) => isActive(item.href))?.name || 'Dashboard'}
+                </h1>
+              </div>
+
+              {/* Right actions */}
+              <div className="flex items-center gap-2">
+                {/* Theme toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                >
+                  <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                </Button>
+
+                {/* Notifications */}
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* User menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full p-0 h-10 w-10">
+                      <Avatar className="h-10 w-10">
+                        {user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user?.firstName || 'User'}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
+                            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">
+                          {user?.firstName} {user?.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setProfileModalOpen(true)}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setNotificationsModalOpen(true)}>
+                      <Bell className="mr-2 h-4 w-4" />
+                      Notifications
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.preventDefault();
+                    }}>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <Shield className="mr-2 h-4 w-4" />
+                          2FA Auth
+                        </div>
+                        <Switch
+                          checked={twoFactorEnabled}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setTwoFactorModalOpen(true);
+                            } else {
+                              setTwoFactorEnabled(false);
+                              toast.success('Two-Factor Authentication disabled');
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.preventDefault();
+                    }}>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <Fingerprint className="mr-2 h-4 w-4" />
+                          Biometric Auth
+                        </div>
+                        <Switch
+                          checked={biometricEnabled}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setBiometricModalOpen(true);
+                            } else {
+                              setBiometricEnabled(false);
+                              toast.success('Biometric Authentication disabled');
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </header>
+
+          {/* Page content */}
+          <main className="p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
+
+        {/* Modals */}
+        <ProfileEditModal
+          open={profileModalOpen}
+          onOpenChange={(open) => {
+            setProfileModalOpen(open);
+            // Refetch registration bonus when modal closes to update progress
+            if (!open) {
+              // Small delay to ensure profile update mutation completes
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('refetchRegistrationBonus'));
+              }, 500);
+            }
+          }}
+        />
+        <NotificationsModal open={notificationsModalOpen} onOpenChange={setNotificationsModalOpen} />
+        <TwoFactorModal
+          open={twoFactorModalOpen}
+          onOpenChange={setTwoFactorModalOpen}
+          onEnable={() => setTwoFactorEnabled(true)}
+        />
+        <BiometricModal
+          open={biometricModalOpen}
+          onOpenChange={setBiometricModalOpen}
+          onEnable={() => setBiometricEnabled(true)}
+        />
+
+        {/* Global Wallet Modals */}
+        <CreateStakeModal />
+
+        <DepositModal
+          isOpen={isModalOpen('deposit')}
+          onClose={() => closeModal('deposit')}
+        />
+        <WithdrawModal
+          isOpen={isModalOpen('withdraw')}
+          onClose={() => closeModal('withdraw')}
+        />
+        <TransferModal
+          isOpen={isModalOpen('transfer')}
+          onClose={() => closeModal('transfer')}
+        />
       </div>
-
-      {/* Modals */}
-      <ProfileEditModal 
-        open={profileModalOpen} 
-        onOpenChange={(open) => {
-          setProfileModalOpen(open);
-          // Refetch registration bonus when modal closes to update progress
-          if (!open) {
-            // Small delay to ensure profile update mutation completes
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('refetchRegistrationBonus'));
-            }, 500);
-          }
-        }} 
-      />
-      <NotificationsModal open={notificationsModalOpen} onOpenChange={setNotificationsModalOpen} />
-      <TwoFactorModal open={twoFactorModalOpen} onOpenChange={setTwoFactorModalOpen} />
-      <BiometricModal open={biometricModalOpen} onOpenChange={setBiometricModalOpen} />
-    </div>
     </DashboardGuard>
   );
 }
