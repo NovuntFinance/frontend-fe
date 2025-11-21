@@ -24,13 +24,26 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if confetti has already been shown
+    const confettiShown = typeof window !== 'undefined' && localStorage.getItem('novunt_bonus_confetti_shown') === 'true';
+
+    if (confettiShown) {
+      console.log('[BonusActivatedCard] ⛔ Confetti already shown, skipping');
+      return;
+    }
+
+    console.log('[BonusActivatedCard] 🎉 Showing confetti for activated bonus!');
+
+    // Mark as shown immediately
+    localStorage.setItem('novunt_bonus_confetti_shown', 'true');
+
     // Trigger confetti celebration when component mounts
     const duration = 3000;
     const animationEnd = Date.now() + duration;
-    const defaults = { 
-      startVelocity: 30, 
-      spread: 360, 
-      ticks: 60, 
+    const defaults = {
+      startVelocity: 30,
+      spread: 360,
+      ticks: 60,
       zIndex: 0,
       colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
     };
@@ -48,7 +61,7 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
       }
 
       const particleCount = 50 * (timeLeft / duration);
-      
+
       // Emit from left and right
       confetti({
         ...defaults,
@@ -175,8 +188,8 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ 
-                          width: `${((bonusData.bonus.bonusPaidOut || 0) / bonusData.bonusAmount) * 100}%` 
+                        animate={{
+                          width: `${((bonusData.bonus.bonusPaidOut || 0) / bonusData.bonusAmount) * 100}%`
                         }}
                         transition={{ duration: 1, delay: 0.5 }}
                         className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"

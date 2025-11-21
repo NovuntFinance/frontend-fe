@@ -31,25 +31,113 @@ export function RegistrationBonusBanner() {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasShownConfetti, setHasShownConfetti] = useState(false);
+  const confettiIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const confettiFiredRef = React.useRef(false);
 
-  // Listen for bonus completion event (triggered when stake is created and progress reaches 100%)
+  // Check localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const shown = localStorage.getItem('novunt_bonus_confetti_shown');
+      if (shown === 'true') {
+        setHasShownConfetti(true);
+        confettiFiredRef.current = true;
+      }
+    }
+  }, []);
+
+  // Cleanup confetti on unmount
+  useEffect(() => {
+    return () => {
+      if (confettiIntervalRef.current) {
+        clearInterval(confettiIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Trigger confetti helper
+  const fireConfetti = () => {
+    // NUCLEAR OPTION: Check localStorage FIRST before anything else
+    if (typeof window !== 'undefined' && localStorage.getItem('novunt_bonus_confetti_shown') === 'true') {
+      console.log('[RegistrationBonusBanner] ⛔ Confetti already shown (localStorage check), aborting');
+      return;
+    }
+
+    // Double check ref to prevent duplicate firing in same session
+    if (confettiFiredRef.current) {
+      console.log('[RegistrationBonusBanner] ⛔ Confetti already fired in this session (ref check), aborting');
+      return;
+    }
+
+    console.log('[RegistrationBonusBanner] 🎉 Firing confetti!');
+    confettiFiredRef.current = true;
+
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = {
+      startVelocity: 30,
+      spread: 360,
+      ticks: 60,
+      zIndex: 9999,
+      colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
+    };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    // Clear any existing interval
+    if (confettiIntervalRef.current) {
+      clearInterval(confettiIntervalRef.current);
+    }
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+
+      // Fire confetti from left side
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      });
+
+      // Fire confetti from right side
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      });
+    }, 250);
+
+    confettiIntervalRef.current = interval;
+  };
+
+  // Listen for bonus completion event
   useEffect(() => {
     const handleBonusCompleted = (event: any) => {
       const { bonusAmount } = event.detail || {};
-      console.log('[RegistrationBonusBanner] 🎉 Bonus completed event received!', { bonusAmount });
 
-      // Trigger confetti celebration
-      if (!hasShownConfetti) {
-        triggerConfetti();
+      // Check localStorage directly to be safe
+      const isShown = typeof window !== 'undefined' && localStorage.getItem('novunt_bonus_confetti_shown') === 'true';
+
+      if (!hasShownConfetti && !isShown && !confettiFiredRef.current) {
+        console.log('[RegistrationBonusBanner] 🎉 Bonus completed event received!', { bonusAmount });
+        fireConfetti();
         setHasShownConfetti(true);
+        localStorage.setItem('novunt_bonus_confetti_shown', 'true');
 
-        // Show success toast
         toast.success('🎉 Bonus Activated!', {
           description: `Congratulations! You've unlocked your ${bonusAmount ? `$${bonusAmount}` : '10%'} registration bonus!`,
           duration: 7000,
+          id: 'bonus-activated-toast',
         });
 
-        // Refetch to show updated progress
         setTimeout(() => refetch(), 1000);
       }
     };
@@ -60,24 +148,29 @@ export function RegistrationBonusBanner() {
     };
   }, [hasShownConfetti, refetch]);
 
-  // Trigger confetti when progress reaches 100% (also handles page refresh case)
+  // Debug: Log when we detect 100% progress (but DON'T trigger confetti here)
+  // Confetti will ONLY be triggered by the 'registrationBonusCompleted' event
   useEffect(() => {
     const progressPercentage = data?.data?.progressPercentage ?? 0;
     const status = data?.data?.status;
 
-    // Show confetti if progress is 100% and we haven't shown it yet
-    // and status is transitioning to bonus_active or requirements_met
-    if (progressPercentage === 100 && !hasShownConfetti &&
+    if (progressPercentage === 100 &&
       (status === RegistrationBonusStatus.REQUIREMENTS_MET ||
         status === RegistrationBonusStatus.BONUS_ACTIVE)) {
-      console.log('[RegistrationBonusBanner] 🎉 Progress reached 100%, triggering confetti!');
-      triggerConfetti();
-      setHasShownConfetti(true);
 
-      toast.success('🎉 Bonus Requirements Complete!', {
-        description: 'Congratulations! You\'ve completed all requirements for your registration bonus!',
-        duration: 7000,
+      // Check localStorage directly
+      const isShown = typeof window !== 'undefined' && localStorage.getItem('novunt_bonus_confetti_shown') === 'true';
+
+      console.log('[RegistrationBonusBanner] 🔍 Detected 100% progress', {
+        hasShownConfetti,
+        isShownInLocalStorage: isShown,
+        confettiFiredRef: confettiFiredRef.current,
+        willTrigger: !hasShownConfetti && !isShown && !confettiFiredRef.current,
+        status,
       });
+
+      // NOTE: We do NOT trigger confetti here anymore to prevent repeated confetti on navigation.
+      // Confetti is ONLY triggered by the 'registrationBonusCompleted' event (when stake is created).
     }
   }, [data?.data?.progressPercentage, data?.data?.status, hasShownConfetti]);
 
@@ -419,49 +512,7 @@ export function RegistrationBonusBanner() {
   }
 }
 
-/**
- * Trigger confetti celebration
- */
-function triggerConfetti() {
-  const duration = 3000;
-  const animationEnd = Date.now() + duration;
-  const defaults = {
-    startVelocity: 30,
-    spread: 360,
-    ticks: 60,
-    zIndex: 9999,
-    colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399']
-  };
 
-  const randomInRange = (min: number, max: number) => {
-    return Math.random() * (max - min) + min;
-  };
-
-  const interval = setInterval(() => {
-    const timeLeft = animationEnd - Date.now();
-
-    if (timeLeft <= 0) {
-      clearInterval(interval);
-      return;
-    }
-
-    const particleCount = 50 * (timeLeft / duration);
-
-    // Fire confetti from left side
-    confetti({
-      ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-    });
-
-    // Fire confetti from right side
-    confetti({
-      ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-    });
-  }, 250);
-}
 
 /**
  * Loading skeleton
