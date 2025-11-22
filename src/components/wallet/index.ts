@@ -5,7 +5,7 @@
 
 export { WalletDashboard } from './WalletDashboard';
 export { WalletBreakdown } from './WalletBreakdown';
-export { DepositModal } from './DepositModal';
+export { DepositModal } from './modals/DepositModal';
 export { WithdrawalModal } from './WithdrawalModal';
 export { TransactionHistory } from './TransactionHistory';
 
