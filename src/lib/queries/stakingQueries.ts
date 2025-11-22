@@ -70,21 +70,21 @@ export const stakingQueryKeys = {
  * Get Staking Dashboard
  * GET /api/v1/staking/dashboard
  * 
- * Returns:
+ * Returns full staking dashboard with wallets, active stakes, history, and summary
+ */
+export function useStakeDashboard() {
+  return useQuery({
+    queryKey: stakingQueryKeys.dashboard,
+    queryFn: async () => {
+      try {
+        const response = await api.get<StakingDashboard>('/staking/dashboard');
         const dashboardData = response.data || response;
-        
-        console.log('[Staking] ✅ Dashboard loaded:', {
-          hasData: !!dashboardData,
-          activeStakesCount: dashboardData?.activeStakes?.length || 0,
-          hasWallets: !!dashboardData?.wallets,
-        });
-        
+
         return dashboardData;
       } catch (error: unknown) {
         // Handle 404 gracefully - user has no wallet yet (new user)
         const err = error as { response?: { status?: number }; statusCode?: number };
         if (err?.response?.status === 404 || err?.statusCode === 404) {
-          console.log('[Staking] ⚠️ No wallet found - returning empty dashboard');
           // Return empty dashboard structure (matches what the API would return)
           return {
             wallets: {
@@ -135,9 +135,7 @@ export function useStakeDetails(stakeId: string) {
   return useQuery<StakeDetails>({
     queryKey: stakingQueryKeys.stake(stakeId),
     queryFn: async () => {
-      console.log(`[Staking] 🔄 Fetching stake details for: ${stakeId}`);
       const response = await api.get<StakeDetails>(`/staking/${stakeId}`);
-      console.log('[Staking] ✅ Stake details loaded:', response.stake);
       return response;
     },
     enabled: !!stakeId, // Only run if stakeId exists
@@ -153,10 +151,8 @@ export function useStakeHistory() {
   return useQuery<Stake[]>({
     queryKey: stakingQueryKeys.history,
     queryFn: async () => {
-      console.log('[Staking] 🔄 Fetching stake history...');
       const response = await api.get<StakingDashboard>('/staking/dashboard');
       const history = response.data.stakeHistory || [];
-      console.log('[Staking] ✅ History loaded:', history.length, 'stakes');
       return history;
     },
     staleTime: 60 * 1000, // 1 minute

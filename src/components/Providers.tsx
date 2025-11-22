@@ -5,27 +5,29 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { Toaster } from 'sonner';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ShareAndSocialProofProvider } from '@/components/providers/ShareAndSocialProofProvider';
+import { logger } from '@/lib/logger';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Debug logging at app initialization
   useEffect(() => {
     const apiBaseURL = process.env.NEXT_PUBLIC_API_URL;
-    console.log('🔧 ==========================================');
-    console.log('🔧 Frontend Initialization');
-    console.log('🔧 ==========================================');
-    console.log('🔧 API Base URL:', apiBaseURL || 'NOT SET');
-    console.log('🔧 Environment:', process.env.NODE_ENV);
-    console.log('🔧 NEXT_PUBLIC_API_URL:', apiBaseURL || 'NOT SET (using fallback)');
-    
+    logger.info('Frontend initialized', {
+      apiBaseURL: apiBaseURL || 'NOT SET',
+      environment: process.env.NODE_ENV,
+    });
+
     if (!apiBaseURL) {
-      console.warn('⚠️ NEXT_PUBLIC_API_URL is not set!');
-      console.warn('⚠️ Please set it in .env.local:');
-      console.warn('⚠️   Development: NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1');
-      console.warn('⚠️   Production: NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1');
+      logger.warn('NEXT_PUBLIC_API_URL is not set', {
+        instructions: {
+          development: 'NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1',
+          production: 'NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1',
+        },
+      });
     } else {
-      console.log('✅ NEXT_PUBLIC_API_URL is configured:', apiBaseURL);
+      logger.success('NEXT_PUBLIC_API_URL is configured', { url: apiBaseURL });
     }
-    console.log('🔧 ==========================================');
   }, []);
 
   const [queryClient] = useState(
@@ -42,13 +44,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        {children}
-        <Toaster position="top-right" richColors />
-      </ThemeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Toaster position="top-right" richColors />
+
+          {/* Viral Growth Features: Share Modal + Live Activity Feed */}
+          <ShareAndSocialProofProvider />
+        </ThemeProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -63,3 +70,4 @@ export function cleanupInjectedAttributes() {
     }
   });
 }
+

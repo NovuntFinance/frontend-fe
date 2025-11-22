@@ -43,7 +43,9 @@ import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RegistrationBonusBanner } from '@/components/registration-bonus/RegistrationBonusBanner';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
+import { WeeklyROSCard } from '@/components/dashboard/WeeklyROSCard';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
+import { TestShareButton } from '@/components/dev/TestShareButton';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/useUser';
 
@@ -480,71 +482,7 @@ export default function DashboardPage() {
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {/* ROS Card */}
-          <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            <motion.div
-              animate={{
-                x: [0, 15, 0],
-                y: [0, -10, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -top-12 -right-12 w-24 h-24 bg-green-500/30 rounded-full blur-2xl"
-            />
-
-            <CardHeader className="relative">
-              <div className="flex items-center gap-3 mb-2">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 10 }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-green-500/30 to-emerald-500/20 backdrop-blur-sm shadow-lg"
-                >
-                  <TrendingUp className="h-6 w-6 text-green-500" />
-                </motion.div>
-                <div>
-                  <CardTitle className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    Return on Stake
-                  </CardTitle>
-                  <CardDescription className="text-xs">Overall performance</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="flex items-baseline gap-3 mb-3">
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.9 }}
-                  className="text-5xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
-                >
-                  24.8%
-                </motion.span>
-                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-none shadow-lg hover:shadow-xl">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +5.2%
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Compared to last month
-              </p>
-
-              {/* Progress bar */}
-              <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '75%' }}
-                  transition={{ delay: 1, duration: 1 }}
-                  className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <WeeklyROSCard />
 
           {/* Streak Card */}
           <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
@@ -626,6 +564,9 @@ export default function DashboardPage() {
           />
         )
       }
-    </div >
+
+      {/* Test Share Buttons - Remove after testing */}
+      {process.env.NODE_ENV === 'development' && <TestShareButton />}
+    </div>
   );
 }

@@ -6,73 +6,134 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight, Eye, EyeOff, Loader2, Send, DollarSign } from 'lucide-react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
+import { motion } from 'framer-motion';
+import { TrendingUp, ArrowUpRight, ArrowDownRight, Eye, EyeOff, Send, DollarSign } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/utils/wallet';
 import { WithdrawalModal } from './WithdrawalModal';
 import { TransferModal } from './modals/TransferModal';
 import { WalletBreakdown } from './WalletBreakdown';
-import { ShimmerCard } from '@/components/ui/shimmer';
 import { useUIStore } from '@/store/uiStore';
-
-import { useStakingDashboard } from '@/lib/queries/stakingQueries';
+import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useDashboardOverview, useReferralStats } from '@/lib/queries';
+import { AnimatedBalance } from './AnimatedBalance';
+import { StatCard } from './StatCard';
+import { WalletDashboardSkeleton } from './WalletDashboardSkeleton';
+import { walletLogger } from '@/lib/logger';
+import { prefersReducedMotion } from '@/lib/accessibility';
 
 /**
- * Animated balance counter
- * Counts up from 0 to target value
+ * Quick Actions Component
+ * Memoized to prevent unnecessary re-renders
  */
-function AnimatedBalance({ value, isLoading }: { value: number; isLoading: boolean }) {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  React.useEffect(() => {
-    if (isLoading) {
-      setDisplayValue(0);
-      return;
-    }
-
-    const duration = 1500; // 1.5 seconds
-    const steps = 60;
-    const increment = value / steps;
-    const stepDuration = duration / steps;
-
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setDisplayValue(value);
-        clearInterval(timer);
-      } else {
-        setDisplayValue(current);
-      }
-    }, stepDuration);
-
-    return () => clearInterval(timer);
-  }, [value, isLoading]);
+const QuickActions = memo(function QuickActions({
+  onDeposit,
+  onWithdraw,
+  onTransfer,
+  canWithdraw,
+  canTransfer,
+}: {
+  onDeposit: () => void;
+  onWithdraw: () => void;
+  onTransfer: () => void;
+  canWithdraw: boolean;
+  canTransfer: boolean;
+}) {
+  const reducedMotion = prefersReducedMotion();
+  const motionProps = reducedMotion
+    ? {}
+    : {
+      whileHover: { scale: 1.02, y: -2 },
+      whileTap: { scale: 0.98 },
+      transition: { type: 'spring' as const, stiffness: 400, damping: 17 },
+    };
 
   return (
-    <motion.span
-      key={value}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
-    >
-      ${formatCurrency(displayValue, { showCurrency: false })}
-    </motion.span>
+    <div className="grid grid-cols-3 gap-3 mt-6">
+      <motion.div {...motionProps}>
+        <Button
+          onClick={onDeposit}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+          size="lg"
+        >
+          <ArrowDownRight className="h-5 w-5" />
+          <span>Deposit</span>
+        </Button>
+      </motion.div>
+      <motion.div {...motionProps}>
+        <Button
+          onClick={onWithdraw}
+          disabled={!canWithdraw}
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2 border-2 hover:bg-accent/10 hover:border-accent/50 transition-all duration-300"
+          size="lg"
+        >
+          <ArrowUpRight className="h-5 w-5" />
+          <span>Withdraw</span>
+        </Button>
+      </motion.div>
+      <motion.div {...motionProps}>
+        <Button
+          onClick={onTransfer}
+          disabled={!canTransfer}
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2 border-2 hover:bg-accent/10 hover:border-accent/50 transition-all duration-300"
+          size="lg"
+        >
+          <Send className="h-5 w-5" />
+          <span>Transfer</span>
+        </Button>
+      </motion.div>
+    </div>
   );
-}
+});
+
+/**
+ * Wallet Capabilities Component
+ */
+const WalletCapabilities = memo(function WalletCapabilities({
+  canStake,
+  canWithdraw,
+  canTransfer,
+}: {
+  canStake: boolean;
+  canWithdraw: boolean;
+  canTransfer: boolean;
+}) {
+  return (
+    <div className="mt-6 pt-6 border-t border-border/50">
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Can Stake</p>
+          <p className={`text-sm font-semibold ${canStake ? 'text-success' : 'text-muted-foreground'}`}>
+            {canStake ? '✓ Yes' : '✗ No'}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Can Withdraw</p>
+          <p className={`text-sm font-semibold ${canWithdraw ? 'text-success' : 'text-muted-foreground'}`}>
+            {canWithdraw ? '✓ Yes' : '✗ No'}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Can Transfer</p>
+          <p className={`text-sm font-semibold ${canTransfer ? 'text-success' : 'text-muted-foreground'}`}>
+            {canTransfer ? '✓ Yes' : '✗ No'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 /**
  * Wallet Dashboard Component
  */
 export function WalletDashboard() {
   const { wallet, isLoading, error, refetch } = useWallet();
-  const { data: stakingData } = useStakingDashboard();
+  const { data: stakingData } = useStakeDashboard();
   const { data: overview } = useDashboardOverview();
   const { data: referralStats } = useReferralStats();
   const { openModal } = useUIStore();
@@ -81,21 +142,44 @@ export function WalletDashboard() {
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
 
-  // Calculate total active staked amount to match Stakes Page
-  const activeStakes = stakingData?.activeStakes || [];
-  const totalActiveStaked = activeStakes.reduce((sum, stake) => sum + (stake.amount || 0), 0);
+  // Memoize calculations
+  const totalActiveStaked = useMemo(() => {
+    const activeStakes = stakingData?.activeStakes || [];
+    return activeStakes.reduce((sum, stake) => sum + (stake.amount || 0), 0);
+  }, [stakingData?.activeStakes]);
 
-  // Calculate total earned from all sources (staking + referrals)
-  // Use fallbacks from specific hooks if dashboard overview is not available
-  const totalStakingEarnings = overview?.staking?.totalEarnings ?? stakingData?.summary?.totalEarnedFromROS ?? 0;
-  const totalReferralEarnings = overview?.referrals?.referralEarnings ?? referralStats?.totalEarned ?? 0;
-  const totalEarned = totalStakingEarnings + totalReferralEarnings;
+  const totalEarned = useMemo(() => {
+    const totalStakingEarnings = overview?.staking?.totalEarnings ?? stakingData?.summary?.totalEarnedFromROS ?? 0;
+    const totalReferralEarnings = overview?.referrals?.referralEarnings ?? referralStats?.totalEarned ?? 0;
+    return totalStakingEarnings + totalReferralEarnings;
+  }, [overview, stakingData, referralStats]);
+
+  // Memoize callbacks
+  const handleDeposit = useCallback(() => {
+    walletLogger.info('Opening deposit modal');
+    openModal('deposit');
+  }, [openModal]);
+
+  const handleWithdraw = useCallback(() => {
+    walletLogger.info('Opening withdrawal modal');
+    setWithdrawalModalOpen(true);
+  }, []);
+
+  const handleTransfer = useCallback(() => {
+    walletLogger.info('Opening transfer modal');
+    setTransferModalOpen(true);
+  }, []);
+
+  const toggleBalanceVisibility = useCallback(() => {
+    setBalanceVisible(prev => !prev);
+  }, []);
 
   if (isLoading) {
     return <WalletDashboardSkeleton />;
   }
 
   if (error) {
+    walletLogger.error('Failed to load wallet', error);
     return (
       <Card className="border-destructive/50">
         <CardContent className="p-6">
@@ -114,42 +198,47 @@ export function WalletDashboard() {
     return null;
   }
 
+  const reducedMotion = prefersReducedMotion();
+
   return (
     <div className="space-y-6">
       {/* Main Balance Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <Card className="relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
           {/* Animated background gradient */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10"
-            animate={{
-              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-            style={{
-              backgroundSize: '200% 200%',
-            }}
-          />
-
-          {/* Shimmer effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              repeatDelay: 5,
-            }}
-            style={{ width: '50%' }}
-          />
+          {!reducedMotion && (
+            <>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 10,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+                style={{
+                  backgroundSize: '200% 200%',
+                }}
+              />
+              {/* Shimmer effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                animate={{ x: ['-100%', '200%'] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatDelay: 5,
+                }}
+                style={{ width: '50%' }}
+              />
+            </>
+          )}
 
           <CardHeader className="relative z-10">
             <div className="flex items-center justify-between">
@@ -168,8 +257,9 @@ export function WalletDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setBalanceVisible(!balanceVisible)}
+                onClick={toggleBalanceVisibility}
                 className="rounded-full"
+                aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
               >
                 {balanceVisible ? (
                   <EyeOff className="h-5 w-5" />
@@ -181,90 +271,29 @@ export function WalletDashboard() {
           </CardHeader>
 
           <CardContent className="relative z-10">
-            {/* Two-Wallet Breakdown */}
             <WalletBreakdown wallet={wallet} balanceVisible={balanceVisible} />
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-3 gap-3 mt-6">
-              <motion.div
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <Button
-                  onClick={() => openModal('deposit')}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
-                  size="lg"
-                >
-                  <ArrowDownRight className="h-5 w-5" />
-                  <span>Deposit</span>
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <Button
-                  onClick={() => setWithdrawalModalOpen(true)}
-                  disabled={!wallet.canWithdraw}
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 border-2 hover:bg-accent/10 hover:border-accent/50 transition-all duration-300"
-                  size="lg"
-                >
-                  <ArrowUpRight className="h-5 w-5" />
-                  <span>Withdraw</span>
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <Button
-                  onClick={() => setTransferModalOpen(true)}
-                  disabled={!wallet.canTransfer}
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 border-2 hover:bg-accent/10 hover:border-accent/50 transition-all duration-300"
-                  size="lg"
-                >
-                  <Send className="h-5 w-5" />
-                  <span>Transfer</span>
-                </Button>
-              </motion.div>
-            </div>
+            <QuickActions
+              onDeposit={handleDeposit}
+              onWithdraw={handleWithdraw}
+              onTransfer={handleTransfer}
+              canWithdraw={wallet.canWithdraw}
+              canTransfer={wallet.canTransfer}
+            />
 
-            {/* Capabilities */}
-            <div className="mt-6 pt-6 border-t border-border/50">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Can Stake</p>
-                  <p className={`text-sm font-semibold ${wallet.canStake ? 'text-success' : 'text-muted-foreground'}`}>
-                    {wallet.canStake ? '✓ Yes' : '✗ No'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Can Withdraw</p>
-                  <p className={`text-sm font-semibold ${wallet.canWithdraw ? 'text-success' : 'text-muted-foreground'}`}>
-                    {wallet.canWithdraw ? '✓ Yes' : '✗ No'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Can Transfer</p>
-                  <p className={`text-sm font-semibold ${wallet.canTransfer ? 'text-success' : 'text-muted-foreground'}`}>
-                    {wallet.canTransfer ? '✓ Yes' : '✗ No'}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <WalletCapabilities
+              canStake={wallet.canStake}
+              canWithdraw={wallet.canWithdraw}
+              canTransfer={wallet.canTransfer}
+            />
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Statistics Cards */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
@@ -300,70 +329,3 @@ export function WalletDashboard() {
     </div>
   );
 }
-
-/**
- * Stat Card Component
- */
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-  className,
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  color: string;
-  className?: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4, scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-    >
-      <Card className={className}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">{label}</p>
-              <motion.p
-                key={value}
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                className={`text-lg font-bold ${color}`}
-              >
-                {formatCurrency(value, { showCurrency: false })}
-              </motion.p>
-            </div>
-            <motion.div
-              className={`p-2 rounded-lg bg-muted ${color}`}
-              whileHover={{ rotate: 5, scale: 1.1 }}
-            >
-              {icon}
-            </motion.div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-/**
- * Loading Skeleton
- */
-function WalletDashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <ShimmerCard className="h-64" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <ShimmerCard />
-        <ShimmerCard />
-        <ShimmerCard />
-      </div>
-    </div>
-  );
-}
-

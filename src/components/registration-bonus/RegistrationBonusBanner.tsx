@@ -2,12 +2,13 @@
  * Registration Bonus Banner - Premium Gold Design
  * Modern, attractive design with gold accents and elegant layout
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Star, CheckCircle2, Clock } from 'lucide-react';
+import { X, Gift, Star, CheckCircle2, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
 import { RegistrationBonusStatus } from '@/types/registrationBonus';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,6 +34,7 @@ export function RegistrationBonusBanner() {
   const [hasShownConfetti, setHasShownConfetti] = useState(false);
   const confettiIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const confettiFiredRef = React.useRef(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Check localStorage on mount
   useEffect(() => {
@@ -445,16 +447,28 @@ export function RegistrationBonusBanner() {
                     </div>
                   </div>
 
-                  {/* Dismiss Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleDismiss}
-                    className="shrink-0 h-8 w-8 rounded-full hover:bg-novunt-gold-500/10 text-muted-foreground hover:text-foreground"
-                    aria-label="Dismiss banner"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="gap-1 text-xs h-8"
+                    >
+                      {isExpanded ? 'Hide Details' : 'Show Details'}
+                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </Button>
+
+                    {/* Dismiss Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleDismiss}
+                      className="shrink-0 h-8 w-8 rounded-full hover:bg-novunt-gold-500/10 text-muted-foreground hover:text-foreground"
+                      aria-label="Dismiss banner"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Countdown Timer - Gold Style */}
@@ -499,11 +513,25 @@ export function RegistrationBonusBanner() {
                 </div>
 
                 {/* Requirements Section */}
-                <RequirementSection
-                  requirements={bonusData.requirements}
-                  nextStepDescription={bonusData.nextStepDescription ?? 'Complete the requirements above to activate your bonus'}
-                  onRefresh={refetch}
-                />
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-4 border-t border-novunt-gold-500/10 mt-4">
+                        <RequirementSection
+                          requirements={bonusData.requirements}
+                          nextStepDescription={bonusData.nextStepDescription ?? 'Complete the requirements above to activate your bonus'}
+                          onRefresh={refetch}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </CardContent>
             </Card>
           </motion.div>
@@ -511,8 +539,6 @@ export function RegistrationBonusBanner() {
       );
   }
 }
-
-
 
 /**
  * Loading skeleton
