@@ -5,8 +5,8 @@ import '@/styles/glassmorphism.css';
 import { Providers } from '@/components/Providers';
 import { PWARegister } from '@/components/pwa-register';
 
-const inter = Inter({ 
-  subsets: ['latin'], 
+const inter = Inter({
+  subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
   fallback: ['system-ui', 'arial']
@@ -27,15 +27,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icons/novunt_short.png', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/novunt_short.png', type: 'image/png', sizes: '16x16' },
-      { url: '/icons/novunt.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
     apple: [
-      { url: '/icons/novunt_short.png', sizes: '180x180' },
-      { url: '/icons/novunt.png', sizes: '192x192' }
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/icons/novunt_short.png',
+    shortcut: '/favicon.ico',
   },
   appleWebApp: {
     capable: true,
