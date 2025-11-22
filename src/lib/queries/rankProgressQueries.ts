@@ -17,6 +17,7 @@ export function useRankProgress() {
         queryFn: getRankProgress,
         staleTime: 30 * 1000, // 30 seconds (as recommended by backend)
         gcTime: 5 * 60 * 1000, // 5 minutes
+        refetchInterval: 30 * 1000, // Poll every 30 seconds
         retry: 2,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     });

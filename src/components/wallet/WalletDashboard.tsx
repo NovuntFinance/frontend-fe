@@ -21,6 +21,7 @@ import { ShimmerCard } from '@/components/ui/shimmer';
 import { useUIStore } from '@/store/uiStore';
 
 import { useStakingDashboard } from '@/lib/queries/stakingQueries';
+import { useDashboardOverview, useReferralStats } from '@/lib/queries';
 
 /**
  * Animated balance counter
@@ -72,6 +73,8 @@ function AnimatedBalance({ value, isLoading }: { value: number; isLoading: boole
 export function WalletDashboard() {
   const { wallet, isLoading, error, refetch } = useWallet();
   const { data: stakingData } = useStakingDashboard();
+  const { data: overview } = useDashboardOverview();
+  const { data: referralStats } = useReferralStats();
   const { openModal } = useUIStore();
 
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -81,7 +84,12 @@ export function WalletDashboard() {
   // Calculate total active staked amount to match Stakes Page
   const activeStakes = stakingData?.activeStakes || [];
   const totalActiveStaked = activeStakes.reduce((sum, stake) => sum + (stake.amount || 0), 0);
-  const totalEarned = stakingData?.summary?.totalEarnedFromROS || 0;
+
+  // Calculate total earned from all sources (staking + referrals)
+  // Use fallbacks from specific hooks if dashboard overview is not available
+  const totalStakingEarnings = overview?.staking?.totalEarnings ?? stakingData?.summary?.totalEarnedFromROS ?? 0;
+  const totalReferralEarnings = overview?.referrals?.referralEarnings ?? referralStats?.totalEarned ?? 0;
+  const totalEarned = totalStakingEarnings + totalReferralEarnings;
 
   if (isLoading) {
     return <WalletDashboardSkeleton />;

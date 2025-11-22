@@ -4,6 +4,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { Info } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface NovuntPremiumCardProps {
     /**
@@ -14,6 +21,10 @@ interface NovuntPremiumCardProps {
      * The subtitle or description text
      */
     subtitle?: string;
+    /**
+     * Optional tooltip text to display next to the title
+     */
+    tooltip?: string;
     /**
      * The icon component to display in the header
      */
@@ -44,6 +55,7 @@ interface NovuntPremiumCardProps {
 export function NovuntPremiumCard({
     title,
     subtitle,
+    tooltip,
     icon: Icon,
     colorTheme = 'orange',
     children,
@@ -120,10 +132,24 @@ export function NovuntPremiumCard({
                             <Icon className={cn("h-5 w-5", theme.iconColor)} />
                         </motion.div>
                     )}
-                    <div>
-                        <h3 className={cn("text-lg font-bold", theme.iconColor)}>
-                            {title}
-                        </h3>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className={cn("text-lg font-bold", theme.iconColor)}>
+                                {title}
+                            </h3>
+                            {tooltip && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Info className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="max-w-xs text-sm">{tooltip}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
                         {subtitle && (
                             <p className="text-sm text-muted-foreground">
                                 {subtitle}

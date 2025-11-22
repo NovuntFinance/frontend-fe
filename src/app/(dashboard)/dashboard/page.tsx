@@ -43,6 +43,8 @@ import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RegistrationBonusBanner } from '@/components/registration-bonus/RegistrationBonusBanner';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
+import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
+import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/useUser';
 
 /**
@@ -280,60 +282,45 @@ export default function DashboardPage() {
         <RegistrationBonusBanner />
 
         {/* Stats Grid - Premium Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {[
             {
               title: 'Total Balance',
               value: totalBalance,
-              subtitle: 'Funds currently available across all wallets.',
-              tooltip: 'This is your available, unstaked balance.',
+              tooltip: 'Funds currently available across all wallets.',
               icon: Wallet,
-              gradient: 'from-purple-500 to-purple-600',
-              iconBg: 'bg-purple-500/10',
-              iconColor: 'text-purple-500',
+              colorTheme: 'purple' as const,
             },
             {
               title: 'Total Earnings',
               value: totalEarnings + totalReferralEarnings,
-              subtitle: 'Includes staking profits, referral bonuses, and other earnings.',
-              tooltip: 'All-time total earnings from every income source.',
+              tooltip: 'Includes staking profits, referral bonuses, and other earnings.',
               icon: DollarSign,
-              gradient: 'from-green-500 to-green-600',
-              iconBg: 'bg-green-500/10',
-              iconColor: 'text-green-500',
+              colorTheme: 'emerald' as const,
             },
             {
               title: "Last Week's Profit",
               value: lastWeekProfit,
-              subtitle: 'Profit made last week.',
-              tooltip: 'Weekly profit compared to the previous week.',
+              tooltip: 'Profit made last week.',
               icon: lastWeekProfitChange >= 0 ? TrendingUp : TrendingDown,
-              gradient: lastWeekProfitChange >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
-              iconBg: lastWeekProfitChange >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10',
-              iconColor: lastWeekProfitChange >= 0 ? 'text-emerald-500' : 'text-red-500',
+              colorTheme: lastWeekProfitChange >= 0 ? 'emerald' as const : 'orange' as const,
               change: `${lastWeekProfitChange >= 0 ? '+' : ''}${lastWeekProfitChange.toFixed(1)}%`,
               changePositive: lastWeekProfitChange >= 0,
             },
             {
               title: 'Live Platform Activity',
               value: null,
-              subtitle: 'Real-time user activities across the platform.',
-              tooltip: 'Recent activities from platform users in real-time.',
+              tooltip: 'Real-time user activities across the platform.',
               icon: Circle,
-              gradient: 'from-indigo-500 to-indigo-600',
-              iconBg: 'bg-indigo-500/10',
-              iconColor: 'text-indigo-500',
+              colorTheme: 'blue' as const,
               isActivity: true,
             },
             ...(pendingEarnings > 0 ? [{
               title: 'Pending Earnings',
               value: pendingEarnings,
-              subtitle: 'Earnings awaiting confirmation or release.',
-              tooltip: 'Funds still in holding period before withdrawal.',
+              tooltip: 'Earnings awaiting confirmation or release.',
               icon: Clock,
-              gradient: 'from-amber-500 to-amber-600',
-              iconBg: 'bg-amber-500/10',
-              iconColor: 'text-amber-500',
+              colorTheme: 'orange' as const,
             }] : []),
             ...(nextPayoutDate ? [{
               title: 'Next Payout',
@@ -343,12 +330,9 @@ export default function DashboardPage() {
                 day: 'numeric',
                 year: 'numeric',
               }),
-              subtitle: 'Expected date for your next ROS or distribution.',
-              tooltip: 'Automatically updated after each cycle.',
+              tooltip: 'Expected date for your next ROS or distribution.',
               icon: Calendar,
-              gradient: 'from-cyan-500 to-cyan-600',
-              iconBg: 'bg-cyan-500/10',
-              iconColor: 'text-cyan-500',
+              colorTheme: 'blue' as const,
             }] : []),
           ].map((stat, index) => (
             <motion.div
@@ -356,96 +340,86 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4, scale: 1.02 }}
+              whileHover={{ y: -4, scale: 1.01 }}
             >
-              <Card className="relative overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
-                {/* Gradient Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5`} />
-
-                <CardContent className="relative pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl ${stat.iconBg} group-hover:scale-110 transition-transform`}>
-                      <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">{stat.tooltip}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1 font-medium">
-                      {stat.title}
-                    </p>
-                    {isLoading ? (
-                      <Skeleton className="h-8 w-32" />
-                    ) : stat.isActivity ? (
-                      // Live Activity Display
-                      <motion.div
-                        key={currentActivity.user + currentActivity.time}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.5 }}
-                        className="space-y-2"
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`p-2 rounded-lg ${stat.iconBg}`}>
-                            <currentActivity.icon className={`h-4 w-4 ${currentActivity.color}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">
-                              {currentActivity.user}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {currentActivity.action}
-                              {currentActivity.amount && (
-                                <span className="font-semibold text-foreground ml-1">
-                                  ${currentActivity.amount.toLocaleString()}
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Badge variant="outline" className="text-xs">
-                            {currentActivity.time}
-                          </Badge>
-                          <div className="flex items-center gap-1">
-                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs text-muted-foreground">Live</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <p className="text-3xl font-bold text-foreground">
-                          {balanceVisible ? (
-                            stat.displayValue || `$${(stat.value ?? 0).toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}`
-                          ) : '••••••'}
+              <NovuntPremiumCard
+                title={stat.title}
+                tooltip={stat.tooltip}
+                icon={stat.icon}
+                colorTheme={stat.colorTheme}
+                className="h-full"
+              >
+                {isLoading ? (
+                  <Skeleton className="h-10 w-32" />
+                ) : stat.isActivity ? (
+                  // Live Activity Display
+                  <motion.div
+                    key={currentActivity.user + currentActivity.time}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg bg-${stat.colorTheme}-500/10`}>
+                        <currentActivity.icon className={`h-4 w-4 text-${stat.colorTheme}-500`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {currentActivity.user}
                         </p>
-                        {stat.change && (
-                          <span className={`text-sm font-semibold ${stat.changePositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {stat.change}
-                          </span>
-                        )}
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          {currentActivity.action}
+                          {currentActivity.amount && (
+                            <span className="font-semibold text-foreground">
+                              ${currentActivity.amount.toLocaleString()}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                      <Badge variant="outline" className="text-xs bg-background/50">
+                        {currentActivity.time}
+                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                        <span className="text-xs font-medium text-green-500">Live</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-3xl font-bold text-foreground tracking-tight">
+                        {balanceVisible ? (
+                          stat.displayValue || `$${(stat.value ?? 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        ) : '••••••'}
+                      </p>
+                    </div>
+                    {stat.change && (
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={stat.changePositive ? "default" : "destructive"}
+                          className={cn(
+                            "text-xs font-bold px-2 py-0.5",
+                            stat.changePositive
+                              ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 border-emerald-500/20"
+                              : "bg-red-500/20 text-red-600 hover:bg-red-500/30 border-red-500/20"
+                          )}
+                        >
+                          {stat.change}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">vs last week</span>
                       </div>
                     )}
-                    {!stat.isActivity && (
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {stat.subtitle}
-                      </p>
-                    )}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </NovuntPremiumCard>
             </motion.div>
           ))}
         </div>

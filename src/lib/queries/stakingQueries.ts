@@ -71,24 +71,6 @@ export const stakingQueryKeys = {
  * GET /api/v1/staking/dashboard
  * 
  * Returns:
- * - Current wallet balances
- * - All active stakes
- * - Stake history
- * - Summary statistics
- */
-export function useStakingDashboard() {
-  return useQuery<StakingDashboard['data']>({
-    queryKey: stakingQueryKeys.dashboard,
-    queryFn: async () => {
-      try {
-        console.log('[Staking] 🔄 Fetching staking dashboard...');
-        const response = await api.get<StakingDashboard>('/staking/dashboard');
-        
-        // Log the actual response structure for debugging
-        console.log('[Staking] 📊 Raw API response:', response);
-        
-        // The API returns { success: true, data: { wallets, activeStakes, etc } }
-        // But api.get already unwraps it, so response.data contains the full structure
         const dashboardData = response.data || response;
         
         console.log('[Staking] ✅ Dashboard loaded:', {

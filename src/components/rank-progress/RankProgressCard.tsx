@@ -20,7 +20,8 @@ import {
     Info,
     Star,
     Shield,
-    Sparkles
+    Lock,
+    AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -59,10 +60,14 @@ export function RankProgressCard() {
             if (prevProgress === null) {
                 setPrevProgress(newProgress);
             } else {
-                setPrevProgress(newProgress);
+                // Only update prevProgress if it changes, to avoid loops
+                if (newProgress.performance !== prevProgress.performance ||
+                    newProgress.premium !== prevProgress.premium) {
+                    setPrevProgress(newProgress);
+                }
             }
         }
-    }, [data?.overall_progress_percent, data?.premium_progress_percent]);
+    }, [data]);
 
     if (isLoading) {
         return <RankProgressSkeleton />;
@@ -85,10 +90,10 @@ export function RankProgressCard() {
         premium_progress_percent,
         requirements,
         pool_qualification,
-        details
     } = data;
 
     const isMaxRank = next_rank === null;
+    const isStakeholder = current_rank === 'Stakeholder';
 
     // Check for regression
     const performanceDecreased = prevProgress && overall_progress_percent < prevProgress.performance;
@@ -97,13 +102,13 @@ export function RankProgressCard() {
     return (
         <Card className="border-border/50 bg-gradient-to-br from-card via-card to-muted/20 transition-all duration-300 overflow-hidden">
             {/* Subtle Glow Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-emerald-500/10 pointer-events-none opacity-50" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-emerald-500/5 pointer-events-none opacity-50" />
 
             <CardHeader className="pb-4 relative z-10">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <motion.div
-                            className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/20"
+                            className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20"
                             animate={{
                                 x: [0, 5, 0, -5, 0],
                                 rotate: [0, 5, 0, -5, 0]
@@ -114,7 +119,7 @@ export function RankProgressCard() {
                                 ease: "easeInOut"
                             }}
                         >
-                            <Target className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+                            <Target className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                         </motion.div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -125,7 +130,7 @@ export function RankProgressCard() {
                                             <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
-                                            <p>Progress is based on <strong>ACTIVE</strong> stakes only. When stakes expire, your progress may decrease.</p>
+                                            <p>Track your journey through the ranks. Progress is based on active stakes and team performance.</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -149,71 +154,82 @@ export function RankProgressCard() {
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-6 relative z-10">
-                {/* Current & Next Rank with Icons */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        {/* Current Rank Icon */}
-                        {current_rank_icon ? (
-                            <motion.img
-                                src={current_rank_icon}
-                                alt={current_rank}
-                                className="w-14 h-14 object-contain"
-                                animate={{
-                                    rotate: [0, 5, -5, 0],
-                                    scale: [1, 1.05, 1]
-                                }}
-                                transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    repeatDelay: 2,
-                                    ease: "easeInOut"
-                                }}
-                                onError={(e) => {
-                                    // Fallback to emoji if image fails to load
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                        ) : (
-                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 flex items-center justify-center shadow-lg">
-                                <span className="text-2xl">🏆</span>
+            <CardContent className="space-y-8 relative z-10">
+                {/* Current & Next Rank with Icons - Responsive Layout */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
+                    {/* Current Rank - Prominent */}
+                    <div className="flex flex-col items-center md:items-start gap-3 text-center md:text-left">
+                        <div className="relative">
+                            {current_rank_icon ? (
+                                <motion.img
+                                    src={current_rank_icon}
+                                    alt={current_rank}
+                                    className="w-20 h-20 object-contain drop-shadow-xl"
+                                    animate={{
+                                        rotate: [0, 5, -5, 0],
+                                        scale: [1, 1.05, 1]
+                                    }}
+                                    transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        repeatDelay: 2,
+                                        ease: "easeInOut"
+                                    }}
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-500 flex items-center justify-center shadow-xl">
+                                    <span className="text-3xl">🏆</span>
+                                </div>
+                            )}
+                            <div className="absolute -bottom-2 -right-2 bg-background/80 backdrop-blur-sm border border-border rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                Current
                             </div>
-                        )}
+                        </div>
                         <div>
-                            <p className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                            <p className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                                 {current_rank}
                             </p>
-                            <p className="text-xs text-muted-foreground">Current</p>
                         </div>
                     </div>
 
                     {!isMaxRank && (
                         <>
-                            <TrendingUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                            {/* Arrow Indicator */}
+                            <div className="hidden md:flex flex-col items-center gap-1 text-muted-foreground/50">
+                                <span className="text-xs uppercase tracking-widest">Progress</span>
+                                <TrendingUp className="h-6 w-6" />
+                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                    <p className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                            {/* Next Rank - Target */}
+                            <div className="flex flex-col items-center md:items-end gap-3 text-center md:text-right opacity-80 hover:opacity-100 transition-opacity">
+                                <div className="relative">
+                                    {next_rank_icon ? (
+                                        <motion.img
+                                            src={next_rank_icon}
+                                            alt={next_rank}
+                                            className="w-14 h-14 object-contain opacity-70 grayscale-[30%]"
+                                            whileHover={{ scale: 1.05, opacity: 1, filter: 'grayscale(0%)' }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-500 flex items-center justify-center shadow-lg opacity-60">
+                                            <span className="text-2xl">💎</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute -bottom-2 -left-2 md:left-auto md:-right-2 bg-muted/80 backdrop-blur-sm border border-border rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                        Next
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-lg font-bold text-muted-foreground">
                                         {next_rank}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">Next</p>
                                 </div>
-                                {/* Next Rank Icon */}
-                                {next_rank_icon ? (
-                                    <motion.img
-                                        src={next_rank_icon}
-                                        alt={next_rank}
-                                        className="w-14 h-14 object-contain opacity-60"
-                                        whileHover={{ scale: 1.05, opacity: 0.8 }}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-500 flex items-center justify-center shadow-lg opacity-60">
-                                        <span className="text-2xl">💎</span>
-                                    </div>
-                                )}
                             </div>
                         </>
                     )}
@@ -221,33 +237,44 @@ export function RankProgressCard() {
 
                 {/* Dual Progress Bars - Stacked Vertically */}
                 {!isMaxRank && (
-                    <div className="space-y-4">
-                        {/* Bar A: Performance Rank */}
+                    <div className="space-y-6">
+                        {/* Bar A: Performance Rank (Blue Theme) */}
                         <div className="space-y-2">
                             <div className="flex justify-between items-center text-sm">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground font-medium">
-                                        Performance {next_rank}
+                                    <div className="p-1 rounded-full bg-blue-500/10">
+                                        <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <span className="font-medium text-foreground">
+                                        Performance Progress
                                     </span>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-blue-500 transition-colors" />
                                             </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p className="text-xs">Weighted: Personal (10%) + Team (70%) + Downlines (20%)</p>
+                                            <TooltipContent className="max-w-xs">
+                                                <p className="font-semibold mb-1">Performance Calculation:</p>
+                                                <ul className="list-disc pl-4 text-xs space-y-1">
+                                                    <li>Personal Stake (1x weight)</li>
+                                                    <li>Team Stake (7x weight)</li>
+                                                    <li>Direct Downlines (2x weight)</li>
+                                                </ul>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {performanceDecreased && (
-                                        <Badge variant="destructive" className="text-xs gap-1">
+                                        <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
                                             <TrendingDown className="h-3 w-3" />
                                             Decreased
                                         </Badge>
                                     )}
-                                    <span className="font-semibold text-orange-600 dark:text-orange-500">
+                                    <span className={cn(
+                                        "font-bold",
+                                        performanceDecreased ? "text-red-500" : "text-blue-600 dark:text-blue-400"
+                                    )}>
                                         {overall_progress_percent}%
                                     </span>
                                 </div>
@@ -256,7 +283,12 @@ export function RankProgressCard() {
                                 <motion.div
                                     animate={{ width: `${overall_progress_percent}%` }}
                                     transition={{ duration: 0.8, ease: "easeInOut" }}
-                                    className="h-full bg-gradient-to-r from-orange-500 via-yellow-400 to-yellow-500 rounded-full shadow-lg"
+                                    className={cn(
+                                        "h-full rounded-full shadow-lg transition-colors duration-500",
+                                        performanceDecreased
+                                            ? "bg-gradient-to-r from-red-500 to-orange-500"
+                                            : "bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-500"
+                                    )}
                                 />
                                 {/* Shimmer effect */}
                                 <motion.div
@@ -273,55 +305,84 @@ export function RankProgressCard() {
                             </div>
                         </div>
 
-                        {/* Bar B: Premium Rank */}
+                        {/* Bar B: Premium Rank (Green Theme) */}
                         <div className="space-y-2">
                             <div className="flex justify-between items-center text-sm">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground font-medium">
-                                        Premium {next_rank}
+                                    <div className="p-1 rounded-full bg-emerald-500/10">
+                                        <Shield className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                    </div>
+                                    <span className="font-medium text-foreground">
+                                        Premium Pool Qualification
                                     </span>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-emerald-500 transition-colors" />
                                             </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p className="text-xs">Requires qualified downlines at target rank</p>
+                                            <TooltipContent className="max-w-xs">
+                                                <p className="font-semibold mb-1">Premium Pool:</p>
+                                                <p className="text-xs">Requires maintaining active downlines at specific ranks. You can lose this qualification if downlines become inactive.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {premiumDecreased && (
-                                        <Badge variant="destructive" className="text-xs gap-1">
+                                        <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
                                             <TrendingDown className="h-3 w-3" />
                                             Decreased
                                         </Badge>
                                     )}
-                                    <span className="font-semibold text-blue-600 dark:text-blue-500">
-                                        {premium_progress_percent}%
-                                    </span>
+                                    {isStakeholder ? (
+                                        <span className="text-xs font-medium text-muted-foreground">Not Eligible</span>
+                                    ) : (
+                                        <span className={cn(
+                                            "font-bold",
+                                            premiumDecreased ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"
+                                        )}>
+                                            {premium_progress_percent}%
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                                <motion.div
-                                    animate={{ width: `${premium_progress_percent}%` }}
-                                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                                    className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full shadow-lg"
-                                />
-                                {/* Shimmer effect */}
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                                    initial={{ x: '-100%' }}
-                                    animate={{ x: '200%' }}
-                                    transition={{
-                                        duration: 2.5,
-                                        ease: 'easeInOut',
-                                        repeat: Infinity,
-                                        repeatDelay: 2,
-                                    }}
-                                />
+                                {isStakeholder ? (
+                                    <div className="h-full w-full bg-muted-foreground/10 flex items-center justify-center">
+                                        <div className="w-full h-full bg-[url('/assets/stripe-pattern.png')] opacity-10" />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <motion.div
+                                            animate={{ width: `${premium_progress_percent}%` }}
+                                            transition={{ duration: 0.8, ease: "easeInOut" }}
+                                            className={cn(
+                                                "h-full rounded-full shadow-lg transition-colors duration-500",
+                                                premiumDecreased
+                                                    ? "bg-gradient-to-r from-red-500 to-orange-500"
+                                                    : "bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-500"
+                                            )}
+                                        />
+                                        {/* Shimmer effect */}
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                            initial={{ x: '-100%' }}
+                                            animate={{ x: '200%' }}
+                                            transition={{
+                                                duration: 2.5,
+                                                ease: 'easeInOut',
+                                                repeat: Infinity,
+                                                repeatDelay: 2,
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
+                            {isStakeholder && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> Stakeholders are not eligible for Premium Pool
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}
@@ -355,11 +416,11 @@ export function RankProgressCard() {
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             className="overflow-hidden"
                         >
-                            <div className="space-y-6 pt-2 border-t border-border/50 mt-4">
+                            <div className="space-y-6 pt-6 border-t border-border/50 mt-2">
                                 {/* Requirements */}
                                 <div className="space-y-3">
                                     <h4 className="text-sm font-semibold flex items-center gap-2">
-                                        <Star className="h-4 w-4" />
+                                        <Star className="h-4 w-4 text-orange-500" />
                                         Requirements
                                     </h4>
                                     <div className="space-y-2.5">
@@ -393,19 +454,22 @@ export function RankProgressCard() {
                                 {/* Pool Qualifications */}
                                 <div className="space-y-3">
                                     <h4 className="text-sm font-semibold flex items-center gap-2">
-                                        <Shield className="h-4 w-4" />
+                                        <Shield className="h-4 w-4 text-blue-500" />
                                         Pool Qualifications
                                     </h4>
-                                    <div className="grid gap-2">
+                                    <div className="grid gap-3">
                                         <PoolBadge
                                             title="Performance Pool"
                                             isQualified={pool_qualification.performance_pool.is_qualified}
                                             message={pool_qualification.performance_pool.message}
+                                            type="performance"
                                         />
                                         <PoolBadge
                                             title="Premium Pool"
-                                            isQualified={pool_qualification.premium_pool.is_qualified}
-                                            message={pool_qualification.premium_pool.message}
+                                            isQualified={isStakeholder ? false : pool_qualification.premium_pool.is_qualified}
+                                            message={isStakeholder ? "Stakeholders are not eligible for Premium Pool" : pool_qualification.premium_pool.message}
+                                            type="premium"
+                                            isStakeholder={isStakeholder}
                                         />
                                     </div>
                                 </div>
@@ -432,10 +496,10 @@ function RequirementItem({
     requirement: Requirement;
     unit?: string;
 }) {
-    const { current, required, progress_percent, is_met } = requirement;
+    const { current, required, is_met } = requirement;
 
     return (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50 hover:bg-muted/80 transition-colors">
             <div className={cn(
                 "p-2 rounded-lg",
                 is_met ? "bg-green-500/10 text-green-600 dark:text-green-500" : "bg-muted"
@@ -455,9 +519,10 @@ function RequirementItem({
                     <span>
                         {unit}{current.toLocaleString()} / {unit}{required.toLocaleString()}
                     </span>
-                    <span className="font-semibold">{progress_percent}%</span>
+                    <span className={is_met ? "text-green-600 dark:text-green-500 font-medium" : ""}>
+                        {is_met ? "Completed" : "In Progress"}
+                    </span>
                 </div>
-                <Progress value={progress_percent} className="h-1 mt-1.5" />
             </div>
         </div>
     );
@@ -469,36 +534,52 @@ function RequirementItem({
 function PoolBadge({
     title,
     isQualified,
-    message
+    message,
+    type,
+    isStakeholder = false
 }: {
     title: string;
     isQualified: boolean;
     message: string;
+    type: 'performance' | 'premium';
+    isStakeholder?: boolean;
 }) {
+    const isPerformance = type === 'performance';
+    const activeColorClass = isPerformance ? "text-blue-600 dark:text-blue-400" : "text-green-600 dark:text-green-400";
+    const activeBgClass = isPerformance ? "bg-blue-500/10 border-blue-500/20" : "bg-green-500/10 border-green-500/20";
+    const activeBadgeClass = isPerformance ? "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30" : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30";
+
     return (
         <div className={cn(
-            "flex items-center justify-between p-3 rounded-lg border",
+            "flex flex-col gap-2 p-3 rounded-lg border transition-all",
             isQualified
-                ? "bg-green-500/10 border-green-500/20"
-                : "bg-muted/50 border-border/50"
+                ? activeBgClass
+                : "bg-muted/30 border-border/50"
         )}>
-            <div className="flex items-center gap-2">
-                {isQualified ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-                ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="text-sm font-medium">{title}</span>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    {isStakeholder ? (
+                        <Lock className="h-4 w-4 text-muted-foreground" />
+                    ) : isQualified ? (
+                        <CheckCircle2 className={cn("h-4 w-4", activeColorClass)} />
+                    ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm font-medium">{title}</span>
+                </div>
+                <Badge
+                    variant={isQualified ? "default" : "secondary"}
+                    className={cn(
+                        "text-xs",
+                        isQualified && activeBadgeClass
+                    )}
+                >
+                    {isStakeholder ? "Not Eligible" : isQualified ? "Qualified" : "Not Qualified"}
+                </Badge>
             </div>
-            <Badge
-                variant={isQualified ? "default" : "secondary"}
-                className={cn(
-                    "text-xs",
-                    isQualified && "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30"
-                )}
-            >
-                {isQualified ? "Qualified" : "Not Qualified"}
-            </Badge>
+            <p className="text-xs text-muted-foreground pl-6">
+                {message}
+            </p>
         </div>
     );
 }
@@ -541,7 +622,7 @@ function RankProgressError({ error }: { error: string }) {
         <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="pt-6">
                 <div className="flex items-center gap-3 text-destructive">
-                    <Info className="h-5 w-5" />
+                    <AlertCircle className="h-5 w-5" />
                     <div>
                         <p className="font-medium">Failed to load rank progress</p>
                         <p className="text-sm text-muted-foreground">{error}</p>
