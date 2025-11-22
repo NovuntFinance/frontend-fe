@@ -9,16 +9,38 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
-  fallback: ['system-ui', 'arial']
+  fallback: ['system-ui', 'arial'],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'),
-  title: 'Novunt - Goal-Based Staking Platform',
-  description: 'Stake USDT and earn up to 200% returns. Join Novunt for smart staking with Performance and Premium Pool rewards.',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+  ),
+  title: 'Novunt – Smart Goal Staking',
+  description:
+    'Stake USDT and earn up to 200% returns. Join Novunt for smart staking with Performance and Premium Pool rewards.',
   applicationName: 'Novunt',
   manifest: '/manifest.json',
-  keywords: ['staking', 'crypto', 'USDT', 'blockchain', 'earn', 'ROS', 'DeFi'],
+  keywords: [
+    'crypto',
+    'USDT',
+    'blockchain',
+    'earn',
+    'ROS',
+    'Trade',
+    'Goal',
+    'Stake',
+    'Smart',
+    'Goal',
+    'Staking',
+    'Performance',
+    'Premium',
+    'Rewards',
+    'Pool',
+    'Smart',
+    'Forex',
+    'Foreign Exchange',
+  ],
   authors: [{ name: 'Novunt' }],
   creator: 'Novunt',
   publisher: 'Novunt',
@@ -31,9 +53,7 @@ export const metadata: Metadata = {
       { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
       { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
     shortcut: '/favicon.ico',
   },
   appleWebApp: {
@@ -43,7 +63,8 @@ export const metadata: Metadata = {
     startupImage: [
       {
         url: '/icons/icon-maskable.svg',
-        media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
+        media:
+          '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
       },
     ],
   },
@@ -51,7 +72,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://novunt.com',
-    title: 'Novunt - Goal-Based Staking Platform',
+    title: 'Novunt – Smart Goal Staking',
     description: 'Stake USDT and earn up to 200% returns',
     siteName: 'Novunt',
     images: [
@@ -65,7 +86,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Novunt - Goal-Based Staking Platform',
+    title: 'Novunt – Smart Goal Staking',
     description: 'Stake USDT and earn up to 200% returns',
   },
 };
