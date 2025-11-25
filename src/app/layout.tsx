@@ -108,6 +108,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log('[RootLayout] Rendering root layout');
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning={true} className="antialiased">
