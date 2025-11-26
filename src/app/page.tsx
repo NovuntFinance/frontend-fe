@@ -15,23 +15,6 @@ const ProgressDeposit = dynamic(
 const ChatWidget = dynamic(() => import('@/components/ui/chat-widget'), {
   ssr: false,
 });
-('use client');
-
-import React, { useRef, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-
-// Dynamically import components to avoid SSR issues
-const Typing = dynamic(() => import('@/components/ui/typing'), { ssr: false });
-const ProgressDeposit = dynamic(
-  () => import('@/components/ui/progress-deposit'),
-  { ssr: false }
-);
-const ChatWidget = dynamic(() => import('@/components/ui/chat-widget'), {
-  ssr: false,
-});
 
 function GradientBlob({ className = '' }: { className?: string }) {
   return (

@@ -8,9 +8,19 @@ import { motion } from 'framer-motion';
 import { Mail, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { verifyEmailSchema, type VerifyEmailFormData } from '@/lib/validation';
-import { useCompleteRegistration, useResendVerification } from '@/lib/mutations';
+import {
+  useCompleteRegistration,
+  useResendVerification,
+} from '@/lib/mutations';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 
@@ -18,11 +28,11 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
-  
+
   // Phase 1: Use completeRegistration to finish registration with verification code
   const completeRegistrationMutation = useCompleteRegistration();
   const resendMutation = useResendVerification();
-  
+
   const [verificationCode, setVerificationCode] = useState('');
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -44,7 +54,8 @@ function VerifyEmailContent() {
     if (!email || email.trim() === '') {
       console.warn('[VerifyEmail] Email is missing from URL parameters');
       setError('root', {
-        message: 'Email address is required. Please register again or check the verification link.',
+        message:
+          'Email address is required. Please register again or check the verification link.',
       });
     }
   }, [email, setError]);
@@ -53,7 +64,9 @@ function VerifyEmailContent() {
     async (code: string) => {
       // Prevent multiple simultaneous verification attempts
       if (completeRegistrationMutation.isPending) {
-        console.log('[VerifyEmail] Verification already in progress, skipping...');
+        console.log(
+          '[VerifyEmail] Verification already in progress, skipping...'
+        );
         return;
       }
 
@@ -61,7 +74,8 @@ function VerifyEmailContent() {
       if (!email || email.trim() === '') {
         console.error('[VerifyEmail] Email is missing from URL parameters');
         setError('root', {
-          message: 'Email address is required. Please register again or check the verification link.',
+          message:
+            'Email address is required. Please register again or check the verification link.',
         });
         return;
       }
@@ -75,33 +89,42 @@ function VerifyEmailContent() {
         return;
       }
 
-      console.log('[VerifyEmail] Completing registration:', { email, code, codeLength: code.length });
-      
+      console.log('[VerifyEmail] Completing registration:', {
+        email,
+        code,
+        codeLength: code.length,
+      });
+
       try {
         // Backend expects: { email, verificationCode }
-        const result = await completeRegistrationMutation.mutateAsync({ 
-          email: email.trim(), 
-          verificationCode: code 
+        const result = await completeRegistrationMutation.mutateAsync({
+          email: email.trim(),
+          verificationCode: code,
         });
         console.log('[VerifyEmail] Registration complete:', result);
         // Redirect handled in useEffect on success
       } catch (error: unknown) {
         console.error('[VerifyEmail] Verification failed:', error);
-        
+
         const message =
-          error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string'
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof (error as { message?: string }).message === 'string'
             ? (error as { message: string }).message
             : 'Invalid verification code';
-        
+
         // Check if email is already verified
         if (message.toLowerCase().includes('already verified')) {
-          console.log('[VerifyEmail] Email already verified, redirecting to login...');
+          console.log(
+            '[VerifyEmail] Email already verified, redirecting to login...'
+          );
           setTimeout(() => {
             router.push('/login?verified=true&message=Email already verified');
           }, 2000);
           return;
         }
-        
+
         setError('root', {
           message,
         });
@@ -115,7 +138,9 @@ function VerifyEmailContent() {
   useEffect(() => {
     // If the error message in root contains "already verified", auto-redirect
     if (errors.root?.message?.toLowerCase().includes('already verified')) {
-      console.log('[VerifyEmail] Email already verified on mount, redirecting...');
+      console.log(
+        '[VerifyEmail] Email already verified on mount, redirecting...'
+      );
       setTimeout(() => {
         router.push('/login?verified=true&message=Email already verified');
       }, 2000);
@@ -124,14 +149,21 @@ function VerifyEmailContent() {
 
   // Countdown timer for resend button
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     if (resendTimer > 0) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setResendTimer((prev) => prev - 1);
       }, 1000);
-      return () => clearTimeout(timer);
     } else {
       setCanResend(true);
     }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [resendTimer]);
 
   // Auto-submit when code is complete
@@ -153,7 +185,10 @@ function VerifyEmailContent() {
       setVerificationCode('');
     } catch (error: unknown) {
       const message =
-        error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string'
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof (error as { message?: string }).message === 'string'
           ? (error as { message: string }).message
           : 'Failed to resend verification code';
       setError('root', {
@@ -169,48 +204,55 @@ function VerifyEmailContent() {
 
   // Handle redirect after successful verification
   useEffect(() => {
-    if (completeRegistrationMutation.isSuccess) {
-      // Get response data to check for nextStep and requiresLogin
-      const response = completeRegistrationMutation.data;
-      let redirectPath = '/login?verified=true';
-      
-      // Check if backend specified a nextStep
-      if (response) {
-        const responseData = (response as any)?.data || response;
-        const nextStep = responseData?.nextStep;
-        const requiresLogin = responseData?.requiresLogin;
-        
-        if (nextStep) {
-          redirectPath = nextStep === '/login' 
+    if (!completeRegistrationMutation.isSuccess) {
+      return undefined;
+    }
+
+    // Get response data to check for nextStep and requiresLogin
+    const response = completeRegistrationMutation.data;
+    let redirectPath = '/login?verified=true';
+
+    // Check if backend specified a nextStep
+    if (response) {
+      const responseData = (response as any)?.data || response;
+      const nextStep = responseData?.nextStep;
+      const requiresLogin = responseData?.requiresLogin;
+
+      if (nextStep) {
+        redirectPath =
+          nextStep === '/login'
             ? '/login?verified=true'
             : `${nextStep}?verified=true`;
-        }
-        
-        console.log('[VerifyEmail] Redirect info:', {
-          nextStep,
-          requiresLogin,
-          redirectPath,
-          emailVerified: responseData?.user?.emailVerified,
-        });
       }
-      
-      // Always redirect to login (backend requires manual login)
-      const timer = setTimeout(() => {
-        router.push(redirectPath);
-      }, 2000);
-      return () => clearTimeout(timer);
+
+      console.log('[VerifyEmail] Redirect info:', {
+        nextStep,
+        requiresLogin,
+        redirectPath,
+        emailVerified: responseData?.user?.emailVerified,
+      });
     }
-  }, [completeRegistrationMutation.isSuccess, completeRegistrationMutation.data, router]);
+
+    const timer = setTimeout(() => {
+      router.push(redirectPath);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [
+    completeRegistrationMutation.isSuccess,
+    completeRegistrationMutation.data,
+    router,
+  ]);
 
   // If verification is successful
   if (completeRegistrationMutation.isSuccess) {
     return (
-      <div className="text-center space-y-6">
+      <div className="space-y-6 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', duration: 0.5 }}
-          className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center"
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
         >
           <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
         </motion.div>
@@ -228,15 +270,15 @@ function VerifyEmailContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Mail className="h-8 w-8 text-primary" />
+      <div className="space-y-2 text-center">
+        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+          <Mail className="text-primary h-8 w-8" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Verify your email</h1>
         <p className="text-muted-foreground">
           We&apos;ve sent a 6-digit verification code to
           <br />
-          <span className="font-medium text-foreground">{email}</span>
+          <span className="text-foreground font-medium">{email}</span>
         </p>
       </div>
 
@@ -259,10 +301,10 @@ function VerifyEmailContent() {
       )}
 
       {/* Verification Form */}
-      <Card className="shadow-2xl border-border/50 relative overflow-hidden">
+      <Card className="border-border/50 relative overflow-hidden shadow-2xl">
         {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
-        
+        <div className="from-primary/5 to-accent/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
+
         <CardHeader className="relative z-10">
           <CardTitle className="text-2xl">Enter Verification Code</CardTitle>
           <CardDescription>
@@ -279,13 +321,17 @@ function VerifyEmailContent() {
             />
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4 relative z-10 pt-8">
+          <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">
             {/* Verify Button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+              className="from-primary to-primary/90 hover:from-primary/90 hover:to-primary w-full bg-gradient-to-r shadow-lg transition-all duration-300 hover:shadow-xl"
               size="lg"
-              disabled={verificationCode.length !== 6 || isSubmitting || completeRegistrationMutation.isPending}
+              disabled={
+                verificationCode.length !== 6 ||
+                isSubmitting ||
+                completeRegistrationMutation.isPending
+              }
             >
               {(isSubmitting || completeRegistrationMutation.isPending) && (
                 <NovuntSpinner size="sm" className="mr-2" />
@@ -296,11 +342,13 @@ function VerifyEmailContent() {
 
             {/* Resend Button */}
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">Didn&apos;t receive the code? </span>
+              <span className="text-muted-foreground">
+                Didn&apos;t receive the code?{' '}
+              </span>
               <Button
                 type="button"
                 variant="link"
-                className="px-0 font-semibold h-auto"
+                className="h-auto px-0 font-semibold"
                 onClick={handleResend}
                 disabled={!canResend || resendMutation.isPending}
               >
@@ -331,7 +379,7 @@ function VerifyEmailContent() {
       </Card>
 
       {/* Help Text */}
-      <div className="text-center text-sm text-muted-foreground space-y-2">
+      <div className="text-muted-foreground space-y-2 text-center text-sm">
         <p>Check your spam folder if you don&apos;t see the email</p>
         <p>The code will expire in 15 minutes</p>
       </div>
@@ -345,11 +393,13 @@ function VerifyEmailContent() {
  */
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <NovuntSpinner size="lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <NovuntSpinner size="lg" />
+        </div>
+      }
+    >
       <VerifyEmailContent />
     </Suspense>
   );

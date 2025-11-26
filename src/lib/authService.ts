@@ -1,10 +1,10 @@
 /**
  * Authentication Service - BetterAuth Implementation
  * Handles all authentication-related API calls
- * 
+ *
  * Backend API: /api/v1/better-auth
  * Based on: AUTHENTICATION_COMPLETE_OVERVIEW.md
- * 
+ *
  * BetterAuth Authentication Endpoints:
  * 1. POST /better-auth/register - Initiate registration (creates temp user)
  * 2. POST /better-auth/verify-email - Verify email with code
@@ -70,14 +70,31 @@ export type ChangePasswordPayload = ChangePasswordRequest;
 export type RevokeTokenPayload = RevokeTokenRequest;
 
 // Response type aliases
-type InternalRegisterResponse = RegisterResponse | ApiResponse<RegisterResponse>;
-type InternalLoginResponse = LoginResponse | MFARequiredResponse | ApiResponse<LoginResponse>;
-type InternalVerifyEmailResponse = VerifyEmailResponse | ApiResponse<VerifyEmailResponse>;
-type InternalCompleteRegistrationResponse = CompleteRegistrationResponse | ApiResponse<CompleteRegistrationResponse>;
-type InternalRefreshTokenResponse = RefreshTokenResponse | ApiResponse<RefreshTokenResponse>;
-type InternalGenerate2FASecretResponse = Generate2FASecretResponse | ApiResponse<Generate2FASecretResponse>;
-type InternalEnable2FAResponse = Enable2FAResponse | ApiResponse<Enable2FAResponse>;
-type InternalReferralInfoResponse = ReferralInfoResponse | ApiResponse<ReferralInfoResponse>;
+type InternalRegisterResponse =
+  | RegisterResponse
+  | ApiResponse<RegisterResponse>;
+type InternalLoginResponse =
+  | LoginResponse
+  | MFARequiredResponse
+  | ApiResponse<LoginResponse>;
+type InternalVerifyEmailResponse =
+  | VerifyEmailResponse
+  | ApiResponse<VerifyEmailResponse>;
+type InternalCompleteRegistrationResponse =
+  | CompleteRegistrationResponse
+  | ApiResponse<CompleteRegistrationResponse>;
+type InternalRefreshTokenResponse =
+  | RefreshTokenResponse
+  | ApiResponse<RefreshTokenResponse>;
+type InternalGenerate2FASecretResponse =
+  | Generate2FASecretResponse
+  | ApiResponse<Generate2FASecretResponse>;
+type InternalEnable2FAResponse =
+  | Enable2FAResponse
+  | ApiResponse<Enable2FAResponse>;
+type InternalReferralInfoResponse =
+  | ReferralInfoResponse
+  | ApiResponse<ReferralInfoResponse>;
 type InternalGenericResponse = ApiResponse<{ message?: string }>;
 
 // Exported response types
@@ -108,7 +125,9 @@ export const authService = {
    * @param payload - Registration data with fname/lname
    * @returns { message, nextStep: "/verify-email" }
    */
-  register: async (payload: RegisterRequest): Promise<InternalRegisterResponse> => {
+  register: async (
+    payload: RegisterRequest
+  ): Promise<InternalRegisterResponse> => {
     // Debug logging for registration requests
     if (process.env.NODE_ENV === 'development') {
       console.log('[authService.register] Sending registration request:', {
@@ -126,8 +145,13 @@ export const authService = {
    * @param payload - Email and verification code
    * @returns Success message
    */
-  verifyEmail: async (payload: VerifyEmailRequest): Promise<InternalVerifyEmailResponse> => {
-    return api.post<InternalVerifyEmailResponse>('/better-auth/verify-email', payload);
+  verifyEmail: async (
+    payload: VerifyEmailRequest
+  ): Promise<InternalVerifyEmailResponse> => {
+    return api.post<InternalVerifyEmailResponse>(
+      '/better-auth/verify-email',
+      payload
+    );
   },
 
   /**
@@ -136,8 +160,13 @@ export const authService = {
    * @param payload - Email address
    * @returns Success message
    */
-  resendVerification: async (payload: ResendVerificationRequest): Promise<InternalVerifyEmailResponse> => {
-    return api.post<InternalVerifyEmailResponse>('/better-auth/resend-verification', payload);
+  resendVerification: async (
+    payload: ResendVerificationRequest
+  ): Promise<InternalVerifyEmailResponse> => {
+    return api.post<InternalVerifyEmailResponse>(
+      '/better-auth/resend-verification',
+      payload
+    );
   },
 
   /**
@@ -146,24 +175,32 @@ export const authService = {
    * @param payload - Email and verification code
    * @returns Token, user data, and referral info
    */
-  completeRegistration: async (payload: CompleteRegistrationRequest): Promise<InternalCompleteRegistrationResponse> => {
+  completeRegistration: async (
+    payload: CompleteRegistrationRequest
+  ): Promise<InternalCompleteRegistrationResponse> => {
     // Debug logging for complete registration requests
     if (process.env.NODE_ENV === 'development') {
-      console.log('[authService.completeRegistration] Sending complete registration request:', {
-        email: payload.email,
-        verificationCode: payload.verificationCode,
-        codeLength: payload.verificationCode?.length,
-      });
+      console.log(
+        '[authService.completeRegistration] Sending complete registration request:',
+        {
+          email: payload.email,
+          verificationCode: payload.verificationCode,
+          codeLength: payload.verificationCode?.length,
+        }
+      );
     }
-    
+
     // BetterAuth endpoint expects: { email, code }
     // Transform verificationCode to code for backend compatibility
     const requestPayload = {
       email: payload.email,
       code: payload.verificationCode,
     };
-    
-    return api.post<InternalCompleteRegistrationResponse>('/better-auth/complete-registration', requestPayload);
+
+    return api.post<InternalCompleteRegistrationResponse>(
+      '/better-auth/complete-registration',
+      requestPayload
+    );
   },
 
   /**
@@ -191,28 +228,51 @@ export const authService = {
    * @param payload - UserID and 6-digit TOTP code
    * @returns Token and user data
    */
-  verify2FA: async (payload: Verify2FARequest): Promise<InternalLoginResponse> => {
+  verify2FA: async (
+    payload: Verify2FARequest
+  ): Promise<InternalLoginResponse> => {
     return api.post<InternalLoginResponse>('/better-auth/verify-mfa', payload);
   },
 
   /**
    * 7. Setup MFA - Generate secret and QR code
    * POST /better-auth/mfa/setup [Protected]
-   * @param payload - Email address (optional, uses authenticated user)
-   * @returns QR code, secret, and setup methods
+   * @param payload - Empty object (user ID from auth token)
+   * @returns QR code, secret, and verification token
    */
-  generate2FASecret: async (payload: Generate2FASecretRequest): Promise<InternalGenerate2FASecretResponse> => {
-    return api.post<InternalGenerate2FASecretResponse>('/better-auth/mfa/setup', payload);
+  generate2FASecret: async (): Promise<InternalGenerate2FASecretResponse> => {
+    // Backend extracts user from Authorization token, so send empty body
+    return api.post<InternalGenerate2FASecretResponse>(
+      '/better-auth/mfa/setup',
+      {}
+    );
   },
 
   /**
    * 8. Complete MFA setup - Verify TOTP code to enable 2FA
    * POST /better-auth/mfa/verify [Protected]
-   * @param payload - Token (TOTP code) and secret
-   * @returns Success message
+   * @param payload - Verification token (from setup) and 6-digit TOTP code
+   * @returns Success message and optional backup codes
    */
-  enable2FA: async (payload: Enable2FARequest): Promise<InternalEnable2FAResponse> => {
-    return api.post<InternalEnable2FAResponse>('/better-auth/mfa/verify', payload);
+  enable2FA: async (payload: Enable2FARequest): Promise<Enable2FAResponse> => {
+    const response = await api.post<InternalEnable2FAResponse>(
+      '/better-auth/mfa/verify',
+      payload
+    );
+
+    // Map backend response structure (backupCodes may be in response.data.data)
+    if (response && typeof response === 'object') {
+      const data = response as {
+        message?: string;
+        data?: { backupCodes?: string[] };
+      };
+      return {
+        message: data.message || 'MFA setup completed successfully',
+        backupCodes: data.data?.backupCodes,
+      } as Enable2FAResponse;
+    }
+
+    return response as Enable2FAResponse;
   },
 
   /**
@@ -221,8 +281,13 @@ export const authService = {
    * @param payload - Current password, new password, confirm password
    * @returns Success message
    */
-  updatePassword: async (payload: ChangePasswordRequest): Promise<InternalGenericResponse> => {
-    return api.post<InternalGenericResponse>('/better-auth/change-password', payload);
+  updatePassword: async (
+    payload: ChangePasswordRequest
+  ): Promise<InternalGenericResponse> => {
+    return api.post<InternalGenericResponse>(
+      '/better-auth/change-password',
+      payload
+    );
   },
 
   /**
@@ -231,8 +296,13 @@ export const authService = {
    * @param payload - Email address
    * @returns Success message
    */
-  requestPasswordReset: async (payload: RequestPasswordResetRequest): Promise<InternalGenericResponse> => {
-    return api.post<InternalGenericResponse>('/better-auth/request-password-reset', payload);
+  requestPasswordReset: async (
+    payload: RequestPasswordResetRequest
+  ): Promise<InternalGenericResponse> => {
+    return api.post<InternalGenericResponse>(
+      '/better-auth/request-password-reset',
+      payload
+    );
   },
 
   /**
@@ -241,8 +311,13 @@ export const authService = {
    * @param payload - Email, reset token, new password, confirm password
    * @returns Success message
    */
-  resetPassword: async (payload: ResetPasswordRequest): Promise<InternalGenericResponse> => {
-    return api.post<InternalGenericResponse>('/better-auth/reset-password', payload);
+  resetPassword: async (
+    payload: ResetPasswordRequest
+  ): Promise<InternalGenericResponse> => {
+    return api.post<InternalGenericResponse>(
+      '/better-auth/reset-password',
+      payload
+    );
   },
 
   /**
@@ -251,8 +326,13 @@ export const authService = {
    * @param payload - Refresh token
    * @returns New access token and refresh token
    */
-  refreshToken: async (payload: RefreshTokenRequest): Promise<InternalRefreshTokenResponse> => {
-    return api.post<InternalRefreshTokenResponse>('/better-auth/refresh-token', payload);
+  refreshToken: async (
+    payload: RefreshTokenRequest
+  ): Promise<InternalRefreshTokenResponse> => {
+    return api.post<InternalRefreshTokenResponse>(
+      '/better-auth/refresh-token',
+      payload
+    );
   },
 
   /**
@@ -261,8 +341,13 @@ export const authService = {
    * @param payload - Refresh token to revoke
    * @returns Success message
    */
-  revokeToken: async (payload: RevokeTokenRequest): Promise<InternalGenericResponse> => {
-    return api.post<InternalGenericResponse>('/better-auth/revoke-token', payload);
+  revokeToken: async (
+    payload: RevokeTokenRequest
+  ): Promise<InternalGenericResponse> => {
+    return api.post<InternalGenericResponse>(
+      '/better-auth/revoke-token',
+      payload
+    );
   },
 
   /**
@@ -271,7 +356,10 @@ export const authService = {
    * @returns Success message
    */
   logoutAllDevices: async (): Promise<InternalGenericResponse> => {
-    return api.post<InternalGenericResponse>('/better-auth/logout-all-devices', {});
+    return api.post<InternalGenericResponse>(
+      '/better-auth/logout-all-devices',
+      {}
+    );
   },
 
   /**
@@ -327,19 +415,26 @@ export const getErrorMessage = (errorCode: string): string => {
   return ERROR_MESSAGES[errorCode] || 'An unexpected error occurred';
 };
 
-export const extractErrorMessage = (error: unknown, fallback = 'An unexpected error occurred'): string => {
+export const extractErrorMessage = (
+  error: unknown,
+  fallback = 'An unexpected error occurred'
+): string => {
   if (!error) return fallback;
   if (typeof error === 'string') return error;
   if (error instanceof Error) return error.message;
-  
+
   if (typeof error === 'object') {
     const err = error as Record<string, unknown>;
-    
+
     // Network/CORS errors
-    if (err.code === 'CORS_ERROR' || err.code === 'ERR_NETWORK' || err.statusCode === 0) {
+    if (
+      err.code === 'CORS_ERROR' ||
+      err.code === 'ERR_NETWORK' ||
+      err.statusCode === 0
+    ) {
       return 'Unable to connect to the server. Please check your internet connection.';
     }
-    
+
     // Extract response data for better error detection
     let responseData: Record<string, unknown> | null = null;
     if (err.response && typeof err.response === 'object') {
@@ -350,44 +445,52 @@ export const extractErrorMessage = (error: unknown, fallback = 'An unexpected er
     } else if (err.responseData && typeof err.responseData === 'object') {
       responseData = err.responseData as Record<string, unknown>;
     }
-    
+
     // Check for specific error codes first
     if (responseData) {
       const errorCode = responseData.code || responseData.error;
       if (typeof errorCode === 'string' && errorCode in ERROR_MESSAGES) {
         return getErrorMessage(errorCode);
       }
-      
+
       // Check for specific error messages that indicate email vs password issues
       const errorMessage = responseData.message || responseData.error;
       if (typeof errorMessage === 'string') {
         const lowerMessage = errorMessage.toLowerCase();
-        
+
         // Email-related errors
-        if (lowerMessage.includes('email not found') || 
-            lowerMessage.includes('user not found') ||
-            lowerMessage.includes('no account found') ||
-            lowerMessage.includes('email does not exist') ||
-            lowerMessage.includes('invalid email')) {
+        if (
+          lowerMessage.includes('email not found') ||
+          lowerMessage.includes('user not found') ||
+          lowerMessage.includes('no account found') ||
+          lowerMessage.includes('email does not exist') ||
+          lowerMessage.includes('invalid email')
+        ) {
           return 'No account found with this email address. Please check your email or sign up.';
         }
-        
+
         // Password-related errors
-        if (lowerMessage.includes('incorrect password') ||
-            lowerMessage.includes('wrong password') ||
-            lowerMessage.includes('invalid password') ||
-            lowerMessage.includes('password mismatch') ||
-            lowerMessage.includes('password is incorrect')) {
+        if (
+          lowerMessage.includes('incorrect password') ||
+          lowerMessage.includes('wrong password') ||
+          lowerMessage.includes('invalid password') ||
+          lowerMessage.includes('password mismatch') ||
+          lowerMessage.includes('password is incorrect')
+        ) {
           return 'Incorrect password. Please check your password and try again.';
         }
-        
+
         // Use the backend message if it's clear
-        if (errorMessage && errorMessage !== 'Invalid credentials' && errorMessage !== 'Authentication failed') {
+        if (
+          errorMessage &&
+          errorMessage !== 'Invalid credentials' &&
+          errorMessage !== 'Authentication failed'
+        ) {
           return errorMessage;
         }
       }
     }
-    
+
     // Phase 1 error format
     if (err.error && typeof err.error === 'object') {
       const nestedError = err.error as Record<string, unknown>;
@@ -398,30 +501,34 @@ export const extractErrorMessage = (error: unknown, fallback = 'An unexpected er
         return nestedError.message;
       }
     }
-    
+
     // Direct message
     if (typeof err.message === 'string') {
       const lowerMessage = err.message.toLowerCase();
-      
+
       // Check for specific error patterns
-      if (lowerMessage.includes('email not found') || 
-          lowerMessage.includes('user not found') ||
-          lowerMessage.includes('no account found')) {
+      if (
+        lowerMessage.includes('email not found') ||
+        lowerMessage.includes('user not found') ||
+        lowerMessage.includes('no account found')
+      ) {
         return 'No account found with this email address. Please check your email or sign up.';
       }
-      
-      if (lowerMessage.includes('incorrect password') ||
-          lowerMessage.includes('wrong password') ||
-          lowerMessage.includes('invalid password')) {
+
+      if (
+        lowerMessage.includes('incorrect password') ||
+        lowerMessage.includes('wrong password') ||
+        lowerMessage.includes('invalid password')
+      ) {
         return 'Incorrect password. Please check your password and try again.';
       }
-      
+
       if (err.message in ERROR_MESSAGES) {
         return getErrorMessage(err.message);
       }
       return err.message;
     }
-    
+
     // Status code based messages
     if (typeof err.statusCode === 'number') {
       const statusMessages: Record<number, string> = {
@@ -434,14 +541,14 @@ export const extractErrorMessage = (error: unknown, fallback = 'An unexpected er
       };
       return statusMessages[err.statusCode] || fallback;
     }
-    
+
     // Axios error format (fallback)
     if (err.response && typeof err.response === 'object') {
       const response = err.response as Record<string, unknown>;
       if (response.data && typeof response.data === 'object') {
         const data = response.data as Record<string, unknown>;
         if (typeof data.message === 'string') return data.message;
-        
+
         if (data.error && typeof data.error === 'object') {
           const dataError = data.error as Record<string, unknown>;
           if (typeof dataError.code === 'string') {
@@ -451,6 +558,6 @@ export const extractErrorMessage = (error: unknown, fallback = 'An unexpected er
       }
     }
   }
-  
+
   return fallback;
 };

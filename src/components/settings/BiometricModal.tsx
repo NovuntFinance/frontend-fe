@@ -19,7 +19,11 @@ interface BiometricModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalProps & { onEnable?: () => void }) {
+export function BiometricModal({
+  open,
+  onOpenChange,
+  onEnable,
+}: BiometricModalProps & { onEnable?: () => void }) {
   const [isEnabled, setIsEnabled] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(true); // Mock availability
@@ -52,29 +56,33 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4">
-        <DialogHeader className="items-center text-center space-y-1">
-          <DialogTitle className="text-lg font-bold flex items-center justify-center gap-2">
+      <DialogContent className="max-h-[90vh] max-w-[95vw] overflow-y-auto p-4 sm:max-w-lg">
+        <DialogHeader className="items-center space-y-1 text-center">
+          <DialogTitle className="flex items-center justify-center gap-2 text-lg font-bold">
             <Fingerprint className="h-5 w-5" />
             Biometric Authentication
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm text-center">
+          <DialogDescription className="text-center text-xs sm:text-sm">
             Use your fingerprint or face recognition to access your account
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           {/* Status - Only show when enabled or if unavailable */}
           {(isEnabled || !biometricAvailable) && (
-            <div className="p-3 rounded-lg border border-border bg-card">
+            <div className="border-border bg-card rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-sm">Status</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Biometric Authentication is currently {isEnabled ? 'enabled' : 'disabled'}
+                  <p className="text-sm font-medium">Status</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Biometric Authentication is currently{' '}
+                    {isEnabled ? 'enabled' : 'disabled'}
                   </p>
                 </div>
-                <Badge variant={isEnabled ? 'default' : 'secondary'} className={isEnabled ? 'bg-emerald-500' : ''}>
+                <Badge
+                  variant={isEnabled ? 'default' : 'secondary'}
+                  className={isEnabled ? 'bg-emerald-500' : ''}
+                >
                   {isEnabled ? (
                     <>
                       <Check className="mr-1 h-3 w-3" /> Enabled
@@ -91,9 +99,11 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
 
           {/* Device Compatibility - Compact */}
           {biometricAvailable && !isEnabled && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs">
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-2 text-xs text-emerald-700 dark:text-emerald-400">
               <Check className="h-3 w-3 shrink-0" />
-              <span className="font-medium">Device supports fingerprint & face recognition</span>
+              <span className="font-medium">
+                Device supports fingerprint & face recognition
+              </span>
             </div>
           )}
 
@@ -109,14 +119,14 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
           {/* Registration/Test Area */}
           {isEnabled && (
             <div className="space-y-3">
-              <div className="p-4 rounded-lg border-2 border-dashed border-border bg-muted/20 text-center">
+              <div className="border-border bg-muted/20 rounded-lg border-2 border-dashed p-4 text-center">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-full bg-primary/10">
-                    <Fingerprint className="h-8 w-8 text-primary" />
+                  <div className="bg-primary/10 rounded-full p-2">
+                    <Fingerprint className="text-primary h-8 w-8" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Biometric Active</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium">Biometric Active</p>
+                    <p className="text-muted-foreground text-xs">
                       You can use your fingerprint or face to log in
                     </p>
                   </div>
@@ -143,19 +153,19 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
 
           {/* Setup Instructions - Compact */}
           {!isEnabled && biometricAvailable && !isRegistering && (
-            <div className="p-3 rounded-lg border border-border bg-card">
-              <h3 className="font-semibold text-sm mb-2">Setup Instructions</h3>
-              <ol className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="border-border bg-card rounded-lg border p-3">
+              <h3 className="mb-2 text-sm font-semibold">Setup Instructions</h3>
+              <ol className="text-muted-foreground space-y-1.5 text-xs">
                 <li className="flex gap-2">
-                  <span className="font-medium text-foreground">1.</span>
-                  Click "Enable Biometric Authentication"
+                  <span className="text-foreground font-medium">1.</span>
+                  Click “Enable Biometric Authentication”
                 </li>
                 <li className="flex gap-2">
-                  <span className="font-medium text-foreground">2.</span>
-                  Follow your device's prompts to verify identity
+                  <span className="text-foreground font-medium">2.</span>
+                  Follow your device’s prompts to verify identity
                 </li>
                 <li className="flex gap-2">
-                  <span className="font-medium text-foreground">3.</span>
+                  <span className="text-foreground font-medium">3.</span>
                   Biometric login will be active for this device
                 </li>
               </ol>
@@ -164,18 +174,18 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
 
           {/* Registration in progress */}
           {isRegistering && (
-            <div className="p-6 rounded-lg border-2 border-dashed border-primary bg-primary/5 text-center">
+            <div className="border-primary bg-primary/5 rounded-lg border-2 border-dashed p-6 text-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="relative">
-                  <Fingerprint className="h-12 w-12 text-primary animate-pulse" />
+                  <Fingerprint className="text-primary h-12 w-12 animate-pulse" />
                   <div className="absolute inset-0 animate-ping">
-                    <Fingerprint className="h-12 w-12 text-primary opacity-20" />
+                    <Fingerprint className="text-primary h-12 w-12 opacity-20" />
                   </div>
                 </div>
                 <div>
-                  <p className="font-medium text-base">Registering...</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Please follow your device's prompts
+                  <p className="text-base font-medium">Registering...</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Please follow your device’s prompts
                   </p>
                 </div>
               </div>
@@ -184,16 +194,26 @@ export function BiometricModal({ open, onOpenChange, onEnable }: BiometricModalP
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+        <div className="mt-4 flex justify-end gap-2 border-t pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+          >
             Close
           </Button>
           {biometricAvailable && !isRegistering && (
             <Button
-              onClick={isEnabled ? handleDisableBiometric : handleEnableBiometric}
+              onClick={
+                isEnabled ? handleDisableBiometric : handleEnableBiometric
+              }
               variant={isEnabled ? 'destructive' : 'default'}
               size="sm"
-              className={!isEnabled ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : ''}
+              className={
+                !isEnabled
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                  : ''
+              }
             >
               {isEnabled ? (
                 <>

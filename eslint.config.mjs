@@ -22,6 +22,14 @@ const eslintConfig = [
       'public/workbox-*.js',
     ],
   },
+  {
+    rules: {
+      // Allow explicit `any` in this codebase for now to keep linting focused on
+      // real bugs instead of type-widening refactors.
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -7,19 +7,19 @@ import { useState, useEffect } from 'react';
 
 export function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  
+
   useEffect(() => {
     // Set timeout to update debounced value after delay
     const timer = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-    
+
     // Cleanup timeout if value changes before delay
     return () => {
       clearTimeout(timer);
     };
   }, [value, delay]);
-  
+
   return debouncedValue;
 }
 
@@ -30,22 +30,30 @@ export function useDebounce<T>(value: T, delay: number = 500): T {
 export function useThrottle<T>(value: T, interval: number = 500): T {
   const [throttledValue, setThrottledValue] = useState<T>(value);
   const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
-  
+
   useEffect(() => {
     const now = Date.now();
-    
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     if (now >= lastUpdated + interval) {
       setThrottledValue(value);
       setLastUpdated(now);
     } else {
-      const timer = setTimeout(() => {
-        setThrottledValue(value);
-        setLastUpdated(Date.now());
-      }, interval - (now - lastUpdated));
-      
-      return () => clearTimeout(timer);
+      timer = setTimeout(
+        () => {
+          setThrottledValue(value);
+          setLastUpdated(Date.now());
+        },
+        interval - (now - lastUpdated)
+      );
     }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [value, interval, lastUpdated]);
-  
+
   return throttledValue;
 }
