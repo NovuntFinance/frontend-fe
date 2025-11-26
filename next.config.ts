@@ -104,8 +104,14 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(withPWAConfig(nextConfig), {
   org: 'novunt',
   project: 'javascript-nextjs',
-  silent: !process.env.CI,
+  // Silent mode suppresses warnings when auth token is missing
+  silent: true,
   widenClientFileUpload: true,
   disableLogger: true,
   automaticVercelMonitors: true,
+  // Disable source map uploads and release creation when no auth token
+  // To enable: Add SENTRY_AUTH_TOKEN to Vercel environment variables
+  hideSourceMaps: !process.env.SENTRY_AUTH_TOKEN,
+  disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+  disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
 });
