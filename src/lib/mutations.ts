@@ -20,13 +20,13 @@ import type {
   ChangePasswordPayload,
 } from './authService';
 import type { RegisterRequest } from '@/types/auth';
-import type {
-  UpdateProfilePayload,
-  UploadKYCPayload,
-} from './userService';
+import type { UpdateProfilePayload, UploadKYCPayload } from './userService';
 import { queryKeys } from './queries';
 import { toast } from 'sonner';
-import { UpdateProfilePayload as UserUpdateProfilePayload, type User } from '@/types/user';
+import {
+  UpdateProfilePayload as UserUpdateProfilePayload,
+  type User,
+} from '@/types/user';
 import { CreateStakePayload, WithdrawEarlyPayload } from '@/types/stake';
 import {
   TransferBetweenWalletsPayload,
@@ -48,27 +48,30 @@ import type { BackendUser } from '@/types/auth';
  */
 export function useLogin() {
   const { setUser, setTokens } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: async (credentials: LoginPayload) => {
-      console.log('[useLogin] Attempting login:', { 
-        email: credentials.email, 
-        username: credentials.username 
+      console.log('[useLogin] Attempting login:', {
+        email: credentials.email,
+        username: credentials.username,
       });
       return authService.login(credentials);
     },
     onSuccess: (response) => {
       console.log('[useLogin] Login response:', response);
       console.log('[useLogin] Response type:', typeof response);
-      console.log('[useLogin] Response keys:', response && typeof response === 'object' ? Object.keys(response) : 'N/A');
-      
+      console.log(
+        '[useLogin] Response keys:',
+        response && typeof response === 'object' ? Object.keys(response) : 'N/A'
+      );
+
       // Unwrap response if nested
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
         data = (response as any).data;
         console.log('[useLogin] Unwrapped nested response data');
       }
-      
+
       console.log('[useLogin] Processing data:', {
         hasMfaRequired: 'mfaRequired' in data,
         mfaRequiredValue: (data as any)?.mfaRequired,
@@ -77,9 +80,14 @@ export function useLogin() {
         hasUser: 'user' in data,
         dataKeys: data && typeof data === 'object' ? Object.keys(data) : 'N/A',
       });
-      
+
       // Check if 2FA is required (Phase 1 format - uses userID, not mfaToken)
-      if (data && typeof data === 'object' && 'mfaRequired' in data && data.mfaRequired === true) {
+      if (
+        data &&
+        typeof data === 'object' &&
+        'mfaRequired' in data &&
+        data.mfaRequired === true
+      ) {
         console.log('[useLogin] 2FA required - Phase 1 format');
         const userId = (data as any).userID || (data as any).userId;
         if (userId) {
@@ -91,29 +99,39 @@ export function useLogin() {
           // The login page will handle showing the 2FA input
           return;
         } else {
-          console.error('[useLogin] 2FA required but userID not found in response:', data);
+          console.error(
+            '[useLogin] 2FA required but userID not found in response:',
+            data
+          );
         }
       }
-      
+
       // Normal login flow - Phase 1 returns token (not accessToken)
-      if (data && typeof data === 'object' && 'token' in data && 'user' in data) {
+      if (
+        data &&
+        typeof data === 'object' &&
+        'token' in data &&
+        'user' in data
+      ) {
         const { token, user } = data as {
           token: string;
           user: BackendUser;
         };
-        
-        console.log('[useLogin] Normal login successful, setting user and tokens');
-        
+
+        console.log(
+          '[useLogin] Normal login successful, setting user and tokens'
+        );
+
         // Normalize user (fname/lname to firstName/lastName)
         const normalizedUser = normalizeUser(user);
-        
+
         // Phase 1 login may not return refreshToken
         // Use empty string for now, will be populated by refresh endpoint if needed
         const refreshToken = (data as any).refreshToken || '';
-        
+
         setUser(normalizedUser as User);
         setTokens(token, refreshToken);
-        
+
         toast.success('Welcome back!', {
           description: `Logged in as ${user.fname} ${user.lname}`,
         });
@@ -123,7 +141,8 @@ export function useLogin() {
           isObject: typeof data === 'object',
           hasToken: data && typeof data === 'object' ? 'token' in data : false,
           hasUser: data && typeof data === 'object' ? 'user' in data : false,
-          hasMfaRequired: data && typeof data === 'object' ? 'mfaRequired' in data : false,
+          hasMfaRequired:
+            data && typeof data === 'object' ? 'mfaRequired' in data : false,
           allKeys: data && typeof data === 'object' ? Object.keys(data) : [],
         });
         toast.error('Login error', {
@@ -135,7 +154,7 @@ export function useLogin() {
       // Better error serialization
       let errorStr = '';
       let errorDetails: any = {};
-      
+
       try {
         if (error instanceof Error) {
           errorStr = error.message;
@@ -152,11 +171,13 @@ export function useLogin() {
             statusCode: err.statusCode,
             code: err.code,
             message: err.message,
-            response: err.response ? {
-              status: err.response.status,
-              statusText: err.response.statusText,
-              data: err.response.data,
-            } : undefined,
+            response: err.response
+              ? {
+                  status: err.response.status,
+                  statusText: err.response.statusText,
+                  data: err.response.data,
+                }
+              : undefined,
           };
         } else {
           errorStr = String(error);
@@ -166,21 +187,24 @@ export function useLogin() {
         errorStr = 'Failed to serialize error';
         errorDetails = { serializationError: String(e) };
       }
-      
+
       console.error('[useLogin] Login failed:', errorStr);
       console.error('[useLogin] Error type:', typeof error);
       console.error('[useLogin] Error details:', errorDetails);
-      
+
       // Extract detailed error information
       let backendMessage = 'Invalid credentials';
       let statusCode = 401;
-      
+
       if (typeof error === 'object' && error !== null) {
         const err = error as any;
-        
+
         // Get status code
-        statusCode = err.statusCode || err.response?.status || (err.code === 'CORS_ERROR' || err.code === 'ERR_NETWORK' ? 0 : 401);
-        
+        statusCode =
+          err.statusCode ||
+          err.response?.status ||
+          (err.code === 'CORS_ERROR' || err.code === 'ERR_NETWORK' ? 0 : 401);
+
         // Try to get backend error message from multiple possible locations
         if (err.message && typeof err.message === 'string') {
           backendMessage = err.message;
@@ -188,32 +212,40 @@ export function useLogin() {
           const responseData = err.response.data;
           if (typeof responseData === 'string') {
             backendMessage = responseData;
-          } else if (typeof responseData === 'object' && responseData !== null) {
-            backendMessage = (responseData as any).message || 
-                           (responseData as any).error || 
-                           JSON.stringify(responseData);
+          } else if (
+            typeof responseData === 'object' &&
+            responseData !== null
+          ) {
+            backendMessage =
+              (responseData as any).message ||
+              (responseData as any).error ||
+              JSON.stringify(responseData);
           }
         } else if (err.responseData?.message) {
           backendMessage = err.responseData.message;
         }
       }
-      
+
       const errorMessage = extractErrorMessage(error, backendMessage);
       console.error('[useLogin] Extracted error message:', errorMessage);
-      
+
       // Try to serialize full error object with circular reference handling
       try {
         const seen = new WeakSet();
-        const fullErrorStr = JSON.stringify(error, (key, value) => {
-          // Handle circular references
-          if (typeof value === 'object' && value !== null) {
-            if (seen.has(value)) {
-              return '[Circular]';
+        const fullErrorStr = JSON.stringify(
+          error,
+          (key, value) => {
+            // Handle circular references
+            if (typeof value === 'object' && value !== null) {
+              if (seen.has(value)) {
+                return '[Circular]';
+              }
+              seen.add(value);
             }
-            seen.add(value);
-          }
-          return value;
-        }, 2);
+            return value;
+          },
+          2
+        );
         console.error('[useLogin] Full error object:', fullErrorStr);
       } catch (e) {
         console.error('[useLogin] Could not serialize full error object:', e);
@@ -224,18 +256,25 @@ export function useLogin() {
             message: err.message,
             code: err.code,
             statusCode: err.statusCode,
-            response: err.response ? {
-              status: err.response.status,
-              statusText: err.response.statusText,
-              data: typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data),
-            } : undefined,
+            response: err.response
+              ? {
+                  status: err.response.status,
+                  statusText: err.response.statusText,
+                  data:
+                    typeof err.response.data === 'string'
+                      ? err.response.data
+                      : JSON.stringify(err.response.data),
+                }
+              : undefined,
           });
         }
       }
-      
+
       // Show specific error message - extractErrorMessage already provides clear messages
       toast.error('Login failed', {
-        description: errorMessage || 'Invalid email or password. Please check your credentials and try again.',
+        description:
+          errorMessage ||
+          'Invalid email or password. Please check your credentials and try again.',
       });
     },
   });
@@ -250,11 +289,14 @@ export function useLogin() {
 export function useSignup() {
   return useMutation({
     mutationFn: async (credentials: RegisterPayload) => {
-      console.log('[useSignup] Registering user:', { email: credentials.email, username: credentials.username });
-      
+      console.log('[useSignup] Registering user:', {
+        email: credentials.email,
+        username: credentials.username,
+      });
+
       // BetterAuth: Backend now expects firstName/lastName (not fname/lname)
       const creds = credentials as any;
-      
+
       // Validate required fields are not empty
       const firstName = (creds.firstName || creds.fname || '').trim();
       const lastName = (creds.lastName || creds.lname || '').trim();
@@ -264,7 +306,14 @@ export function useSignup() {
       const countryCode = (credentials.countryCode || '').trim();
 
       // Validate all required fields (phoneNumber and countryCode are now REQUIRED)
-      if (!firstName || !lastName || !email || !username || !phoneNumber || !countryCode) {
+      if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !username ||
+        !phoneNumber ||
+        !countryCode
+      ) {
         const missingFields = [];
         if (!firstName) missingFields.push('firstName');
         if (!lastName) missingFields.push('lastName');
@@ -272,7 +321,7 @@ export function useSignup() {
         if (!username) missingFields.push('username');
         if (!phoneNumber) missingFields.push('phoneNumber');
         if (!countryCode) missingFields.push('countryCode');
-        
+
         console.error('[useSignup] Missing required fields:', missingFields);
         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
       }
@@ -287,18 +336,20 @@ export function useSignup() {
         username: username.toLowerCase(),
         password: credentials.password,
         confirmPassword: credentials.confirmPassword,
-        phoneNumber,  // ✅ REQUIRED
-        countryCode,  // ✅ REQUIRED
-        ...(credentials.referralCode?.trim() ? { referralCode: credentials.referralCode.trim() } : {}),
+        phoneNumber, // ✅ REQUIRED
+        countryCode, // ✅ REQUIRED
+        ...(credentials.referralCode?.trim()
+          ? { referralCode: credentials.referralCode.trim() }
+          : {}),
         // Avatar/profilePicture is intentionally NOT included - should be null in backend
       };
-      
+
       console.log('[useSignup] BetterAuth registration payload:', {
         ...payload,
         password: '***',
         confirmPassword: '***',
       });
-      
+
       // Log the exact payload structure for debugging
       console.log('[useSignup] Payload structure:', {
         firstName: payload.firstName,
@@ -311,19 +362,20 @@ export function useSignup() {
         passwordLength: payload.password.length,
         confirmPasswordLength: payload.confirmPassword.length,
       });
-      
+
       return authService.register(payload);
     },
     onSuccess: (response) => {
       console.log('[useSignup] Registration initiated:', response);
       toast.success('Verification code sent!', {
-        description: response.message || 'Please check your email to verify your account',
+        description:
+          response.message || 'Please check your email to verify your account',
       });
     },
     onError: (error: unknown) => {
       // Better error serialization
       let errorDetails: Record<string, unknown> = {};
-      
+
       if (error instanceof Error) {
         errorDetails = {
           name: error.name,
@@ -331,7 +383,7 @@ export function useSignup() {
           stack: error.stack,
         };
       }
-      
+
       if (typeof error === 'object' && error !== null) {
         const err = error as Record<string, unknown>;
         errorDetails = {
@@ -341,11 +393,13 @@ export function useSignup() {
           errors: err.errors,
           code: err.code,
           responseData: err.responseData,
-          responseMessage: typeof err.responseData === 'object' && err.responseData !== null
-            ? (err.responseData as any).message || (err.responseData as any).error
-            : undefined,
+          responseMessage:
+            typeof err.responseData === 'object' && err.responseData !== null
+              ? (err.responseData as any).message ||
+                (err.responseData as any).error
+              : undefined,
         };
-        
+
         // Try to extract nested error info
         if (err.fullError && typeof err.fullError === 'object') {
           const fullErr = err.fullError as Record<string, unknown>;
@@ -356,13 +410,16 @@ export function useSignup() {
           };
         }
       }
-      
+
       console.error('[useSignup] Registration failed:', errorDetails);
       console.error('[useSignup] Raw error object:', error);
       console.error('[useSignup] Error type:', typeof error);
       console.error('[useSignup] Error constructor:', error?.constructor?.name);
-      
-      const errorMessage = extractErrorMessage(error, 'Registration failed. Please try again.');
+
+      const errorMessage = extractErrorMessage(
+        error,
+        'Registration failed. Please try again.'
+      );
       toast.error('Signup failed', {
         description: errorMessage,
       });
@@ -373,33 +430,38 @@ export function useSignup() {
 
 export function useCompleteRegistration() {
   const { setUser, setTokens } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: async (payload: CompleteRegistrationPayload) => {
-      console.log('[useCompleteRegistration] Completing registration:', payload.email);
+      console.log(
+        '[useCompleteRegistration] Completing registration:',
+        payload.email
+      );
       return authService.completeRegistration(payload);
     },
     onSuccess: (response) => {
       console.log('[useCompleteRegistration] Registration complete:', response);
-      
+
       // Extract token and user from response
       let data = response;
       // Updated: Backend no longer returns token - requires manual login
       if (response && typeof response === 'object' && 'data' in response) {
         data = (response as any).data;
       }
-      
+
       // Check for new response format (requiresLogin: true, no token)
       const responseData = data || response;
       const requiresLogin = (responseData as any)?.requiresLogin === true;
       const nextStep = (responseData as any)?.nextStep || '/login';
-      
+
       // DO NOT auto-login - backend requires manual login after registration
       // User will be redirected to login page
       toast.success('Registration complete!', {
-        description: responseData?.message || 'Please log in with your credentials to continue.',
+        description:
+          responseData?.message ||
+          'Please log in with your credentials to continue.',
       });
-      
+
       console.log('[useCompleteRegistration] Registration completed:', {
         requiresLogin,
         nextStep,
@@ -410,7 +472,7 @@ export function useCompleteRegistration() {
     onError: (error: unknown) => {
       // Better error serialization for complete registration
       let errorDetails: Record<string, unknown> = {};
-      
+
       if (error instanceof Error) {
         errorDetails = {
           name: error.name,
@@ -418,7 +480,7 @@ export function useCompleteRegistration() {
           stack: error.stack,
         };
       }
-      
+
       if (typeof error === 'object' && error !== null) {
         const err = error as Record<string, unknown>;
         errorDetails = {
@@ -428,14 +490,16 @@ export function useCompleteRegistration() {
           errors: err.errors,
           code: err.code,
           responseData: err.responseData,
-          responseMessage: typeof err.responseData === 'object' && err.responseData !== null
-            ? (err.responseData as any).message || (err.responseData as any).error
-            : undefined,
+          responseMessage:
+            typeof err.responseData === 'object' && err.responseData !== null
+              ? (err.responseData as any).message ||
+                (err.responseData as any).error
+              : undefined,
         };
-        
+
         // Extract all properties
         const errorKeys = Object.keys(err);
-        errorKeys.forEach(key => {
+        errorKeys.forEach((key) => {
           if (!errorDetails[key]) {
             try {
               errorDetails[key] = err[key];
@@ -445,13 +509,19 @@ export function useCompleteRegistration() {
           }
         });
       }
-      
+
       console.error('[useCompleteRegistration] Failed:', errorDetails);
       console.error('[useCompleteRegistration] Raw error:', error);
       console.error('[useCompleteRegistration] Error type:', typeof error);
-      console.error('[useCompleteRegistration] Error keys:', typeof error === 'object' && error !== null ? Object.keys(error) : []);
-      
-      const errorMessage = extractErrorMessage(error, 'Invalid or expired verification code');
+      console.error(
+        '[useCompleteRegistration] Error keys:',
+        typeof error === 'object' && error !== null ? Object.keys(error) : []
+      );
+
+      const errorMessage = extractErrorMessage(
+        error,
+        'Invalid or expired verification code'
+      );
       toast.error('Verification failed', {
         description: errorMessage,
       });
@@ -466,19 +536,26 @@ export function useCompleteRegistration() {
 export function useResendVerification() {
   return useMutation({
     mutationFn: async (payload: ResendVerificationPayload) => {
-      console.log('[useResendVerification] Resending verification code:', payload.email);
+      console.log(
+        '[useResendVerification] Resending verification code:',
+        payload.email
+      );
       return authService.resendVerification(payload);
     },
     onSuccess: (response) => {
       console.log('[useResendVerification] Code resent successfully');
       toast.success('Code sent!', {
-        description: response.message || 'Check your email for the verification code',
+        description:
+          response.message || 'Check your email for the verification code',
       });
     },
     onError: (error: unknown) => {
       console.error('[useResendVerification] Resend failed:', error);
-      const errorMessage = extractErrorMessage(error, 'Could not resend verification code');
-      
+      const errorMessage = extractErrorMessage(
+        error,
+        'Could not resend verification code'
+      );
+
       toast.error('Resend failed', {
         description: errorMessage,
       });
@@ -493,7 +570,7 @@ export function useResendVerification() {
  */
 export function useVerify2FA() {
   const { setUser, setTokens } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: async (payload: Verify2FAPayload) => {
       console.log('[useVerify2FA] Verifying 2FA code');
@@ -501,26 +578,26 @@ export function useVerify2FA() {
     },
     onSuccess: (response) => {
       console.log('[useVerify2FA] 2FA verified successfully:', response);
-      
+
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
         data = (response as any).data;
       }
-      
+
       if ('token' in data && 'user' in data) {
         const { token, user } = data as {
           token: string;
           user: BackendUser;
         };
-        
+
         const normalizedUser = normalizeUser(user);
         setUser(normalizedUser as User);
-        
+
         // Phase 1 may not return refreshToken in verify-2fa
         // Try to get from response or use empty string
         const refreshToken = (data as any).refreshToken || '';
         setTokens(token, refreshToken);
-        
+
         toast.success('Welcome back!', {
           description: `Logged in as ${user.fname} ${user.lname}`,
         });
@@ -547,7 +624,10 @@ export function useVerify2FA() {
 export function useRequestPasswordReset() {
   return useMutation({
     mutationFn: async (payload: RequestPasswordResetPayload) => {
-      console.log('[useRequestPasswordReset] Requesting password reset:', payload.email);
+      console.log(
+        '[useRequestPasswordReset] Requesting password reset:',
+        payload.email
+      );
       return authService.requestPasswordReset(payload);
     },
     onSuccess: (response) => {
@@ -578,7 +658,8 @@ export function useResetPassword() {
     onSuccess: (response) => {
       console.log('[useResetPassword] Password reset successful');
       toast.success('Password reset!', {
-        description: response.message || 'You can now log in with your new password',
+        description:
+          response.message || 'You can now log in with your new password',
       });
     },
     onError: (error: unknown) => {
@@ -621,9 +702,10 @@ export function useChangePassword() {
  */
 export function useGenerate2FASecret() {
   return useMutation({
-    mutationFn: async (payload: Generate2FASecretPayload) => {
+    mutationFn: async (_payload: Generate2FASecretPayload) => {
       console.log('[useGenerate2FASecret] Generating 2FA secret');
-      return authService.generate2FASecret(payload);
+      // Backend extracts user from auth token, so no payload is required
+      return authService.generate2FASecret();
     },
     onSuccess: (response) => {
       console.log('[useGenerate2FASecret] 2FA secret generated:', response);
@@ -634,7 +716,10 @@ export function useGenerate2FASecret() {
     onError: (error: unknown) => {
       console.error('[useGenerate2FASecret] Setup failed:', error);
       toast.error('Setup failed', {
-        description: extractErrorMessage(error, 'Could not generate 2FA secret'),
+        description: extractErrorMessage(
+          error,
+          'Could not generate 2FA secret'
+        ),
       });
     },
   });
@@ -646,7 +731,7 @@ export function useGenerate2FASecret() {
  */
 export function useEnable2FA() {
   const { updateUser } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: async (payload: Enable2FAPayload) => {
       console.log('[useEnable2FA] Enabling 2FA');
@@ -655,7 +740,7 @@ export function useEnable2FA() {
     onSuccess: (response) => {
       console.log('[useEnable2FA] 2FA enabled successfully');
       updateUser({ twoFAEnabled: true } as Partial<User>);
-      
+
       toast.success('2FA Enabled!', {
         description: 'Two-factor authentication is now active',
       });
@@ -671,7 +756,7 @@ export function useEnable2FA() {
 
 export function useLogout() {
   const { logout: clearAuth } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: async () => {
       console.log('[useLogout] Logging out');
@@ -702,14 +787,14 @@ export function useLogout() {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: (payload: UpdateProfilePayload | UserUpdateProfilePayload) => {
       console.log('[useUpdateProfile] Updating profile with payload:', payload);
-      
+
       // Convert frontend field names to backend field names if needed
       const backendPayload: UpdateProfilePayload = {
-        ...payload as any,
+        ...(payload as any),
         // Map firstName/lastName to fname/lname for backend if present
         fname: (payload as any).firstName || (payload as any).fname,
         lname: (payload as any).lastName || (payload as any).lname,
@@ -718,23 +803,26 @@ export function useUpdateProfile() {
         // Keep countryCode if provided
         countryCode: (payload as any).countryCode,
       };
-      
+
       // Remove frontend-specific fields (but keep phoneNumber and countryCode)
       delete (backendPayload as any).firstName;
       delete (backendPayload as any).lastName;
-      
-      console.log('[useUpdateProfile] Converted to backend payload:', backendPayload);
+
+      console.log(
+        '[useUpdateProfile] Converted to backend payload:',
+        backendPayload
+      );
       return userService.updateProfile(backendPayload);
     },
     onSuccess: async (data) => {
       console.log('[useUpdateProfile] Profile updated successfully');
-      
+
       // Normalize backend response (fname/lname) to frontend format
       let responseData = data;
       if (data && typeof data === 'object' && 'data' in data) {
         responseData = (data as any).data;
       }
-      
+
       const backendData = responseData as any;
       if (backendData && (backendData.fname || backendData.lname)) {
         const normalizedData = {
@@ -744,7 +832,7 @@ export function useUpdateProfile() {
         };
         updateUser(normalizedData as Partial<User>);
       }
-      
+
       queryClient.invalidateQueries({ queryKey: queryKeys.profile });
       queryClient.invalidateQueries({ queryKey: ['user'] });
       // Invalidate registration bonus to refresh progress after profile update
@@ -759,21 +847,28 @@ export function useUpdateProfile() {
         message: error instanceof Error ? error.message : String(error),
         code: (error as any)?.code,
         statusCode: (error as any)?.statusCode,
-        response: (error as any)?.response ? {
-          status: (error as any).response.status,
-          statusText: (error as any).response.statusText,
-          data: (error as any).response.data,
-        } : undefined,
-        request: (error as any)?.request ? {
-          url: (error as any).request.responseURL,
-          method: (error as any).config?.method,
-        } : undefined,
+        response: (error as any)?.response
+          ? {
+              status: (error as any).response.status,
+              statusText: (error as any).response.statusText,
+              data: (error as any).response.data,
+            }
+          : undefined,
+        request: (error as any)?.request
+          ? {
+              url: (error as any).request.responseURL,
+              method: (error as any).config?.method,
+            }
+          : undefined,
       };
-      
+
       console.error('[useUpdateProfile] Profile update failed:', errorDetails);
       console.error('[useUpdateProfile] Full error object:', error);
-      
-      const errorMessage = extractErrorMessage(error, 'Could not update profile');
+
+      const errorMessage = extractErrorMessage(
+        error,
+        'Could not update profile'
+      );
       toast.error('Update failed', {
         description: errorMessage,
       });
@@ -787,7 +882,7 @@ export function useUpdateProfile() {
  */
 export function useUploadKYC() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: UploadKYCPayload) => {
       console.log('[useUploadKYC] Uploading KYC documents');
@@ -803,7 +898,10 @@ export function useUploadKYC() {
     onError: (error) => {
       console.error('[useUploadKYC] Upload failed:', error);
       toast.error('Upload failed', {
-        description: extractErrorMessage(error, 'Could not upload KYC documents'),
+        description: extractErrorMessage(
+          error,
+          'Could not upload KYC documents'
+        ),
       });
     },
   });
@@ -834,7 +932,7 @@ export function useSearchUsers() {
 
 export function useCreateStake() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: CreateStakePayload) =>
       api.post('/staking/create', payload),
@@ -842,27 +940,44 @@ export function useCreateStake() {
       queryClient.invalidateQueries({ queryKey: queryKeys.activeStakes });
       queryClient.invalidateQueries({ queryKey: queryKeys.stakeStats });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
-      
+
       // Process registration bonus if this is the first stake
       const stakeData = response?.data?.stake || response?.stake;
-      const isFirstStake = response?.data?.isFirstStake || stakeData?.isFirstStake;
-      const isBonusEligible = response?.data?.registrationBonusEligible || false;
-      
-      if (isFirstStake && isBonusEligible && stakeData?._id && stakeData?.amount) {
+      const isFirstStake =
+        response?.data?.isFirstStake || stakeData?.isFirstStake;
+      const isBonusEligible =
+        response?.data?.registrationBonusEligible || false;
+
+      if (
+        isFirstStake &&
+        isBonusEligible &&
+        stakeData?._id &&
+        stakeData?.amount
+      ) {
         try {
           // Dynamically import to avoid circular dependencies
-          const { registrationBonusApi } = await import('@/services/registrationBonusApi');
-          await registrationBonusApi.processStake(stakeData._id, stakeData.amount);
-          
+          const { registrationBonusApi } = await import(
+            '@/services/registrationBonusApi'
+          );
+          await registrationBonusApi.processStake(
+            stakeData._id,
+            stakeData.amount
+          );
+
           // Invalidate registration bonus status to refresh banner
-          queryClient.invalidateQueries({ queryKey: queryKeys.registrationBonus });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.registrationBonus,
+          });
         } catch (bonusError) {
           // Don't fail the stake creation if bonus processing fails
-          console.error('[useCreateStake] Bonus processing failed:', bonusError);
+          console.error(
+            '[useCreateStake] Bonus processing failed:',
+            bonusError
+          );
           // Stake is still created successfully, bonus processing is optional
         }
       }
-      
+
       toast.success('Stake created successfully! 🎉', {
         description: 'Your investment journey has begun!',
         duration: 5000,
@@ -878,7 +993,7 @@ export function useCreateStake() {
 
 export function useWithdrawEarly() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: WithdrawEarlyPayload) =>
       api.post(`/staking/${payload.stakeId}/withdraw-early`, payload),
@@ -886,7 +1001,7 @@ export function useWithdrawEarly() {
       queryClient.invalidateQueries({ queryKey: queryKeys.activeStakes });
       queryClient.invalidateQueries({ queryKey: queryKeys.completedStakes });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
-      
+
       toast.success('Early withdrawal processed', {
         description: 'Funds have been returned to your wallet',
       });
@@ -900,14 +1015,14 @@ export function useWithdrawEarly() {
 
 export function useTransferBetweenWallets() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: TransferBetweenWalletsPayload) =>
       api.post('/wallet/transfer', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
-      
+
       toast.success('Transfer successful', {
         description: 'Funds transferred between wallets',
       });
@@ -926,12 +1041,16 @@ export function useInitiateDeposit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
       toast.success('Deposit initialized', {
-        description: 'Send funds to the generated address to complete your deposit.',
+        description:
+          'Send funds to the generated address to complete your deposit.',
       });
     },
     onError: (error: unknown) => {
       toast.error('Deposit initialization failed', {
-        description: extractErrorMessage(error, 'Unable to create deposit address'),
+        description: extractErrorMessage(
+          error,
+          'Unable to create deposit address'
+        ),
       });
     },
   });
@@ -943,7 +1062,7 @@ export function useInitiateDeposit() {
 
 export function useRequestWithdrawal() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: WithdrawalRequest) =>
       api.post('/withdrawal/request', payload),
@@ -951,7 +1070,7 @@ export function useRequestWithdrawal() {
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawalStats });
-      
+
       toast.success('Withdrawal requested', {
         description: 'Your withdrawal request is being processed',
       });
@@ -961,13 +1080,12 @@ export function useRequestWithdrawal() {
 
 export function useCancelWithdrawal() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (id: string) =>
-      api.delete(`/withdrawal/${id}/cancel`),
+    mutationFn: (id: string) => api.delete(`/withdrawal/${id}/cancel`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
-      
+
       toast.success('Withdrawal cancelled', {
         description: 'Your withdrawal request has been cancelled',
       });
@@ -981,7 +1099,7 @@ export function useCancelWithdrawal() {
 
 export function useTerminateSession() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (sessionId: string) =>
       api.delete(`/auth/sessions/${sessionId}`),

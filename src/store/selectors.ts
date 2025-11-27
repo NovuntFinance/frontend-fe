@@ -5,7 +5,6 @@
 
 import { useAuthStore } from './authStore';
 import { useUIStore } from './uiStore';
-import { shallow } from 'zustand/shallow';
 
 /**
  * Auth Store Selectors
@@ -13,89 +12,82 @@ import { shallow } from 'zustand/shallow';
  */
 
 // Get only user data (doesn't re-render when token changes)
-export const useUser = () => useAuthStore(state => state.user);
+export const useUser = () => useAuthStore((state) => state.user);
 
 // Get only authentication status
-export const useIsAuthenticated = () => useAuthStore(state => state.isAuthenticated);
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => state.isAuthenticated);
 
 // Get only loading state
-export const useAuthLoading = () => useAuthStore(state => state.isLoading);
+export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 
 // Get only token (rarely needed in components)
-export const useToken = () => useAuthStore(state => state.token);
+export const useToken = () => useAuthStore((state) => state.token);
 
 // Get auth actions only (never causes re-renders)
 export const useAuthActions = () =>
-    useAuthStore(
-        state => ({
-            login: state.login,
-            logout: state.logout,
-            setUser: state.setUser,
-            setTokens: state.setTokens,
-        }),
-        shallow
-    );
+  useAuthStore((state) => ({
+    // `login` is handled via mutation hooks; expose core actions only
+    logout: state.logout,
+    setUser: state.setUser,
+    setTokens: state.setTokens,
+  }));
 
 // Combined selectors for common patterns
 export const useAuthState = () =>
-    useAuthStore(
-        state => ({
-            user: state.user,
-            isAuthenticated: state.isAuthenticated,
-            isLoading: state.isLoading,
-        }),
-        shallow
-    );
+  useAuthStore((state) => ({
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    isLoading: state.isLoading,
+  }));
 
 // Role-based selectors
 export const useIsAdmin = () =>
-    useAuthStore(state => state.user?.role === 'admin');
+  useAuthStore((state) => state.user?.role === 'admin');
 
 export const useIsVerified = () =>
-    useAuthStore(state => state.user?.emailVerified === true);
+  useAuthStore((state) => state.user?.emailVerified === true);
 
 /**
  * UI Store Selectors
  */
 
 // Get only theme
-export const useTheme = () => useUIStore(state => state.theme);
+export const useTheme = () => useUIStore((state) => state.theme);
 
 // Get only sidebar state
-export const useSidebarOpen = () => useUIStore(state => state.sidebarOpen);
+export const useSidebarOpen = () => useUIStore((state) => state.sidebarOpen);
 
 // Get UI actions
 export const useUIActions = () =>
-    useUIStore(
-        state => ({
-            setTheme: state.setTheme,
-            toggleSidebar: state.toggleSidebar,
-            openModal: state.openModal,
-            closeModal: state.closeModal,
-        }),
-        shallow
-    );
+  useUIStore((state) => ({
+    setTheme: state.setTheme,
+    toggleSidebar: state.toggleSidebar,
+    openModal: state.openModal,
+    closeModal: state.closeModal,
+  }));
 
 // Get modal state
 export const useModalState = (modalId: string) =>
-    useUIStore(state => ({
-        isOpen: state.openModals.includes(modalId),
-        open: () => state.openModal(modalId),
-        close: () => state.closeModal(modalId),
-    }));
+  useUIStore((state) => ({
+    isOpen: state.isModalOpen(modalId),
+    open: () => state.openModal(modalId),
+    close: () => state.closeModal(modalId),
+    data: state.getModalData(modalId),
+  }));
 
 /**
  * Usage Examples:
- * 
+ *
  * // Bad - causes re-render on ANY auth state change
  * const { user, token, isLoading } = useAuthStore();
- * 
+ *
  * // Good - only re-renders when user changes
  * const user = useUser();
- * 
+ *
  * // Good - only re-renders when isAuthenticated changes
  * const isAuthenticated = useIsAuthenticated();
- * 
+ *
  * // Good - get actions without subscribing to state
  * const { logout } = useAuthActions();
  */

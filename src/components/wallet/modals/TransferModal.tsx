@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Search, User, AlertCircle, CheckCircle2, Shield, Clock } from 'lucide-react';
+import {
+  X,
+  Send,
+  Search,
+  User,
+  AlertCircle,
+  CheckCircle2,
+  Shield,
+  Clock,
+} from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,11 +60,13 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [transferResponse, setTransferResponse] = useState<TransferResponse | null>(null);
+  const [transferResponse, setTransferResponse] =
+    useState<TransferResponse | null>(null);
   const [fetchingTestCode, setFetchingTestCode] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
-  const availableBalance = (wallet?.funded?.balance || 0) + (wallet?.earnings?.balance || 0);
+  const availableBalance =
+    (wallet?.funded?.balance || 0) + (wallet?.earnings?.balance || 0);
   const MIN_TRANSFER = 1;
 
   // Reset on open
@@ -87,15 +98,15 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       setSearchLoading(true);
       try {
         const results = await transferApi.searchUsers(debouncedSearch);
-        
+
         // Convert API results to display format
-        const displayUsers: DisplayUser[] = results.map(user => ({
+        const displayUsers: DisplayUser[] = results.map((user) => ({
           userId: user.userId,
           username: user.username,
           displayName: user.fullName || user.username,
           email: user.email,
         }));
-        
+
         setSearchResults(displayUsers);
       } catch (err) {
         console.error('Search error:', err);
@@ -115,13 +126,16 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   };
 
   const handleProceedTo2FA = () => {
-    const validation = transferApi.validateTransferAmount(parseFloat(amount), availableBalance);
-    
+    const validation = transferApi.validateTransferAmount(
+      parseFloat(amount),
+      availableBalance
+    );
+
     if (!validation.isValid) {
       setError(validation.error || 'Invalid amount');
       return;
     }
-    
+
     setError('');
     setStep('2fa');
   };
@@ -129,13 +143,13 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const handleGetTestCode = async () => {
     setFetchingTestCode(true);
     setError('');
-    
+
     try {
       const response = await transferApi.get2FACode();
       const testCode = response.data.codes.current;
-      
+
       setTwoFACode(testCode);
-      
+
       toast.success('Test code retrieved!', {
         description: `Code: ${testCode} (Valid for ${response.data.validFor})`,
         duration: 5000,
@@ -143,7 +157,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to get test code';
       setError(errorMessage);
-      
+
       toast.error('Could not get test code', {
         description: errorMessage,
         duration: 5000,
@@ -176,12 +190,12 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
       setTransferResponse(response);
       setStep('success');
-      
+
       toast.success('Transfer successful!', {
         description: `${amount} USDT sent to @${selectedUser.username}`,
         duration: 5000,
       });
-      
+
       // Refresh wallet balance and transactions
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
@@ -189,7 +203,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     } catch (err: any) {
       const errorMessage = transferApi.formatErrorMessage(err);
       setError(errorMessage);
-      
+
       toast.error('Transfer failed', {
         description: errorMessage,
         duration: 5000,
@@ -212,7 +226,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+            className="bg-background/80 fixed inset-0 z-50 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -221,14 +235,14 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-card rounded-3xl shadow-2xl border border-border/50 overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-card border-border/50 relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border shadow-2xl"
             >
               {/* Header */}
-              <div className="relative bg-gradient-to-br from-accent via-accent to-accent/80 p-6">
-                <div className="absolute inset-0 bg-gradient-to-t from-accent/20 to-transparent" />
+              <div className="from-accent via-accent to-accent/80 relative bg-gradient-to-br p-6">
+                <div className="from-accent/20 absolute inset-0 bg-gradient-to-t to-transparent" />
                 <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-white/10">
+                    <div className="rounded-xl bg-white/10 p-3">
                       <Send className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -244,7 +258,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     variant="ghost"
                     size="icon"
                     onClick={onClose}
-                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    className="text-white/80 hover:bg-white/10 hover:text-white"
                   >
                     <X className="h-5 w-5" />
                   </Button>
@@ -252,7 +266,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
               </div>
 
               {/* Content */}
-              <div className="p-6 overflow-y-auto flex-1">
+              <div className="flex-1 overflow-y-auto p-6">
                 {/* Step 1: Search User */}
                 {step === 'search' && (
                   <motion.div
@@ -261,26 +275,28 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     className="space-y-6"
                   >
                     {/* Available Balance */}
-                    <div className="p-4 bg-gradient-to-br from-accent/10 to-accent/5 rounded-xl border border-accent/20">
-                      <p className="text-sm text-muted-foreground mb-1">
+                    <div className="from-accent/10 to-accent/5 border-accent/20 rounded-xl border bg-gradient-to-br p-4">
+                      <p className="text-muted-foreground mb-1 text-sm">
                         Available to Send
                       </p>
-                      <p className="text-3xl font-bold text-foreground">
-                        ${availableBalance.toLocaleString('en-US', {
+                      <p className="text-foreground text-3xl font-bold">
+                        $
+                        {availableBalance.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         From Earnings Wallet
                       </p>
                     </div>
 
                     {/* Info Alert */}
                     <Alert className="bg-success/10 border-success">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="text-success h-4 w-4" />
                       <AlertDescription>
-                        <strong>Instant & FREE</strong> - No fees, instant delivery, available 24/7
+                        <strong>Instant & FREE</strong> - No fees, instant
+                        delivery, available 24/7
                       </AlertDescription>
                     </Alert>
 
@@ -288,7 +304,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <div className="space-y-2">
                       <Label htmlFor="search">Find Recipient</Label>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                         <Input
                           id="search"
                           type="text"
@@ -297,13 +313,17 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="pl-10"
                         />
-                      {searchLoading && (
-                        <NovuntSpinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Shows past recipients first, or type a username to send to someone new
-                    </p>
+                        {searchLoading && (
+                          <NovuntSpinner
+                            size="sm"
+                            className="absolute top-1/2 right-3 -translate-y-1/2"
+                          />
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        Shows past recipients first, or type a username to send
+                        to someone new
+                      </p>
                     </div>
 
                     {/* Search Results */}
@@ -323,34 +343,36 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               };
                               handleSelectUser(newUser);
                             }}
-                            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
+                            className="border-primary/30 bg-primary/5 hover:bg-primary/10 flex w-full items-center gap-4 rounded-xl border-2 border-dashed p-4 text-left transition-colors"
                           >
-                            <div className="p-3 rounded-full bg-primary/20">
-                              <User className="h-5 w-5 text-primary" />
+                            <div className="bg-primary/20 rounded-full p-3">
+                              <User className="text-primary h-5 w-5" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold truncate">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-semibold">
                                 @{searchQuery.trim()}
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-muted-foreground text-sm">
                                 Send to new recipient
                               </p>
                             </div>
-                            <Send className="h-4 w-4 text-primary" />
+                            <Send className="text-primary h-4 w-4" />
                           </motion.button>
                         )}
 
                         {/* Show message if less than 3 characters */}
                         {searchQuery.trim().length < 3 && !searchLoading && (
-                          <div className="p-6 text-center text-muted-foreground bg-muted/50 rounded-xl">
-                            <p className="text-sm">Type at least 3 characters to add a new recipient</p>
+                          <div className="text-muted-foreground bg-muted/50 rounded-xl p-6 text-center">
+                            <p className="text-sm">
+                              Type at least 3 characters to add a new recipient
+                            </p>
                           </div>
                         )}
 
                         {/* Past Recipients Section */}
                         {searchResults.length > 0 && (
                           <div className="space-y-2">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2">
+                            <p className="text-muted-foreground px-2 text-xs font-semibold tracking-wide uppercase">
                               Past Recipients
                             </p>
                             {searchResults.map((user) => (
@@ -359,16 +381,16 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 onClick={() => handleSelectUser(user)}
-                                className="w-full flex items-center gap-4 p-4 rounded-xl border hover:bg-muted transition-colors text-left"
+                                className="hover:bg-muted flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-colors"
                               >
-                                <div className="p-3 rounded-full bg-primary/10">
-                                  <User className="h-5 w-5 text-primary" />
+                                <div className="bg-primary/10 rounded-full p-3">
+                                  <User className="text-primary h-5 w-5" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold truncate">
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-semibold">
                                     @{user.username}
                                   </p>
-                                  <p className="text-sm text-muted-foreground truncate">
+                                  <p className="text-muted-foreground truncate text-sm">
                                     {user.displayName}
                                   </p>
                                 </div>
@@ -380,8 +402,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     )}
 
                     {searchQuery.length < 2 && (
-                      <div className="p-12 text-center text-muted-foreground">
-                        <Search className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <div className="text-muted-foreground p-12 text-center">
+                        <Search className="mx-auto mb-4 h-12 w-12 opacity-30" />
                         <p className="text-sm">
                           Start typing to search for users
                         </p>
@@ -398,17 +420,19 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     className="space-y-6"
                   >
                     {/* Selected User */}
-                    <div className="p-4 bg-muted rounded-xl">
-                      <p className="text-xs text-muted-foreground mb-2">
+                    <div className="bg-muted rounded-xl p-4">
+                      <p className="text-muted-foreground mb-2 text-xs">
                         Sending to:
                       </p>
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-primary/10">
-                          <User className="h-5 w-5 text-primary" />
+                        <div className="bg-primary/10 rounded-full p-2">
+                          <User className="text-primary h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-semibold">@{selectedUser.username}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-semibold">
+                            @{selectedUser.username}
+                          </p>
+                          <p className="text-muted-foreground text-sm">
                             {selectedUser.displayName}
                           </p>
                         </div>
@@ -417,7 +441,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         variant="link"
                         size="sm"
                         onClick={() => setStep('search')}
-                        className="text-xs mt-2"
+                        className="mt-2 text-xs"
                       >
                         Change recipient
                       </Button>
@@ -446,7 +470,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                           variant="link"
                           size="sm"
                           onClick={() => setAmount(availableBalance.toString())}
-                          className="text-xs h-auto p-0"
+                          className="h-auto p-0 text-xs"
                         >
                           Send max
                         </Button>
@@ -464,31 +488,41 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         value={memo}
                         onChange={(e) => setMemo(e.target.value)}
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {memo.length}/200 characters
                       </p>
                     </div>
 
                     {/* Fee Info */}
                     {parseFloat(amount) >= MIN_TRANSFER && (
-                      <div className="p-4 bg-success/10 rounded-xl border border-success/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <p className="font-semibold text-success">FREE Transfer</p>
+                      <div className="bg-success/10 border-success/20 rounded-xl border p-4">
+                        <div className="mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="text-success h-4 w-4" />
+                          <p className="text-success font-semibold">
+                            FREE Transfer
+                          </p>
                         </div>
                         <div className="space-y-1 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">Amount:</span>
-                            <span className="font-semibold">${parseFloat(amount).toFixed(2)}</span>
+                            <span className="text-muted-foreground">
+                              Amount:
+                            </span>
+                            <span className="font-semibold">
+                              ${parseFloat(amount).toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Fee:</span>
-                            <span className="font-semibold text-success">$0.00 (FREE)</span>
+                            <span className="text-success font-semibold">
+                              $0.00 (FREE)
+                            </span>
                           </div>
-                          <div className="h-px bg-border my-2" />
+                          <div className="bg-border my-2 h-px" />
                           <div className="flex justify-between">
-                            <span className="font-semibold">Recipient receives:</span>
-                            <span className="font-bold text-lg text-success">
+                            <span className="font-semibold">
+                              Recipient receives:
+                            </span>
+                            <span className="text-success text-lg font-bold">
                               ${parseFloat(amount).toFixed(2)}
                             </span>
                           </div>
@@ -514,7 +548,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       <Button
                         onClick={handleProceedTo2FA}
                         disabled={!amount || parseFloat(amount) < MIN_TRANSFER}
-                        className="flex-1 bg-accent hover:bg-accent/90"
+                        className="bg-accent hover:bg-accent/90 flex-1"
                       >
                         Continue
                       </Button>
@@ -527,138 +561,156 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex flex-col h-full"
+                    className="flex h-full flex-col"
                   >
-                    <div className="space-y-6 flex-1 overflow-y-auto pr-2">
-                    <Alert className="bg-accent/10 border-accent">
-                      <Shield className="h-4 w-4 text-accent" />
-                      <AlertDescription>
-                        Enter your 2FA code to confirm this transfer
-                      </AlertDescription>
-                    </Alert>
-
-                    {/* Confirmation Card */}
-                    <div className="p-6 bg-muted rounded-xl space-y-4">
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          You&apos;re sending
-                        </p>
-                        <p className="text-4xl font-bold text-foreground">
-                          ${parseFloat(amount).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          USDT
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-center">
-                        <motion.div
-                          animate={{ x: [0, 10, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        >
-                          <Send className="h-6 w-6 text-accent" />
-                        </motion.div>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          To
-                        </p>
-                        <div className="inline-flex items-center gap-3 p-3 bg-background rounded-xl">
-                          <div className="p-2 rounded-full bg-primary/10">
-                            <User className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-semibold">@{selectedUser.username}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {selectedUser.displayName}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Transfer fee:</span>
-                          <span className="font-semibold text-success">FREE</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Delivery time:</span>
-                          <span className="font-semibold text-success">Instant</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 2FA Code Input */}
-                    <div className="space-y-2">
-                      <Label htmlFor="twoFACode" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        2FA Authentication Code
-                      </Label>
-                      <Input
-                        id="twoFACode"
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
-                        placeholder="Enter 6-digit code"
-                        value={twoFACode}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          setTwoFACode(value);
-                          setError('');
-                        }}
-                        className="text-center text-2xl tracking-widest font-mono"
-                        autoFocus
-                      />
-                      <div className="flex items-center justify-between text-xs">
-                        <p className="text-muted-foreground">
-                          Enter the 6-digit code from your authenticator app
-                        </p>
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    </div>
-
-                    {/* Test Code Button (Development Only) */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
-                        <AlertTitle className="text-amber-800 dark:text-amber-400">Testing Mode</AlertTitle>
-                        <AlertDescription className="text-amber-700 dark:text-amber-500">
-                          <p className="mb-2">For development testing, you can get a test 2FA code:</p>
-                          <Button
-                            onClick={handleGetTestCode}
-                            disabled={fetchingTestCode}
-                            variant="outline"
-                            size="sm"
-                            className="w-full border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
-                          >
-                            {fetchingTestCode ? (
-                              <>
-                                <NovuntSpinner size="sm" className="mr-2" />
-                                Getting code...
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-4 w-4 mr-2" />
-                                Get Test 2FA Code
-                              </>
-                            )}
-                          </Button>
+                    <div className="flex-1 space-y-6 overflow-y-auto pr-2">
+                      <Alert className="bg-accent/10 border-accent">
+                        <Shield className="text-accent h-4 w-4" />
+                        <AlertDescription>
+                          Enter your 2FA code to confirm this transfer
                         </AlertDescription>
                       </Alert>
-                    )}
 
-                    {error && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
-                      </Alert>
-                    )}
+                      {/* Confirmation Card */}
+                      <div className="bg-muted space-y-4 rounded-xl p-6">
+                        <div className="text-center">
+                          <p className="text-muted-foreground mb-2 text-sm">
+                            You&apos;re sending
+                          </p>
+                          <p className="text-foreground text-4xl font-bold">
+                            ${parseFloat(amount).toFixed(2)}
+                          </p>
+                          <p className="text-muted-foreground mt-1 text-sm">
+                            USDT
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-center">
+                          <motion.div
+                            animate={{ x: [0, 10, 0] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          >
+                            <Send className="text-accent h-6 w-6" />
+                          </motion.div>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="text-muted-foreground mb-2 text-sm">
+                            To
+                          </p>
+                          <div className="bg-background inline-flex items-center gap-3 rounded-xl p-3">
+                            <div className="bg-primary/10 rounded-full p-2">
+                              <User className="text-primary h-5 w-5" />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-semibold">
+                                @{selectedUser.username}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {selectedUser.displayName}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 border-t pt-4 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Transfer fee:
+                            </span>
+                            <span className="text-success font-semibold">
+                              FREE
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Delivery time:
+                            </span>
+                            <span className="text-success font-semibold">
+                              Instant
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2FA Code Input */}
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="twoFACode"
+                          className="flex items-center gap-2"
+                        >
+                          <Shield className="h-4 w-4" />
+                          2FA Authentication Code
+                        </Label>
+                        <Input
+                          id="twoFACode"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          placeholder="Enter 6-digit code"
+                          value={twoFACode}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setTwoFACode(value);
+                            setError('');
+                          }}
+                          className="text-center font-mono text-2xl tracking-widest"
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-between text-xs">
+                          <p className="text-muted-foreground">
+                            Enter the 6-digit code from your authenticator app
+                          </p>
+                          <Clock className="text-muted-foreground h-3 w-3" />
+                        </div>
+                      </div>
+
+                      {/* Test Code Button (Development Only) */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <AlertTitle className="text-amber-800 dark:text-amber-400">
+                            Testing Mode
+                          </AlertTitle>
+                          <AlertDescription className="text-amber-700 dark:text-amber-500">
+                            <p className="mb-2">
+                              For development testing, you can get a test 2FA
+                              code:
+                            </p>
+                            <Button
+                              onClick={handleGetTestCode}
+                              disabled={fetchingTestCode}
+                              variant="outline"
+                              size="sm"
+                              className="w-full border-amber-300 hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900/50"
+                            >
+                              {fetchingTestCode ? (
+                                <>
+                                  <NovuntSpinner size="sm" className="mr-2" />
+                                  Getting code...
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Get Test 2FA Code
+                                </>
+                              )}
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {error && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                      )}
                     </div>
 
                     {/* Sticky Footer with Buttons */}
-                    <div className="flex gap-3 pt-4 mt-4 border-t bg-card sticky bottom-0">
+                    <div className="bg-card sticky bottom-0 mt-4 flex gap-3 border-t pt-4">
                       <Button
                         onClick={() => setStep('amount')}
                         variant="outline"
@@ -669,9 +721,11 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       <Button
                         onClick={handleSubmitTransfer}
                         disabled={loading || twoFACode.length !== 6}
-                        className="flex-1 bg-accent hover:bg-accent/90"
+                        className="bg-accent hover:bg-accent/90 flex-1"
                       >
-                        {loading && <NovuntSpinner size="sm" className="mr-2" />}
+                        {loading && (
+                          <NovuntSpinner size="sm" className="mr-2" />
+                        )}
                         Confirm Transfer
                       </Button>
                     </div>
@@ -683,42 +737,53 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="py-12 text-center space-y-6"
+                    className="space-y-6 py-12 text-center"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', duration: 0.5 }}
-                      className="inline-flex p-6 rounded-full bg-success/10"
+                      className="bg-success/10 inline-flex rounded-full p-6"
                     >
-                      <CheckCircle2 className="h-12 w-12 text-success" />
+                      <CheckCircle2 className="text-success h-12 w-12" />
                     </motion.div>
 
                     <div>
-                      <h3 className="text-2xl font-bold mb-2">
+                      <h3 className="mb-2 text-2xl font-bold">
                         Transfer Successful!
                       </h3>
-                      <p className="text-lg text-muted-foreground">
-                        ${parseFloat(amount).toFixed(2)} sent to @{selectedUser.username}
+                      <p className="text-muted-foreground text-lg">
+                        ${parseFloat(amount).toFixed(2)} sent to @
+                        {selectedUser.username}
                       </p>
                     </div>
 
-                    <div className="p-4 bg-muted rounded-xl space-y-2 text-sm">
+                    <div className="bg-muted space-y-2 rounded-xl p-4 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">${parseFloat(amount).toFixed(2)}</span>
+                        <span className="font-semibold">
+                          ${parseFloat(amount).toFixed(2)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Recipient:</span>
-                        <span className="font-semibold">@{selectedUser.username}</span>
+                        <span className="text-muted-foreground">
+                          Recipient:
+                        </span>
+                        <span className="font-semibold">
+                          @{selectedUser.username}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Fee:</span>
-                        <span className="font-semibold text-success">FREE</span>
+                        <span className="text-success font-semibold">FREE</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Transaction ID:</span>
-                        <span className="font-mono text-xs">{transferResponse?.transactionId}</span>
+                        <span className="text-muted-foreground">
+                          Transaction ID:
+                        </span>
+                        <span className="font-mono text-xs">
+                          {transferResponse?.txId}
+                        </span>
                       </div>
                     </div>
 
@@ -737,7 +802,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                           setSelectedUser(null);
                           setAmount('');
                         }}
-                        className="flex-1 bg-accent hover:bg-accent/90"
+                        className="bg-accent hover:bg-accent/90 flex-1"
                       >
                         Send Again
                       </Button>
@@ -752,4 +817,3 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     </AnimatePresence>
   );
 }
-

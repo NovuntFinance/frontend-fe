@@ -24,15 +24,15 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
   return (
     <Card className="border-muted bg-muted/30">
       <CardContent className="p-6">
-        <div className="text-center space-y-4">
+        <div className="space-y-4 text-center">
           {/* Expired Icon */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border"
+            className="bg-muted border-border inline-flex h-16 w-16 items-center justify-center rounded-full border-2"
           >
-            <Clock className="h-8 w-8 text-muted-foreground" />
+            <Clock className="text-muted-foreground h-8 w-8" />
           </motion.div>
 
           {/* Title */}
@@ -41,10 +41,10 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              ⏰ Time's Up
+            <h2 className="text-foreground mb-2 text-2xl font-bold">
+              ⏰ Time’s Up
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               The registration bonus deadline has passed
             </p>
           </motion.div>
@@ -54,12 +54,12 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="p-4 rounded-lg bg-card border border-border/50"
+            className="bg-card border-border/50 rounded-lg border p-4"
           >
-            <p className="text-sm text-foreground mb-2">
-              Don't worry! You can still earn rewards through:
+            <p className="text-foreground mb-2 text-sm">
+              Don’t worry! You can still earn rewards through:
             </p>
-            <ul className="text-left text-sm text-muted-foreground space-y-1 list-disc list-inside">
+            <ul className="text-muted-foreground list-inside list-disc space-y-1 text-left text-sm">
               <li>Our referral program</li>
               <li>Regular staking rewards</li>
               <li>Weekly profit distributions</li>
@@ -71,7 +71,7 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-3 justify-center"
+            className="flex flex-col justify-center gap-3 sm:flex-row"
           >
             <Button
               variant="outline"
@@ -80,9 +80,7 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
               <Gift className="mr-2 h-4 w-4" />
               Referral Program
             </Button>
-            <Button
-              onClick={() => router.push('/dashboard/stakes')}
-            >
+            <Button onClick={() => router.push('/dashboard/stakes')}>
               View Stakes
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -92,4 +90,3 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
     </Card>
   );
 }
-

@@ -1,15 +1,15 @@
 // Type declarations for lucide-react
 declare module 'lucide-react' {
   import { FC, SVGProps } from 'react';
-  
+
   export type IconProps = SVGProps<SVGSVGElement> & {
     size?: number | string;
     strokeWidth?: number | string;
     color?: string;
   };
-  
+
   export type Icon = FC<IconProps>;
-  
+
   export const Mail: Icon;
   export const AtSign: Icon;
   export const Lock: Icon;
@@ -31,6 +31,8 @@ declare module 'lucide-react' {
   export const ChevronLeft: Icon;
   export const ArrowRight: Icon;
   export const ArrowLeft: Icon;
+  export const ArrowDownLeft: Icon;
+  export const ArrowRightLeft: Icon;
   export const Plus: Icon;
   export const Minus: Icon;
   export const Home: Icon;
@@ -78,4 +80,7 @@ declare module 'lucide-react' {
   export const TrendingDown: Icon;
   export const Circle: Icon;
   export const ShieldCheck: Icon;
+  export const Award: Icon;
+  export const Share2: Icon;
+  export const Inbox: Icon;
 }
