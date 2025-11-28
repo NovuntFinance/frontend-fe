@@ -71,12 +71,54 @@ export function DateFilteredNotificationList({
   const { filteredNotifications, dateGroups } = useMemo(() => {
     let filtered = [...notifications];
 
+    // Debug: Log notification types to see what's coming from backend
+    if (process.env.NODE_ENV === 'development' && notifications.length > 0) {
+      console.log('[DateFilteredNotificationList] === FILTERING DEBUG ===');
+      console.log(
+        '[DateFilteredNotificationList] Total notifications:',
+        notifications.length
+      );
+      console.log(
+        '[DateFilteredNotificationList] Notification types:',
+        notifications.map((n) => n.type)
+      );
+      console.log(
+        '[DateFilteredNotificationList] includeTypes filter:',
+        includeTypes
+      );
+      console.log(
+        '[DateFilteredNotificationList] Sample notification:',
+        notifications[0]
+      );
+    }
+
     // Apply type filters (include/exclude)
+    // Handle case where notification type might be undefined or different format
     if (includeTypes && includeTypes.length > 0) {
-      filtered = filtered.filter((n) => includeTypes.includes(n.type));
+      filtered = filtered.filter((n) => {
+        // If no type, default to 'system' category for system/alert tab, or show in activity
+        const type = (n.type || 'system').toLowerCase();
+        const matches = includeTypes.some((t) => t.toLowerCase() === type);
+
+        // Also check if this is a system tab and notification has no type (should show there)
+        const isSystemTab = includeTypes.includes('system');
+        const hasNoType = !n.type;
+
+        return matches || (isSystemTab && hasNoType);
+      });
     }
     if (excludeTypes && excludeTypes.length > 0) {
-      filtered = filtered.filter((n) => !excludeTypes.includes(n.type));
+      filtered = filtered.filter((n) => {
+        const type = (n.type || 'system').toLowerCase();
+        return !excludeTypes.some((t) => t.toLowerCase() === type);
+      });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        '[DateFilteredNotificationList] After type filter:',
+        filtered.length
+      );
     }
 
     // Apply date filter
@@ -173,13 +215,44 @@ export function DateFilteredNotificationList({
   }
 
   if (filteredNotifications.length === 0) {
+    // Determine empty state message based on filters
+    const getEmptyStateMessage = () => {
+      // Check if filtering by system/alert types
+      const isSystemFilter = includeTypes?.some((t) =>
+        ['system', 'alert', 'bonus', 'referral', 'security'].includes(t)
+      );
+      const isActivityFilter = includeTypes?.some((t) =>
+        ['deposit', 'withdrawal', 'earning'].includes(t)
+      );
+
+      if (dateFilter !== 'all') {
+        const dateLabel =
+          dateFilter === 'today'
+            ? 'today'
+            : dateFilter === 'week'
+              ? 'this week'
+              : dateFilter === 'month'
+                ? 'this month'
+                : 'selected date range';
+        return `No notifications found for ${dateLabel}`;
+      }
+
+      if (isSystemFilter && !isActivityFilter) {
+        return "No system messages or alerts yet. We'll notify you about important updates and promotions here.";
+      }
+
+      if (isActivityFilter && !isSystemFilter) {
+        return 'No activity notifications yet. Your deposits, withdrawals, and earnings will appear here.';
+      }
+
+      return 'No notifications yet';
+    };
+
     return (
       <div className="py-12 text-center">
-        <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-50" />
-        <p className="text-muted-foreground">
-          {dateFilter === 'all'
-            ? 'No notifications yet'
-            : `No notifications found for ${dateFilter === 'today' ? 'today' : dateFilter === 'week' ? 'this week' : dateFilter === 'month' ? 'this month' : 'selected date range'}`}
+        <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-40" />
+        <p className="text-muted-foreground mx-auto max-w-xs text-sm">
+          {getEmptyStateMessage()}
         </p>
       </div>
     );

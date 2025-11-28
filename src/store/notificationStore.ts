@@ -1,140 +1,281 @@
 /**
  * Notification Store
- * Manages in-app notifications and push notification state
+ * Manages in-app notifications with API integration
  */
 
 import { create } from 'zustand';
-
-export interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  actionUrl?: string;
-  metadata?: Record<string, unknown>;
-}
+import {
+  getNotifications,
+  getUnreadCount,
+  markAsRead as markAsReadApi,
+  markAllAsRead as markAllAsReadApi,
+  deleteNotification as deleteNotificationApi,
+} from '@/services/notificationApi';
+import type {
+  Notification,
+  NotificationFilters,
+  PaginationInfo,
+} from '@/types/notification';
 
 interface NotificationState {
   // State
   notifications: Notification[];
   unreadCount: number;
+  pagination: PaginationInfo | null;
+  loading: boolean;
+  error: string | null;
   pushEnabled: boolean;
-  
+
   // Actions
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
-  removeNotification: (id: string) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
-  setNotifications: (notifications: Notification[]) => void;
-  
+  fetchNotifications: (filters?: NotificationFilters) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  loadMore: () => Promise<void>;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+
   // Push notifications
   setPushEnabled: (enabled: boolean) => void;
   requestPushPermission: () => Promise<boolean>;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotificationStore = create<NotificationState>((set, get) => ({
   // Initial state
   notifications: [],
   unreadCount: 0,
+  pagination: null,
+  loading: false,
+  error: null,
   pushEnabled: false,
-  
-  // Add new notification
-  addNotification: (notification) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-      isRead: false,
-    };
-    
-    set((state) => ({
-      notifications: [newNotification, ...state.notifications],
-      unreadCount: state.unreadCount + 1,
-    }));
-  },
-  
-  // Remove notification
-  removeNotification: (id) => {
-    set((state) => {
-      const notification = state.notifications.find((n) => n.id === id);
-      const wasUnread = notification && !notification.isRead;
-      
-      return {
-        notifications: state.notifications.filter((n) => n.id !== id),
-        unreadCount: wasUnread ? state.unreadCount - 1 : state.unreadCount,
-      };
-    });
-  },
-  
-  // Mark notification as read
-  markAsRead: (id) => {
-    set((state) => {
-      const notification = state.notifications.find((n) => n.id === id);
-      if (!notification || notification.isRead) {
-        return state;
+
+  // Fetch notifications from API
+  fetchNotifications: async (filters: NotificationFilters = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getNotifications(filters);
+
+      // Debug logging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[notificationStore] === PROCESSING RESPONSE ===');
+        console.log('[notificationStore] Response type:', typeof response);
+        console.log('[notificationStore] Is array?:', Array.isArray(response));
+        console.log('[notificationStore] Response:', response);
       }
-      
-      return {
-        notifications: state.notifications.map((n) =>
-          n.id === id ? { ...n, isRead: true } : n
-        ),
-        unreadCount: Math.max(0, state.unreadCount - 1),
-      };
-    });
+
+      // Handle both array response (API client unwraps data) and object response
+      if (Array.isArray(response)) {
+        // API returned unwrapped array of notifications
+        const notifications = response as Notification[];
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '[notificationStore] ✅ Array detected, notifications count:',
+            notifications.length
+          );
+          console.log(
+            '[notificationStore] Notification types:',
+            notifications.map((n) => n.type)
+          );
+          if (notifications.length > 0) {
+            console.log(
+              '[notificationStore] First notification:',
+              notifications[0]
+            );
+          }
+        }
+        set({
+          notifications,
+          pagination: null, // Pagination info not available in unwrapped response
+          unreadCount: notifications.filter((n) => !n.isRead).length,
+          loading: false,
+        });
+      } else {
+        // API returned wrapped object response
+        const notifications = response.data || [];
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '[notificationStore] Object response, data count:',
+            notifications.length
+          );
+        }
+        set({
+          notifications,
+          pagination: response.pagination || null,
+          unreadCount: response.unreadCount || 0,
+          loading: false,
+        });
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch notifications';
+      set({ error: errorMessage, loading: false });
+      console.error('[notificationStore.fetchNotifications] Error:', err);
+    }
   },
-  
-  // Mark all as read
-  markAllAsRead: () => {
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
-      unreadCount: 0,
-    }));
+
+  // Fetch unread count
+  fetchUnreadCount: async () => {
+    try {
+      const count = await getUnreadCount();
+      set({ unreadCount: count });
+    } catch (err) {
+      console.error('[notificationStore.fetchUnreadCount] Error:', err);
+    }
   },
-  
-  // Clear all notifications
-  clearAll: () => {
-    set({
-      notifications: [],
-      unreadCount: 0,
-    });
+
+  // Mark notification as read (API call + state update)
+  markAsRead: async (notificationId: string) => {
+    try {
+      await markAsReadApi(notificationId);
+      // Update local state
+      set((state) => {
+        const notification = state.notifications.find(
+          (n) => n._id === notificationId
+        );
+        if (!notification || notification.isRead) {
+          return state;
+        }
+
+        const updatedNotifications = state.notifications.map((n) =>
+          n._id === notificationId ? { ...n, isRead: true } : n
+        );
+
+        return {
+          notifications: updatedNotifications,
+          unreadCount: Math.max(0, state.unreadCount - 1),
+        };
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to mark notification as read';
+      set({ error: errorMessage });
+      throw err;
+    }
   },
-  
-  // Set notifications (from API)
-  setNotifications: (notifications) => {
-    const unreadCount = notifications.filter((n) => !n.isRead).length;
-    set({
-      notifications,
-      unreadCount,
-    });
+
+  // Mark all notifications as read (API call + state update)
+  markAllAsRead: async () => {
+    try {
+      await markAllAsReadApi();
+      // Update local state
+      set((state) => ({
+        notifications: state.notifications.map((n) => ({
+          ...n,
+          isRead: true,
+        })),
+        unreadCount: 0,
+      }));
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to mark all notifications as read';
+      set({ error: errorMessage });
+      throw err;
+    }
   },
-  
+
+  // Delete notification (API call + state update)
+  deleteNotification: async (notificationId: string) => {
+    try {
+      await deleteNotificationApi(notificationId);
+      // Update local state
+      set((state) => {
+        const notification = state.notifications.find(
+          (n) => n._id === notificationId
+        );
+        const wasUnread = notification && !notification.isRead;
+
+        return {
+          notifications: state.notifications.filter(
+            (n) => n._id !== notificationId
+          ),
+          unreadCount: wasUnread
+            ? Math.max(0, state.unreadCount - 1)
+            : state.unreadCount,
+        };
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to delete notification';
+      set({ error: errorMessage });
+      throw err;
+    }
+  },
+
+  // Load more notifications (pagination)
+  loadMore: async () => {
+    const { pagination, notifications } = get();
+    if (!pagination || pagination.page >= pagination.pages) {
+      return; // No more pages
+    }
+
+    set({ loading: true });
+    try {
+      const nextPage = pagination.page + 1;
+      const response = await getNotifications({ page: nextPage });
+
+      // Handle both array response (API client unwraps data) and object response
+      if (Array.isArray(response)) {
+        // API returned unwrapped array of notifications
+        const newNotifications = response as Notification[];
+        set({
+          notifications: [...notifications, ...newNotifications],
+          pagination: null, // Pagination info not available in unwrapped response
+          loading: false,
+        });
+      } else {
+        // API returned wrapped object response
+        set({
+          notifications: [...notifications, ...(response.data || [])],
+          pagination: response.pagination || null,
+          loading: false,
+        });
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to load more notifications';
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  // Clear error
+  clearError: () => set({ error: null }),
+
+  // Set loading state
+  setLoading: (loading: boolean) => set({ loading }),
+
+  // Set error state
+  setError: (error: string | null) => set({ error }),
+
   // Set push notification enabled state
-  setPushEnabled: (enabled) => {
-    set({ pushEnabled: enabled });
-  },
-  
+  setPushEnabled: (enabled: boolean) => set({ pushEnabled: enabled }),
+
   // Request push notification permission
   requestPushPermission: async () => {
     if (!('Notification' in window)) {
       console.warn('This browser does not support notifications');
       return false;
     }
-    
+
     if (Notification.permission === 'granted') {
       set({ pushEnabled: true });
       return true;
     }
-    
+
     if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission();
       const granted = permission === 'granted';
       set({ pushEnabled: granted });
       return granted;
     }
-    
+
     return false;
   },
 }));

@@ -5,6 +5,7 @@
 
 import { api } from '@/lib/api';
 import type {
+  Notification,
   NotificationFilters,
   GetNotificationsResponse,
   GetNotificationCountsResponse,
@@ -16,11 +17,17 @@ import type {
 } from '@/types/notification';
 
 /**
+ * Notification response type - API may return wrapped object or unwrapped array
+ * (API client auto-unwraps the 'data' property from responses)
+ */
+export type NotificationApiResponse = GetNotificationsResponse | Notification[];
+
+/**
  * Get notifications with filters
  */
 export async function getNotifications(
   filters: NotificationFilters = {}
-): Promise<GetNotificationsResponse> {
+): Promise<NotificationApiResponse> {
   const params: Record<string, string> = {};
 
   if (filters.page) params.page = filters.page.toString();
@@ -39,55 +46,39 @@ export async function getNotifications(
     console.log('[notificationApi.getNotifications] Filters:', filters);
   }
 
-  const response = await api.get<GetNotificationsResponse>(url);
+  const response = await api.get<NotificationApiResponse>(url);
 
   if (process.env.NODE_ENV === 'development') {
+    const isArray = Array.isArray(response);
     console.log('[notificationApi.getNotifications] === RESPONSE RECEIVED ===');
     console.log(
-      '[notificationApi.getNotifications] Response type:',
-      typeof response
+      '[notificationApi.getNotifications] Response is array?',
+      isArray
     );
-    console.log(
-      '[notificationApi.getNotifications] Response is object?',
-      typeof response === 'object' && response !== null
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response keys:',
-      response && typeof response === 'object' ? Object.keys(response) : 'N/A'
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.success:',
-      response.success
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.hasData:',
-      'data' in (response || {})
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data type:',
-      typeof response.data
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data is array?',
-      Array.isArray(response.data)
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data length:',
-      Array.isArray(response.data) ? response.data.length : 'N/A'
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.pagination:',
-      response.pagination
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.unreadCount:',
-      response.unreadCount
-    );
-    console.log('[notificationApi.getNotifications] Full response:', response);
-    if (Array.isArray(response.data) && response.data.length > 0) {
+    if (isArray) {
       console.log(
-        '[notificationApi.getNotifications] First notification:',
-        response.data[0]
+        '[notificationApi.getNotifications] Notifications count:',
+        response.length
+      );
+      if (response.length > 0) {
+        console.log(
+          '[notificationApi.getNotifications] First notification:',
+          response[0]
+        );
+      }
+    } else {
+      const objResponse = response as GetNotificationsResponse;
+      console.log(
+        '[notificationApi.getNotifications] Response.data length:',
+        objResponse.data?.length || 0
+      );
+      console.log(
+        '[notificationApi.getNotifications] Response.pagination:',
+        objResponse.pagination
+      );
+      console.log(
+        '[notificationApi.getNotifications] Response.unreadCount:',
+        objResponse.unreadCount
       );
     }
   }

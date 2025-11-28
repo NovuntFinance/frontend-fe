@@ -35,8 +35,32 @@ import { useNotifications } from '@/hooks/useNotifications';
 import type { NotificationType } from '@/types/notification';
 import { format } from 'date-fns';
 
+// Category types for notification filtering
+type NotificationCategory = 'all' | 'activity' | 'system';
+
+// System & Alerts types: system messages, alerts, bonuses (registration bonus), referrals, security
+// Includes 'info' which is the backend type for system/informational messages
+const SYSTEM_ALERT_TYPES: NotificationType[] = [
+  'system',
+  'alert',
+  'bonus',
+  'referral',
+  'security',
+  'info',
+];
+
+// Activity types: financial transactions and earnings
+// Includes 'success' which is the backend type for successful transactions
+const ACTIVITY_TYPES: NotificationType[] = [
+  'deposit',
+  'withdrawal',
+  'earning',
+  'success',
+];
+
 export default function NotificationsPage() {
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'system'>('all');
+  const [categoryFilter, setCategoryFilter] =
+    useState<NotificationCategory>('all');
   const [filterType, setFilterType] = useState<NotificationType | 'all'>('all');
   const [filterUnread, setFilterUnread] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -51,7 +75,44 @@ export default function NotificationsPage() {
     ...(filterUnread && { unreadOnly: true }),
   };
 
-  const { unreadCount = 0, markAllAsRead } = useNotifications({ filters });
+  const {
+    unreadCount = 0,
+    markAllAsRead,
+    notifications = [],
+  } = useNotifications({ filters });
+
+  // Debug: Log notifications and their types
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[NotificationsPage] === NOTIFICATIONS DEBUG ===');
+      console.log(
+        '[NotificationsPage] Total notifications:',
+        notifications.length
+      );
+      console.log('[NotificationsPage] Notification types found:', [
+        ...new Set(notifications.map((n) => n.type)),
+      ]);
+      console.log('[NotificationsPage] All notifications:', notifications);
+      if (notifications.length > 0) {
+        console.log(
+          '[NotificationsPage] Sample notification:',
+          notifications[0]
+        );
+      }
+    }
+  }, [notifications]);
+
+  // Calculate unread counts for each category (case-insensitive matching)
+  const systemAlertsUnread = notifications.filter((n) => {
+    const type = (n.type || '').toLowerCase();
+    return (
+      SYSTEM_ALERT_TYPES.some((t) => t.toLowerCase() === type) && !n.isRead
+    );
+  }).length;
+  const activityUnread = notifications.filter((n) => {
+    const type = (n.type || '').toLowerCase();
+    return ACTIVITY_TYPES.some((t) => t.toLowerCase() === type) && !n.isRead;
+  }).length;
 
   const handleDateFilterChange = (value: DateFilter) => {
     setDateFilter(value);
@@ -111,7 +172,7 @@ export default function NotificationsPage() {
 
             <div className="relative z-20 flex flex-wrap items-center gap-2">
               {/* Category Filter */}
-              <div className="flex items-center rounded-md border">
+              <div className="bg-muted/30 flex items-center rounded-lg border">
                 <Button
                   variant={categoryFilter === 'all' ? 'default' : 'ghost'}
                   size="sm"
@@ -121,7 +182,28 @@ export default function NotificationsPage() {
                   }}
                   className="rounded-r-none"
                 >
-                  All Notifications
+                  All
+                  {unreadCount > 0 && (
+                    <span className="bg-primary/20 ml-1.5 rounded-full px-1.5 py-0.5 text-xs">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+                <Button
+                  variant={categoryFilter === 'activity' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setCategoryFilter('activity');
+                    setFilterType('all');
+                  }}
+                  className="border-border/50 rounded-none border-x"
+                >
+                  Activity
+                  {activityUnread > 0 && (
+                    <span className="ml-1.5 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-xs text-emerald-600 dark:text-emerald-400">
+                      {activityUnread}
+                    </span>
+                  )}
                 </Button>
                 <Button
                   variant={categoryFilter === 'system' ? 'default' : 'ghost'}
@@ -133,6 +215,11 @@ export default function NotificationsPage() {
                   className="rounded-l-none"
                 >
                   System & Alerts
+                  {systemAlertsUnread > 0 && (
+                    <span className="ml-1.5 rounded-full bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-600 dark:text-blue-400">
+                      {systemAlertsUnread}
+                    </span>
+                  )}
                 </Button>
               </div>
 
@@ -289,57 +376,72 @@ export default function NotificationsPage() {
                 </PopoverContent>
               </Popover>
 
-              {/* Filter by Type - Only show when "All Notifications" is selected */}
-              {categoryFilter === 'all' && (
-                <Select
-                  value={filterType}
-                  onValueChange={(value) => {
-                    console.log(
-                      '[NotificationsPage] Filter changed to:',
-                      value
-                    );
-                    setFilterType(value as NotificationType | 'all');
-                  }}
+              {/* Filter by Type - Show relevant options based on category */}
+              <Select
+                value={filterType}
+                onValueChange={(value) => {
+                  console.log('[NotificationsPage] Filter changed to:', value);
+                  setFilterType(value as NotificationType | 'all');
+                }}
+              >
+                <SelectTrigger className="w-[180px] cursor-pointer">
+                  <Filter className="mr-2 h-4 w-4 shrink-0" />
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent
+                  className="z-[9999]"
+                  position="popper"
+                  sideOffset={4}
                 >
-                  <SelectTrigger className="w-[180px] cursor-pointer">
-                    <Filter className="mr-2 h-4 w-4 shrink-0" />
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent
-                    className="z-[9999]"
-                    position="popper"
-                    sideOffset={4}
-                  >
-                    <SelectItem value="all" className="cursor-pointer">
-                      All Types
-                    </SelectItem>
-                    <SelectItem value="deposit" className="cursor-pointer">
-                      💰 Deposits
-                    </SelectItem>
-                    <SelectItem value="withdrawal" className="cursor-pointer">
-                      💸 Withdrawals
-                    </SelectItem>
-                    <SelectItem value="earning" className="cursor-pointer">
-                      📈 Earnings
-                    </SelectItem>
-                    <SelectItem value="bonus" className="cursor-pointer">
-                      🎁 Bonuses
-                    </SelectItem>
-                    <SelectItem value="referral" className="cursor-pointer">
-                      👥 Referrals
-                    </SelectItem>
-                    <SelectItem value="system" className="cursor-pointer">
-                      ℹ️ System
-                    </SelectItem>
-                    <SelectItem value="alert" className="cursor-pointer">
-                      ⚠️ Alerts
-                    </SelectItem>
-                    <SelectItem value="security" className="cursor-pointer">
-                      🔒 Security
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
+                  <SelectItem value="all" className="cursor-pointer">
+                    All Types
+                  </SelectItem>
+
+                  {/* Activity Types - Show for All or Activity category */}
+                  {(categoryFilter === 'all' ||
+                    categoryFilter === 'activity') && (
+                    <>
+                      <SelectItem value="deposit" className="cursor-pointer">
+                        Deposits
+                      </SelectItem>
+                      <SelectItem value="withdrawal" className="cursor-pointer">
+                        Withdrawals
+                      </SelectItem>
+                      <SelectItem value="earning" className="cursor-pointer">
+                        Earnings
+                      </SelectItem>
+                      <SelectItem value="success" className="cursor-pointer">
+                        Successful Actions
+                      </SelectItem>
+                    </>
+                  )}
+
+                  {/* System & Alert Types - Show for All or System category */}
+                  {(categoryFilter === 'all' ||
+                    categoryFilter === 'system') && (
+                    <>
+                      <SelectItem value="info" className="cursor-pointer">
+                        Information
+                      </SelectItem>
+                      <SelectItem value="bonus" className="cursor-pointer">
+                        Bonuses & Promotions
+                      </SelectItem>
+                      <SelectItem value="referral" className="cursor-pointer">
+                        Referrals
+                      </SelectItem>
+                      <SelectItem value="system" className="cursor-pointer">
+                        System Messages
+                      </SelectItem>
+                      <SelectItem value="alert" className="cursor-pointer">
+                        Alerts & Announcements
+                      </SelectItem>
+                      <SelectItem value="security" className="cursor-pointer">
+                        Security
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
 
               {/* Filter Unread */}
               <Button
@@ -367,8 +469,10 @@ export default function NotificationsPage() {
             customDateRange={customDateRange}
             includeTypes={
               categoryFilter === 'system'
-                ? ['system', 'security', 'alert', 'bonus', 'referral']
-                : undefined
+                ? SYSTEM_ALERT_TYPES
+                : categoryFilter === 'activity'
+                  ? ACTIVITY_TYPES
+                  : undefined
             }
             maxHeight="calc(100vh - 380px)"
             showHeader={false}
