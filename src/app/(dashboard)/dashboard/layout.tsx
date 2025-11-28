@@ -42,6 +42,7 @@ import { Badge } from '@/components/ui/badge';
 import { DashboardGuard } from '@/components/auth/DashboardGuard';
 import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
 import { NotificationsModal } from '@/components/settings/NotificationsModal';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
 import { BiometricModal } from '@/components/settings/BiometricModal';
 import { Switch } from '@/components/ui/switch';
@@ -63,8 +64,6 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Wallets', href: '/dashboard/wallets', icon: Wallet },
   { name: 'Stakes', href: '/dashboard/stakes', icon: TrendingUp },
-  { name: 'Transactions', href: '/dashboard/transactions', icon: FileText },
-  { name: 'Bonuses', href: '/dashboard/bonuses', icon: Gift },
   { name: 'Team', href: '/dashboard/team', icon: Users },
   { name: 'Pools', href: '/dashboard/pools', icon: Gift },
 ];
@@ -73,7 +72,11 @@ const navigation: NavItem[] = [
  * Dashboard Layout
  * Persistent layout for all dashboard pages with sidebar navigation
  */
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { isModalOpen, closeModal } = useUIStore();
@@ -98,9 +101,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Get weekly profit percentage
-  const overviewData = overview as { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } } | undefined;
-  const lastWeekProfitChange = overviewData?.analytics?.lastWeekProfitChange ?? 0;
-  const [notificationCount] = useState(3); // Mock notification count
+  const overviewData = overview as
+    | { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } }
+    | undefined;
+  const lastWeekProfitChange =
+    overviewData?.analytics?.lastWeekProfitChange ?? 0;
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [biometricModalOpen, setBiometricModalOpen] = useState(false);
@@ -123,7 +128,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <DashboardGuard>
-      <div className="min-h-screen bg-background">
+      <div className="bg-background min-h-screen">
         {/* Mobile sidebar backdrop */}
         <AnimatePresence>
           {sidebarOpen && (
@@ -139,23 +144,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Sidebar */}
         <aside
-          className={`
-          fixed inset-y-0 left-0 z-50 w-64
-          bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl backdrop-saturate-150
-          border-r border-white/30 dark:border-white/10
-          shadow-xl shadow-black/5 dark:shadow-black/20
-          transform transition-all duration-300 ease-out lg:translate-x-0
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+          className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-white/30 bg-white/80 shadow-xl shadow-black/5 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out lg:translate-x-0 dark:border-white/10 dark:bg-gray-900/80 dark:shadow-black/20 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} `}
         >
           <div className="flex h-full flex-col">
             {/* Logo */}
-            <div className="flex h-16 items-center justify-between px-4 border-b border-white/20 dark:border-white/10">
-              <Link href="/dashboard" className="flex items-center gap-2 group">
-                <span className="text-3xl font-black tracking-tight leading-none text-foreground">
+            <div className="flex h-16 items-center justify-between border-b border-white/20 px-4 dark:border-white/10">
+              <Link href="/dashboard" className="group flex items-center gap-2">
+                <span className="text-foreground text-3xl leading-none font-black tracking-tight">
                   NOVUNT
                 </span>
-                <div className="w-12 h-12 relative flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
+                <div className="relative h-12 w-12 flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
                   <Image
                     src="/icons/novunt_short.png"
                     alt="Novunt Logo"
@@ -175,7 +173,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            <nav className="flex-1 space-y-1 overflow-y-auto p-4">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -185,20 +183,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     key={item.name}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
-                    transition-all duration-200 relative overflow-hidden
-                    touch-manipulation active:scale-[0.98]
-                    ${active
-                        ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30'
-                        : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-gray-800/50 hover:backdrop-blur-sm hover:text-foreground hover:shadow-md'
-                      }
-                  `}
+                    className={`relative flex touch-manipulation items-center gap-3 overflow-hidden rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                      active
+                        ? 'from-primary to-primary/90 text-primary-foreground shadow-primary/30 bg-gradient-to-r shadow-lg'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-white/50 hover:shadow-md hover:backdrop-blur-sm dark:hover:bg-gray-800/50'
+                    } `}
                   >
                     <Icon className="h-5 w-5" />
                     <span className="flex-1">{item.name}</span>
                     {item.badge && (
-                      <Badge variant="secondary" className="h-5 min-w-5 px-1 text-xs">
+                      <Badge
+                        variant="secondary"
+                        className="h-5 min-w-5 px-1 text-xs"
+                      >
                         {item.badge}
                       </Badge>
                     )}
@@ -208,39 +205,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
 
             {/* User profile card */}
-            <div className="p-4 border-t border-white/20 dark:border-white/10">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/30 dark:border-white/10 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200">
+            <div className="border-t border-white/20 p-4 dark:border-white/10">
+              <div className="flex items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/60 dark:border-white/10 dark:bg-gray-800/40 dark:hover:bg-gray-800/60">
                 <Avatar className="h-10 w-10">
                   {user?.avatar ? (
                     <img
                       src={user.avatar}
                       alt={user?.firstName || 'User'}
-                      className="w-full h-full object-cover rounded-full"
+                      className="h-full w-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
-                      {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    <div className="from-primary/20 to-primary/40 text-primary flex h-full w-full items-center justify-center bg-gradient-to-br text-sm font-bold">
+                      {user?.firstName?.[0]?.toUpperCase() ||
+                        user?.email?.[0]?.toUpperCase() ||
+                        'U'}
                     </div>
                   )}
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-muted-foreground truncate text-xs">
                     {user?.email}
                   </p>
                   {/* Weekly Profit Percentage - Strategically Placed on Profile Card */}
                   {lastWeekProfitChange !== 0 && (
-                    <div className={`flex items-center gap-1 mt-1.5 ${lastWeekProfitChange >= 0 ? 'text-emerald-400' : 'text-red-400'
-                      }`}>
+                    <div
+                      className={`mt-1.5 flex items-center gap-1 ${
+                        lastWeekProfitChange >= 0
+                          ? 'text-emerald-400'
+                          : 'text-red-400'
+                      }`}
+                    >
                       {lastWeekProfitChange >= 0 ? (
                         <TrendingUp className="h-3 w-3" />
                       ) : (
                         <TrendingDown className="h-3 w-3" />
                       )}
                       <span className="text-xs font-semibold">
-                        {lastWeekProfitChange >= 0 ? '+' : ''}{lastWeekProfitChange.toFixed(2)}% this week
+                        {lastWeekProfitChange >= 0 ? '+' : ''}
+                        {lastWeekProfitChange.toFixed(2)}% this week
                       </span>
                     </div>
                   )}
@@ -253,7 +258,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main content */}
         <div className="lg:pl-64">
           {/* Top bar */}
-          <header className="sticky top-0 z-30 h-16 border-b border-white/30 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl backdrop-saturate-150 shadow-sm shadow-black/5 dark:shadow-black/10">
+          <header className="sticky top-0 z-30 h-16 border-b border-white/30 bg-white/80 shadow-sm shadow-black/5 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-900/80 dark:shadow-black/10">
             <div className="flex h-full items-center justify-between px-4">
               {/* Mobile menu button */}
               <Button
@@ -268,7 +273,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Page title - hidden on mobile, shown on desktop */}
               <div className="hidden lg:block">
                 <h1 className="text-xl font-semibold">
-                  {navigation.find((item) => isActive(item.href))?.name || 'Dashboard'}
+                  {navigation.find((item) => isActive(item.href))?.name ||
+                    'Dashboard'}
                 </h1>
               </div>
 
@@ -280,34 +286,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   size="icon"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
-                  <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+                  <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
                 </Button>
 
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
-                    <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">
-                      {notificationCount}
-                    </span>
-                  )}
-                </Button>
+                <NotificationCenter />
 
                 {/* User menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full p-0 h-10 w-10">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full p-0"
+                    >
                       <Avatar className="h-10 w-10">
                         {user?.avatar ? (
                           <img
                             src={user.avatar}
                             alt={user?.firstName || 'User'}
-                            className="w-full h-full object-cover rounded-full"
+                            className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-sm">
-                            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                          <div className="from-primary/20 to-primary/40 text-primary flex h-full w-full items-center justify-center bg-gradient-to-br text-sm font-bold">
+                            {user?.firstName?.[0]?.toUpperCase() ||
+                              user?.email?.[0]?.toUpperCase() ||
+                              'U'}
                           </div>
                         )}
                       </Avatar>
@@ -319,7 +324,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <p className="text-sm font-medium">
                           {user?.firstName} {user?.lastName}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {user?.email}
                         </p>
                       </div>
@@ -329,14 +334,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setNotificationsModalOpen(true)}>
+                    <DropdownMenuItem
+                      onClick={() => setNotificationsModalOpen(true)}
+                    >
                       <Bell className="mr-2 h-4 w-4" />
                       Notifications
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.preventDefault();
-                    }}>
-                      <div className="flex items-center justify-between w-full">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                      }}
+                    >
+                      <div className="flex w-full items-center justify-between">
                         <div className="flex items-center">
                           <Shield className="mr-2 h-4 w-4" />
                           2FA Auth
@@ -348,17 +357,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                               setTwoFactorModalOpen(true);
                             } else {
                               setTwoFactorEnabled(false);
-                              toast.success('Two-Factor Authentication disabled');
+                              toast.success(
+                                'Two-Factor Authentication disabled'
+                              );
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.preventDefault();
-                    }}>
-                      <div className="flex items-center justify-between w-full">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                      }}
+                    >
+                      <div className="flex w-full items-center justify-between">
                         <div className="flex items-center">
                           <Fingerprint className="mr-2 h-4 w-4" />
                           Biometric Auth
@@ -370,7 +383,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                               setBiometricModalOpen(true);
                             } else {
                               setBiometricEnabled(false);
-                              toast.success('Biometric Authentication disabled');
+                              toast.success(
+                                'Biometric Authentication disabled'
+                              );
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
@@ -378,7 +393,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-destructive"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
                     </DropdownMenuItem>
@@ -389,9 +407,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Page content */}
-          <main className="p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
+          <main className="p-4 sm:p-6 lg:p-8">{children}</main>
         </div>
 
         {/* Modals */}
@@ -403,12 +419,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             if (!open) {
               // Small delay to ensure profile update mutation completes
               setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('refetchRegistrationBonus'));
+                window.dispatchEvent(
+                  new CustomEvent('refetchRegistrationBonus')
+                );
               }, 500);
             }
           }}
         />
-        <NotificationsModal open={notificationsModalOpen} onOpenChange={setNotificationsModalOpen} />
+        <NotificationsModal
+          open={notificationsModalOpen}
+          onOpenChange={setNotificationsModalOpen}
+        />
         <TwoFactorModal
           open={twoFactorModalOpen}
           onOpenChange={setTwoFactorModalOpen}

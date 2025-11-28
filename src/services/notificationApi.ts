@@ -3,7 +3,7 @@
  * Handles all API calls to the notification backend
  */
 
-import { api } from '@/lib/api';
+import apiClient from '@/lib/api';
 import type {
   NotificationFilters,
   GetNotificationsResponse,
@@ -39,70 +39,50 @@ export async function getNotifications(
     console.log('[notificationApi.getNotifications] Filters:', filters);
   }
 
-  const response = await api.get<GetNotificationsResponse>(url);
+  // Use apiClient directly to avoid auto-unwrapping of data
+  // We need the full response to access pagination and unreadCount
+  const response = await apiClient.get<GetNotificationsResponse>(url);
 
   if (process.env.NODE_ENV === 'development') {
     console.log('[notificationApi.getNotifications] === RESPONSE RECEIVED ===');
     console.log(
-      '[notificationApi.getNotifications] Response type:',
-      typeof response
+      '[notificationApi.getNotifications] Response status:',
+      response.status
     );
     console.log(
-      '[notificationApi.getNotifications] Response is object?',
-      typeof response === 'object' && response !== null
+      '[notificationApi.getNotifications] Response data keys:',
+      Object.keys(response.data)
     );
-    console.log(
-      '[notificationApi.getNotifications] Response keys:',
-      response && typeof response === 'object' ? Object.keys(response) : 'N/A'
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.success:',
-      response.success
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.hasData:',
-      'data' in (response || {})
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data type:',
-      typeof response.data
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data is array?',
-      Array.isArray(response.data)
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.data length:',
-      Array.isArray(response.data) ? response.data.length : 'N/A'
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.pagination:',
-      response.pagination
-    );
-    console.log(
-      '[notificationApi.getNotifications] Response.unreadCount:',
-      response.unreadCount
-    );
-    console.log('[notificationApi.getNotifications] Full response:', response);
-    if (Array.isArray(response.data) && response.data.length > 0) {
-      console.log(
-        '[notificationApi.getNotifications] First notification:',
-        response.data[0]
-      );
-    }
   }
 
-  return response;
+  return response.data;
 }
 
 /**
  * Get unread notification count
  */
 export async function getUnreadCount(): Promise<number> {
-  const response = await api.get<GetNotificationCountsResponse>(
+  const response = await apiClient.get<GetNotificationCountsResponse>(
     '/notifications/counts'
   );
-  return response.data.unreadCount;
+
+  // Handle different response structures safely
+  if (
+    response.data &&
+    response.data.data &&
+    typeof response.data.data.unreadCount === 'number'
+  ) {
+    return response.data.data.unreadCount;
+  }
+
+  // Fallback: maybe it's directly in data (e.g. { success: true, unreadCount: 5 })
+  // or maybe response.data IS the data (if interceptor unwrapped it, though we think it doesn't)
+  const anyData = response.data as any;
+  if (typeof anyData.unreadCount === 'number') {
+    return anyData.unreadCount;
+  }
+
+  return 0;
 }
 
 /**
@@ -115,15 +95,6 @@ export async function markAsRead(
   // Always log (not conditional) for debugging
   console.log('[notificationApi.markAsRead] === FUNCTION CALLED ===');
   console.log('[notificationApi.markAsRead] Notification ID:', notificationId);
-  console.log('[notificationApi.markAsRead] ID type:', typeof notificationId);
-  console.log(
-    '[notificationApi.markAsRead] ID length:',
-    notificationId?.length
-  );
-  console.log(
-    '[notificationApi.markAsRead] Endpoint path:',
-    `/notifications/${notificationId}/read`
-  );
 
   // Validate notification ID format (MongoDB ObjectId should be 24 hex characters)
   if (!notificationId || typeof notificationId !== 'string') {
@@ -134,120 +105,21 @@ export async function markAsRead(
     throw error;
   }
 
-  if (notificationId.length !== 24) {
-    console.warn(
-      '[notificationApi.markAsRead] ⚠️ Warning: Notification ID length is not 24 characters (expected MongoDB ObjectId format)'
-    );
-    console.warn('[notificationApi.markAsRead] ⚠️ ID:', notificationId);
-  }
-
-  console.log('[notificationApi.markAsRead] 📤 About to call api.patch...');
-  console.log(
-    '[notificationApi.markAsRead] Full URL will be: /notifications/' +
-      notificationId +
-      '/read'
+  const response = await apiClient.patch<MarkAsReadResponse>(
+    `/notifications/${notificationId}/read`
   );
 
-  try {
-    console.log('[notificationApi.markAsRead] 📤 Making PATCH request NOW...');
-    const response = await api.patch<MarkAsReadResponse>(
-      `/notifications/${notificationId}/read`
-    );
-
-    console.log('[notificationApi.markAsRead] ✅ Success! Response received');
-    console.log('[notificationApi.markAsRead] Response:', response);
-
-    return response;
-  } catch (error: unknown) {
-    console.log('[notificationApi.markAsRead] ⚠️ CATCH BLOCK ENTERED');
-    console.error('[notificationApi.markAsRead] ❌ ERROR OCCURRED');
-    if (error instanceof Error) {
-      console.error('[notificationApi.markAsRead] Error type:', error.name);
-      console.error('[notificationApi.markAsRead] Error:', error);
-      console.error(
-        '[notificationApi.markAsRead] Error message:',
-        error.message
-      );
-    } else {
-      console.error('[notificationApi.markAsRead] Error type:', typeof error);
-      console.error('[notificationApi.markAsRead] Error:', error);
-    }
-
-    if (typeof error === 'object' && error !== null) {
-      const errorDetails = error as {
-        message?: string;
-        code?: string;
-        statusCode?: number;
-        response?: {
-          status?: number;
-          statusText?: string;
-          data?: unknown;
-          headers?: unknown;
-        };
-        config?: {
-          url?: string;
-          method?: string;
-          baseURL?: string;
-        };
-      };
-
-      console.error(
-        '[notificationApi.markAsRead] Error code:',
-        errorDetails.code
-      );
-      console.error(
-        '[notificationApi.markAsRead] Error statusCode:',
-        errorDetails.statusCode
-      );
-
-      if (errorDetails.response) {
-        console.error(
-          '[notificationApi.markAsRead] Response status:',
-          errorDetails.response.status
-        );
-        console.error(
-          '[notificationApi.markAsRead] Response statusText:',
-          errorDetails.response.statusText
-        );
-        console.error(
-          '[notificationApi.markAsRead] Response data:',
-          errorDetails.response.data
-        );
-        console.error(
-          '[notificationApi.markAsRead] Response headers:',
-          errorDetails.response.headers
-        );
-      }
-
-      if (errorDetails.config) {
-        console.error(
-          '[notificationApi.markAsRead] Request URL:',
-          errorDetails.config.url
-        );
-        console.error(
-          '[notificationApi.markAsRead] Request method:',
-          errorDetails.config.method
-        );
-        console.error(
-          '[notificationApi.markAsRead] Request baseURL:',
-          errorDetails.config.baseURL
-        );
-        console.error(
-          '[notificationApi.markAsRead] Full request URL:',
-          `${errorDetails.config.baseURL || ''}${errorDetails.config.url || ''}`
-        );
-      }
-    }
-
-    throw error;
-  }
+  return response.data;
 }
 
 /**
  * Mark all notifications as read
  */
 export async function markAllAsRead(): Promise<MarkAllAsReadResponse> {
-  return api.patch<MarkAllAsReadResponse>('/notifications/mark-all-read');
+  const response = await apiClient.patch<MarkAllAsReadResponse>(
+    '/notifications/mark-all-read'
+  );
+  return response.data;
 }
 
 /**
@@ -257,9 +129,10 @@ export async function markAllAsRead(): Promise<MarkAllAsReadResponse> {
 export async function deleteNotification(
   notificationId: string
 ): Promise<DeleteNotificationResponse> {
-  return api.delete<DeleteNotificationResponse>(
+  const response = await apiClient.delete<DeleteNotificationResponse>(
     `/notifications/${notificationId}`
   );
+  return response.data;
 }
 
 /**
@@ -281,7 +154,11 @@ interface CreateTestNotificationResponse {
 export async function createTestNotification(
   data: CreateTestNotificationPayload
 ): Promise<CreateTestNotificationResponse> {
-  return api.post<CreateTestNotificationResponse>('/notifications/test', data);
+  const response = await apiClient.post<CreateTestNotificationResponse>(
+    '/notifications/test',
+    data
+  );
+  return response.data;
 }
 
 /**

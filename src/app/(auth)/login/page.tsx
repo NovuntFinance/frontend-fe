@@ -150,7 +150,6 @@ function LoginPageContent() {
 
       return () => clearTimeout(redirectTimer);
     }
-    return undefined;
   }, [isAuthenticated, hasRedirected, router, searchParams]);
 
   // Handle biometric login success
@@ -244,67 +243,33 @@ function LoginPageContent() {
         setTimeout(checkAuthAndRedirect, 200);
       }
     } catch (error: unknown) {
-      // Better error serialization
-      let errorStr = '';
-      let errorDetails: any = {};
+      console.error('[Login Page] Login error:', error);
 
-      try {
-        if (error instanceof Error) {
-          errorStr = error.message;
-          errorDetails = {
-            name: error.name,
-            message: error.message,
-            stack: error.stack?.substring(0, 200),
-          };
-        } else if (typeof error === 'object' && error !== null) {
-          const err = error as any;
-          errorStr = err.message || JSON.stringify(err);
-          errorDetails = {
-            ...err,
-            statusCode: err.statusCode,
-            code: err.code,
-            message: err.message,
-            response: err.response
-              ? {
-                  status: err.response.status,
-                  statusText: err.response.statusText,
-                  data: err.response.data,
-                }
-              : undefined,
-          };
-        } else {
-          errorStr = String(error);
-          errorDetails = { raw: error };
-        }
-      } catch (e) {
-        errorStr = 'Failed to serialize error';
-        errorDetails = { serializationError: String(e) };
-      }
-
-      console.error('[Login Page] Login error caught:', errorStr);
-      console.error('[Login Page] Error type:', typeof error);
-      console.error('[Login Page] Error details:', errorDetails);
-
-      // Extract detailed error information
-      let backendMessage = 'Invalid email or password';
+      // Extract user-friendly error message
+      let userMessage =
+        'Invalid email or password. Please check your credentials and try again.';
       let statusCode = 401;
       let errorCode: string | undefined;
       let passwordResetRequired = false;
+      let emailNotVerified = false;
 
       if (typeof error === 'object' && error !== null) {
         const err = error as any;
 
-        // Get status code
-        statusCode = err.statusCode || err.response?.status || 401;
+        // Extract status code
+        statusCode =
+          err.statusCode || err.response?.status || err.status || 401;
 
-        // Try to get backend error message from multiple possible locations
-        if (
-          err.message &&
-          typeof err.message === 'string' &&
-          !err.message.includes('status code')
-        ) {
+        // Extract error code
+        errorCode =
+          err.code || err.response?.data?.code || err.responseData?.code;
+
+        // Extract backend message
+        let backendMessage = '';
+        if (err.message && typeof err.message === 'string') {
           backendMessage = err.message;
-        } else if (err.response?.data) {
+        }
+        if (err.response?.data) {
           const responseData = err.response.data;
           if (typeof responseData === 'string') {
             backendMessage = responseData;
@@ -313,145 +278,108 @@ function LoginPageContent() {
             responseData !== null
           ) {
             backendMessage =
-              (responseData as any).message ||
-              (responseData as any).error ||
-              backendMessage;
-            errorCode = (responseData as any).code;
-            passwordResetRequired =
-              (responseData as any).passwordResetRequired === true;
+              responseData.message || responseData.error || backendMessage;
+            errorCode = responseData.code || errorCode;
+            passwordResetRequired = responseData.passwordResetRequired === true;
+            emailNotVerified = responseData.emailNotVerified === true;
           }
-        } else if (err.responseData?.message) {
-          backendMessage = err.responseData.message;
-          errorCode = err.responseData.code;
-          passwordResetRequired =
-            err.responseData.passwordResetRequired === true;
         }
 
-        // Check for EMAIL_NOT_VERIFIED error code and passwordResetRequired
-        const responseData = err.response?.data || err.responseData;
-        if (responseData && typeof responseData === 'object') {
-          errorCode = responseData.code || errorCode;
-          passwordResetRequired =
-            passwordResetRequired ||
-            responseData.passwordResetRequired === true;
-        }
-
-        // Improve error message specificity
-        const lowerMessage = backendMessage.toLowerCase();
+        // Check for password reset requirement
         if (
-          lowerMessage.includes('email not found') ||
-          lowerMessage.includes('user not found') ||
-          lowerMessage.includes('no account found') ||
-          lowerMessage.includes('email does not exist')
+          passwordResetRequired ||
+          backendMessage.toLowerCase().includes('password reset required')
         ) {
-          backendMessage =
-            'No account found with this email address. Please check your email or sign up.';
-        } else if (
-          lowerMessage.includes('incorrect password') ||
-          lowerMessage.includes('wrong password') ||
-          lowerMessage.includes('invalid password') ||
-          lowerMessage.includes('password mismatch')
-        ) {
-          backendMessage =
-            'Incorrect password. Please check your password and try again.';
-        }
-
-        console.error('[Login Page] Parsed error details:', {
-          isError: error instanceof Error,
-          statusCode,
-          backendMessage,
-          errorCode,
-          passwordResetRequired,
-          responseData: err.response?.data,
-          code: err.code,
-          message: err.message,
-        });
-      }
-
-      // Try to serialize full error object with circular reference handling
-      try {
-        const seen = new WeakSet();
-        const fullErrorStr = JSON.stringify(
-          error,
-          (key, value) => {
-            if (typeof value === 'object' && value !== null) {
-              if (seen.has(value)) {
-                return '[Circular]';
-              }
-              seen.add(value);
-            }
-            return value;
-          },
-          2
-        );
-        console.error('[Login Page] Full error object:', fullErrorStr);
-      } catch (e) {
-        console.error('[Login Page] Could not serialize full error object:', e);
-        // Fallback: log error properties individually
-        if (typeof error === 'object' && error !== null) {
-          const err = error as any;
-          console.error('[Login Page] Error properties:', {
-            message: err.message,
-            code: err.code,
-            statusCode: err.statusCode,
-            response: err.response
-              ? {
-                  status: err.response.status,
-                  statusText: err.response.statusText,
-                  data:
-                    typeof err.response.data === 'string'
-                      ? err.response.data
-                      : JSON.stringify(err.response.data),
-                }
-              : undefined,
+          setRequiresPasswordReset(true);
+          setRequiresEmailVerification(false);
+          setUnverifiedEmail(null);
+          setError('root', {
+            message:
+              'For security reasons, please reset your password to continue.',
           });
+          return;
+        }
+
+        // Check for email verification requirement
+        if (
+          statusCode === 403 ||
+          errorCode === 'EMAIL_NOT_VERIFIED' ||
+          emailNotVerified ||
+          backendMessage.toLowerCase().includes('verify your email') ||
+          backendMessage.toLowerCase().includes('email not verified')
+        ) {
+          setUnverifiedEmail(emailValue || '');
+          setRequiresEmailVerification(true);
+          setRequiresPasswordReset(false);
+          setError('root', {
+            message: 'Please verify your email address before logging in.',
+          });
+          return;
+        }
+
+        // Parse backend message for more specific user messages
+        if (
+          backendMessage &&
+          !backendMessage.includes('status code') &&
+          !backendMessage.includes('failed with')
+        ) {
+          const lowerMessage = backendMessage.toLowerCase();
+
+          if (
+            lowerMessage.includes('email not found') ||
+            lowerMessage.includes('user not found') ||
+            lowerMessage.includes('no account found') ||
+            lowerMessage.includes('email does not exist')
+          ) {
+            userMessage =
+              'No account found with this email address. Please check your email or sign up.';
+          } else if (
+            lowerMessage.includes('incorrect password') ||
+            lowerMessage.includes('wrong password') ||
+            lowerMessage.includes('invalid password') ||
+            lowerMessage.includes('password mismatch') ||
+            lowerMessage.includes('invalid credentials')
+          ) {
+            userMessage =
+              'Incorrect password. Please check your password and try again.';
+          } else if (
+            lowerMessage.includes('account locked') ||
+            lowerMessage.includes('too many attempts')
+          ) {
+            userMessage =
+              'Your account has been temporarily locked due to too many failed login attempts. Please try again later or reset your password.';
+          } else {
+            // Use the backend message if it's descriptive
+            userMessage = backendMessage;
+          }
+        } else {
+          // Default message based on status code
+          if (statusCode === 401) {
+            userMessage =
+              'Invalid email or password. Please check your credentials and try again.';
+          } else if (statusCode === 403) {
+            userMessage =
+              'Access denied. Please contact support if you believe this is an error.';
+          } else if (statusCode === 404) {
+            userMessage =
+              'No account found with this email address. Please check your email or sign up.';
+          } else if (statusCode === 429) {
+            userMessage =
+              'Too many login attempts. Please wait a few minutes and try again.';
+          } else if (statusCode >= 500) {
+            userMessage =
+              'Server error. Please try again later or contact support if the issue persists.';
+          }
         }
       }
 
-      // Priority 1: Check if password reset is required (double password hashing bug fix)
-      if (
-        passwordResetRequired ||
-        backendMessage.toLowerCase().includes('password reset required')
-      ) {
-        setRequiresPasswordReset(true);
-        setRequiresEmailVerification(false);
-        setUnverifiedEmail(null);
-        setError('root', {
-          message:
-            'For security reasons, please reset your password to continue.',
-        });
-      }
-      // Priority 2: Check if error is EMAIL_NOT_VERIFIED
-      // Backend returns 403 status with emailNotVerified: true flag
-      // Check both the error code, status code, and emailNotVerified flag
-      const emailNotVerified =
-        statusCode === 403 || // Backend returns 403 for unverified email
-        errorCode === 'EMAIL_NOT_VERIFIED' ||
-        (typeof error === 'object' &&
-          error !== null &&
-          ((error as any).emailNotVerified === true ||
-            (error as any).response?.data?.emailNotVerified === true)) ||
-        backendMessage.toLowerCase().includes('verify your email') ||
-        backendMessage.toLowerCase().includes('email not verified');
-
-      if (emailNotVerified) {
-        setUnverifiedEmail(emailValue || '');
-        setRequiresEmailVerification(true);
-        setRequiresPasswordReset(false);
-        setError('root', {
-          message: 'Please verify your email address before logging in.',
-        });
-      } else {
-        // Generic error
-        setRequiresEmailVerification(false);
-        setRequiresPasswordReset(false);
-        setUnverifiedEmail(null);
-        const errorMessage = getErrorMessage(error, backendMessage);
-        console.error('[Login Page] Extracted error message:', errorMessage);
-        setError('root', {
-          message: errorMessage,
-        });
-      }
+      // Set the error
+      setRequiresEmailVerification(false);
+      setRequiresPasswordReset(false);
+      setUnverifiedEmail(null);
+      setError('root', {
+        message: userMessage,
+      });
     }
   };
 

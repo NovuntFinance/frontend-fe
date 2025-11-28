@@ -50,14 +50,14 @@ export interface Verify2FARequest {
   token: string; // 6-digit TOTP code
 }
 
-// Backend uses authenticated user from token, no email needed
 export interface Generate2FASecretRequest {
-  // Empty - user ID is extracted from Authorization token
+  email: string;
 }
 
 export interface Enable2FARequest {
-  verificationToken: string; // Token from /mfa/setup response
-  verificationCode: string; // 6-digit TOTP code from authenticator app
+  email: string;
+  token: string; // 6-digit TOTP code
+  secret: string; // Secret from generate-2fa-secret
 }
 
 export interface RefreshTokenRequest {
@@ -185,19 +185,37 @@ export interface RefreshTokenResponse {
   refreshToken: string;
 }
 
-// 2FA Setup Response - Actual backend structure
+// Phase 1 2FA Setup Response - Multiple setup methods
 export interface Generate2FASecretResponse {
   message: string;
-  setupDetails: {
-    qrCode: string; // Base64 data URL: data:image/png;base64,...
-    secret: string; // Base32 secret: JBSWY3DPEHPK3PXP
+  setupMethods: {
+    qrCode: {
+      method: string;
+      description: string;
+      qrImageUrl: string; // Base64 data URL
+      instructions: string[];
+    };
+    manualEntry: {
+      method: string;
+      description: string;
+      secretKey: string;
+      accountName: string;
+      issuer: string;
+      instructions: string[];
+    };
+    otpauthUrl: {
+      method: string;
+      description: string;
+      url: string;
+      instructions: string[];
+    };
   };
-  verificationToken: string; // Token to use when verifying the setup
+  secret: string;
+  nextStep: string;
 }
 
 export interface Enable2FAResponse {
-  message: string; // "MFA setup completed successfully"
-  backupCodes?: string[]; // Optional backup codes from backend
+  message: string; // "2FA successfully enabled"
 }
 
 export interface ReferralInfoResponse {
