@@ -170,16 +170,24 @@ export function NotificationItem({
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        {/* Header Row */}
+        {/* Header Row - Title with delete button */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h4 className="truncate text-sm leading-tight font-medium">
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm leading-snug font-medium">
                 {notification.title}
               </h4>
-              {/* Type Badge */}
+              {isUnread && (
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full bg-blue-500"
+                  aria-label="Unread"
+                />
+              )}
+            </div>
+            {/* Type Badge - on its own line */}
+            <div className="mt-1 flex items-center gap-2">
               <span
-                className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
+                className="inline-flex shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
                 style={{
                   backgroundColor: config.bgColor,
                   color: config.color,
@@ -187,12 +195,11 @@ export function NotificationItem({
               >
                 {config.label}
               </span>
-              {isUnread && (
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"
-                  aria-label="Unread"
-                />
-              )}
+              <span className="text-muted-foreground/60 text-[11px]">
+                {formatDistanceToNow(new Date(notification.createdAt), {
+                  addSuffix: true,
+                })}
+              </span>
             </div>
           </div>
 
@@ -211,33 +218,26 @@ export function NotificationItem({
         </div>
 
         {/* Message */}
-        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
           {notification.message}
         </p>
 
-        {/* Footer */}
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-muted-foreground/70 text-[11px]">
-            {formatDistanceToNow(new Date(notification.createdAt), {
-              addSuffix: true,
-            })}
-          </span>
-
-          {/* CTA Button */}
-          {notification.metadata?.ctaUrl && (
+        {/* CTA Button */}
+        {notification.metadata?.ctaUrl && (
+          <div className="mt-2">
             <Button
               variant="link"
               size="sm"
-              className="h-auto p-0 text-[11px]"
+              className="text-primary h-auto p-0 text-xs font-medium"
               onClick={(e) => {
                 e.stopPropagation();
                 window.location.href = notification.metadata!.ctaUrl!;
               }}
             >
-              {notification.metadata.ctaText || 'View Details'}
+              {notification.metadata.ctaText || 'View Details →'}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
