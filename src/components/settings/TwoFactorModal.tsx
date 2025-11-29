@@ -123,41 +123,55 @@ export function TwoFactorModal({
         }
       }
 
-      // Now try to extract setupMethods or other expected fields
+      // Now try to extract setupDetails, setupMethods, or other expected fields
       let qrUrl = '';
       let secret = '';
+      let verificationToken = '';
 
-      // Try various paths to find the QR code URL
+      // Try various paths to find the QR code URL, secret, and verification token
       if (responseData && typeof responseData === 'object') {
-        qrUrl =
-          responseData.setupMethods?.qrCode?.qrImageUrl ||
-          responseData.qrCode?.qrImageUrl ||
-          responseData.qrImageUrl ||
-          responseData.qrCode ||
-          responseData.setupMethods?.qrCode ||
-          (typeof responseData.setupMethods?.qrCode === 'string'
-            ? responseData.setupMethods.qrCode
-            : '') ||
-          '';
-
-        // Try various paths to find the secret key
-        secret =
-          responseData.secret ||
-          responseData.setupMethods?.manualEntry?.secretKey ||
-          responseData.manualEntry?.secretKey ||
-          responseData.secretKey ||
-          '';
-      }
-
-      // If we found either QR code or secret, we can proceed
-      if (qrUrl || secret) {
-        setQrCodeUrl(qrUrl);
-        setSecretKey(secret);
-
-        if (!qrUrl && !secret) {
-          throw new Error('QR code and secret not found in response');
+        // Check for setupDetails structure (actual API format)
+        if ('setupDetails' in responseData && responseData.setupDetails) {
+          const setupDetails = responseData.setupDetails as any;
+          qrUrl = setupDetails.qrCode || '';
+          secret = setupDetails.secret || '';
         }
 
+        // Also check for setupMethods structure (expected format from types)
+        if (!qrUrl || !secret) {
+          qrUrl =
+            qrUrl ||
+            responseData.setupMethods?.qrCode?.qrImageUrl ||
+            responseData.qrCode?.qrImageUrl ||
+            responseData.qrImageUrl ||
+            responseData.qrCode ||
+            responseData.setupMethods?.qrCode ||
+            (typeof responseData.setupMethods?.qrCode === 'string'
+              ? responseData.setupMethods.qrCode
+              : '') ||
+            '';
+
+          secret =
+            secret ||
+            responseData.secret ||
+            responseData.setupMethods?.manualEntry?.secretKey ||
+            responseData.manualEntry?.secretKey ||
+            responseData.secretKey ||
+            '';
+        }
+
+        // Extract verification token
+        verificationToken =
+          responseData.verificationToken || responseData.token || '';
+      }
+
+      // If we found QR code and secret, we can proceed
+      if (qrUrl && secret) {
+        setQrCodeUrl(qrUrl);
+        setSecretKey(secret);
+        if (verificationToken) {
+          setVerificationToken(verificationToken);
+        }
         toast.success('QR code generated successfully!');
       } else {
         // Log the actual structure for debugging
@@ -170,7 +184,7 @@ export function TwoFactorModal({
           JSON.stringify(responseData, null, 2)
         );
         throw new Error(
-          'Invalid response format: missing setupMethods or secret. Check console for details.'
+          `Invalid response format: missing QR code or secret. QR: ${!!qrUrl}, Secret: ${!!secret}. Check console for details.`
         );
       }
     } catch (error: unknown) {
