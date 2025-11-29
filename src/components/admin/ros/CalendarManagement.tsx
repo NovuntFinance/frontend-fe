@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Calendar as CalendarIcon, Save } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Download } from 'lucide-react';
 
 export function CalendarManagement() {
   const [activeTab, setActiveTab] = useState('current');
@@ -278,7 +278,7 @@ export function CalendarManagement() {
 
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Save className="mr-2 h-4 w-4" />
+                  <Download className="mr-2 h-4 w-4" />
                   Create Calendar
                 </Button>
               </form>

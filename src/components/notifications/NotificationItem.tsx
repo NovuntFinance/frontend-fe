@@ -19,12 +19,14 @@ import {
   Shield,
   Bell,
   CheckCircle,
-  type LucideIcon,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types/notification';
 import { NOTIFICATION_TYPE_CONFIG } from '@/types/notification';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+
+type LucideIcon = React.ComponentType<LucideProps>;
 
 // Map icon names to actual Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -49,7 +51,7 @@ function getNotificationIcon(type: NotificationType): LucideIcon {
 
 interface NotificationItemProps {
   notification: Notification;
-  onMarkAsRead: (id: string) => void;
+  onMarkAsRead: (id: string) => Promise<void>;
   onDelete: (id: string) => void;
   onClick?: (notification: Notification) => void;
   showDelete?: boolean;

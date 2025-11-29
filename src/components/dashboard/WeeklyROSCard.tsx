@@ -44,8 +44,9 @@ export function WeeklyROSCard() {
     fetchData();
   }, []);
 
-  // Calculate week progress
-  const weekProgress = data ? (data.currentDay / 7) * 100 : 0;
+  // Calculate week progress based on daily breakdown
+  const currentDay = data?.dailyBreakdown?.length || 0;
+  const weekProgress = data ? (currentDay / 7) * 100 : 0;
 
   return (
     <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
@@ -113,7 +114,7 @@ export function WeeklyROSCard() {
               transition={{ delay: 0.9 }}
               className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-5xl font-black text-transparent"
             >
-              {data?.declaredWeeklyProfitPercentage}%
+              {data?.averageRos?.toFixed(2) || 0}%
             </motion.span>
           )}
 
@@ -143,23 +144,23 @@ export function WeeklyROSCard() {
                   Daily Breakdown
                 </h4>
                 <div className="max-h-[200px] space-y-2 overflow-y-auto pr-1">
-                  {data.dailyData.map((day, index) => (
+                  {(data.dailyBreakdown || []).map((day, index) => (
                     <div
                       key={index}
                       className="bg-background/50 hover:bg-background/80 flex items-center justify-between rounded-lg p-2 text-sm transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         <Calendar className="text-muted-foreground h-3.5 w-3.5" />
-                        <span>{day.day}</span>
+                        <span>{day.dayOfWeek}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground text-xs">
-                          {day.percentage}%
+                          {day.ros.toFixed(2)}%
                         </span>
                         <span
                           className={`font-bold text-green-600 dark:text-green-400`}
                         >
-                          ${day.total.toFixed(2)}
+                          ${day.earnings.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -170,7 +171,7 @@ export function WeeklyROSCard() {
                 <div className="mt-4">
                   <div className="mb-1 flex justify-between text-xs">
                     <span>Week Progress</span>
-                    <span>{data.currentDay}/7 Days</span>
+                    <span>{currentDay}/7 Days</span>
                   </div>
                   <div className="bg-muted h-2 overflow-hidden rounded-full">
                     <motion.div

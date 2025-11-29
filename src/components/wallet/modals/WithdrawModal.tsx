@@ -483,7 +483,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           Back
                         </Button>
                         <Button
-                          onClick={handleSubmit}
+                          onClick={() => handleSubmit()}
                           disabled={withdrawMutation.isPending}
                           className="bg-secondary hover:bg-secondary/90 flex-1"
                         >
