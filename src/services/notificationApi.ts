@@ -63,9 +63,10 @@ export async function getNotifications(
         isArray
       );
       if (isArray) {
+        const arrayData = response.data as Notification[];
         console.log(
           '[notificationApi.getNotifications] Notifications count:',
-          response.data.length
+          arrayData.length
         );
       } else {
         const objResponse = response.data as GetNotificationsResponse;
