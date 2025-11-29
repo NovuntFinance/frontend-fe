@@ -55,9 +55,9 @@ export interface Generate2FASecretRequest {
 }
 
 export interface Enable2FARequest {
-  email: string;
-  token: string; // 6-digit TOTP code
-  secret: string; // Secret from generate-2fa-secret
+  userId: string; // User ID (not email)
+  verificationToken: string; // Token from generate-2fa-secret setup response
+  verificationCode: string; // 6-digit TOTP code from authenticator app
 }
 
 export interface RefreshTokenRequest {

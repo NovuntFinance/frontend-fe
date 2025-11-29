@@ -218,16 +218,28 @@ export function TwoFactorModal({
       return;
     }
 
+    if (!verificationToken) {
+      toast.error(
+        'Verification token is missing. Please restart the setup process.'
+      );
+      setStep('select');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Get user email from auth store (if available)
+      // Get user ID from auth store
       const { user } = useAuthStore.getState();
-      const userEmail = user?.email || '';
+      const userId = user?._id || user?.id || '';
+
+      if (!userId) {
+        throw new Error('User ID not found. Please log in again.');
+      }
 
       const response = await authService.enable2FA({
-        email: userEmail,
-        token: verificationCode,
-        secret: secretKey,
+        userId,
+        verificationToken,
+        verificationCode,
       });
 
       toast.success(
