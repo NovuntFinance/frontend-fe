@@ -1,7 +1,7 @@
 /**
  * Wallet API Service
  * Handles all wallet-related API calls based on backend TRD
- * 
+ *
  * Backend TRD: FRONTEND_WALLET_IMPLEMENTATION_PHASE1.md
  */
 
@@ -16,12 +16,12 @@ export interface UserWallet {
   totalBalance: number;
   fundedWallet: number;
   earningWallet: number;
-  
+
   // Capabilities
   canStake: boolean;
   canWithdraw: boolean;
   canTransfer: boolean;
-  
+
   // Statistics
   statistics: {
     totalDeposited: number;
@@ -31,7 +31,7 @@ export interface UserWallet {
     totalStaked: number;
     totalStakeReturns: number;
   };
-  
+
   // Metadata
   walletAddress: string | null;
   createdAt: string;
@@ -46,7 +46,7 @@ export interface DetailedWallet extends UserWallet {
     canStake: boolean;
     canWithdraw: boolean;
   };
-  
+
   // Staking Options
   stakingOptions: {
     availableForStaking: number;
@@ -56,7 +56,7 @@ export interface DetailedWallet extends UserWallet {
       fromEarningWallet: number;
     };
   };
-  
+
   // Transfer Options
   transferOptions: {
     availableForTransfer: number;
@@ -66,7 +66,7 @@ export interface DetailedWallet extends UserWallet {
       fromEarningWallet: number;
     };
   };
-  
+
   // Withdrawal Options
   withdrawalOptions: {
     availableForWithdrawal: number;
@@ -153,46 +153,14 @@ export interface WithdrawalResponse {
   };
 }
 
-export interface Transaction {
-  _id: string;
-  type: 'deposit' | 'withdrawal' | 'transfer' | 'stake' | 'bonus';
-  amount: number;
-  status: 'pending' | 'confirmed' | 'failed';
-  reference: string;
-  txId: string | null;
-  fee: number | null;
-  netAmount: number | null;
-  walletAddress: string | null;
-  network: string | null;
-  metadata: Record<string, any>;
-  timestamp: string;
-  processedAt: string | null;
-}
+// Import enhanced transaction types
+import type {
+  TransactionHistoryResponse,
+  TransactionHistoryParams,
+} from '@/types/enhanced-transaction';
 
-export interface TransactionHistoryResponse {
-  success: boolean;
-  data: {
-    transactions: Transaction[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  };
-}
-
-export interface TransactionFilters {
-  page?: number;
-  limit?: number;
-  type?: 'deposit' | 'withdrawal' | 'transfer' | 'stake' | 'bonus';
-  status?: 'pending' | 'confirmed' | 'failed';
-  search?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}
+// Re-export for backward compatibility
+export type TransactionFilters = TransactionHistoryParams;
 
 // ============================================
 // API SERVICE
@@ -204,7 +172,9 @@ export const walletApi = {
    * GET /api/v1/wallets/info
    */
   async getWalletInfo(): Promise<{ success: boolean; wallet: UserWallet }> {
-    const response = await api.get<{ success: boolean; wallet: UserWallet }>('/wallets/info');
+    const response = await api.get<{ success: boolean; wallet: UserWallet }>(
+      '/wallets/info'
+    );
     return response;
   },
 
@@ -212,8 +182,14 @@ export const walletApi = {
    * Get detailed wallet (requires 2FA)
    * GET /api/v1/wallets/my-wallet
    */
-  async getWalletDetailed(): Promise<{ success: boolean; wallet: DetailedWallet }> {
-    const response = await api.get<{ success: boolean; wallet: DetailedWallet }>('/wallets/my-wallet');
+  async getWalletDetailed(): Promise<{
+    success: boolean;
+    wallet: DetailedWallet;
+  }> {
+    const response = await api.get<{
+      success: boolean;
+      wallet: DetailedWallet;
+    }>('/wallets/my-wallet');
     return response;
   },
 
@@ -222,10 +198,13 @@ export const walletApi = {
    * POST /api/v1/enhanced-transactions/deposit/create
    */
   async createDeposit(amount: number): Promise<DepositResponse> {
-    const response = await api.post<DepositResponse>('/enhanced-transactions/deposit/create', {
-      amount,
-    });
-    
+    const response = await api.post<DepositResponse>(
+      '/enhanced-transactions/deposit/create',
+      {
+        amount,
+      }
+    );
+
     // Debug logging
     if (process.env.NODE_ENV === 'development') {
       console.log('[walletApi] Deposit creation response:', response);
@@ -237,7 +216,7 @@ export const walletApi = {
         fullResponse: response,
       });
     }
-    
+
     return response;
   },
 
@@ -257,7 +236,9 @@ export const walletApi = {
    * GET /api/v1/enhanced-transactions/withdrawal/limits
    */
   async getWithdrawalLimits(): Promise<WithdrawalLimits> {
-    const response = await api.get<WithdrawalLimits>('/enhanced-transactions/withdrawal/limits');
+    const response = await api.get<WithdrawalLimits>(
+      '/enhanced-transactions/withdrawal/limits'
+    );
     return response;
   },
 
@@ -265,7 +246,9 @@ export const walletApi = {
    * Create withdrawal request (requires 2FA)
    * POST /api/v1/enhanced-transactions/withdrawal/create
    */
-  async createWithdrawal(payload: WithdrawalRequest): Promise<WithdrawalResponse> {
+  async createWithdrawal(
+    payload: WithdrawalRequest
+  ): Promise<WithdrawalResponse> {
     const response = await api.post<WithdrawalResponse>(
       '/enhanced-transactions/withdrawal/create',
       payload
@@ -276,15 +259,94 @@ export const walletApi = {
   /**
    * Get transaction history
    * GET /api/v1/enhanced-transactions/history
+   *
+   * Supports all query parameters from the API guide:
+   * - page, limit, type, category, status, search
+   * - dateFrom, dateTo, amountMin, amountMax
+   * - sortBy, sortOrder
    */
-  async getTransactionHistory(filters: TransactionFilters = {}): Promise<TransactionHistoryResponse> {
-    const response = await api.get<TransactionHistoryResponse>(
-      '/enhanced-transactions/history',
-      {
-        params: filters,
+  async getTransactionHistory(
+    filters: TransactionHistoryParams = {}
+  ): Promise<TransactionHistoryResponse> {
+    // Build query params, excluding 'all' values and undefined/null
+    const queryParams: Record<string, string> = {};
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== 'all') {
+        queryParams[key] = String(value);
       }
-    );
-    return response;
+    });
+
+    try {
+      console.log('[walletApi] 🔄 Fetching transaction history...');
+      console.log('[walletApi] Filters:', filters);
+      console.log('[walletApi] Query params:', queryParams);
+
+      // Make the API call - the api client may unwrap the response
+      const response = await api.get<any>('/enhanced-transactions/history', {
+        params: queryParams,
+      });
+
+      console.log(
+        '[walletApi] ✅ Raw response:',
+        JSON.stringify(response, null, 2).slice(0, 500)
+      );
+      console.log(
+        '[walletApi] Response keys:',
+        response ? Object.keys(response) : 'null'
+      );
+
+      // Determine the actual data structure
+      let data: TransactionHistoryResponse['data'];
+
+      // Case 1: Response has 'transactions' directly (already unwrapped)
+      if (response && 'transactions' in response) {
+        console.log(
+          '[walletApi] 📦 Case 1: Response has transactions directly'
+        );
+        data = response;
+      }
+      // Case 2: Response has 'data' with 'transactions'
+      else if (response && response.data && 'transactions' in response.data) {
+        console.log('[walletApi] 📦 Case 2: Response has data.transactions');
+        data = response.data;
+      }
+      // Case 3: Response is the full { success, data } structure
+      else if (response && response.success && response.data) {
+        console.log('[walletApi] 📦 Case 3: Response is { success, data }');
+        data = response.data;
+      }
+      // Fallback: assume response is the data
+      else {
+        console.log('[walletApi] 📦 Fallback: assuming response is data');
+        data = response;
+      }
+
+      console.log('[walletApi] ✅ Final data structure:', {
+        hasTransactions: !!data?.transactions,
+        transactionsCount: data?.transactions?.length || 0,
+        hasPagination: !!data?.pagination,
+        hasSummary: !!data?.summary,
+        hasCategoryBreakdown: !!data?.categoryBreakdown,
+      });
+
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (error: any) {
+      console.error(
+        '[walletApi] ❌ Error fetching transaction history:',
+        error
+      );
+      console.error('[walletApi] Error details:', {
+        message: error?.message,
+        status: error?.response?.status || error?.statusCode,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        url: error?.config?.url,
+      });
+      throw error;
+    }
   },
 };
-

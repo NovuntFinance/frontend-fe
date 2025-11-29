@@ -59,7 +59,8 @@ export function validateWalletAddress(
       if (!ethRegex.test(trimmedAddress)) {
         return {
           valid: false,
-          error: 'Invalid BEP20/ERC20 address format. Must start with 0x and be 42 characters.',
+          error:
+            'Invalid BEP20/ERC20 address format. Must start with 0x and be 42 characters.',
         };
       }
       break;
@@ -70,7 +71,8 @@ export function validateWalletAddress(
       if (!tronRegex.test(trimmedAddress)) {
         return {
           valid: false,
-          error: 'Invalid TRC20 address format. Must start with T and be 34 characters.',
+          error:
+            'Invalid TRC20 address format. Must start with T and be 34 characters.',
         };
       }
       break;
@@ -129,15 +131,38 @@ export function maskWalletAddress(address: string): string {
 /**
  * Format transaction type for display
  * @param type - Transaction type
+ * @param typeLabel - Optional typeLabel from API (preferred)
  * @returns Human-readable label
  */
-export function formatTransactionType(type: string): string {
+export function formatTransactionType(
+  type: string,
+  typeLabel?: string
+): string {
+  // Use typeLabel if provided (from API)
+  if (typeLabel) {
+    return typeLabel;
+  }
+
   const types: Record<string, string> = {
     deposit: 'Deposit',
     withdrawal: 'Withdrawal',
+    transfer_out: 'Transfer Out',
+    transfer_in: 'Transfer In',
     transfer: 'Transfer',
     stake: 'Stake',
+    unstake: 'Unstake',
+    ros_payout: 'ROS Payout',
+    stake_completion: 'Stake Completion',
+    stake_pool_payout: 'Stake Pool Payout',
+    performance_pool_payout: 'Performance Pool Payout',
+    premium_pool_payout: 'Premium Pool Payout',
+    registration_bonus: 'Registration Bonus',
+    referral_bonus: 'Referral Bonus',
+    bonus_activation: 'Bonus Activation',
     bonus: 'Bonus',
+    fee: 'Fee',
+    adjustment: 'Adjustment',
+    refund: 'Refund',
   };
   return types[type] || type;
 }
@@ -152,14 +177,27 @@ export function formatTransactionStatus(status: string): {
   color: string;
   bgColor: string;
 } {
-  const statusMap: Record<string, { label: string; color: string; bgColor: string }> = {
+  const statusMap: Record<
+    string,
+    { label: string; color: string; bgColor: string }
+  > = {
     pending: {
       label: 'Pending',
       color: 'text-warning',
       bgColor: 'bg-warning/10',
     },
+    processing: {
+      label: 'Processing',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+    },
     confirmed: {
       label: 'Confirmed',
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+    },
+    completed: {
+      label: 'Completed',
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
@@ -168,13 +206,87 @@ export function formatTransactionStatus(status: string): {
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
     },
+    cancelled: {
+      label: 'Cancelled',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted',
+    },
+    expired: {
+      label: 'Expired',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted',
+    },
+    requires_approval: {
+      label: 'Requires Approval',
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+    },
   };
 
-  return statusMap[status] || {
-    label: status,
-    color: 'text-muted-foreground',
-    bgColor: 'bg-muted',
+  return (
+    statusMap[status] || {
+      label: status,
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted',
+    }
+  );
+}
+
+/**
+ * Format amount with direction sign
+ * @param amount - Transaction amount
+ * @param direction - Transaction direction ('in', 'out', 'neutral')
+ * @returns Formatted amount string with sign
+ */
+export function formatAmountWithDirection(
+  amount: number,
+  direction: 'in' | 'out' | 'neutral'
+): string {
+  const sign = direction === 'out' ? '-' : direction === 'in' ? '+' : '';
+  return `${sign}${formatCurrency(Math.abs(amount), { showCurrency: false })}`;
+}
+
+/**
+ * Get status color for display
+ * @param status - Transaction status
+ * @returns Color string
+ */
+export function getStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    pending: 'orange',
+    processing: 'blue',
+    confirmed: 'green',
+    completed: 'green',
+    failed: 'red',
+    cancelled: 'gray',
+    expired: 'gray',
+    requires_approval: 'yellow',
   };
+  return colors[status] || 'gray';
+}
+
+/**
+ * Get direction icon
+ * @param direction - Transaction direction
+ * @returns Icon character
+ */
+export function getDirectionIcon(direction: 'in' | 'out' | 'neutral'): string {
+  return direction === 'in' ? '↓' : direction === 'out' ? '↑' : '↔';
+}
+
+/**
+ * Format date for display
+ * @param dateString - ISO date string
+ * @returns Formatted date string
+ */
+export function formatTransactionDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 /**
@@ -209,4 +321,3 @@ export function formatTimeRemaining(milliseconds: number): string {
   }
   return `${seconds}s`;
 }
-
