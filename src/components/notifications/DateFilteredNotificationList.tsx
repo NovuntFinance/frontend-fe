@@ -300,7 +300,7 @@ export function DateFilteredNotificationList({
                 <div className="space-y-2 pl-1">
                   {groupNotifications.map((notification) => (
                     <NotificationItem
-                      key={notification.notificationId}
+                      key={notification.notificationId || notification._id}
                       notification={notification}
                       onMarkAsRead={markAsRead}
                       onDelete={deleteNotification}

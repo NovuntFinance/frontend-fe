@@ -10,11 +10,13 @@ import {
   markAsRead as markAsReadApi,
   markAllAsRead as markAllAsReadApi,
   deleteNotification as deleteNotificationApi,
+  handleNotificationError,
 } from '@/services/notificationApi';
 import type {
   Notification,
   NotificationFilters,
   PaginationInfo,
+  GetNotificationsResponse,
 } from '@/types/notification';
 
 interface NotificationState {
@@ -33,6 +35,7 @@ interface NotificationState {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   loadMore: () => Promise<void>;
+  addNotification: (notification: Notification) => void;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -92,8 +95,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           loading: false,
         });
       } else {
-        // API returned wrapped object response
-        const notifications = response.data || [];
+        // API returned wrapped object response (GetNotificationsResponse)
+        const responseObj = response as GetNotificationsResponse;
+        const notifications = responseObj.data || [];
         if (process.env.NODE_ENV === 'development') {
           console.log(
             '[notificationStore] Object response, data count:',
@@ -102,14 +106,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         }
         set({
           notifications,
-          pagination: response.pagination || null,
-          unreadCount: response.unreadCount || 0,
+          pagination: responseObj.pagination || null,
+          unreadCount: responseObj.unreadCount || 0,
           loading: false,
         });
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch notifications';
+      const errorMessage = handleNotificationError(err);
       set({ error: errorMessage, loading: false });
       console.error('[notificationStore.fetchNotifications] Error:', err);
     }
@@ -131,15 +134,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       await markAsReadApi(notificationId);
       // Update local state
       set((state) => {
+        // Support both _id (MongoDB) and notificationId (UUID) for compatibility
         const notification = state.notifications.find(
-          (n) => n._id === notificationId
+          (n) => n._id === notificationId || n.notificationId === notificationId
         );
         if (!notification || notification.isRead) {
           return state;
         }
 
         const updatedNotifications = state.notifications.map((n) =>
-          n._id === notificationId ? { ...n, isRead: true } : n
+          n._id === notificationId || n.notificationId === notificationId
+            ? { ...n, isRead: true }
+            : n
         );
 
         return {
@@ -148,10 +154,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         };
       });
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Failed to mark notification as read';
+      const errorMessage = handleNotificationError(err);
       set({ error: errorMessage });
       throw err;
     }
@@ -170,10 +173,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         unreadCount: 0,
       }));
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Failed to mark all notifications as read';
+      const errorMessage = handleNotificationError(err);
       set({ error: errorMessage });
       throw err;
     }
@@ -185,14 +185,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       await deleteNotificationApi(notificationId);
       // Update local state
       set((state) => {
+        // Support both _id (MongoDB) and notificationId (UUID) for compatibility
         const notification = state.notifications.find(
-          (n) => n._id === notificationId
+          (n) => n._id === notificationId || n.notificationId === notificationId
         );
         const wasUnread = notification && !notification.isRead;
 
         return {
           notifications: state.notifications.filter(
-            (n) => n._id !== notificationId
+            (n) =>
+              n._id !== notificationId && n.notificationId !== notificationId
           ),
           unreadCount: wasUnread
             ? Math.max(0, state.unreadCount - 1)
@@ -200,8 +202,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         };
       });
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to delete notification';
+      const errorMessage = handleNotificationError(err);
       set({ error: errorMessage });
       throw err;
     }
@@ -230,19 +231,29 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         });
       } else {
         // API returned wrapped object response
+        const responseObj = response as GetNotificationsResponse;
         set({
-          notifications: [...notifications, ...(response.data || [])],
-          pagination: response.pagination || null,
+          notifications: [...notifications, ...(responseObj.data || [])],
+          pagination: responseObj.pagination || null,
+          unreadCount: responseObj.unreadCount || get().unreadCount,
           loading: false,
         });
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Failed to load more notifications';
+      const errorMessage = handleNotificationError(err);
       set({ error: errorMessage, loading: false });
+      console.error('[notificationStore.loadMore] Error:', err);
     }
+  },
+
+  // Add notification (for real-time updates)
+  addNotification: (notification: Notification) => {
+    set((state) => ({
+      notifications: [notification, ...state.notifications],
+      unreadCount: notification.isRead
+        ? state.unreadCount
+        : state.unreadCount + 1,
+    }));
   },
 
   // Clear error

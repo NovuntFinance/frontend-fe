@@ -27,13 +27,28 @@ import {
 } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
-import { useWalletBalance, useActiveStakes, useTransactions, useDashboardOverview } from '@/lib/queries';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  useWalletBalance,
+  useActiveStakes,
+  useTransactions,
+  useDashboardOverview,
+} from '@/lib/queries';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { PortfolioChart } from '@/components/dashboard/PortfolioChart';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { StakeCard } from '@/components/dashboard/StakeCard';
@@ -99,28 +114,141 @@ export default function DashboardPage() {
   };
 
   // Fetch data
-  const { data: walletBalance, isLoading: balanceLoading, error: balanceError, refetch } = useWalletBalance();
-  const { data: activeStakes, isLoading: stakesLoading, error: stakesError } = useActiveStakes();
-  const { data: transactions, isLoading: transactionsLoading, error: transactionsError } = useTransactions();
-  const { data: overview, isLoading: overviewLoading, error: overviewError } = useDashboardOverview();
+  const {
+    data: walletBalance,
+    isLoading: balanceLoading,
+    error: balanceError,
+    refetch,
+  } = useWalletBalance();
+  const {
+    data: activeStakes,
+    isLoading: stakesLoading,
+    error: stakesError,
+  } = useActiveStakes();
+  const {
+    data: transactions,
+    isLoading: transactionsLoading,
+    error: transactionsError,
+  } = useTransactions();
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    error: overviewError,
+  } = useDashboardOverview();
 
   // Platform ranks
-  const ranks = React.useMemo(() => [
-    'Stakeholder',
-    'Associate Stakeholder',
-    'Principal Strategist',
-    'Elite Capitalist',
-    'Wealth Architect',
-    'Finance Titan'
-  ], []);
+  const ranks = React.useMemo(
+    () => [
+      'Stakeholder',
+      'Associate Stakeholder',
+      'Principal Strategist',
+      'Elite Capitalist',
+      'Wealth Architect',
+      'Finance Titan',
+    ],
+    []
+  );
 
   // Generate random platform activity
   const generateRandomActivity = React.useCallback(() => {
     const generateMaskedName = () => {
-      const firstNames = ['John', 'Sarah', 'Mike', 'Emma', 'David', 'Lisa', 'Chris', 'Anna', 'Tom', 'Rachel', 'James', 'Sophie', 'Mark', 'Nina', 'Paul', 'Grace', 'Peter', 'Kate', 'Alex', 'Maria', 'Dan', 'Eva', 'Ryan', 'Zoe', 'Luke', 'Mia', 'Ben', 'Ella', 'Sam', 'Amy', 'Jack', 'Lily', 'Max', 'Ruby', 'Leo', 'Ivy', 'Noah', 'Lucy', 'Jake', 'Aria', 'Owen', 'Maya', 'Cole', 'Leah', 'Ian', 'Nora', 'Eric', 'Jade', 'Sean', 'Rose'];
-      const lastNames = ['Anderson', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Taylor', 'Thomas', 'Moore', 'Jackson', 'Martin', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'King', 'Wright', 'Scott', 'Green', 'Baker', 'Adams', 'Nelson', 'Carter', 'Mitchell', 'Roberts', 'Turner', 'Phillips', 'Campbell', 'Parker', 'Evans'];
+      const firstNames = [
+        'John',
+        'Sarah',
+        'Mike',
+        'Emma',
+        'David',
+        'Lisa',
+        'Chris',
+        'Anna',
+        'Tom',
+        'Rachel',
+        'James',
+        'Sophie',
+        'Mark',
+        'Nina',
+        'Paul',
+        'Grace',
+        'Peter',
+        'Kate',
+        'Alex',
+        'Maria',
+        'Dan',
+        'Eva',
+        'Ryan',
+        'Zoe',
+        'Luke',
+        'Mia',
+        'Ben',
+        'Ella',
+        'Sam',
+        'Amy',
+        'Jack',
+        'Lily',
+        'Max',
+        'Ruby',
+        'Leo',
+        'Ivy',
+        'Noah',
+        'Lucy',
+        'Jake',
+        'Aria',
+        'Owen',
+        'Maya',
+        'Cole',
+        'Leah',
+        'Ian',
+        'Nora',
+        'Eric',
+        'Jade',
+        'Sean',
+        'Rose',
+      ];
+      const lastNames = [
+        'Anderson',
+        'Smith',
+        'Johnson',
+        'Williams',
+        'Brown',
+        'Jones',
+        'Garcia',
+        'Miller',
+        'Davis',
+        'Rodriguez',
+        'Martinez',
+        'Hernandez',
+        'Lopez',
+        'Gonzalez',
+        'Wilson',
+        'Taylor',
+        'Thomas',
+        'Moore',
+        'Jackson',
+        'Martin',
+        'Lee',
+        'Walker',
+        'Hall',
+        'Allen',
+        'Young',
+        'King',
+        'Wright',
+        'Scott',
+        'Green',
+        'Baker',
+        'Adams',
+        'Nelson',
+        'Carter',
+        'Mitchell',
+        'Roberts',
+        'Turner',
+        'Phillips',
+        'Campbell',
+        'Parker',
+        'Evans',
+      ];
 
-      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const firstName =
+        firstNames[Math.floor(Math.random() * firstNames.length)];
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
 
       const maskName = (name: string) => {
@@ -190,9 +318,12 @@ export default function DashboardPage() {
       },
     ];
 
-    const activity = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+    const activity =
+      activityTypes[Math.floor(Math.random() * activityTypes.length)];
     const amount = activity.amountRange
-      ? Math.floor(Math.random() * (activity.amountRange[1] - activity.amountRange[0])) + activity.amountRange[0]
+      ? Math.floor(
+          Math.random() * (activity.amountRange[1] - activity.amountRange[0])
+        ) + activity.amountRange[0]
       : null;
 
     // Generate random time (1-60 minutes ago)
@@ -210,7 +341,9 @@ export default function DashboardPage() {
   }, [ranks]);
 
   // Generate initial activity and update every 30 seconds
-  const [currentActivity, setCurrentActivity] = React.useState(() => generateRandomActivity());
+  const [currentActivity, setCurrentActivity] = React.useState(() =>
+    generateRandomActivity()
+  );
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -222,33 +355,62 @@ export default function DashboardPage() {
 
   // Check if ALL queries have failed (indicating auth issue)
   const allQueriesFailed =
-    !balanceLoading && !walletBalance &&
-    !stakesLoading && !activeStakes &&
-    !transactionsLoading && !transactions &&
-    !overviewLoading && !overview;
+    !balanceLoading &&
+    !walletBalance &&
+    !stakesLoading &&
+    !activeStakes &&
+    !transactionsLoading &&
+    !transactions &&
+    !overviewLoading &&
+    !overview;
 
   // If all queries failed and we're not loading, show auth error
-  if (allQueriesFailed && (balanceError || stakesError || transactionsError || overviewError)) {
+  if (
+    allQueriesFailed &&
+    (balanceError || stakesError || transactionsError || overviewError)
+  ) {
     return <AuthErrorFallback />;
   }
 
   // Calculate totals with safe property access
-  const totalBalance = overview?.wallets?.totalBalance ?? ((walletBalance?.funded?.balance || 0) + (walletBalance?.earnings?.balance || 0));
-  const totalStaked = overview?.staking?.totalStaked ?? (Array.isArray(activeStakes) ? activeStakes.reduce((sum, stake) => sum + stake.amount, 0) : 0);
-  const totalEarnings = overview?.staking?.totalEarnings ?? walletBalance?.earnings?.balance ?? 0;
+  const totalBalance =
+    overview?.wallets?.totalBalance ??
+    (walletBalance?.funded?.balance || 0) +
+      (walletBalance?.earnings?.balance || 0);
+  const totalStaked =
+    overview?.staking?.totalStaked ??
+    (Array.isArray(activeStakes)
+      ? activeStakes.reduce((sum, stake) => sum + stake.amount, 0)
+      : 0);
+  const totalEarnings =
+    overview?.staking?.totalEarnings ?? walletBalance?.earnings?.balance ?? 0;
   const totalReferralEarnings = overview?.referrals?.referralEarnings ?? 0;
-  const availableForWithdrawal = overview?.wallets?.availableForWithdrawal ?? walletBalance?.availableForWithdrawal ?? walletBalance?.earnings?.availableBalance ?? 0;
-  const lockedInStakes = overview?.wallets?.lockedInStakes ?? walletBalance?.lockedInStakes ?? walletBalance?.funded?.lockedBalance ?? 0;
-  const pendingWithdrawals = overview?.wallets?.pendingWithdrawals ?? walletBalance?.pendingWithdrawals ?? 0;
+  const availableForWithdrawal =
+    overview?.wallets?.availableForWithdrawal ??
+    walletBalance?.availableForWithdrawal ??
+    walletBalance?.earnings?.availableBalance ??
+    0;
+  const lockedInStakes =
+    overview?.wallets?.lockedInStakes ??
+    walletBalance?.lockedInStakes ??
+    walletBalance?.funded?.lockedBalance ??
+    0;
+  const pendingWithdrawals =
+    overview?.wallets?.pendingWithdrawals ??
+    walletBalance?.pendingWithdrawals ??
+    0;
 
   // Calculate total portfolio value (combines all stakes and wallet balances)
   const totalPortfolioValue = totalBalance + totalStaked;
 
   // Last week's profit (will be updated by backend)
   // TODO: Backend to add analytics.lastWeekProfit and analytics.lastWeekProfitChange
-  const overviewData = overview as { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } } | undefined;
+  const overviewData = overview as
+    | { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } }
+    | undefined;
   const lastWeekProfit = overviewData?.analytics?.lastWeekProfit ?? 0;
-  const lastWeekProfitChange = overviewData?.analytics?.lastWeekProfitChange ?? 0;
+  const lastWeekProfitChange =
+    overviewData?.analytics?.lastWeekProfitChange ?? 0;
 
   // Pending earnings (optional - profits awaiting maturity)
   // TODO: Backend to add staking.pendingEarnings
@@ -261,8 +423,9 @@ export default function DashboardPage() {
   const isRefetching = false; // Can be connected to refetch state
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
       <div className="space-y-6">
+        {/* Hero Section - Welcome Card */}
         {/* Hero Section - Welcome Card */}
         {/* Hero Section - Welcome Card */}
         <motion.div
@@ -280,11 +443,8 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Registration Bonus Banner */}
-        <RegistrationBonusBanner />
-
         {/* Stats Grid - Premium Cards */}
-        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {[
             {
               title: 'Total Balance',
@@ -296,18 +456,23 @@ export default function DashboardPage() {
             {
               title: 'Total Earnings',
               value: totalEarnings + totalReferralEarnings,
-              tooltip: 'Includes staking profits, referral bonuses, and other earnings.',
+              tooltip:
+                'Includes staking profits, referral bonuses, and other earnings.',
               icon: DollarSign,
               colorTheme: 'emerald' as const,
             },
             {
               title: "Last Week's Profit",
-              value: lastWeekProfit,
+              value: lastWeekProfit ?? 0,
               tooltip: 'Profit made last week.',
-              icon: lastWeekProfitChange >= 0 ? TrendingUp : TrendingDown,
-              colorTheme: lastWeekProfitChange >= 0 ? 'emerald' as const : 'orange' as const,
-              change: `${lastWeekProfitChange >= 0 ? '+' : ''}${lastWeekProfitChange.toFixed(1)}%`,
-              changePositive: lastWeekProfitChange >= 0,
+              icon:
+                (lastWeekProfitChange ?? 0) >= 0 ? TrendingUp : TrendingDown,
+              colorTheme:
+                (lastWeekProfitChange ?? 0) >= 0
+                  ? ('emerald' as const)
+                  : ('orange' as const),
+              change: `${(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}${(lastWeekProfitChange ?? 0).toFixed(1)}%`,
+              changePositive: (lastWeekProfitChange ?? 0) >= 0,
             },
             {
               title: 'Live Platform Activity',
@@ -317,25 +482,36 @@ export default function DashboardPage() {
               colorTheme: 'blue' as const,
               isActivity: true,
             },
-            ...(pendingEarnings > 0 ? [{
-              title: 'Pending Earnings',
-              value: pendingEarnings,
-              tooltip: 'Earnings awaiting confirmation or release.',
-              icon: Clock,
-              colorTheme: 'orange' as const,
-            }] : []),
-            ...(nextPayoutDate ? [{
-              title: 'Next Payout',
-              value: null,
-              displayValue: new Date(nextPayoutDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              }),
-              tooltip: 'Expected date for your next ROS or distribution.',
-              icon: Calendar,
-              colorTheme: 'blue' as const,
-            }] : []),
+            ...(pendingEarnings > 0
+              ? [
+                  {
+                    title: 'Pending Earnings',
+                    value: pendingEarnings,
+                    tooltip: 'Earnings awaiting confirmation or release.',
+                    icon: Clock,
+                    colorTheme: 'orange' as const,
+                  },
+                ]
+              : []),
+            ...(nextPayoutDate
+              ? [
+                  {
+                    title: 'Next Payout',
+                    value: null,
+                    displayValue: new Date(nextPayoutDate).toLocaleDateString(
+                      'en-US',
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      }
+                    ),
+                    tooltip: 'Expected date for your next ROS or distribution.',
+                    icon: Calendar,
+                    colorTheme: 'blue' as const,
+                  },
+                ]
+              : []),
           ].map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -364,59 +540,73 @@ export default function DashboardPage() {
                     className="space-y-3"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg bg-${stat.colorTheme}-500/10`}>
-                        <currentActivity.icon className={`h-4 w-4 text-${stat.colorTheme}-500`} />
+                      <div
+                        className={`rounded-lg p-2 bg-${stat.colorTheme}-500/10`}
+                      >
+                        <currentActivity.icon
+                          className={`h-4 w-4 text-${stat.colorTheme}-500`}
+                        />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-foreground truncate text-sm font-semibold">
                           {currentActivity.user}
                         </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
                           {currentActivity.action}
                           {currentActivity.amount && (
-                            <span className="font-semibold text-foreground">
+                            <span className="text-foreground font-semibold">
                               ${currentActivity.amount.toLocaleString()}
                             </span>
                           )}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                      <Badge variant="outline" className="text-xs bg-background/50">
+                    <div className="border-border/50 flex items-center justify-between border-t pt-2">
+                      <Badge
+                        variant="outline"
+                        className="bg-background/50 text-xs"
+                      >
                         {currentActivity.time}
                       </Badge>
                       <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                        <span className="text-xs font-medium text-green-500">Live</span>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                        <span className="text-xs font-medium text-green-500">
+                          Live
+                        </span>
                       </div>
                     </div>
                   </motion.div>
                 ) : (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-3">
-                      <p className="text-3xl font-bold text-foreground tracking-tight">
-                        {balanceVisible ? (
-                          stat.displayValue || `$${(stat.value ?? 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}`
-                        ) : '••••••'}
+                      <p className="text-foreground text-3xl font-bold tracking-tight">
+                        {balanceVisible
+                          ? stat.displayValue ||
+                            `$${(stat.value ?? 0).toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : '••••••'}
                       </p>
                     </div>
                     {stat.change && (
                       <div className="flex items-center gap-2">
                         <Badge
-                          variant={stat.changePositive ? "default" : "destructive"}
+                          variant={
+                            stat.changePositive ? 'default' : 'destructive'
+                          }
                           className={cn(
-                            "text-xs font-bold px-2 py-0.5",
+                            'px-2 py-0.5 text-xs font-bold',
                             stat.changePositive
-                              ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 border-emerald-500/20"
-                              : "bg-red-500/20 text-red-600 hover:bg-red-500/30 border-red-500/20"
+                              ? 'border-emerald-500/20 bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30'
+                              : 'border-red-500/20 bg-red-500/20 text-red-600 hover:bg-red-500/30'
                           )}
                         >
                           {stat.change}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">vs last week</span>
+                        <span className="text-muted-foreground text-xs">
+                          vs last week
+                        </span>
                       </div>
                     )}
                   </div>
@@ -450,7 +640,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <PortfolioChart />
+          <DailyROSPerformance />
         </motion.div>
 
         {/* Recent Activity */}
@@ -485,7 +675,7 @@ export default function DashboardPage() {
           <WeeklyROSCard />
 
           {/* Streak Card */}
-          <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
 
@@ -501,36 +691,40 @@ export default function DashboardPage() {
                 repeat: Infinity,
                 ease: 'easeInOut',
               }}
-              className="absolute -bottom-12 -left-12 w-24 h-24 bg-blue-500/30 rounded-full blur-2xl"
+              className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
             />
 
             <CardHeader className="relative">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="mb-2 flex items-center gap-3">
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 backdrop-blur-sm shadow-lg"
+                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
                 >
                   <Clock className="h-6 w-6 text-blue-500" />
                 </motion.div>
                 <div>
-                  <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
                     Staking Streak
                   </CardTitle>
-                  <CardDescription className="text-xs">Consecutive active days</CardDescription>
+                  <CardDescription className="text-xs">
+                    Consecutive active days
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="relative">
-              <div className="flex items-baseline gap-3 mb-4">
+              <div className="mb-4 flex items-baseline gap-3">
                 <motion.span
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.9 }}
-                  className="text-5xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-5xl font-black text-transparent"
                 >
                   45
                 </motion.span>
-                <span className="text-lg font-semibold text-muted-foreground">days</span>
+                <span className="text-muted-foreground text-lg font-semibold">
+                  days
+                </span>
               </div>
               <div className="flex gap-1.5">
                 {[...Array(7)].map((_, i) => (
@@ -540,10 +734,11 @@ export default function DashboardPage() {
                     animate={{ scaleY: 1, opacity: 1 }}
                     transition={{ delay: 0.9 + i * 0.1, type: 'spring' }}
                     whileHover={{ scaleY: 1.2 }}
-                    className={`h-10 flex-1 rounded-lg transition-all ${i < 6
-                      ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
-                      : 'bg-muted/50'
-                      }`}
+                    className={`h-10 flex-1 rounded-lg transition-all ${
+                      i < 6
+                        ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
+                        : 'bg-muted/50'
+                    }`}
                   />
                 ))}
               </div>
@@ -553,17 +748,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Welcome Modal for First-Time Users */}
-      {
-        newUserInfo && (
-          <WelcomeModal
-            isOpen={showWelcomeModal}
-            onClose={handleWelcomeModalClose}
-            firstName={newUserInfo.firstName}
-            lastName={newUserInfo.lastName}
-            email={newUserInfo.email}
-          />
-        )
-      }
+      {newUserInfo && (
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={handleWelcomeModalClose}
+          firstName={newUserInfo.firstName}
+          lastName={newUserInfo.lastName}
+          email={newUserInfo.email}
+        />
+      )}
 
       {/* Test Share Buttons - Remove after testing */}
       {process.env.NODE_ENV === 'development' && <TestShareButton />}

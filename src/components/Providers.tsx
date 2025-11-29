@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ShareAndSocialProofProvider } from '@/components/providers/ShareAndSocialProofProvider';
 import { logger } from '@/lib/logger';
+import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Debug logging at app initialization
@@ -22,7 +23,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logger.warn('NEXT_PUBLIC_API_URL is not set', {
         instructions: {
           development: 'NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1',
-          production: 'NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1',
+          production:
+            'NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1',
         },
       });
     } else {
@@ -47,11 +49,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster position="top-right" richColors />
+          <GlobalModalsProvider>
+            {children}
+            <Toaster position="top-right" richColors />
 
-          {/* Viral Growth Features: Share Modal + Live Activity Feed */}
-          <ShareAndSocialProofProvider />
+            {/* Viral Growth Features: Share Modal + Live Activity Feed */}
+            <ShareAndSocialProofProvider />
+          </GlobalModalsProvider>
         </ThemeProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
@@ -70,4 +74,3 @@ export function cleanupInjectedAttributes() {
     }
   });
 }
-

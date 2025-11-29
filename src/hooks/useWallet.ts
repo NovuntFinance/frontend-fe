@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import type { WalletBalance } from '@/types/wallet';
 import type { UserWallet } from '@/services/walletApi';
+import type { TransactionHistoryParams } from '@/types/enhanced-transaction';
 
 /**
  * Get wallet info (overview)
@@ -32,9 +33,14 @@ export function useWallet(): {
         return response.wallet;
       } catch (error: any) {
         // Handle 404 - Wallet not found (new user) - This is expected
-        const err = error as { statusCode?: number; response?: { status?: number } };
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useWallet] ℹ️ Wallet not created yet - returning empty wallet (normal for new users)');
+          console.log(
+            '[useWallet] ℹ️ Wallet not created yet - returning empty wallet (normal for new users)'
+          );
           // Return empty wallet structure
           return {
             totalBalance: 0,
@@ -128,12 +134,15 @@ export function useCreateDeposit() {
       queryClient.invalidateQueries({ queryKey: queryKeys.walletInfo });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
-      
+
       // Note: Toast notification is handled in the component
       // to allow for automatic redirect to payment URL
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error?.message || 'Failed to create deposit';
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to create deposit';
       toast.error('Deposit failed', {
         description: message,
       });
@@ -169,7 +178,9 @@ export function useWithdrawalLimits() {
         const response = await walletApi.getWithdrawalLimits();
         // Ensure we always return a value, never undefined
         if (!response || !response.data) {
-          console.warn('[useWithdrawalLimits] Invalid response, returning default limits');
+          console.warn(
+            '[useWithdrawalLimits] Invalid response, returning default limits'
+          );
           return {
             minWithdrawal: 20,
             maxWithdrawal: 10000,
@@ -217,8 +228,11 @@ export function useCreateWithdrawal() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { amount: number; walletAddress: string; network?: string }) =>
-      walletApi.createWithdrawal(payload),
+    mutationFn: (payload: {
+      amount: number;
+      walletAddress: string;
+      network?: string;
+    }) => walletApi.createWithdrawal(payload),
     onSuccess: (response) => {
       // Invalidate wallet queries
       queryClient.invalidateQueries({ queryKey: queryKeys.walletInfo });
@@ -226,14 +240,17 @@ export function useCreateWithdrawal() {
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawalLimits });
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
-      
+
       toast.success('Withdrawal requested', {
         description: 'Your withdrawal will be processed within 24-48 hours',
       });
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error?.message || 'Failed to create withdrawal';
-      
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to create withdrawal';
+
       // Handle specific error cases
       if (error?.response?.status === 403) {
         toast.error('2FA Required', {
@@ -254,57 +271,241 @@ export function useCreateWithdrawal() {
 
 /**
  * Get transaction history with filters
+ * Returns the full enhanced transaction history response including summary and category breakdown
  */
-export function useTransactionHistory(filters: TransactionFilters = {}) {
+export function useTransactionHistory(filters: TransactionHistoryParams = {}) {
   return useQuery({
     queryKey: queryKeys.transactions(filters as any),
     queryFn: async () => {
       try {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '[useTransactionHistory] 🔄 Fetching with filters:',
+            filters
+          );
+        }
+
         const response = await walletApi.getTransactionHistory(filters);
-        // Ensure we always return a valid structure
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[useTransactionHistory] ✅ Raw response:', response);
+          console.log(
+            '[useTransactionHistory] Response type:',
+            typeof response
+          );
+          console.log(
+            '[useTransactionHistory] Response keys:',
+            response ? Object.keys(response) : []
+          );
+          console.log(
+            '[useTransactionHistory] Has data prop:',
+            response && 'data' in response
+          );
+          console.log(
+            '[useTransactionHistory] Has transactions prop:',
+            response && 'transactions' in response
+          );
+          if (response?.data) {
+            console.log(
+              '[useTransactionHistory] Response.data:',
+              response.data
+            );
+            console.log(
+              '[useTransactionHistory] Response.data.transactions:',
+              response.data.transactions?.length
+            );
+          }
+          if ((response as any)?.transactions) {
+            console.log(
+              '[useTransactionHistory] Direct transactions:',
+              (response as any).transactions?.length
+            );
+          }
+        }
+
+        // Handle case where response is already the data object (unwrapped by API client)
+        if (
+          response &&
+          'transactions' in response &&
+          !('success' in response)
+        ) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[useTransactionHistory] 📦 Response is already unwrapped data object'
+            );
+          }
+          return response as any;
+        }
+
+        // Handle wrapped response { success: true, data: {...} }
         if (response?.data) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[useTransactionHistory] 📦 Returning response.data');
+          }
           return response.data;
         }
         // Return empty structure if no data
         return {
           transactions: [],
           pagination: {
-            page: 1,
-            limit: 20,
-            total: 0,
+            currentPage: 1,
             totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: filters.limit || 20,
             hasNext: false,
             hasPrev: false,
           },
+          summary: {
+            deposits: { total: 0, count: 0 },
+            withdrawals: { total: 0, count: 0 },
+            staking: {
+              totalStaked: 0,
+              stakeCount: 0,
+              totalCompletions: 0,
+              completionCount: 0,
+            },
+            earnings: {
+              rosPayouts: 0,
+              rosCount: 0,
+              poolPayouts: 0,
+            },
+            bonuses: { total: 0, count: 0 },
+            transfers: { sent: 0, received: 0 },
+            fees: 0,
+            netInflow: 0,
+          },
+          categoryBreakdown: {},
+          filters: {
+            type: filters.type || 'all',
+            category: filters.category || 'all',
+            status: filters.status || 'all',
+            dateFrom: filters.dateFrom || null,
+            dateTo: filters.dateTo || null,
+            amountMin: filters.amountMin || null,
+            amountMax: filters.amountMax || null,
+            search: filters.search || null,
+          },
+          availableFilters: {
+            types: [],
+            categories: [],
+            statuses: [],
+          },
         };
       } catch (error: any) {
+        console.error('[useTransactionHistory] ❌ Error:', error);
+        console.error('[useTransactionHistory] Error details:', {
+          message: error?.message,
+          status: error?.response?.status || error?.statusCode,
+          statusText: error?.response?.statusText,
+          data: error?.response?.data,
+          url: error?.config?.url,
+        });
+
         // Handle 404 - No transactions yet (new user) - This is expected
-        const err = error as { statusCode?: number; response?: { status?: number } };
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useTransactionHistory] ℹ️ No transactions found - returning empty list (normal for new users)');
+          console.log(
+            '[useTransactionHistory] ℹ️ No transactions found - returning empty list (normal for new users)'
+          );
           return {
             transactions: [],
             pagination: {
-              page: 1,
-              limit: filters.limit || 20,
-              total: 0,
+              currentPage: 1,
               totalPages: 0,
+              totalItems: 0,
+              itemsPerPage: filters.limit || 20,
               hasNext: false,
               hasPrev: false,
+            },
+            summary: {
+              deposits: { total: 0, count: 0 },
+              withdrawals: { total: 0, count: 0 },
+              staking: {
+                totalStaked: 0,
+                stakeCount: 0,
+                totalCompletions: 0,
+                completionCount: 0,
+              },
+              earnings: {
+                rosPayouts: 0,
+                rosCount: 0,
+                poolPayouts: 0,
+              },
+              bonuses: { total: 0, count: 0 },
+              transfers: { sent: 0, received: 0 },
+              fees: 0,
+              netInflow: 0,
+            },
+            categoryBreakdown: {},
+            filters: {
+              type: filters.type || 'all',
+              category: filters.category || 'all',
+              status: filters.status || 'all',
+              dateFrom: filters.dateFrom || null,
+              dateTo: filters.dateTo || null,
+              amountMin: filters.amountMin || null,
+              amountMax: filters.amountMax || null,
+              search: filters.search || null,
+            },
+            availableFilters: {
+              types: [],
+              categories: [],
+              statuses: [],
             },
           };
         }
         // For other errors, return empty structure instead of throwing
-        console.error('[useTransactionHistory] Error fetching transactions:', error);
+        console.error(
+          '[useTransactionHistory] Error fetching transactions:',
+          error
+        );
         return {
           transactions: [],
           pagination: {
-            page: 1,
-            limit: filters.limit || 20,
-            total: 0,
+            currentPage: 1,
             totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: filters.limit || 20,
             hasNext: false,
             hasPrev: false,
+          },
+          summary: {
+            deposits: { total: 0, count: 0 },
+            withdrawals: { total: 0, count: 0 },
+            staking: {
+              totalStaked: 0,
+              stakeCount: 0,
+              totalCompletions: 0,
+              completionCount: 0,
+            },
+            earnings: {
+              rosPayouts: 0,
+              rosCount: 0,
+              poolPayouts: 0,
+            },
+            bonuses: { total: 0, count: 0 },
+            transfers: { sent: 0, received: 0 },
+            fees: 0,
+            netInflow: 0,
+          },
+          categoryBreakdown: {},
+          filters: {
+            type: filters.type || 'all',
+            category: filters.category || 'all',
+            status: filters.status || 'all',
+            dateFrom: filters.dateFrom || null,
+            dateTo: filters.dateTo || null,
+            amountMin: filters.amountMin || null,
+            amountMax: filters.amountMax || null,
+            search: filters.search || null,
+          },
+          availableFilters: {
+            types: [],
+            categories: [],
+            statuses: [],
           },
         };
       }
