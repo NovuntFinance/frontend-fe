@@ -6,7 +6,7 @@ import { TrendingUp } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { rosApi, TimeRange, DailyEarningsData } from '@/services/rosApi';
+import { rosApi, TimeRange, DailyEarning } from '@/services/rosApi';
 import { toast } from 'sonner';
 
 const timeRanges: TimeRange[] = ['7D', '30D'];
@@ -36,6 +36,12 @@ export function DailyROSPerformance() {
 
   // Calculate totals (using amount field from DailyEarning)
   const totalEarnings = data.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+  // Since the API doesn't provide breakdown by source, we'll use the total amount
+  // and assume it's all from staking (which is the primary source)
+  const totalStaking = totalEarnings;
+  const totalReferral = 0; // Not provided by API
+  const totalBonus = 0; // Not provided by API
 
   // Calculate max value for chart scaling
   const maxDailyTotal = Math.max(
@@ -90,22 +96,12 @@ export function DailyROSPerformance() {
           </div>
         </div>
 
-        {/* Legend */}
+        {/* Legend - Simplified since API doesn't provide breakdown */}
         <div className="flex flex-wrap gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full bg-emerald-500" />
-            <span className="text-muted-foreground">Staking</span>
-            <span className="font-semibold">${totalStaking.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-blue-500" />
-            <span className="text-muted-foreground">Referrals</span>
-            <span className="font-semibold">${totalReferral.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-purple-500" />
-            <span className="text-muted-foreground">Bonuses</span>
-            <span className="font-semibold">${totalBonus.toFixed(2)}</span>
+            <span className="text-muted-foreground">Total Earnings</span>
+            <span className="font-semibold">${totalEarnings.toFixed(2)}</span>
           </div>
         </div>
 
@@ -124,16 +120,19 @@ export function DailyROSPerformance() {
           ) : (
             <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
               {data.map((day, index) => {
-                const dailyTotal = day.staking + day.referral + day.bonus;
+                const dailyTotal = day.amount || 0;
                 const heightPercent = (dailyTotal / maxDailyTotal) * 100;
+
+                // Since API doesn't provide breakdown, all earnings are from staking
+                const stakingAmount = dailyTotal;
+                const referralAmount = 0;
+                const bonusAmount = 0;
 
                 // Calculate segment heights as percentages of the BAR height (not chart height)
                 const stakingPercent =
-                  dailyTotal > 0 ? (day.staking / dailyTotal) * 100 : 0;
-                const referralPercent =
-                  dailyTotal > 0 ? (day.referral / dailyTotal) * 100 : 0;
-                const bonusPercent =
-                  dailyTotal > 0 ? (day.bonus / dailyTotal) * 100 : 0;
+                  dailyTotal > 0 ? (stakingAmount / dailyTotal) * 100 : 0;
+                const referralPercent = 0; // Not provided by API
+                const bonusPercent = 0; // Not provided by API
 
                 const isHovered = hoveredIndex === index;
 
@@ -158,36 +157,24 @@ export function DailyROSPerformance() {
                               {day.date} • Total: ${dailyTotal.toFixed(2)}
                             </p>
                             <div className="space-y-1">
-                              {day.staking > 0 && (
+                              {stakingAmount > 0 && (
                                 <div className="flex items-center justify-between">
                                   <span className="text-muted-foreground flex items-center gap-1">
                                     <div className="h-2 w-2 rounded-full bg-emerald-500" />{' '}
-                                    Staking
+                                    Earnings
                                   </span>
                                   <span className="font-mono">
-                                    ${day.staking.toFixed(2)}
+                                    ${stakingAmount.toFixed(2)}
                                   </span>
                                 </div>
                               )}
-                              {day.referral > 0 && (
+                              {day.ros > 0 && (
                                 <div className="flex items-center justify-between">
                                   <span className="text-muted-foreground flex items-center gap-1">
-                                    <div className="h-2 w-2 rounded-full bg-blue-500" />{' '}
-                                    Referral
+                                    ROS
                                   </span>
                                   <span className="font-mono">
-                                    ${day.referral.toFixed(2)}
-                                  </span>
-                                </div>
-                              )}
-                              {day.bonus > 0 && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <div className="h-2 w-2 rounded-full bg-purple-500" />{' '}
-                                    Bonus
-                                  </span>
-                                  <span className="font-mono">
-                                    ${day.bonus.toFixed(2)}
+                                    {day.ros.toFixed(2)}%
                                   </span>
                                 </div>
                               )}
@@ -205,39 +192,30 @@ export function DailyROSPerformance() {
                       animate={{ height: `${heightPercent}%` }}
                       transition={{ duration: 0.5, delay: index * 0.03 }}
                       className={cn(
-                        'relative flex w-full flex-col-reverse overflow-hidden rounded-t-sm transition-all duration-200',
+                        'relative w-full overflow-hidden rounded-t-sm transition-all duration-200',
                         isHovered
                           ? 'z-10 scale-x-110 opacity-100 shadow-lg'
                           : 'opacity-85 hover:opacity-100'
                       )}
                     >
-                      {/* Staking Segment (Bottom) */}
+                      {/* Earnings Bar - Full height since it's the only segment */}
                       <div
-                        style={{ height: `${stakingPercent}%` }}
                         className="w-full bg-emerald-500 transition-colors"
+                        style={{ height: '100%' }}
                       />
-                      {/* Referral Segment (Middle) */}
-                      {day.referral > 0 && (
-                        <div
-                          style={{ height: `${referralPercent}%` }}
-                          className="w-full bg-blue-500 transition-colors"
-                        />
-                      )}
-                      {/* Bonus Segment (Top) */}
-                      {day.bonus > 0 && (
-                        <div
-                          style={{ height: `${bonusPercent}%` }}
-                          className="w-full bg-purple-500 transition-colors"
-                        />
-                      )}
                     </motion.div>
 
                     {/* X-Axis Label */}
                     <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
                       {selectedRange === '7D'
-                        ? day.day
+                        ? new Date(day.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                          })
                         : index % 5 === 0
-                          ? day.day
+                          ? new Date(day.date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })
                           : ''}
                     </div>
                   </div>
