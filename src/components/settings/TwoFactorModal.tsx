@@ -70,23 +70,95 @@ export function TwoFactorModal({
     try {
       const response = await authService.generate2FASecret();
 
-      // Map backend response to component state
-      if (
-        response &&
-        typeof response === 'object' &&
-        'setupMethods' in response
-      ) {
-        const responseData = response as any;
-        setQrCodeUrl(responseData.setupMethods?.qrCode?.qrImageUrl || '');
-        setSecretKey(
+      // Debug: Log the actual response structure
+      console.log('[TwoFactorModal] 2FA Setup Response:', response);
+      console.log('[TwoFactorModal] Response type:', typeof response);
+      console.log(
+        '[TwoFactorModal] Response keys:',
+        response ? Object.keys(response) : 'null'
+      );
+
+      // Handle different response structures
+      // The API client might return the data directly or wrapped
+      let responseData: any = response;
+
+      // The API might return the response wrapped in various ways
+      // Try to extract the actual data from the response
+
+      // Check if response has a 'data' property (common axios/ApiResponse wrapper)
+      if (response && typeof response === 'object') {
+        // If it's an ApiResponse structure: { success: true, data: {...} }
+        if ('data' in response && response.data) {
+          responseData = response.data;
+        }
+        // If it has nested data
+        else if (
+          'data' in response &&
+          typeof (response as any).data === 'object' &&
+          'data' in (response as any).data
+        ) {
+          responseData = (response as any).data.data;
+        }
+        // Check if the response itself has the expected fields
+        else if ('setupMethods' in response || 'secret' in response) {
+          responseData = response;
+        }
+        // If response has success:true but no data, it might be the data itself
+        else if ('success' in response && (response as any).success === true) {
+          // The data might be at the root level
+          responseData = response;
+        }
+      }
+
+      // Now try to extract setupMethods or other expected fields
+      let qrUrl = '';
+      let secret = '';
+
+      // Try various paths to find the QR code URL
+      if (responseData && typeof responseData === 'object') {
+        qrUrl =
+          responseData.setupMethods?.qrCode?.qrImageUrl ||
+          responseData.qrCode?.qrImageUrl ||
+          responseData.qrImageUrl ||
+          responseData.qrCode ||
+          responseData.setupMethods?.qrCode ||
+          (typeof responseData.setupMethods?.qrCode === 'string'
+            ? responseData.setupMethods.qrCode
+            : '') ||
+          '';
+
+        // Try various paths to find the secret key
+        secret =
           responseData.secret ||
-            responseData.setupMethods?.manualEntry?.secretKey ||
-            ''
-        );
-        // Note: verificationToken is not in the response, handled via secret
+          responseData.setupMethods?.manualEntry?.secretKey ||
+          responseData.manualEntry?.secretKey ||
+          responseData.secretKey ||
+          '';
+      }
+
+      // If we found either QR code or secret, we can proceed
+      if (qrUrl || secret) {
+        setQrCodeUrl(qrUrl);
+        setSecretKey(secret);
+
+        if (!qrUrl && !secret) {
+          throw new Error('QR code and secret not found in response');
+        }
+
         toast.success('QR code generated successfully!');
       } else {
-        throw new Error('Invalid response format from server');
+        // Log the actual structure for debugging
+        console.error(
+          '[TwoFactorModal] Response structure:',
+          JSON.stringify(response, null, 2)
+        );
+        console.error(
+          '[TwoFactorModal] Extracted responseData:',
+          JSON.stringify(responseData, null, 2)
+        );
+        throw new Error(
+          'Invalid response format: missing setupMethods or secret. Check console for details.'
+        );
       }
     } catch (error: unknown) {
       console.error('[TwoFactorModal] Failed to generate 2FA secret:', error);
