@@ -87,8 +87,21 @@ export function TwoFactorModal({
 
       // Check if response has a 'data' property (common axios/ApiResponse wrapper)
       if (response && typeof response === 'object') {
+        // If response has hasData: true, check for data in common locations
+        if ('hasData' in response && (response as any).hasData === true) {
+          if ('data' in response && response.data) {
+            responseData = response.data;
+          } else if ('result' in response) {
+            responseData = (response as any).result;
+          } else if ('response' in response) {
+            responseData = (response as any).response;
+          } else if ('setupMethods' in response || 'secret' in response) {
+            // Data might be at root level
+            responseData = response;
+          }
+        }
         // If it's an ApiResponse structure: { success: true, data: {...} }
-        if ('data' in response && response.data) {
+        else if ('data' in response && response.data) {
           responseData = response.data;
         }
         // If it has nested data
