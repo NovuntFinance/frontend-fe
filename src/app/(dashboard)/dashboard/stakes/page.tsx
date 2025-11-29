@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
+import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 
@@ -405,6 +406,15 @@ export default function StakesPage() {
             </p>
           </div>
         </div>
+      </motion.div>
+
+      {/* Staking Transaction History */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <StakingTransactionHistory />
       </motion.div>
     </div>
   );
