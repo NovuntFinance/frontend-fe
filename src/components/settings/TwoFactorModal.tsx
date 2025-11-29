@@ -41,7 +41,10 @@ export function TwoFactorModal({
   onEnable,
 }: TwoFactorModalProps & { onEnable?: () => void }) {
   const { user } = useUser();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { updateUser } = useAuthStore();
+
+  // Initialize isEnabled from user's actual 2FA status
+  const [isEnabled, setIsEnabled] = useState(() => user?.twoFAEnabled || false);
   const [method, setMethod] = useState<'app' | 'sms' | 'email'>('app');
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<
@@ -57,6 +60,11 @@ export function TwoFactorModal({
   const [isLoading, setIsLoading] = useState(false);
 
   const userEmail = user?.email || 'user@example.com';
+
+  // Sync isEnabled with user's actual 2FA status from backend
+  useEffect(() => {
+    setIsEnabled(user?.twoFAEnabled || false);
+  }, [user?.twoFAEnabled]);
 
   // Fetch 2FA setup data when entering setup mode
   useEffect(() => {
@@ -245,6 +253,10 @@ export function TwoFactorModal({
       toast.success(
         response.message || 'Two-Factor Authentication enabled successfully!'
       );
+
+      // Update the user in auth store to reflect 2FA is now enabled
+      updateUser({ twoFAEnabled: true });
+
       setStep('select');
       setIsEnabled(true);
       setVerificationCode('');

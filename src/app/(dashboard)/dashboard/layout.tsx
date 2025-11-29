@@ -110,8 +110,16 @@ export default function DashboardLayout({
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [biometricModalOpen, setBiometricModalOpen] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  // Initialize twoFactorEnabled from user's actual 2FA status
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+    () => user?.twoFAEnabled || false
+  );
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+
+  // Sync twoFactorEnabled with user's 2FA status from backend
+  useEffect(() => {
+    setTwoFactorEnabled(user?.twoFAEnabled || false);
+  }, [user?.twoFAEnabled]);
 
   // Handle logout
   const handleLogout = () => {
@@ -341,10 +349,13 @@ export default function DashboardLayout({
                             if (checked) {
                               setTwoFactorModalOpen(true);
                             } else {
-                              setTwoFactorEnabled(false);
-                              toast.success(
-                                'Two-Factor Authentication disabled'
+                              // Disabling should be handled through the backend
+                              // For now, just show a message - actual disable requires backend API
+                              toast.info(
+                                'Please disable 2FA through your security settings'
                               );
+                              // Revert the toggle since we can't disable yet
+                              setTwoFactorEnabled(user?.twoFAEnabled || false);
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
