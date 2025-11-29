@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
 import { Avatar } from '@/components/ui/avatar';
+import { getUserAvatarUrl } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -208,19 +209,11 @@ export default function DashboardLayout({
             <div className="border-t border-white/20 p-4 dark:border-white/10">
               <div className="flex items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/60 dark:border-white/10 dark:bg-gray-800/40 dark:hover:bg-gray-800/60">
                 <Avatar className="h-10 w-10">
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user?.firstName || 'User'}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="from-primary/20 to-primary/40 text-primary flex h-full w-full items-center justify-center bg-gradient-to-br text-sm font-bold">
-                      {user?.firstName?.[0]?.toUpperCase() ||
-                        user?.email?.[0]?.toUpperCase() ||
-                        'U'}
-                    </div>
-                  )}
+                  <img
+                    src={getUserAvatarUrl(user) || ''}
+                    alt={user?.firstName || 'User'}
+                    className="h-full w-full rounded-full object-cover"
+                  />
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
@@ -302,19 +295,11 @@ export default function DashboardLayout({
                       className="h-10 w-10 rounded-full p-0"
                     >
                       <Avatar className="h-10 w-10">
-                        {user?.avatar ? (
-                          <img
-                            src={user.avatar}
-                            alt={user?.firstName || 'User'}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="from-primary/20 to-primary/40 text-primary flex h-full w-full items-center justify-center bg-gradient-to-br text-sm font-bold">
-                            {user?.firstName?.[0]?.toUpperCase() ||
-                              user?.email?.[0]?.toUpperCase() ||
-                              'U'}
-                          </div>
-                        )}
+                        <img
+                          src={getUserAvatarUrl(user) || ''}
+                          alt={user?.firstName || 'User'}
+                          className="h-full w-full rounded-full object-cover"
+                        />
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
