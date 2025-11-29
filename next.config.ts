@@ -111,7 +111,8 @@ export default withSentryConfig(withPWAConfig(nextConfig), {
   automaticVercelMonitors: true,
   // Disable source map uploads and release creation when no auth token
   // To enable: Add SENTRY_AUTH_TOKEN to Vercel environment variables
-  hideSourceMaps: !process.env.SENTRY_AUTH_TOKEN,
-  disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
-  disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  // Note: disableServerWebpackPlugin and disableClientWebpackPlugin removed as they're not valid Sentry config options
 });

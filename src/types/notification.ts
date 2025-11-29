@@ -5,6 +5,7 @@
 
 /**
  * Supported notification types
+ * Note: Backend may send 'info' and 'success' types which map to system/alert categories
  */
 export type NotificationType =
   | 'deposit'
@@ -14,7 +15,9 @@ export type NotificationType =
   | 'earning'
   | 'system'
   | 'alert'
-  | 'security';
+  | 'security'
+  | 'info' // Backend type: informational/system messages
+  | 'success'; // Backend type: successful actions/transactions
 
 /**
  * Notification metadata for deep linking and additional data
@@ -158,6 +161,7 @@ export interface NotificationGroupConfig {
 
 /**
  * Group configuration map
+ * Using Lucide icon names for cleaner UI
  */
 export const NOTIFICATION_GROUPS: Record<
   NotificationGroup,
@@ -166,58 +170,58 @@ export const NOTIFICATION_GROUPS: Record<
   financial: {
     id: 'financial',
     label: 'Financial Activity',
-    icon: '💰',
+    icon: 'Wallet',
     color: '#10b981', // Green
-    bgColor: '#d1fae5',
-    types: ['deposit', 'withdrawal'],
+    bgColor: 'rgba(16, 185, 129, 0.1)',
+    types: ['deposit', 'withdrawal', 'success'], // success = successful transactions
   },
   investment: {
     id: 'investment',
     label: 'Investment & Earnings',
-    icon: '📈',
+    icon: 'TrendingUp',
     color: '#3b82f6', // Blue
-    bgColor: '#dbeafe',
+    bgColor: 'rgba(59, 130, 246, 0.1)',
     types: ['earning'],
   },
   rewards: {
     id: 'rewards',
     label: 'Rewards & Bonuses',
-    icon: '🎁',
+    icon: 'Gift',
     color: '#f59e0b', // Gold
-    bgColor: '#fef3c7',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
     types: ['bonus'],
   },
   social: {
     id: 'social',
     label: 'Social & Team',
-    icon: '👥',
+    icon: 'Users',
     color: '#8b5cf6', // Purple
-    bgColor: '#ede9fe',
+    bgColor: 'rgba(139, 92, 246, 0.1)',
     types: ['referral'],
   },
   security: {
     id: 'security',
     label: 'Security & Account',
-    icon: '🔒',
+    icon: 'Shield',
     color: '#ef4444', // Red
-    bgColor: '#fee2e2',
+    bgColor: 'rgba(239, 68, 68, 0.1)',
     types: ['security'],
   },
   alerts: {
     id: 'alerts',
     label: 'Alerts & Warnings',
-    icon: '⚠️',
+    icon: 'AlertTriangle',
     color: '#f59e0b', // Orange
-    bgColor: '#fef3c7',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
     types: ['alert'],
   },
   system: {
     id: 'system',
     label: 'System & Info',
-    icon: 'ℹ️',
+    icon: 'Bell',
     color: '#3b82f6', // Blue
-    bgColor: '#dbeafe',
-    types: ['system'],
+    bgColor: 'rgba(59, 130, 246, 0.1)',
+    types: ['system', 'info'], // info = backend system messages
   },
 };
 
@@ -242,57 +246,71 @@ export function getNotificationGroup(
 
 /**
  * Type configuration map
+ * Using Lucide icon names for cleaner UI
  */
 export const NOTIFICATION_TYPE_CONFIG: Record<
   NotificationType,
   NotificationTypeConfig
 > = {
   deposit: {
-    icon: '💰',
+    icon: 'ArrowDownLeft',
     color: '#10b981', // Green
-    bgColor: '#d1fae5',
+    bgColor: 'rgba(16, 185, 129, 0.1)',
     label: 'Deposit',
   },
   withdrawal: {
-    icon: '💸',
+    icon: 'ArrowUpRight',
     color: '#3b82f6', // Blue
-    bgColor: '#dbeafe',
+    bgColor: 'rgba(59, 130, 246, 0.1)',
     label: 'Withdrawal',
   },
   bonus: {
-    icon: '🎁',
+    icon: 'Gift',
     color: '#f59e0b', // Gold
-    bgColor: '#fef3c7',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
     label: 'Bonus',
   },
   referral: {
-    icon: '👥',
+    icon: 'Users',
     color: '#8b5cf6', // Purple
-    bgColor: '#ede9fe',
+    bgColor: 'rgba(139, 92, 246, 0.1)',
     label: 'Referral',
   },
   earning: {
-    icon: '📈',
+    icon: 'TrendingUp',
     color: '#10b981', // Green
-    bgColor: '#d1fae5',
+    bgColor: 'rgba(16, 185, 129, 0.1)',
     label: 'Earning',
   },
   system: {
-    icon: 'ℹ️',
+    icon: 'Info',
     color: '#3b82f6', // Blue
-    bgColor: '#dbeafe',
+    bgColor: 'rgba(59, 130, 246, 0.1)',
     label: 'System',
   },
   alert: {
-    icon: '⚠️',
+    icon: 'AlertTriangle',
     color: '#f59e0b', // Orange
-    bgColor: '#fef3c7',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
     label: 'Alert',
   },
   security: {
-    icon: '🔒',
+    icon: 'Shield',
     color: '#ef4444', // Red
-    bgColor: '#fee2e2',
+    bgColor: 'rgba(239, 68, 68, 0.1)',
     label: 'Security',
+  },
+  // Backend-specific types
+  info: {
+    icon: 'Bell',
+    color: '#3b82f6', // Blue
+    bgColor: 'rgba(59, 130, 246, 0.1)',
+    label: 'Information',
+  },
+  success: {
+    icon: 'CheckCircle',
+    color: '#10b981', // Green
+    bgColor: 'rgba(16, 185, 129, 0.1)',
+    label: 'Success',
   },
 };

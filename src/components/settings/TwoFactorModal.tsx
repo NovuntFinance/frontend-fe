@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 import { useUser } from '@/hooks/useUser';
+import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/lib/authService';
 import type { Generate2FASecretResponse } from '@/types/auth';
 
@@ -73,11 +74,16 @@ export function TwoFactorModal({
       if (
         response &&
         typeof response === 'object' &&
-        'setupDetails' in response
+        'setupMethods' in response
       ) {
-        setQrCodeUrl(response.setupDetails.qrCode);
-        setSecretKey(response.setupDetails.secret);
-        setVerificationToken(response.verificationToken);
+        const responseData = response as any;
+        setQrCodeUrl(responseData.setupMethods?.qrCode?.qrImageUrl || '');
+        setSecretKey(
+          responseData.secret ||
+            responseData.setupMethods?.manualEntry?.secretKey ||
+            ''
+        );
+        // Note: verificationToken is not in the response, handled via secret
         toast.success('QR code generated successfully!');
       } else {
         throw new Error('Invalid response format from server');
@@ -115,39 +121,30 @@ export function TwoFactorModal({
 
     setIsLoading(true);
     try {
+      // Get user email from auth store (if available)
+      const { user } = useAuthStore.getState();
+      const userEmail = user?.email || '';
+
       const response = await authService.enable2FA({
-        verificationToken,
-        verificationCode,
+        email: userEmail,
+        token: verificationCode,
+        secret: secretKey,
       });
 
-      // Check if backup codes were provided
-      if (response.backupCodes && response.backupCodes.length > 0) {
-        setBackupCodes(response.backupCodes);
-        setShowBackupCodes(true);
-        setStep('backupCodes'); // Move to a new step to display backup codes
-        toast.success(
-          'Two-Factor Authentication enabled! Please save your backup codes.'
-        );
-      } else {
-        toast.success(
-          response.message || 'Two-Factor Authentication enabled successfully!'
-        );
-        setStep('select'); // If no backup codes, go back to select
-      }
-
+      toast.success(
+        response.message || 'Two-Factor Authentication enabled successfully!'
+      );
+      setStep('select');
       setIsEnabled(true);
       setVerificationCode('');
 
-      // Clear QR data but keep backup codes if shown
+      // Clear QR data
       setQrCodeUrl('');
       setSecretKey('');
       setVerificationToken('');
 
-      // If no backup codes, close modal immediately
-      if (!response.backupCodes || response.backupCodes.length === 0) {
-        if (onEnable) onEnable();
-        onOpenChange(false);
-      }
+      if (onEnable) onEnable();
+      onOpenChange(false);
     } catch (error: unknown) {
       console.error('[TwoFactorModal] Failed to verify 2FA code:', error);
       const errorMessage =

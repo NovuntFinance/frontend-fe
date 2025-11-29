@@ -5,6 +5,7 @@
 
 import apiClient from '@/lib/api';
 import type {
+  Notification,
   NotificationFilters,
   GetNotificationsResponse,
   GetNotificationCountsResponse,
@@ -16,11 +17,17 @@ import type {
 } from '@/types/notification';
 
 /**
+ * Notification response type - API may return wrapped object or unwrapped array
+ * (API client auto-unwraps the 'data' property from responses)
+ */
+export type NotificationApiResponse = GetNotificationsResponse | Notification[];
+
+/**
  * Get notifications with filters
  */
 export async function getNotifications(
   filters: NotificationFilters = {}
-): Promise<GetNotificationsResponse> {
+): Promise<NotificationApiResponse> {
   const params: Record<string, string> = {};
 
   if (filters.page) params.page = filters.page.toString();
@@ -49,10 +56,34 @@ export async function getNotifications(
       '[notificationApi.getNotifications] Response status:',
       response.status
     );
-    console.log(
-      '[notificationApi.getNotifications] Response data keys:',
-      Object.keys(response.data)
-    );
+    if (response.data) {
+      const isArray = Array.isArray(response.data);
+      console.log(
+        '[notificationApi.getNotifications] Response.data is array?',
+        isArray
+      );
+      if (isArray) {
+        const arrayData = response.data as Notification[];
+        console.log(
+          '[notificationApi.getNotifications] Notifications count:',
+          arrayData.length
+        );
+      } else {
+        const objResponse = response.data as GetNotificationsResponse;
+        console.log(
+          '[notificationApi.getNotifications] Response.data.data length:',
+          objResponse.data?.length || 0
+        );
+        console.log(
+          '[notificationApi.getNotifications] Response.data.pagination:',
+          objResponse.pagination
+        );
+        console.log(
+          '[notificationApi.getNotifications] Response.data.unreadCount:',
+          objResponse.unreadCount
+        );
+      }
+    }
   }
 
   return response.data;

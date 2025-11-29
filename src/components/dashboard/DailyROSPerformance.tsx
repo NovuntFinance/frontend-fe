@@ -6,7 +6,7 @@ import { TrendingUp } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { rosApi, TimeRange, DailyEarningData } from '@/services/rosApi';
+import { rosApi, TimeRange, DailyEarningsData } from '@/services/rosApi';
 import { toast } from 'sonner';
 
 const timeRanges: TimeRange[] = ['7D', '30D'];
@@ -14,15 +14,15 @@ const timeRanges: TimeRange[] = ['7D', '30D'];
 export function DailyROSPerformance() {
   const [selectedRange, setSelectedRange] = useState<TimeRange>('7D');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [data, setData] = useState<DailyEarningData[]>([]);
+  const [data, setData] = useState<DailyEarning[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await rosApi.getDailyEarnings(selectedRange);
-        setData(data.dailyData);
+        const response = await rosApi.getDailyEarnings(selectedRange);
+        setData(response.dailyData || []);
       } catch (error) {
         console.error('Failed to fetch daily earnings:', error);
         toast.error('Failed to load daily earnings');
@@ -34,15 +34,12 @@ export function DailyROSPerformance() {
     fetchData();
   }, [selectedRange]);
 
-  // Calculate totals
-  const totalStaking = data.reduce((sum, d) => sum + d.staking, 0);
-  const totalReferral = data.reduce((sum, d) => sum + d.referral, 0);
-  const totalBonus = data.reduce((sum, d) => sum + d.bonus, 0);
-  const totalEarnings = totalStaking + totalReferral + totalBonus;
+  // Calculate totals (using amount field from DailyEarning)
+  const totalEarnings = data.reduce((sum, d) => sum + (d.amount || 0), 0);
 
   // Calculate max value for chart scaling
   const maxDailyTotal = Math.max(
-    ...data.map((d) => d.staking + d.referral + d.bonus),
+    ...data.map((d) => d.amount || 0),
     1 // Prevent division by zero
   );
 

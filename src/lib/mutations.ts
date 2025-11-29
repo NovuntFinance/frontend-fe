@@ -667,9 +667,9 @@ export function useChangePassword() {
  */
 export function useGenerate2FASecret() {
   return useMutation({
-    mutationFn: async (payload: Generate2FASecretPayload) => {
+    mutationFn: async () => {
       console.log('[useGenerate2FASecret] Generating 2FA secret');
-      return authService.generate2FASecret(payload);
+      return authService.generate2FASecret();
     },
     onSuccess: (response) => {
       console.log('[useGenerate2FASecret] 2FA secret generated:', response);

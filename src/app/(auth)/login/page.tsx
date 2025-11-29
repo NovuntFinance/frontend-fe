@@ -150,6 +150,7 @@ function LoginPageContent() {
 
       return () => clearTimeout(redirectTimer);
     }
+    return undefined;
   }, [isAuthenticated, hasRedirected, router, searchParams]);
 
   // Handle biometric login success
