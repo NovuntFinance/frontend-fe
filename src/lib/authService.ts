@@ -276,6 +276,15 @@ export const authService = {
   },
 
   /**
+   * 8.5. Disable MFA/2FA
+   * POST /better-auth/mfa/disable [Protected]
+   * @returns Success message
+   */
+  disable2FA: async (): Promise<InternalGenericResponse> => {
+    return api.post<InternalGenericResponse>('/better-auth/mfa/disable', {});
+  },
+
+  /**
    * 9. Change password (requires authentication)
    * POST /better-auth/change-password [Protected]
    * @param payload - Current password, new password, confirm password

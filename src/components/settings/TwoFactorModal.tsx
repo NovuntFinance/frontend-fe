@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useUser } from '@/hooks/useUser';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/lib/authService';
+import { useDisable2FA } from '@/lib/mutations';
 import type { Generate2FASecretResponse } from '@/types/auth';
 
 interface TwoFactorModalProps {
@@ -42,6 +43,7 @@ export function TwoFactorModal({
 }: TwoFactorModalProps & { onEnable?: () => void }) {
   const { user } = useUser();
   const { updateUser } = useAuthStore();
+  const disable2FAMutation = useDisable2FA();
 
   // Initialize isEnabled from user's actual 2FA status
   const [isEnabled, setIsEnabled] = useState(() => user?.twoFAEnabled || false);
@@ -208,12 +210,19 @@ export function TwoFactorModal({
 
   const handleEnable2FA = () => {
     if (isEnabled) {
-      // Disable 2FA
-      setIsEnabled(false);
-      setStep('select');
-      setShowBackupCodes(false);
-      setBackupCodes([]);
-      toast.success('Two-Factor Authentication disabled');
+      // Disable 2FA via API
+      disable2FAMutation.mutate(undefined, {
+        onSuccess: () => {
+          setIsEnabled(false);
+          setStep('select');
+          setShowBackupCodes(false);
+          setBackupCodes([]);
+          if (onEnable) onEnable();
+        },
+        onError: () => {
+          // Keep enabled state on error
+        },
+      });
     } else {
       // Start enabling 2FA
       setStep('setup');
@@ -559,6 +568,7 @@ export function TwoFactorModal({
               onClick={handleEnable2FA}
               variant={isEnabled ? 'destructive' : 'default'}
               size="sm"
+              disabled={isEnabled && disable2FAMutation.isPending}
               className={
                 !isEnabled
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'

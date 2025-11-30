@@ -28,6 +28,7 @@ import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
+import { useDisable2FA } from '@/lib/mutations';
 import { Avatar } from '@/components/ui/avatar';
 import { getUserAvatarUrl } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,9 @@ export default function DashboardLayout({
     () => user?.twoFAEnabled || false
   );
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+
+  // 2FA disable mutation
+  const disable2FAMutation = useDisable2FA();
 
   // Sync twoFactorEnabled with user's 2FA status from backend
   useEffect(() => {
@@ -349,16 +353,22 @@ export default function DashboardLayout({
                             if (checked) {
                               setTwoFactorModalOpen(true);
                             } else {
-                              // Disabling should be handled through the backend
-                              // For now, just show a message - actual disable requires backend API
-                              toast.info(
-                                'Please disable 2FA through your security settings'
-                              );
-                              // Revert the toggle since we can't disable yet
-                              setTwoFactorEnabled(user?.twoFAEnabled || false);
+                              // Disable 2FA via API
+                              disable2FAMutation.mutate(undefined, {
+                                onSuccess: () => {
+                                  setTwoFactorEnabled(false);
+                                },
+                                onError: () => {
+                                  // Revert toggle on error
+                                  setTwoFactorEnabled(
+                                    user?.twoFAEnabled || false
+                                  );
+                                },
+                              });
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
+                          disabled={disable2FAMutation.isPending}
                         />
                       </div>
                     </DropdownMenuItem>

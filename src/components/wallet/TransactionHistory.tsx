@@ -136,6 +136,7 @@ const CATEGORY_CONFIG: Record<
  * Transaction History Component
  */
 export function TransactionHistory() {
+  const { user } = useUser();
   const [filters, setFilters] = useState<TransactionHistoryParams>({
     page: 1,
     limit: 20,
@@ -211,6 +212,7 @@ export function TransactionHistory() {
     const txIdUpper = (tx.txId || '').toUpperCase();
 
     // PRIORITY 1: Use backend category if it's valid (backend properly categorizes transactions)
+    // Backend now correctly returns category: "earnings" for referral_bonus transactions
     // Backend sets category correctly: "staking" for stake/stake_completion, "earnings" for payouts
     if (
       tx.category &&
@@ -289,19 +291,21 @@ export function TransactionHistory() {
 
     // Earnings types (as per backend documentation)
     // All payout types are category "earnings"
+    // Note: referral_bonus is now correctly categorized as "earnings" by backend
+    // This fallback is for old transactions or edge cases where category might be missing
     if (
       typeLower === 'ros_payout' ||
       typeLower === 'stake_pool_payout' ||
       typeLower === 'performance_pool_payout' ||
       typeLower === 'premium_pool_payout' ||
       typeLower === 'stake_roi' ||
-      typeLower === 'pool_distribution'
+      typeLower === 'pool_distribution' ||
+      typeLower === 'referral_bonus'
     )
       return 'earnings';
 
     if (
       typeLower === 'registration_bonus' ||
-      typeLower === 'referral_bonus' ||
       typeLower === 'bonus_activation' ||
       typeLower === 'ranking_bonus'
     )
@@ -419,7 +423,24 @@ export function TransactionHistory() {
         transfer: { count: 0, totalAmount: 0 },
       };
 
-      data.transactions.forEach((tx: Transaction) => {
+      // Filter transactions the same way as filteredTransactions to ensure consistency
+      // This ensures transfer_in transactions where user is sender are excluded from breakdown
+      const transactionsForBreakdown = data.transactions.filter(
+        (tx: Transaction) => {
+          // Filter out transfer_in transactions where current user is the sender
+          if (
+            user?.username &&
+            (tx.type === 'transfer_in' ||
+              tx.type?.toLowerCase() === 'transfer_in') &&
+            tx.fromUser?.username === user.username
+          ) {
+            return false;
+          }
+          return true;
+        }
+      );
+
+      transactionsForBreakdown.forEach((tx: Transaction) => {
         // Use the shared categorization function for consistency
         const cat = categorizeTransaction(tx);
 
@@ -569,6 +590,8 @@ export function TransactionHistory() {
   }, [
     data?.categoryBreakdown,
     data?.transactions,
+    user?.username,
+    categorizeTransaction,
     data?.summary,
     categorizeTransaction,
   ]);
@@ -660,6 +683,46 @@ export function TransactionHistory() {
     }
 
     let filtered = [...data.transactions];
+
+    // Filter out transfer_in transactions where current user is the sender
+    // When a user sends money, they should only see the transfer_out transaction, not the transfer_in
+    // The transfer_in transaction is for the receiver, not the sender
+    if (user?.username) {
+      const beforeTransferFilter = filtered.length;
+      filtered = filtered.filter((tx) => {
+        // If it's a transfer_in transaction and the current user is the sender (fromUser),
+        // filter it out because this is the receiver's transaction, not the sender's
+        if (
+          (tx.type === 'transfer_in' ||
+            tx.type?.toLowerCase() === 'transfer_in') &&
+          tx.fromUser?.username === user.username
+        ) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[TransactionHistory] 🚫 Filtering out transfer_in transaction where user is sender:',
+              {
+                id: tx._id,
+                type: tx.type,
+                fromUser: tx.fromUser?.username,
+                toUser: tx.toUser?.username,
+                currentUser: user.username,
+              }
+            );
+          }
+          return false;
+        }
+        return true;
+      });
+
+      if (
+        process.env.NODE_ENV === 'development' &&
+        beforeTransferFilter !== filtered.length
+      ) {
+        console.log(
+          `[TransactionHistory] 🚫 Filtered out ${beforeTransferFilter - filtered.length} transfer_in transactions where user is sender`
+        );
+      }
+    }
 
     if (process.env.NODE_ENV === 'development' && filters.category) {
       console.log(
@@ -2174,6 +2237,25 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                     label="Days Active"
                     value={`${transaction.metadata.daysActive} day${transaction.metadata.daysActive !== 1 ? 's' : ''}`}
                   />
+                )}
+                {/* Referral Bonus Metadata */}
+                {transaction.type === 'referral_bonus' && (
+                  <>
+                    {transaction.metadata?.bonusType && (
+                      <DetailRow
+                        label="Bonus Type"
+                        value={String(transaction.metadata.bonusType)
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      />
+                    )}
+                    {transaction.metadata?.relatedUserId && (
+                      <DetailRow
+                        label="Related User ID"
+                        value={String(transaction.metadata.relatedUserId)}
+                      />
+                    )}
+                  </>
                 )}
                 {(() => {
                   const stakeId = transaction.metadata?.stakeId;
