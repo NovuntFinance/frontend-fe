@@ -151,26 +151,59 @@ export function useLogin() {
       }
     },
     onError: (error: unknown) => {
-      console.error('[useLogin] Login failed:', error);
+      // Better error serialization
+      let errorStr = '';
+      let errorDetails: any = {};
 
-      // Extract user-friendly error message
-      let userMessage =
-        'Invalid email or password. Please check your credentials and try again.';
-      let statusCode = 401;
+      try {
+        if (error instanceof Error) {
+          errorStr = error.message;
+          errorDetails = {
+            name: error.name,
+            message: error.message,
+            stack: error.stack?.substring(0, 200),
+          };
+        } else if (typeof error === 'object' && error !== null) {
+          const err = error as any;
+          errorStr = err.message || JSON.stringify(err);
+          errorDetails = {
+            ...err,
+            statusCode: err.statusCode,
+            code: err.code,
+            message: err.message,
+            response: err.response
+              ? {
+                  status: err.response.status,
+                  statusText: err.response.statusText,
+                  data: err.response.data,
+                }
+              : undefined,
+          };
+        } else {
+          errorStr = String(error);
+          errorDetails = { raw: error };
+        }
+      } catch (e) {
+        errorStr = 'Failed to serialize error';
+        errorDetails = { serializationError: String(e) };
+      }
+
+      console.error('[useLogin] Login failed:', errorStr);
+      console.error('[useLogin] Error type:', typeof error);
+      console.error('[useLogin] Error details:', errorDetails);
+
+      // Extract detailed error information
+      let backendMessage = 'Invalid credentials';
 
       if (typeof error === 'object' && error !== null) {
         const err = error as any;
 
-        // Extract status code
-        statusCode =
-          err.statusCode || err.response?.status || err.status || 401;
+        // Get status code
 
-        // Extract backend message
-        let backendMessage = '';
+        // Try to get backend error message from multiple possible locations
         if (err.message && typeof err.message === 'string') {
           backendMessage = err.message;
-        }
-        if (err.response?.data) {
+        } else if (err.response?.data) {
           const responseData = err.response.data;
           if (typeof responseData === 'string') {
             backendMessage = responseData;
@@ -179,67 +212,64 @@ export function useLogin() {
             responseData !== null
           ) {
             backendMessage =
-              responseData.message || responseData.error || backendMessage;
+              (responseData as any).message ||
+              (responseData as any).error ||
+              JSON.stringify(responseData);
           }
-        }
-
-        // Parse backend message for more specific user messages
-        if (
-          backendMessage &&
-          !backendMessage.includes('status code') &&
-          !backendMessage.includes('failed with')
-        ) {
-          const lowerMessage = backendMessage.toLowerCase();
-
-          if (
-            lowerMessage.includes('email not found') ||
-            lowerMessage.includes('user not found') ||
-            lowerMessage.includes('no account found') ||
-            lowerMessage.includes('email does not exist')
-          ) {
-            userMessage = 'No account found with this email address.';
-          } else if (
-            lowerMessage.includes('incorrect password') ||
-            lowerMessage.includes('wrong password') ||
-            lowerMessage.includes('invalid password') ||
-            lowerMessage.includes('password mismatch') ||
-            lowerMessage.includes('invalid credentials')
-          ) {
-            userMessage = 'Incorrect password. Please try again.';
-          } else if (
-            lowerMessage.includes('account locked') ||
-            lowerMessage.includes('too many attempts')
-          ) {
-            userMessage = 'Too many failed attempts. Please try again later.';
-          } else if (
-            lowerMessage.includes('verify your email') ||
-            lowerMessage.includes('email not verified')
-          ) {
-            userMessage = 'Please verify your email before logging in.';
-          } else {
-            // Use the backend message if it's descriptive
-            userMessage = backendMessage;
-          }
-        } else {
-          // Default message based on status code
-          if (statusCode === 401) {
-            userMessage =
-              'Invalid email or password. Please check your credentials and try again.';
-          } else if (statusCode === 403) {
-            userMessage =
-              'Access denied. Please verify your email or contact support.';
-          } else if (statusCode === 404) {
-            userMessage = 'No account found with this email address.';
-          } else if (statusCode === 429) {
-            userMessage = 'Too many login attempts. Please wait a few minutes.';
-          } else if (statusCode >= 500) {
-            userMessage = 'Server error. Please try again later.';
-          }
+        } else if (err.responseData?.message) {
+          backendMessage = err.responseData.message;
         }
       }
 
+      const errorMessage = extractErrorMessage(error, backendMessage);
+      console.error('[useLogin] Extracted error message:', errorMessage);
+
+      // Try to serialize full error object with circular reference handling
+      try {
+        const seen = new WeakSet();
+        const fullErrorStr = JSON.stringify(
+          error,
+          (key, value) => {
+            // Handle circular references
+            if (typeof value === 'object' && value !== null) {
+              if (seen.has(value)) {
+                return '[Circular]';
+              }
+              seen.add(value);
+            }
+            return value;
+          },
+          2
+        );
+        console.error('[useLogin] Full error object:', fullErrorStr);
+      } catch (e) {
+        console.error('[useLogin] Could not serialize full error object:', e);
+        // Fallback: log error properties individually
+        if (typeof error === 'object' && error !== null) {
+          const err = error as any;
+          console.error('[useLogin] Error properties:', {
+            message: err.message,
+            code: err.code,
+            statusCode: err.statusCode,
+            response: err.response
+              ? {
+                  status: err.response.status,
+                  statusText: err.response.statusText,
+                  data:
+                    typeof err.response.data === 'string'
+                      ? err.response.data
+                      : JSON.stringify(err.response.data),
+                }
+              : undefined,
+          });
+        }
+      }
+
+      // Show specific error message - extractErrorMessage already provides clear messages
       toast.error('Login failed', {
-        description: userMessage,
+        description:
+          errorMessage ||
+          'Invalid email or password. Please check your credentials and try again.',
       });
     },
   });
@@ -394,7 +424,7 @@ export function useSignup() {
 }
 
 export function useCompleteRegistration() {
-  const { setUser, setTokens } = useAuthStore();
+  // const { setUser, setTokens } = useAuthStore();
 
   return useMutation({
     mutationFn: async (payload: CompleteRegistrationPayload) => {
@@ -468,7 +498,7 @@ export function useCompleteRegistration() {
           if (!errorDetails[key]) {
             try {
               errorDetails[key] = err[key];
-            } catch (e) {
+            } catch {
               errorDetails[key] = '[Unable to serialize]';
             }
           }
@@ -669,6 +699,7 @@ export function useGenerate2FASecret() {
   return useMutation({
     mutationFn: async () => {
       console.log('[useGenerate2FASecret] Generating 2FA secret');
+      // Backend extracts user from auth token, so no payload is required
       return authService.generate2FASecret();
     },
     onSuccess: (response) => {
@@ -701,7 +732,7 @@ export function useEnable2FA() {
       console.log('[useEnable2FA] Enabling 2FA');
       return authService.enable2FA(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       console.log('[useEnable2FA] 2FA enabled successfully');
       updateUser({ twoFAEnabled: true } as Partial<User>);
 

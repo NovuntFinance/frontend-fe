@@ -55,7 +55,7 @@ export interface Generate2FASecretRequest {
 }
 
 export interface Enable2FARequest {
-  userId: string; // User ID (not email)
+  userId?: string; // Optional - backend extracts from auth token if not provided
   verificationToken: string; // Token from generate-2fa-secret setup response
   verificationCode: string; // 6-digit TOTP code from authenticator app
 }
@@ -216,6 +216,7 @@ export interface Generate2FASecretResponse {
 
 export interface Enable2FAResponse {
   message: string; // "2FA successfully enabled"
+  backupCodes?: string[]; // Optional backup codes from backend
 }
 
 export interface ReferralInfoResponse {

@@ -19,7 +19,6 @@ import {
   User,
   Sun,
   Moon,
-  FileText,
   Gift,
   Shield,
   Fingerprint,

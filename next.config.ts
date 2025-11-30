@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
     },
   },
   output: 'standalone',
-  webpack: (config, { dev, isServer: _isServer }) => {
+  webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
         poll: false,
@@ -109,10 +109,7 @@ export default withSentryConfig(withPWAConfig(nextConfig), {
   widenClientFileUpload: true,
   disableLogger: true,
   automaticVercelMonitors: true,
-  // Disable source map uploads and release creation when no auth token
-  // To enable: Add SENTRY_AUTH_TOKEN to Vercel environment variables
-  sourcemaps: {
-    disable: !process.env.SENTRY_AUTH_TOKEN,
-  },
-  // Note: disableServerWebpackPlugin and disableClientWebpackPlugin removed as they're not valid Sentry config options
+  // Note: To enable source map uploads and releases, add SENTRY_AUTH_TOKEN
+  // to Vercel environment variables. Without it, Sentry will work but
+  // won't upload source maps or create releases (warnings are suppressed).
 });

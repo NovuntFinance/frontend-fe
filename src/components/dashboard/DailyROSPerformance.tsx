@@ -7,7 +7,6 @@ import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { rosApi, TimeRange, DailyEarning } from '@/services/rosApi';
-import { toast } from 'sonner';
 
 const timeRanges: TimeRange[] = ['7D', '30D'];
 
@@ -24,8 +23,12 @@ export function DailyROSPerformance() {
         const response = await rosApi.getDailyEarnings(selectedRange);
         setData(response.dailyData || []);
       } catch (error) {
-        console.error('Failed to fetch daily earnings:', error);
-        toast.error('Failed to load daily earnings');
+        // Only log in development - 404s are handled gracefully by the API
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Daily earnings endpoint not available:', error);
+        }
+        // Set empty data - API already returns empty structure for 404s
+        setData([]);
       } finally {
         setLoading(false);
       }
@@ -39,9 +42,6 @@ export function DailyROSPerformance() {
 
   // Since the API doesn't provide breakdown by source, we'll use the total amount
   // and assume it's all from staking (which is the primary source)
-  const totalStaking = totalEarnings;
-  const totalReferral = 0; // Not provided by API
-  const totalBonus = 0; // Not provided by API
 
   // Calculate max value for chart scaling
   const maxDailyTotal = Math.max(
@@ -125,14 +125,8 @@ export function DailyROSPerformance() {
 
                 // Since API doesn't provide breakdown, all earnings are from staking
                 const stakingAmount = dailyTotal;
-                const referralAmount = 0;
-                const bonusAmount = 0;
 
                 // Calculate segment heights as percentages of the BAR height (not chart height)
-                const stakingPercent =
-                  dailyTotal > 0 ? (stakingAmount / dailyTotal) * 100 : 0;
-                const referralPercent = 0; // Not provided by API
-                const bonusPercent = 0; // Not provided by API
 
                 const isHovered = hoveredIndex === index;
 

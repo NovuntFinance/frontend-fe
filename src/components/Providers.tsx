@@ -9,6 +9,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ShareAndSocialProofProvider } from '@/components/providers/ShareAndSocialProofProvider';
 import { logger } from '@/lib/logger';
 import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
+import { ConfigProvider } from '@/contexts/ConfigContext';
+import { TwoFAProvider } from '@/contexts/TwoFAContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Debug logging at app initialization
@@ -49,13 +51,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <GlobalModalsProvider>
-            {children}
-            <Toaster position="top-right" richColors />
+          <TwoFAProvider>
+            <ConfigProvider>
+              <GlobalModalsProvider>
+                {children}
+                <Toaster position="top-right" richColors />
 
-            {/* Viral Growth Features: Share Modal + Live Activity Feed */}
-            <ShareAndSocialProofProvider />
-          </GlobalModalsProvider>
+                {/* Viral Growth Features: Share Modal + Live Activity Feed */}
+                <ShareAndSocialProofProvider />
+              </GlobalModalsProvider>
+            </ConfigProvider>
+          </TwoFAProvider>
         </ThemeProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>

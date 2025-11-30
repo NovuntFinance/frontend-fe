@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
-  ArrowUpRight,
   ChevronDown,
   ChevronUp,
   Calendar,
@@ -20,7 +19,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { rosApi, WeeklySummaryData } from '@/services/rosApi';
-import { toast } from 'sonner';
 
 export function WeeklyROSCard() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -34,8 +32,12 @@ export function WeeklyROSCard() {
         const response = await rosApi.getWeeklySummary();
         setData(response);
       } catch (error) {
-        console.error('Failed to fetch weekly summary:', error);
-        // toast.error('Failed to load weekly summary'); // Optional: suppress error if not critical
+        // Only log in development - 404s are handled gracefully by the API
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Weekly summary endpoint not available:', error);
+        }
+        // Set empty data to show component in a "no data" state
+        setData(null);
       } finally {
         setLoading(false);
       }

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Loading from '@/components/ui/loading';
-import { useAuthStore } from '@/store/authStore';
+import { adminAuthService } from '@/services/adminAuthService';
 
 type GuardStatus = 'checking' | 'allowed' | 'redirecting';
 
@@ -14,36 +14,36 @@ interface AdminGuardProps {
 const AdminGuard = ({ children }: AdminGuardProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const hasHydrated = useAuthStore((state) => state._hasHydrated);
-  const isAdmin = useAuthStore((state) => state.isAdmin());
   const [status, setStatus] = useState<GuardStatus>('checking');
 
-  const redirectTarget = useMemo(() => {
-    if (!isAuthenticated) {
-      return `/login?redirect=${encodeURIComponent(pathname)}`;
-    }
-
-    if (!isAdmin) {
-      return '/dashboard';
-    }
-
-    return null;
-  }, [isAuthenticated, isAdmin, pathname]);
-
   useEffect(() => {
-    if (!hasHydrated || status !== 'checking') {
-      return;
-    }
+    // Check admin authentication
+    const admin = adminAuthService.getCurrentAdmin();
+    const isAuthenticated = adminAuthService.isAuthenticated();
+    const token = adminAuthService.getToken();
 
-    if (redirectTarget) {
+    // Log auth check for debugging
+    console.log('[AdminGuard] Auth check:', {
+      pathname,
+      isAuthenticated,
+      hasAdmin: !!admin,
+      hasToken: !!token,
+      tokenPreview: token ? token.substring(0, 30) + '...' : 'null',
+      adminEmail: admin?.email,
+    });
+
+    if (!isAuthenticated || !admin) {
+      // Not authenticated as admin - redirect to admin login
+      console.log('[AdminGuard] Not authenticated, redirecting to login');
       setStatus('redirecting');
-      router.replace(redirectTarget);
+      router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 
+    // Admin is authenticated - allow access
+    console.log('[AdminGuard] Authenticated, allowing access');
     setStatus('allowed');
-  }, [hasHydrated, redirectTarget, router, status]);
+  }, [router, pathname]);
 
   if (status !== 'allowed') {
     return (

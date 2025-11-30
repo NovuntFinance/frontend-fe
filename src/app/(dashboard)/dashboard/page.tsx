@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Wallet,
@@ -9,24 +8,15 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   DollarSign,
-  Target,
   Users,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  ArrowRight,
   Clock,
-  Info,
   Calendar,
   TrendingDown,
   Circle,
   Star,
   Gift,
   Send,
-  CheckCircle2,
 } from 'lucide-react';
-import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
-import { SiTiktok } from 'react-icons/si';
 import {
   useWalletBalance,
   useActiveStakes,
@@ -40,22 +30,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { StakeCard } from '@/components/dashboard/StakeCard';
 import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
-import { RegistrationBonusBanner } from '@/components/registration-bonus/RegistrationBonusBanner';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { WeeklyROSCard } from '@/components/dashboard/WeeklyROSCard';
@@ -385,20 +367,6 @@ export default function DashboardPage() {
   const totalEarnings =
     overview?.staking?.totalEarnings ?? walletBalance?.earnings?.balance ?? 0;
   const totalReferralEarnings = overview?.referrals?.referralEarnings ?? 0;
-  const availableForWithdrawal =
-    overview?.wallets?.availableForWithdrawal ??
-    walletBalance?.availableForWithdrawal ??
-    walletBalance?.earnings?.availableBalance ??
-    0;
-  const lockedInStakes =
-    overview?.wallets?.lockedInStakes ??
-    walletBalance?.lockedInStakes ??
-    walletBalance?.funded?.lockedBalance ??
-    0;
-  const pendingWithdrawals =
-    overview?.wallets?.pendingWithdrawals ??
-    walletBalance?.pendingWithdrawals ??
-    0;
 
   // Calculate total portfolio value (combines all stakes and wallet balances)
   const totalPortfolioValue = totalBalance + totalStaked;

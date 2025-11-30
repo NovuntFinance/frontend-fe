@@ -86,26 +86,81 @@ export const rosApi = {
   getDailyEarnings: async (
     timeRange: TimeRange
   ): Promise<DailyEarningsData> => {
-    const response = await axios.get(
-      `${ROS_BASE_URL}/api/analytics/daily-earnings`,
-      {
-        params: { timeRange },
-        headers: getAuthHeader(),
-        withCredentials: true,
+    try {
+      const response = await axios.get(
+        `${ROS_BASE_URL}/api/analytics/daily-earnings`,
+        {
+          params: { timeRange },
+          headers: getAuthHeader(),
+          withCredentials: true,
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      // Handle 404 gracefully - endpoint may not be implemented yet
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // Return empty data structure instead of throwing
+        return {
+          dailyData: [],
+          summary: {
+            totalEarnings: 0,
+            averageRos: 0,
+            bestDay: {
+              date: new Date().toISOString(),
+              amount: 0,
+            },
+          },
+        };
       }
-    );
-    return response.data.data;
+      throw error;
+    }
   },
 
   getWeeklySummary: async (): Promise<WeeklySummaryData> => {
-    const response = await axios.get(
-      `${ROS_BASE_URL}/api/analytics/weekly-summary`,
-      {
-        headers: getAuthHeader(),
-        withCredentials: true,
+    try {
+      const response = await axios.get(
+        `${ROS_BASE_URL}/api/analytics/weekly-summary`,
+        {
+          headers: getAuthHeader(),
+          withCredentials: true,
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      // Handle 404 gracefully - endpoint may not be implemented yet
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // Return empty data structure instead of throwing
+        // Note: Backend uses Monday-Sunday weeks (not Sunday-Saturday)
+        const now = new Date();
+        const weekStart = new Date(now);
+        // Calculate days since Monday (Monday = 0, Sunday = 6)
+        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday-based (0-6)
+        weekStart.setDate(now.getDate() - daysSinceMonday);
+        weekStart.setHours(0, 0, 0, 0); // Start of Monday
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6); // End of Sunday
+        weekEnd.setHours(23, 59, 59, 999); // End of Sunday
+
+        // Calculate week number
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const weekNumber = Math.ceil(
+          (now.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+        );
+
+        return {
+          weekNumber,
+          year: now.getFullYear(),
+          startDate: weekStart.toISOString(),
+          endDate: weekEnd.toISOString(),
+          totalEarnings: 0,
+          averageRos: 0,
+          status: 'pending' as const,
+          dailyBreakdown: [],
+        };
       }
-    );
-    return response.data.data;
+      throw error;
+    }
   },
 
   // Admin Endpoints - TEMPORARY: Using /api/admin instead of /api/v1/admin

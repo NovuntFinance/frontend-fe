@@ -20,13 +20,13 @@ import {
   Bell,
   CheckCircle,
 } from 'lucide-react';
-import type { LucideProps } from 'lucide-react';
+import type { IconProps } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types/notification';
 import { NOTIFICATION_TYPE_CONFIG } from '@/types/notification';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-type LucideIcon = React.ComponentType<LucideProps>;
+type LucideIcon = React.ComponentType<IconProps>;
 
 // Map icon names to actual Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {
