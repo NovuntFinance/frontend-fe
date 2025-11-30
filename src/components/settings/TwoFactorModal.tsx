@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import {
   Shield,
   Smartphone,
+  Mail,
   Key,
   Check,
   X,
   Copy,
   RefreshCw,
+  Mail as MessageIcon,
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,7 +26,10 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 import { useUser } from '@/hooks/useUser';
+import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/lib/authService';
+import { useDisable2FA } from '@/lib/mutations';
+import type { Generate2FASecretResponse } from '@/types/auth';
 
 interface TwoFactorModalProps {
   open: boolean;
@@ -38,7 +42,11 @@ export function TwoFactorModal({
   onEnable,
 }: TwoFactorModalProps & { onEnable?: () => void }) {
   const { user } = useUser();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { updateUser } = useAuthStore();
+  const disable2FAMutation = useDisable2FA();
+
+  // Initialize isEnabled from user's actual 2FA status
+  const [isEnabled, setIsEnabled] = useState(() => user?.twoFAEnabled || false);
   const [method, setMethod] = useState<'app' | 'sms' | 'email'>('app');
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<
@@ -50,47 +58,144 @@ export function TwoFactorModal({
   const [secretKey, setSecretKey] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const userEmail = user?.email || 'user@example.com';
+
+  // Sync isEnabled with user's actual 2FA status from backend
+  useEffect(() => {
+    setIsEnabled(user?.twoFAEnabled || false);
+  }, [user?.twoFAEnabled]);
 
   // Fetch 2FA setup data when entering setup mode
   useEffect(() => {
     if (step === 'setup' && method === 'app' && !qrCodeUrl) {
       handleFetch2FASetup();
     }
-  }, [step, method, qrCodeUrl]);
+  }, [step, method]);
 
   const handleFetch2FASetup = async () => {
     setIsLoading(true);
     try {
       const response = await authService.generate2FASecret();
 
-      // Map backend response to component state
-      // Response might be wrapped in ApiResponse or direct Generate2FASecretResponse
-      const responseData = (response as any)?.data || response;
+      // Debug: Log the actual response structure
+      console.log('[TwoFactorModal] 2FA Setup Response:', response);
+      console.log('[TwoFactorModal] Response type:', typeof response);
+      console.log(
+        '[TwoFactorModal] Response keys:',
+        response ? Object.keys(response) : 'null'
+      );
 
-      if (
-        responseData &&
-        typeof responseData === 'object' &&
-        'setupDetails' in responseData
-      ) {
-        const setupDetails = (responseData as any).setupDetails;
-        setQrCodeUrl(setupDetails.qrCode);
-        setSecretKey(setupDetails.secret);
-        setVerificationToken((responseData as any).verificationToken);
-        toast.success('QR code generated successfully!');
-      } else if (responseData && 'setupMethods' in responseData) {
-        // Handle new format with setupMethods
-        const qrCode = (responseData as any).setupMethods?.qrCode;
-        if (qrCode) {
-          setQrCodeUrl(qrCode.qrImageUrl);
-          setSecretKey((responseData as any).secret);
-          setVerificationToken((responseData as any).verificationToken || '');
-          toast.success('QR code generated successfully!');
-        } else {
-          throw new Error('QR code method not available');
+      // Handle different response structures
+      // The API client might return the data directly or wrapped
+      let responseData: any = response;
+
+      // The API might return the response wrapped in various ways
+      // Try to extract the actual data from the response
+
+      // Check if response has a 'data' property (common axios/ApiResponse wrapper)
+      if (response && typeof response === 'object') {
+        // If response has hasData: true, check for data in common locations
+        if ('hasData' in response && (response as any).hasData === true) {
+          if ('data' in response && response.data) {
+            responseData = response.data;
+          } else if ('result' in response) {
+            responseData = (response as any).result;
+          } else if ('response' in response) {
+            responseData = (response as any).response;
+          } else if ('setupMethods' in response || 'secret' in response) {
+            // Data might be at root level
+            responseData = response;
+          }
         }
+        // If it's an ApiResponse structure: { success: true, data: {...} }
+        else if ('data' in response && response.data) {
+          responseData = response.data;
+        }
+        // If it has nested data
+        else if (
+          'data' in response &&
+          typeof (response as any).data === 'object' &&
+          'data' in (response as any).data
+        ) {
+          responseData = (response as any).data.data;
+        }
+        // Check if the response itself has the expected fields
+        else if ('setupMethods' in response || 'secret' in response) {
+          responseData = response;
+        }
+        // If response has success:true but no data, it might be the data itself
+        else if ('success' in response && (response as any).success === true) {
+          // The data might be at the root level
+          responseData = response;
+        }
+      }
+
+      // Now try to extract setupDetails, setupMethods, or other expected fields
+      let qrUrl = '';
+      let secret = '';
+      let verificationToken = '';
+
+      // Try various paths to find the QR code URL, secret, and verification token
+      if (responseData && typeof responseData === 'object') {
+        // Check for setupDetails structure (actual API format)
+        if ('setupDetails' in responseData && responseData.setupDetails) {
+          const setupDetails = responseData.setupDetails as any;
+          qrUrl = setupDetails.qrCode || '';
+          secret = setupDetails.secret || '';
+        }
+
+        // Also check for setupMethods structure (expected format from types)
+        if (!qrUrl || !secret) {
+          qrUrl =
+            qrUrl ||
+            responseData.setupMethods?.qrCode?.qrImageUrl ||
+            responseData.qrCode?.qrImageUrl ||
+            responseData.qrImageUrl ||
+            responseData.qrCode ||
+            responseData.setupMethods?.qrCode ||
+            (typeof responseData.setupMethods?.qrCode === 'string'
+              ? responseData.setupMethods.qrCode
+              : '') ||
+            '';
+
+          secret =
+            secret ||
+            responseData.secret ||
+            responseData.setupMethods?.manualEntry?.secretKey ||
+            responseData.manualEntry?.secretKey ||
+            responseData.secretKey ||
+            '';
+        }
+
+        // Extract verification token
+        verificationToken =
+          responseData.verificationToken || responseData.token || '';
+      }
+
+      // If we found QR code and secret, we can proceed
+      if (qrUrl && secret) {
+        setQrCodeUrl(qrUrl);
+        setSecretKey(secret);
+        if (verificationToken) {
+          setVerificationToken(verificationToken);
+        }
+        toast.success('QR code generated successfully!');
       } else {
-        throw new Error('Invalid response format from server');
+        // Log the actual structure for debugging
+        console.error(
+          '[TwoFactorModal] Response structure:',
+          JSON.stringify(response, null, 2)
+        );
+        console.error(
+          '[TwoFactorModal] Extracted responseData:',
+          JSON.stringify(responseData, null, 2)
+        );
+        throw new Error(
+          `Invalid response format: missing QR code or secret. QR: ${!!qrUrl}, Secret: ${!!secret}. Check console for details.`
+        );
       }
     } catch (error: unknown) {
       console.error('[TwoFactorModal] Failed to generate 2FA secret:', error);
@@ -105,11 +210,19 @@ export function TwoFactorModal({
 
   const handleEnable2FA = () => {
     if (isEnabled) {
-      // Disable 2FA
-      setIsEnabled(false);
-      setStep('select');
-      setBackupCodes([]);
-      toast.success('Two-Factor Authentication disabled');
+      // Disable 2FA via API
+      disable2FAMutation.mutate(undefined, {
+        onSuccess: () => {
+          setIsEnabled(false);
+          setStep('select');
+          setShowBackupCodes(false);
+          setBackupCodes([]);
+          if (onEnable) onEnable();
+        },
+        onError: () => {
+          // Keep enabled state on error
+        },
+      });
     } else {
       // Start enabling 2FA
       setStep('setup');
@@ -122,40 +235,48 @@ export function TwoFactorModal({
       return;
     }
 
+    if (!verificationToken) {
+      toast.error(
+        'Verification token is missing. Please restart the setup process.'
+      );
+      setStep('select');
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Get user ID from auth store
+      const { user } = useAuthStore.getState();
+      const userId = user?._id || user?.id || '';
+
+      if (!userId) {
+        throw new Error('User ID not found. Please log in again.');
+      }
+
       const response = await authService.enable2FA({
+        userId,
         verificationToken,
         verificationCode,
       });
 
-      // Check if backup codes were provided
-      if (response.backupCodes && response.backupCodes.length > 0) {
-        setBackupCodes(response.backupCodes);
-        setStep('backupCodes'); // Move to a new step to display backup codes
-        toast.success(
-          'Two-Factor Authentication enabled! Please save your backup codes.'
-        );
-      } else {
-        toast.success(
-          response.message || 'Two-Factor Authentication enabled successfully!'
-        );
-        setStep('select'); // If no backup codes, go back to select
-      }
+      toast.success(
+        response.message || 'Two-Factor Authentication enabled successfully!'
+      );
 
+      // Update the user in auth store to reflect 2FA is now enabled
+      updateUser({ twoFAEnabled: true });
+
+      setStep('select');
       setIsEnabled(true);
       setVerificationCode('');
 
-      // Clear QR data but keep backup codes if shown
+      // Clear QR data
       setQrCodeUrl('');
       setSecretKey('');
       setVerificationToken('');
 
-      // If no backup codes, close modal immediately
-      if (!response.backupCodes || response.backupCodes.length === 0) {
-        if (onEnable) onEnable();
-        onOpenChange(false);
-      }
+      if (onEnable) onEnable();
+      onOpenChange(false);
     } catch (error: unknown) {
       console.error('[TwoFactorModal] Failed to verify 2FA code:', error);
       const errorMessage =
@@ -261,13 +382,10 @@ export function TwoFactorModal({
                         Scan QR Code
                       </h3>
                       <div className="mb-2 rounded-lg bg-white p-2">
-                        <Image
+                        <img
                           src={qrCodeUrl}
                           alt="2FA QR Code"
-                          width={128}
-                          height={128}
                           className="h-32 w-32"
-                          unoptimized
                         />
                       </div>
                       <p className="text-muted-foreground text-center text-[10px] leading-tight">
@@ -422,6 +540,7 @@ export function TwoFactorModal({
                 <Button
                   onClick={() => {
                     setStep('select');
+                    setShowBackupCodes(false);
                     if (onEnable) onEnable();
                     onOpenChange(false);
                   }}
@@ -449,6 +568,7 @@ export function TwoFactorModal({
               onClick={handleEnable2FA}
               variant={isEnabled ? 'destructive' : 'default'}
               size="sm"
+              disabled={isEnabled && disable2FAMutation.isPending}
               className={
                 !isEnabled
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'

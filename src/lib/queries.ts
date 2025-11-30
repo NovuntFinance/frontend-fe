@@ -3,20 +3,55 @@
  * Centralized API queries using TanStack Query (React Query)
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+} from '@tanstack/react-query';
 import { api } from './api';
-import { UserProfile, ChangePasswordPayload, KYCDocument, Session } from '@/types/user';
+import {
+  UserProfile,
+  ChangePasswordPayload,
+  KYCDocument,
+  Session,
+} from '@/types/user';
 import { WalletBalance, DepositAddress } from '@/types/wallet';
 import { DashboardOverview } from '@/types/dashboard';
 import { StakeWithGoal, StakeStats, ROIPayoutHistory } from '@/types/stake';
-import { Transaction, TransactionDetail, TransactionFilters, TransactionSummary } from '@/types/transaction';
-import { Withdrawal, WithdrawalFees, WithdrawalDetail, WithdrawalStats } from '@/types/withdrawal';
-import { ReferralStats, ReferralTree, ReferralLeaderboard, ReferralInfo, ReferralTreeData } from '@/types/referral';
+import {
+  Transaction,
+  TransactionDetail,
+  TransactionFilters,
+  TransactionSummary,
+} from '@/types/transaction';
+import {
+  Withdrawal,
+  WithdrawalFees,
+  WithdrawalDetail,
+  WithdrawalStats,
+} from '@/types/withdrawal';
+import {
+  ReferralStats,
+  ReferralTree,
+  ReferralLeaderboard,
+  ReferralInfo,
+  ReferralTreeData,
+} from '@/types/referral';
 import { referralApi } from '@/services/referralApi';
-import { TeamInfo, RankInfo, NextRankRequirements, PoolDistributionsData, IncentiveWallet } from '@/types/teamRank';
+import {
+  TeamInfo,
+  RankInfo,
+  NextRankRequirements,
+  PoolDistributionsData,
+  IncentiveWallet,
+} from '@/types/teamRank';
 import { teamRankApi } from '@/services/teamRankApi';
 import { registrationBonusApi } from '@/services/registrationBonusApi';
-import { RegistrationBonusStatusResponse, BonusPayoutHistoryResponse } from '@/types/registrationBonus';
+import {
+  RegistrationBonusStatusResponse,
+  BonusPayoutHistoryResponse,
+} from '@/types/registrationBonus';
 import { AdminDashboardData, AdminDashboardTimeframe } from '@/types/admin';
 import { useAuthStore } from '@/store/authStore';
 
@@ -26,16 +61,17 @@ export const queryKeys = {
   profile: ['profile'] as const,
   sessions: ['sessions'] as const,
   dashboardOverview: ['dashboard', 'overview'] as const,
-  
+
   // Wallets
   wallets: ['wallets'] as const,
   walletInfo: ['wallet', 'info'] as const,
   walletDetailed: ['wallet', 'detailed'] as const,
   walletBalance: ['wallet', 'balance'] as const,
   depositAddress: ['wallet', 'deposit-address'] as const,
-  depositStatus: (invoiceId: string) => ['deposit', 'status', invoiceId] as const,
+  depositStatus: (invoiceId: string) =>
+    ['deposit', 'status', invoiceId] as const,
   withdrawalLimits: ['withdrawal', 'limits'] as const,
-  
+
   // Stakes
   stakes: ['stakes'] as const,
   activeStakes: ['stakes', 'active'] as const,
@@ -43,42 +79,48 @@ export const queryKeys = {
   stake: (id: string) => ['stake', id] as const,
   stakeStats: ['stakes', 'stats'] as const,
   roiHistory: (stakeId: string) => ['stake', stakeId, 'roi-history'] as const,
-  
+
   // Transactions
-  transactions: (filters?: TransactionFilters) => ['transactions', filters] as const,
+  transactions: (filters?: TransactionFilters) =>
+    ['transactions', filters] as const,
   transaction: (id: string) => ['transaction', id] as const,
-  transactionSummary: (period: string) => ['transactions', 'summary', period] as const,
-  
+  transactionSummary: (period: string) =>
+    ['transactions', 'summary', period] as const,
+
   // Withdrawals
   withdrawals: ['withdrawals'] as const,
   withdrawal: (id: string) => ['withdrawal', id] as const,
   withdrawalFees: ['withdrawal', 'fees'] as const,
   withdrawalStats: ['withdrawals', 'stats'] as const,
-  
+
   // Referrals
   referralStats: ['referrals', 'stats'] as const,
   referralInfo: ['referrals', 'info'] as const,
-  referralTree: (maxLevels?: number) => ['referrals', 'tree', maxLevels] as const,
+  referralTree: (maxLevels?: number) =>
+    ['referrals', 'tree', maxLevels] as const,
   referralLeaderboard: ['referrals', 'leaderboard'] as const,
-  
+
   // Team & Rank
   teamInfo: ['team', 'info'] as const,
   rankInfo: ['rank', 'info'] as const,
   nextRankRequirements: ['rank', 'next-requirements'] as const,
-  poolDistributions: (page?: number, limit?: number, type?: string) => ['pools', 'distributions', page, limit, type] as const,
+  poolDistributions: (page?: number, limit?: number, type?: string) =>
+    ['pools', 'distributions', page, limit, type] as const,
   incentiveWallet: ['pools', 'incentive-wallet'] as const,
-  
+
   // Registration Bonus
   registrationBonus: ['registrationBonus'] as const,
   registrationBonusStatus: ['registrationBonus', 'status'] as const,
-  bonusPayoutHistory: (page?: number, limit?: number) => ['registrationBonus', 'payout-history', page, limit] as const,
-  
+  bonusPayoutHistory: (page?: number, limit?: number) =>
+    ['registrationBonus', 'payout-history', page, limit] as const,
+
   // KYC
   kycStatus: ['kyc', 'status'] as const,
   kycDocuments: ['kyc', 'documents'] as const,
 
   // Admin
-  adminDashboard: (timeframe: AdminDashboardTimeframe) => ['admin', 'dashboard', timeframe] as const,
+  adminDashboard: (timeframe: AdminDashboardTimeframe) =>
+    ['admin', 'dashboard', timeframe] as const,
 };
 
 // Backend response format (from COMPLETE_FINANCIAL_SYSTEM_DOCUMENTATION.md)
@@ -86,24 +128,37 @@ interface WalletInfoBackendResponse {
   success: boolean;
   wallet: {
     walletAddress: string;
-    fundedWallet: number;      // Backend field name
-    earningWallet: number;      // Backend field name (no 's')
+    fundedWallet: number; // Backend field name
+    earningWallet: number; // Backend field name (no 's')
     totalBalance: number;
+    availableForTransfer?: number; // Available for transfers (same as earningWallet)
+    transferOptions?: {
+      availableForTransfer: number;
+      canTransferAll: boolean;
+      breakdown: {
+        fromFundedWallet: number;
+        fromEarningWallet: number;
+      };
+    };
   };
 }
 
 // Legacy format for backward compatibility
 interface WalletBalanceApiResponse {
-  depositWallet: number | {
-    balance?: number;
-    availableBalance?: number;
-    lockedBalance?: number;
-  };
-  earningsWallet: number | {
-    balance?: number;
-    availableBalance?: number;
-    lockedBalance?: number;
-  };
+  depositWallet:
+    | number
+    | {
+        balance?: number;
+        availableBalance?: number;
+        lockedBalance?: number;
+      };
+  earningsWallet:
+    | number
+    | {
+        balance?: number;
+        availableBalance?: number;
+        lockedBalance?: number;
+      };
   totalBalance: number;
   availableForWithdrawal?: number;
   lockedInStakes?: number;
@@ -113,12 +168,15 @@ interface WalletBalanceApiResponse {
 const normaliseWalletSection = (
   section: WalletBalanceApiResponse['depositWallet'],
   fallbackAvailable = 0,
-  fallbackLocked = 0,
+  fallbackLocked = 0
 ) => {
   if (typeof section === 'number') {
     const balance = section;
     const availableBalance = Math.max(fallbackAvailable || balance, 0);
-    const lockedBalance = Math.max(fallbackLocked || balance - availableBalance, 0);
+    const lockedBalance = Math.max(
+      fallbackLocked || balance - availableBalance,
+      0
+    );
 
     return {
       balance,
@@ -128,8 +186,12 @@ const normaliseWalletSection = (
   }
 
   const balance = section.balance ?? 0;
-  const availableBalance = section.availableBalance ?? fallbackAvailable ?? balance;
-  const lockedBalance = section.lockedBalance ?? fallbackLocked ?? Math.max(balance - availableBalance, 0);
+  const availableBalance =
+    section.availableBalance ?? fallbackAvailable ?? balance;
+  const lockedBalance =
+    section.lockedBalance ??
+    fallbackLocked ??
+    Math.max(balance - availableBalance, 0);
 
   return {
     balance,
@@ -142,35 +204,42 @@ const normaliseWalletSection = (
 // AUTH QUERIES
 // ============================================
 
-import { userService, type UserProfile as UserServiceProfile } from './userService';
+import {
+  userService,
+  type UserProfile as UserServiceProfile,
+} from './userService';
 import type { UserProfile as FrontendUserProfile } from '@/types/user';
 
 /**
  * useProfile - Get user profile
  * Phase 1: GET /users/profile
- * 
+ *
  * Returns complete user profile with nested profile data
  */
-export function useProfile(options?: Partial<UseQueryOptions<FrontendUserProfile>>) {
+export function useProfile(
+  options?: Partial<UseQueryOptions<FrontendUserProfile>>
+) {
   return useQuery({
     queryKey: queryKeys.profile,
     queryFn: async () => {
       try {
         console.log('[useProfile] Fetching profile from Phase 1 endpoint...');
         const response = await userService.getProfile();
-        
+
         // Unwrap response if nested
         let profile = response;
         if (response && typeof response === 'object' && 'data' in response) {
           profile = (response as any).data;
         }
-        
+
         console.log('[useProfile] Profile fetched:', profile);
-        
+
         // Normalize backend field names (fname/lname) to frontend format (firstName/lastName)
         const backendProfile = profile as unknown as UserServiceProfile;
         // Preserve the nested profile structure from UserServiceProfile
-        const normalizedProfile: FrontendUserProfile & { profile?: UserServiceProfile['profile'] } = {
+        const normalizedProfile: FrontendUserProfile & {
+          profile?: UserServiceProfile['profile'];
+        } = {
           _id: backendProfile.userId || '',
           id: backendProfile.userId,
           email: backendProfile.email,
@@ -205,20 +274,28 @@ export function useProfile(options?: Partial<UseQueryOptions<FrontendUserProfile
           // Preserve nested profile structure for compatibility
           profile: backendProfile.profile,
         } as FrontendUserProfile & { profile?: UserServiceProfile['profile'] };
-        
+
         console.log('[useProfile] Normalized profile:', normalizedProfile);
         return normalizedProfile;
       } catch (error: any) {
-        const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-        
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+          code?: string;
+          message?: string;
+        };
+
         // Handle network errors gracefully - return minimal profile instead of throwing
-        const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                              err?.message?.includes('Network Error') ||
-                              err?.message?.includes('Failed to fetch') ||
-                              (!err?.response && !err?.statusCode);
-        
+        const isNetworkError =
+          err?.code === 'ERR_NETWORK' ||
+          err?.message?.includes('Network Error') ||
+          err?.message?.includes('Failed to fetch') ||
+          (!err?.response && !err?.statusCode);
+
         if (isNetworkError) {
-          console.warn('[useProfile] ⚠️ Network error - backend might be unavailable');
+          console.warn(
+            '[useProfile] ⚠️ Network error - backend might be unavailable'
+          );
           // Return minimal profile structure to prevent app crash
           return {
             _id: '',
@@ -254,7 +331,7 @@ export function useProfile(options?: Partial<UseQueryOptions<FrontendUserProfile
             },
           } as FrontendUserProfile;
         }
-        
+
         throw error;
       }
     },
@@ -262,23 +339,29 @@ export function useProfile(options?: Partial<UseQueryOptions<FrontendUserProfile
     refetchOnMount: true, // Refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     retry: (failureCount, error: any) => {
-      const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-      
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+        code?: string;
+        message?: string;
+      };
+
       // Don't retry network errors aggressively (backend might be down)
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
       if (isNetworkError) {
         return failureCount < 1; // Only retry once for network errors
       }
-      
+
       // Don't retry on 401/403 (auth errors)
       const status = err?.response?.status || err?.statusCode;
       if (status === 401 || status === 403) {
         return false;
       }
-      
+
       return failureCount < 2;
     },
     ...options,
@@ -299,22 +382,25 @@ export function useSessions() {
 export function useWalletBalance() {
   // Check authentication before running query
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
-  
+
   return useQuery({
     queryKey: queryKeys.walletBalance,
     enabled: !!isAuthenticated && !authLoading, // Only run when user is authenticated
     queryFn: async () => {
       try {
-        console.log('[useWalletBalance] 🔄 Fetching wallet from NEW financial backend...');
-        
+        console.log(
+          '[useWalletBalance] 🔄 Fetching wallet from NEW financial backend...'
+        );
+
         // NEW: Call the financial system backend endpoint
-        const response = await api.get<WalletInfoBackendResponse>('/wallets/info');
-        
+        const response =
+          await api.get<WalletInfoBackendResponse>('/wallets/info');
+
         console.log('[useWalletBalance] ✅ Response from backend:', response);
-        
+
         // Backend returns { success: true, wallet: { ... } }
         const walletData = response.wallet || response;
-        
+
         console.log('[useWalletBalance] 📊 Wallet data:', {
           fundedWallet: walletData.fundedWallet,
           earningWallet: walletData.earningWallet,
@@ -324,6 +410,13 @@ export function useWalletBalance() {
         // Map backend field names to frontend format
         // Backend: fundedWallet → Frontend: funded (Deposit Wallet)
         // Backend: earningWallet → Frontend: earnings (Earnings Wallet)
+        // Use availableForTransfer if provided, otherwise fallback to earningWallet
+        const availableForTransfer =
+          walletData.availableForTransfer ??
+          walletData.transferOptions?.availableForTransfer ??
+          walletData.earningWallet ??
+          0;
+
         return {
           funded: {
             balance: walletData.fundedWallet || 0,
@@ -332,7 +425,7 @@ export function useWalletBalance() {
           },
           earnings: {
             balance: walletData.earningWallet || 0,
-            availableBalance: walletData.earningWallet || 0,
+            availableBalance: availableForTransfer, // Use availableForTransfer for transfers
             lockedBalance: 0, // Earnings are available for withdrawal/transfer/staking
           },
           total: walletData.totalBalance || 0,
@@ -341,11 +434,18 @@ export function useWalletBalance() {
           lockedInStakes: 0,
         } satisfies WalletBalance;
       } catch (error: unknown) {
-        const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-        
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+          code?: string;
+          message?: string;
+        };
+
         // Handle 404 - Wallet not found (new user) - This is expected
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useWalletBalance] ℹ️ Wallet not created yet - returning empty wallet (normal for new users)');
+          console.log(
+            '[useWalletBalance] ℹ️ Wallet not created yet - returning empty wallet (normal for new users)'
+          );
           return {
             funded: { balance: 0, availableBalance: 0, lockedBalance: 0 },
             earnings: { balance: 0, availableBalance: 0, lockedBalance: 0 },
@@ -355,15 +455,18 @@ export function useWalletBalance() {
             lockedInStakes: 0,
           } satisfies WalletBalance;
         }
-        
+
         // Handle network errors gracefully - return empty wallet instead of throwing
-        const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                              err?.message?.includes('Network Error') ||
-                              err?.message?.includes('Failed to fetch') ||
-                              (!err?.response && !err?.statusCode);
-        
+        const isNetworkError =
+          err?.code === 'ERR_NETWORK' ||
+          err?.message?.includes('Network Error') ||
+          err?.message?.includes('Failed to fetch') ||
+          (!err?.response && !err?.statusCode);
+
         if (isNetworkError) {
-          console.warn('[useWalletBalance] ⚠️ Network error - returning empty wallet (backend might be unavailable)');
+          console.warn(
+            '[useWalletBalance] ⚠️ Network error - returning empty wallet (backend might be unavailable)'
+          );
           return {
             funded: { balance: 0, availableBalance: 0, lockedBalance: 0 },
             earnings: { balance: 0, availableBalance: 0, lockedBalance: 0 },
@@ -373,7 +476,7 @@ export function useWalletBalance() {
             lockedInStakes: 0,
           } satisfies WalletBalance;
         }
-        
+
         // Only log and throw for other errors
         console.error('[useWalletBalance] ❌ Unexpected error:', error);
         throw error;
@@ -384,13 +487,19 @@ export function useWalletBalance() {
     retry: (failureCount, error) => {
       // Don't retry on 401 (authentication errors), 403 (authorization errors), or 404 (wallet not found)
       if (error && typeof error === 'object' && 'response' in error) {
-        const status = (error as { response?: { status?: number } }).response?.status;
+        const status = (error as { response?: { status?: number } }).response
+          ?.status;
         if (status === 401 || status === 403 || status === 404) {
           return false; // Don't retry these errors
         }
       }
       // Don't retry if error has statusCode 404
-      if (error && typeof error === 'object' && 'statusCode' in error && (error as { statusCode?: number }).statusCode === 404) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'statusCode' in error &&
+        (error as { statusCode?: number }).statusCode === 404
+      ) {
         return false;
       }
       return failureCount < 2; // Retry other errors up to 2 times
@@ -401,7 +510,7 @@ export function useWalletBalance() {
 export function useDepositAddress() {
   // Check authentication before running query
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
-  
+
   return useQuery({
     queryKey: queryKeys.depositAddress,
     enabled: !!isAuthenticated && !authLoading, // Only run when user is authenticated
@@ -422,9 +531,14 @@ export function useDashboardOverview() {
         return await api.get<DashboardOverview>('/staking/dashboard');
       } catch (error: unknown) {
         // Handle 404 - No dashboard data yet (new user)
-        const err = error as { statusCode?: number; response?: { status?: number } };
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useDashboardOverview] Dashboard not found - returning empty data');
+          console.log(
+            '[useDashboardOverview] Dashboard not found - returning empty data'
+          );
           return null;
         }
         throw error;
@@ -432,7 +546,10 @@ export function useDashboardOverview() {
     },
     staleTime: 60 * 1000,
     retry: (failureCount, error: unknown) => {
-      const err = error as { statusCode?: number; response?: { status?: number } };
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+      };
       if (err?.statusCode === 404 || err?.response?.status === 404) {
         return false; // Don't retry 404s
       }
@@ -453,9 +570,14 @@ export function useActiveStakes() {
         return await api.get<StakeWithGoal[]>('/staking/dashboard');
       } catch (error: unknown) {
         // Handle 404 - No stakes yet (new user)
-        const err = error as { statusCode?: number; response?: { status?: number } };
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useActiveStakes] Stakes not found - returning empty array');
+          console.log(
+            '[useActiveStakes] Stakes not found - returning empty array'
+          );
           return [];
         }
         throw error;
@@ -463,7 +585,10 @@ export function useActiveStakes() {
     },
     staleTime: 60 * 1000, // 1 minute
     retry: (failureCount, error: unknown) => {
-      const err = error as { statusCode?: number; response?: { status?: number } };
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+      };
       if (err?.statusCode === 404 || err?.response?.status === 404) {
         return false; // Don't retry 404s
       }
@@ -497,7 +622,8 @@ export function useStakeStats() {
 export function useROIHistory(stakeId: string) {
   return useQuery({
     queryKey: queryKeys.roiHistory(stakeId),
-    queryFn: () => api.get<ROIPayoutHistory[]>(`/staking/${stakeId}/roi-history`),
+    queryFn: () =>
+      api.get<ROIPayoutHistory[]>(`/staking/${stakeId}/roi-history`),
     enabled: !!stakeId,
   });
 }
@@ -511,12 +637,19 @@ export function useTransactions(filters?: TransactionFilters) {
     queryKey: queryKeys.transactions(filters),
     queryFn: async () => {
       try {
-        return await api.get<Transaction[]>('/transactions/history', { params: filters });
+        return await api.get<Transaction[]>('/transactions/history', {
+          params: filters,
+        });
       } catch (error: unknown) {
         // Handle 404 - No transactions yet (new user)
-        const err = error as { statusCode?: number; response?: { status?: number } };
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
         if (err?.statusCode === 404 || err?.response?.status === 404) {
-          console.log('[useTransactions] Transactions not found - returning empty array');
+          console.log(
+            '[useTransactions] Transactions not found - returning empty array'
+          );
           return [];
         }
         throw error;
@@ -524,7 +657,10 @@ export function useTransactions(filters?: TransactionFilters) {
     },
     staleTime: 30 * 1000,
     retry: (failureCount, error: unknown) => {
-      const err = error as { statusCode?: number; response?: { status?: number } };
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+      };
       if (err?.statusCode === 404 || err?.response?.status === 404) {
         return false; // Don't retry 404s
       }
@@ -541,10 +677,13 @@ export function useTransaction(id: string) {
   });
 }
 
-export function useTransactionSummary(period: '7d' | '30d' | '90d' | 'all' = '30d') {
+export function useTransactionSummary(
+  period: '7d' | '30d' | '90d' | 'all' = '30d'
+) {
   return useQuery({
     queryKey: queryKeys.transactionSummary(period),
-    queryFn: () => api.get<TransactionSummary>(`/transactions/summary?period=${period}`),
+    queryFn: () =>
+      api.get<TransactionSummary>(`/transactions/summary?period=${period}`),
   });
 }
 
@@ -596,34 +735,83 @@ export function useReferralInfo() {
     queryFn: async (): Promise<ReferralInfo> => {
       try {
         const response = await referralApi.getReferralInfo();
-        console.log('[useReferralInfo] Full API response from referralApi:', response);
+        console.log(
+          '[useReferralInfo] Full API response from referralApi:',
+          response
+        );
         console.log('[useReferralInfo] Response type:', typeof response);
-        console.log('[useReferralInfo] Response keys:', response && typeof response === 'object' ? Object.keys(response) : 'N/A');
-        console.log('[useReferralInfo] Has data property?', response && typeof response === 'object' && 'data' in response);
-        console.log('[useReferralInfo] Has referralCode?', response && typeof response === 'object' && 'referralCode' in response);
-        
+        console.log(
+          '[useReferralInfo] Response keys:',
+          response && typeof response === 'object'
+            ? Object.keys(response)
+            : 'N/A'
+        );
+        console.log(
+          '[useReferralInfo] Has data property?',
+          response && typeof response === 'object' && 'data' in response
+        );
+        console.log(
+          '[useReferralInfo] Has referralCode?',
+          response && typeof response === 'object' && 'referralCode' in response
+        );
+
         // referralApi.getReferralInfo() always returns { success: boolean, data: { referralCode, ... } }
         // So we need to extract response.data
-        if (response && typeof response === 'object' && 'data' in response && response.data) {
+        if (
+          response &&
+          typeof response === 'object' &&
+          'data' in response &&
+          response.data
+        ) {
           const data = response.data;
           console.log('[useReferralInfo] Extracted data:', data);
           console.log('[useReferralInfo] Data type:', typeof data);
-          console.log('[useReferralInfo] Data keys:', data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-          console.log('[useReferralInfo] Data has referralCode?', data && typeof data === 'object' && 'referralCode' in data);
-          console.log('[useReferralInfo] Data has referralLink?', data && typeof data === 'object' && 'referralLink' in data);
-          console.log('[useReferralInfo] referralCode value:', data && typeof data === 'object' ? (data as any).referralCode : 'N/A');
-          console.log('[useReferralInfo] referralLink value:', data && typeof data === 'object' ? (data as any).referralLink : 'N/A');
+          console.log(
+            '[useReferralInfo] Data keys:',
+            data && typeof data === 'object' ? Object.keys(data) : 'N/A'
+          );
+          console.log(
+            '[useReferralInfo] Data has referralCode?',
+            data && typeof data === 'object' && 'referralCode' in data
+          );
+          console.log(
+            '[useReferralInfo] Data has referralLink?',
+            data && typeof data === 'object' && 'referralLink' in data
+          );
+          console.log(
+            '[useReferralInfo] referralCode value:',
+            data && typeof data === 'object'
+              ? (data as any).referralCode
+              : 'N/A'
+          );
+          console.log(
+            '[useReferralInfo] referralLink value:',
+            data && typeof data === 'object'
+              ? (data as any).referralLink
+              : 'N/A'
+          );
           return data as ReferralInfo;
         }
-        
+
         // Fallback: if somehow response is already the data object
-        if (response && typeof response === 'object' && 'referralCode' in response && 'referralLink' in response) {
-          console.log('[useReferralInfo] Response is already data object:', response);
+        if (
+          response &&
+          typeof response === 'object' &&
+          'referralCode' in response &&
+          'referralLink' in response
+        ) {
+          console.log(
+            '[useReferralInfo] Response is already data object:',
+            response
+          );
           return response as unknown as ReferralInfo;
         }
-        
+
         // Last resort: return empty object structure
-        console.warn('[useReferralInfo] Unexpected response structure, returning empty:', response);
+        console.warn(
+          '[useReferralInfo] Unexpected response structure, returning empty:',
+          response
+        );
         const emptyInfo: ReferralInfo = {
           referralCode: '',
           referralLink: '',
@@ -678,16 +866,20 @@ export function useReferralStats() {
         referralApi.getReferralInfo().catch(() => null),
         referralApi.getReferralTree(5).catch(() => null),
       ]);
-      
+
       const referralInfo = referralInfoResponse?.data;
       const treeData = treeResponse?.data;
-      
+
       // Combine data from referral info and tree
       const stats: ReferralStats = {
-        totalReferrals: treeData?.stats?.totalReferrals || referralInfo?.totalReferrals || 0,
+        totalReferrals:
+          treeData?.stats?.totalReferrals || referralInfo?.totalReferrals || 0,
         activeReferrals: treeData?.stats?.activeReferrals || 0,
         totalEarned: treeData?.stats?.totalEarned || 0,
-        currentBalance: treeData?.stats?.currentBalance || referralInfo?.referralBonusBalance || 0,
+        currentBalance:
+          treeData?.stats?.currentBalance ||
+          referralInfo?.referralBonusBalance ||
+          0,
         canWithdraw: treeData?.stats?.canWithdraw || false,
         // Legacy fields (optional)
         earningsByLevel: {
@@ -699,13 +891,18 @@ export function useReferralStats() {
         },
         recentEarnings: [],
       };
-      
+
       // Calculate earnings by level from tree
       if (treeData?.tree && stats.earningsByLevel) {
         const earningsByLevel = stats.earningsByLevel;
         treeData.tree.forEach((entry) => {
           if (entry.level >= 1 && entry.level <= 5) {
-            const levelKey = `level${entry.level}` as 'level1' | 'level2' | 'level3' | 'level4' | 'level5';
+            const levelKey = `level${entry.level}` as
+              | 'level1'
+              | 'level2'
+              | 'level3'
+              | 'level4'
+              | 'level5';
             const levelData = earningsByLevel[levelKey];
             if (levelData) {
               levelData.count += 1;
@@ -713,7 +910,7 @@ export function useReferralStats() {
           }
         });
       }
-      
+
       return stats;
     },
     staleTime: 30 * 1000,
@@ -794,13 +991,15 @@ export function useRankInfo() {
  */
 export function useCalculateRank() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: () => teamRankApi.calculateRank(),
     onSuccess: () => {
       // Invalidate rank-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.rankInfo });
-      queryClient.invalidateQueries({ queryKey: queryKeys.nextRankRequirements });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.nextRankRequirements,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.teamInfo });
     },
   });
@@ -848,7 +1047,11 @@ export function usePoolDistributions(
     queryKey: queryKeys.poolDistributions(page, limit, distributionType),
     queryFn: async () => {
       try {
-        const response = await teamRankApi.getPoolDistributions(page, limit, distributionType);
+        const response = await teamRankApi.getPoolDistributions(
+          page,
+          limit,
+          distributionType
+        );
         return response.data;
       } catch (error: any) {
         // If it's a 404, return empty structure instead of throwing
@@ -940,18 +1143,28 @@ export function useRegistrationBonusStatus() {
       try {
         return await registrationBonusApi.getStatus();
       } catch (error: any) {
-        const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-        
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+          code?: string;
+          message?: string;
+        };
+
         // Handle network errors gracefully - return default status instead of throwing
-        const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                              err?.message?.includes('Network Error') ||
-                              err?.message?.includes('Failed to fetch') ||
-                              (!err?.response && !err?.statusCode);
-        
+        const isNetworkError =
+          err?.code === 'ERR_NETWORK' ||
+          err?.message?.includes('Network Error') ||
+          err?.message?.includes('Failed to fetch') ||
+          (!err?.response && !err?.statusCode);
+
         if (isNetworkError) {
-          console.warn('[useRegistrationBonusStatus] ⚠️ Network error - returning default status');
+          console.warn(
+            '[useRegistrationBonusStatus] ⚠️ Network error - returning default status'
+          );
           // Return a default response structure to prevent app crash
-          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          const expiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+          ).toISOString();
           return {
             success: false,
             data: {
@@ -981,14 +1194,16 @@ export function useRegistrationBonusStatus() {
             },
           } as RegistrationBonusStatusResponse;
         }
-        
+
         throw error;
       }
     },
     refetchInterval: (query) => {
-      const data = query.state.data as RegistrationBonusStatusResponse | undefined;
+      const data = query.state.data as
+        | RegistrationBonusStatusResponse
+        | undefined;
       const status = data?.data?.status;
-      
+
       // Smart polling based on status
       switch (status) {
         case 'pending':
@@ -1007,17 +1222,23 @@ export function useRegistrationBonusStatus() {
     refetchOnWindowFocus: true,
     staleTime: 10000, // Consider data stale after 10 seconds
     retry: (failureCount, error: any) => {
-      const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-      
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+        code?: string;
+        message?: string;
+      };
+
       // Don't retry network errors aggressively
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
       if (isNetworkError) {
         return failureCount < 1; // Only retry once for network errors
       }
-      
+
       return failureCount < 2;
     },
     retryDelay: 1000,
@@ -1036,17 +1257,23 @@ export function useBonusPayoutHistory(page: number = 1, limit: number = 10) {
     },
     staleTime: 60000, // 1 minute
     retry: (failureCount, error: any) => {
-      const err = error as { statusCode?: number; response?: { status?: number }; code?: string; message?: string };
-      
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+        code?: string;
+        message?: string;
+      };
+
       // Don't retry network errors aggressively
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
       if (isNetworkError) {
         return failureCount < 1; // Only retry once for network errors
       }
-      
+
       return failureCount < 2;
     },
     retryDelay: 1000,
@@ -1066,13 +1293,13 @@ export function useKYCStatus() {
     queryKey: queryKeys.kycStatus,
     queryFn: async () => {
       const response = await userService.getKYCStatus();
-      
+
       // Unwrap response if nested
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
         data = (response as any).data;
       }
-      
+
       return data;
     },
   });
@@ -1134,7 +1361,7 @@ export function useBonusHistory() {
 
 export function useClaimBonus() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (bonusId: string) => api.post(`/bonuses/${bonusId}/claim`),
     onSuccess: () => {
@@ -1153,7 +1380,7 @@ export function useClaimBonus() {
 
 export function useUploadKYC() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: FormData) => api.post('/kyc/upload', payload),
     onSuccess: () => {
@@ -1168,13 +1395,14 @@ export function useUploadKYC() {
 
 export function useUpdatePassword() {
   return useMutation({
-    mutationFn: (payload: ChangePasswordPayload) => api.post('/better-auth/change-password', payload),
+    mutationFn: (payload: ChangePasswordPayload) =>
+      api.post('/better-auth/change-password', payload),
   });
 }
 
 export function useEnable2FA() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     // Note: BetterAuth uses /better-auth/mfa/verify to enable 2FA
     // This is a simplified wrapper - use authService.enable2FA() for full functionality
@@ -1187,7 +1415,7 @@ export function useEnable2FA() {
 
 export function useDisable2FA() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     // Note: BetterAuth doesn't have a disable endpoint in the current implementation
     // This may need to be handled differently or removed
@@ -1209,9 +1437,10 @@ export interface NotificationSettings {
 
 export function useUpdateNotificationSettings() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (settings: NotificationSettings) => api.put('/better-auth/notification-settings', settings),
+    mutationFn: (settings: NotificationSettings) =>
+      api.put('/better-auth/notification-settings', settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profile });
     },

@@ -65,8 +65,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [fetchingTestCode, setFetchingTestCode] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
+  // Transfers should only use Earning Wallet, not total balance
+  // Use earnings.availableBalance (or earnings.balance) for transfers
   const availableBalance =
-    (wallet?.funded?.balance || 0) + (wallet?.earnings?.balance || 0);
+    wallet?.earnings?.availableBalance || wallet?.earnings?.balance || 0;
   const MIN_TRANSFER = 1;
 
   // Reset on open

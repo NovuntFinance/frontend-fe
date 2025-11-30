@@ -749,6 +749,39 @@ export function useEnable2FA() {
   });
 }
 
+/**
+ * Disable 2FA
+ * BetterAuth: POST /better-auth/mfa/disable
+ */
+export function useDisable2FA() {
+  const { updateUser } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      console.log('[useDisable2FA] Disabling 2FA');
+      return authService.disable2FA();
+    },
+    onSuccess: (response) => {
+      console.log('[useDisable2FA] 2FA disabled successfully');
+      updateUser({ twoFAEnabled: false } as Partial<User>);
+
+      // Invalidate profile query to refresh user data
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
+
+      toast.success('2FA Disabled', {
+        description: 'Two-factor authentication has been disabled',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useDisable2FA] Disable failed:', error);
+      toast.error('Disable failed', {
+        description: extractErrorMessage(error, 'Could not disable 2FA'),
+      });
+    },
+  });
+}
+
 export function useLogout() {
   const { logout: clearAuth } = useAuthStore();
 
