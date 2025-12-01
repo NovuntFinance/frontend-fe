@@ -35,6 +35,11 @@ export interface UserWallet {
   // Metadata
   walletAddress: string | null;
   createdAt: string;
+
+  // Withdrawal Address (from wallet info endpoint)
+  defaultWithdrawalAddress?: string | null;
+  hasDefaultAddress?: boolean;
+  immutable?: boolean; // Address cannot be changed once set
 }
 
 export interface DetailedWallet extends UserWallet {
@@ -115,40 +120,68 @@ export interface DepositStatus {
 export interface WithdrawalLimits {
   success: boolean;
   data: {
-    minWithdrawal: number;
-    maxWithdrawal: number;
-    dailyLimit: number;
-    dailyCount: number;
-    resetTime: string;
-    feePercentage: number;
-    feeFixed: number;
-    feeCalculation: string;
     availableBalance: number;
-    canWithdraw: boolean;
-    requiresKYC: boolean;
-    requires2FA: boolean;
+    limits: {
+      minimum: number;
+      instantWithdrawalThreshold: number;
+      enableInstantWithdrawals: boolean;
+    };
+    dailyLimits: {
+      maxWithdrawalsPerDay: number;
+      withdrawalsUsedToday: number;
+      withdrawalsRemaining: number;
+      canWithdrawToday: boolean;
+      resetTime: string;
+    };
+    fees: {
+      percentage: number;
+      description: string;
+    };
     supportedNetworks: string[];
+    processingTimes: {
+      instant: string;
+      standard: string;
+    };
   };
 }
 
+export interface DefaultWithdrawalAddress {
+  success: boolean;
+  data: {
+    address: string | null;
+    hasDefaultAddress: boolean;
+    immutable?: boolean; // Address cannot be changed once set
+  };
+}
+
+export interface SetDefaultAddressRequest {
+  address: string;
+  network?: 'TRC20' | 'BEP20'; // Optional, backend may auto-detect
+  twoFACode?: string; // Required for setting address
+}
+
 export interface WithdrawalRequest {
-  amount: number; // Min: 20, Max: 10000
-  walletAddress: string;
-  network?: string; // "BEP20" | "TRC20" | "ERC20"
+  amount: number;
+  walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
+  network?: 'TRC20' | 'BEP20'; // Optional, backend may use address's network
+  twoFACode: string; // Required
 }
 
 export interface WithdrawalResponse {
   success: boolean;
   message: string;
   data: {
-    withdrawalId: string;
+    transactionId: string;
+    reference: string;
     amount: number;
     fee: number;
     netAmount: number;
     walletAddress: string;
     network: string;
-    status: 'pending';
-    requestedAt: string;
+    status: 'pending' | 'requires_approval' | 'confirmed' | 'failed';
+    requiresApproval: boolean;
+    fraudScore?: number;
+    ledgerEntries?: string[];
     estimatedProcessingTime: string;
   };
 }
@@ -232,12 +265,37 @@ export const walletApi = {
   },
 
   /**
-   * Get withdrawal limits
+   * Get withdrawal limits and available balance
    * GET /api/v1/enhanced-transactions/withdrawal/limits
    */
   async getWithdrawalLimits(): Promise<WithdrawalLimits> {
     const response = await api.get<WithdrawalLimits>(
       '/enhanced-transactions/withdrawal/limits'
+    );
+    return response;
+  },
+
+  /**
+   * Get default withdrawal address
+   * GET /api/v1/wallets/withdrawal/default-address
+   */
+  async getDefaultWithdrawalAddress(): Promise<DefaultWithdrawalAddress> {
+    const response = await api.get<DefaultWithdrawalAddress>(
+      '/wallets/withdrawal/default-address'
+    );
+    return response;
+  },
+
+  /**
+   * Set default withdrawal address (requires 2FA)
+   * POST /api/v1/wallets/withdrawal/default-address
+   */
+  async setDefaultWithdrawalAddress(
+    payload: SetDefaultAddressRequest
+  ): Promise<DefaultWithdrawalAddress> {
+    const response = await api.post<DefaultWithdrawalAddress>(
+      '/wallets/withdrawal/default-address',
+      payload
     );
     return response;
   },

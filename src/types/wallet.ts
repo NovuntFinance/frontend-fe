@@ -43,12 +43,12 @@ export interface UserWallet {
   totalBalance: number;
   fundedWallet: number;
   earningWallet: number;
-  
+
   // Capabilities
   canStake: boolean;
   canWithdraw: boolean;
   canTransfer: boolean;
-  
+
   // Statistics
   statistics: {
     totalDeposited: number;
@@ -58,10 +58,15 @@ export interface UserWallet {
     totalStaked: number;
     totalStakeReturns: number;
   };
-  
+
   // Metadata
   walletAddress: string | null;
   createdAt: string;
+
+  // Withdrawal Address (from wallet info endpoint)
+  defaultWithdrawalAddress?: string | null;
+  hasDefaultAddress?: boolean;
+  immutable?: boolean; // Address cannot be changed once set
 }
 
 export interface DetailedWallet extends UserWallet {
@@ -73,7 +78,7 @@ export interface DetailedWallet extends UserWallet {
     canStake: boolean;
     canWithdraw: boolean;
   };
-  
+
   // Staking Options
   stakingOptions: {
     availableForStaking: number;
@@ -83,7 +88,7 @@ export interface DetailedWallet extends UserWallet {
       fromEarningWallet: number;
     };
   };
-  
+
   // Transfer Options
   transferOptions: {
     availableForTransfer: number;
@@ -93,7 +98,7 @@ export interface DetailedWallet extends UserWallet {
       fromEarningWallet: number;
     };
   };
-  
+
   // Withdrawal Options
   withdrawalOptions: {
     availableForWithdrawal: number;

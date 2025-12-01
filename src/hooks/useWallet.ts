@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletApi, type TransactionFilters } from '@/services/walletApi';
 import { queryKeys } from '@/lib/queries';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils/wallet';
 
 import type { WalletBalance } from '@/types/wallet';
 import type { UserWallet } from '@/services/walletApi';
@@ -175,46 +176,68 @@ export function useWithdrawalLimits() {
     queryKey: queryKeys.withdrawalLimits,
     queryFn: async () => {
       try {
+        console.log('[useWithdrawalLimits] 🔍 Fetching withdrawal limits...');
         const response = await walletApi.getWithdrawalLimits();
+        console.log('[useWithdrawalLimits] 📥 Response:', response);
+
         // Ensure we always return a value, never undefined
         if (!response || !response.data) {
           console.warn(
-            '[useWithdrawalLimits] Invalid response, returning default limits'
+            '[useWithdrawalLimits] ⚠️ Invalid response, returning default limits'
           );
           return {
-            minWithdrawal: 20,
-            maxWithdrawal: 10000,
-            dailyLimit: 2,
-            dailyCount: 0,
-            resetTime: new Date().toISOString(),
-            feePercentage: 2.5,
-            feeFixed: 1,
-            feeCalculation: '2.5% + 1 USDT',
             availableBalance: 0,
-            canWithdraw: false,
-            requiresKYC: false,
-            requires2FA: true,
-            supportedNetworks: ['BEP20', 'TRC20'],
+            limits: {
+              minimum: 10,
+              instantWithdrawalThreshold: 50,
+              enableInstantWithdrawals: true,
+            },
+            dailyLimits: {
+              maxWithdrawalsPerDay: 2,
+              withdrawalsUsedToday: 0,
+              withdrawalsRemaining: 2,
+              canWithdrawToday: true,
+              resetTime: new Date().toISOString(),
+            },
+            fees: {
+              percentage: 3.0,
+              description: '3% fee applied to all withdrawals',
+            },
+            supportedNetworks: ['TRC20', 'BEP20'],
+            processingTimes: {
+              instant: '5-15 minutes (amounts under $50)',
+              standard: '1-24 hours (admin approval required)',
+            },
           };
         }
+        console.log('[useWithdrawalLimits] ✅ Returning data:', response.data);
         return response.data;
       } catch (error) {
-        console.error('[useWithdrawalLimits] Error fetching limits:', error);
+        console.error('[useWithdrawalLimits] ❌ Error fetching limits:', error);
         // Return default limits on error instead of undefined
         return {
-          minWithdrawal: 20,
-          maxWithdrawal: 10000,
-          dailyLimit: 2,
-          dailyCount: 0,
-          resetTime: new Date().toISOString(),
-          feePercentage: 2.5,
-          feeFixed: 1,
-          feeCalculation: '2.5% + 1 USDT',
           availableBalance: 0,
-          canWithdraw: false,
-          requiresKYC: false,
-          requires2FA: true,
-          supportedNetworks: ['BEP20', 'TRC20'],
+          limits: {
+            minimum: 10,
+            instantWithdrawalThreshold: 50,
+            enableInstantWithdrawals: true,
+          },
+          dailyLimits: {
+            maxWithdrawalsPerDay: 2,
+            withdrawalsUsedToday: 0,
+            withdrawalsRemaining: 2,
+            canWithdrawToday: true,
+            resetTime: new Date().toISOString(),
+          },
+          fees: {
+            percentage: 3.0,
+            description: '3% fee applied to all withdrawals',
+          },
+          supportedNetworks: ['TRC20', 'BEP20'],
+          processingTimes: {
+            instant: '5-15 minutes (amounts under $50)',
+            standard: '1-24 hours (admin approval required)',
+          },
         };
       }
     },
@@ -222,7 +245,141 @@ export function useWithdrawalLimits() {
 }
 
 /**
+ * Get default withdrawal address
+ * GET /api/v1/wallets/withdrawal/default-address
+ */
+export function useDefaultWithdrawalAddress() {
+  return useQuery({
+    queryKey: ['withdrawal', 'default-address'],
+    queryFn: async () => {
+      try {
+        const response = await walletApi.getDefaultWithdrawalAddress();
+        // Ensure we always return a value, never undefined
+        if (!response || !response.data) {
+          console.warn(
+            '[useDefaultWithdrawalAddress] Invalid response, returning default'
+          );
+          return {
+            address: null,
+            hasDefaultAddress: false,
+            immutable: false,
+          };
+        }
+        return response.data;
+      } catch (error: any) {
+        // If 404, user doesn't have default address
+        if (error?.response?.status === 404 || error?.statusCode === 404) {
+          return {
+            address: null,
+            hasDefaultAddress: false,
+            immutable: false,
+          };
+        }
+        // For other errors, return default instead of throwing
+        // This prevents React Query from setting data to undefined
+        console.error(
+          '[useDefaultWithdrawalAddress] Error fetching default address:',
+          error
+        );
+        return {
+          address: null,
+          hasDefaultAddress: false,
+          immutable: false,
+        };
+      }
+    },
+  });
+}
+
+/**
+ * Set default withdrawal address mutation (requires 2FA, immutable once set)
+ * POST /api/v1/wallets/withdrawal/default-address
+ */
+export function useSetDefaultWithdrawalAddress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: {
+      address: string;
+      network?: 'TRC20' | 'BEP20';
+      twoFACode?: string;
+    }) => walletApi.setDefaultWithdrawalAddress(payload),
+    onSuccess: async (response) => {
+      // Update cache immediately with response data if available
+      if (response?.data) {
+        queryClient.setQueryData(
+          ['withdrawal', 'default-address'],
+          response.data
+        );
+      }
+      // Invalidate both the default address query and wallet info query
+      // (wallet info now includes default address info)
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['withdrawal', 'default-address'],
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.walletInfo }),
+      ]);
+      // Refetch to ensure UI is updated immediately
+      await queryClient.refetchQueries({
+        queryKey: ['withdrawal', 'default-address'],
+      });
+      toast.success('Withdrawal address set', {
+        description:
+          'Your withdrawal address has been saved and cannot be changed',
+      });
+    },
+    onError: (error: any) => {
+      const errorData = error?.response?.data;
+      const code = errorData?.code;
+      const message =
+        errorData?.message || error?.message || 'Failed to save address';
+
+      // Handle immutable address error
+      if (
+        code === 'ADDRESS_IMMUTABLE' ||
+        (error?.response?.status === 403 && code !== '2FA_CODE_INVALID')
+      ) {
+        const currentAddress = errorData?.currentAddress;
+
+        // If we get ADDRESS_IMMUTABLE, the address exists even if GET didn't return it
+        // Invalidate and refetch to update the UI
+        queryClient.invalidateQueries({
+          queryKey: ['withdrawal', 'default-address'],
+        });
+
+        toast.error('Address cannot be changed', {
+          description: currentAddress
+            ? `Your withdrawal address (${currentAddress.slice(0, 10)}...${currentAddress.slice(-10)}) is permanently set and cannot be changed. Contact support if needed.`
+            : 'Your withdrawal address is permanently set and cannot be changed. Contact support if needed.',
+          duration: 5000,
+        });
+      } else if (code === 'UNSUPPORTED_NETWORK') {
+        toast.error('Network not supported', {
+          description: 'Only BEP20 (BSC) network is supported.',
+        });
+      } else if (code === 'INVALID_ADDRESS') {
+        toast.error('Invalid BEP20 address', {
+          description:
+            message ||
+            'Invalid BEP20 address. Please enter a valid BSC wallet address.',
+        });
+      } else if (code === '2FA_CODE_INVALID') {
+        toast.error('Invalid 2FA code', {
+          description: 'Invalid 2FA code. Please try again.',
+        });
+      } else {
+        toast.error('Save failed', {
+          description: message,
+        });
+      }
+    },
+  });
+}
+
+/**
  * Create withdrawal mutation (requires 2FA)
+ * POST /api/v1/enhanced-transactions/withdrawal/create
  */
 export function useCreateWithdrawal() {
   const queryClient = useQueryClient();
@@ -230,8 +387,9 @@ export function useCreateWithdrawal() {
   return useMutation({
     mutationFn: (payload: {
       amount: number;
-      walletAddress: string;
-      network?: string;
+      walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
+      network?: 'TRC20' | 'BEP20';
+      twoFACode: string; // Required
     }) => walletApi.createWithdrawal(payload),
     onSuccess: (response) => {
       // Invalidate wallet queries
@@ -241,24 +399,63 @@ export function useCreateWithdrawal() {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
 
-      toast.success('Withdrawal requested', {
-        description: 'Your withdrawal will be processed within 24-48 hours',
-      });
+      const requiresApproval = response.data?.requiresApproval;
+      const estimatedTime =
+        response.data?.estimatedProcessingTime || '1-24 hours';
+
+      if (requiresApproval) {
+        toast.success('Withdrawal submitted for approval', {
+          description: `Admin approval required. ${estimatedTime}`,
+        });
+      } else {
+        toast.success('Withdrawal processing', {
+          description: `Processing your withdrawal. ${estimatedTime}`,
+        });
+      }
     },
     onError: (error: any) => {
+      const errorData = error?.response?.data;
+      const code = errorData?.code;
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to create withdrawal';
+        errorData?.message || error?.message || 'Failed to create withdrawal';
 
-      // Handle specific error cases
-      if (error?.response?.status === 403) {
+      // Handle specific error codes
+      if (code === 'INSUFFICIENT_FUNDS') {
+        const availableBalance = errorData?.availableBalance || 0;
+        toast.error('Insufficient balance', {
+          description: `Available: ${formatCurrency(availableBalance)}. Withdrawals can only be made from earnings wallet.`,
+        });
+      } else if (code === 'WITHDRAWAL_AMOUNT_TOO_LOW') {
+        toast.error('Amount too low', {
+          description: message,
+        });
+      } else if (code === 'WITHDRAWAL_AMOUNT_TOO_HIGH') {
+        toast.error('Amount too high', {
+          description: message,
+        });
+      } else if (code === 'WALLET_ADDRESS_REQUIRED') {
+        const requiresSetup = errorData?.requiresSetup;
+        toast.error('Withdrawal address required', {
+          description: requiresSetup
+            ? message ||
+              'Please set your default withdrawal address first. You will be redirected to the setup page.'
+            : 'Please enter a wallet address or set a default address',
+        });
+      } else if (code === 'INVALID_ADDRESS') {
+        toast.error('Invalid address', {
+          description: message,
+        });
+      } else if (code === '2FA_REQUIRED' || code === '2FA_CODE_INVALID') {
+        toast.error('2FA Error', {
+          description: message || 'Invalid 2FA code. Please try again.',
+        });
+      } else if (code === 'DAILY_LIMIT_EXCEEDED') {
+        toast.error('Daily limit exceeded', {
+          description: message,
+        });
+      } else if (error?.response?.status === 403) {
         toast.error('2FA Required', {
           description: 'Please complete 2FA verification to proceed',
-        });
-      } else if (error?.response?.status === 400) {
-        toast.error('Invalid Request', {
-          description: message,
         });
       } else {
         toast.error('Withdrawal failed', {

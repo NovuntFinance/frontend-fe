@@ -321,3 +321,34 @@ export function formatTimeRemaining(milliseconds: number): string {
   }
   return `${seconds}s`;
 }
+
+/**
+ * Generate a random test wallet address for development/testing
+ * @param network - Network type (TRC20, BEP20, ERC20)
+ * @returns A valid-looking test wallet address
+ *
+ * NOTE: This is for TESTING ONLY. Do not use in production.
+ * These addresses are randomly generated and not real wallet addresses.
+ */
+export function generateTestWalletAddress(
+  network: 'TRC20' | 'BEP20' | 'ERC20' = 'TRC20'
+): string {
+  if (network === 'TRC20') {
+    // TRC20: T + 33 base58 characters
+    const base58Chars =
+      '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    const randomChars = Array.from(
+      { length: 33 },
+      () => base58Chars[Math.floor(Math.random() * base58Chars.length)]
+    ).join('');
+    return `T${randomChars}`;
+  } else {
+    // BEP20/ERC20: 0x + 40 hex characters
+    const hexChars = '0123456789abcdef';
+    const randomHex = Array.from(
+      { length: 40 },
+      () => hexChars[Math.floor(Math.random() * hexChars.length)]
+    ).join('');
+    return `0x${randomHex}`;
+  }
+}
