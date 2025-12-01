@@ -54,7 +54,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       }
 
       // Check if 2FA is enabled
-      const is2FAEnabled = admin.twoFAEnabled && admin.twoFASecret;
+      // Only check twoFAEnabled - twoFASecret is not needed after initial setup
+      const is2FAEnabled = admin.twoFAEnabled === true;
 
       // Reset needs2FA state
       setNeeds2FA(false);

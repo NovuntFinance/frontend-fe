@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { rosApi, CalendarEntry } from '@/services/rosApi';
+import { use2FA } from '@/contexts/TwoFAContext';
 import {
   Card,
   CardContent,
@@ -23,11 +24,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 
 export function CalendarManagement() {
   const [activeTab, setActiveTab] = useState('current');
   const [loading, setLoading] = useState(false);
+  const { promptFor2FA } = use2FA();
 
   // Data states
   const [currentCalendar, setCurrentCalendar] = useState<CalendarEntry | null>(
@@ -49,28 +51,83 @@ export function CalendarManagement() {
     sunday: 0,
   });
 
-  const fetchCurrent = async () => {
-    try {
-      const data = await rosApi.getCurrentCalendar();
-      setCurrentCalendar(data);
-    } catch (error) {
-      console.error('Failed to fetch current calendar', error);
-    }
-  };
+  const fetchCurrent = useCallback(
+    async (twoFACode?: string) => {
+      try {
+        setLoading(true);
+        const data = await rosApi.getCurrentCalendar(twoFACode);
+        setCurrentCalendar(data);
+        if (!data) {
+          toast.info('No active calendar found for the current week.');
+        }
+      } catch (error: any) {
+        console.error(
+          '[CalendarManagement] Failed to fetch current calendar:',
+          error
+        );
+
+        // Check if it's a 2FA error
+        const errorData = error.response?.data;
+        const errorCode = errorData?.error?.code;
+        const is2FAError =
+          errorCode === '2FA_CODE_REQUIRED' ||
+          errorCode === '2FA_CODE_INVALID' ||
+          errorCode === '2FA_MANDATORY' ||
+          (error.response?.status === 400 &&
+            errorData?.message?.toLowerCase().includes('2fa'));
+
+        if (is2FAError && !twoFACode) {
+          // First attempt - prompt for 2FA code
+          console.log(
+            '[CalendarManagement] 2FA required for getCurrentCalendar, prompting for code...'
+          );
+          const code = await promptFor2FA();
+          if (code) {
+            console.log(
+              '[CalendarManagement] Retrying getCurrentCalendar with 2FA code...'
+            );
+            // Retry with 2FA code
+            await fetchCurrent(code);
+            return;
+          } else {
+            toast.error('2FA code is required to view current calendar');
+            return;
+          }
+        } else if (is2FAError && twoFACode) {
+          // Retry failed - invalid 2FA code
+          toast.error('Invalid 2FA code. Please try again.');
+          return;
+        }
+
+        // For other errors, show error message but don't throw
+        // GET requests can fail gracefully - just show a toast
+        if (error.response?.status !== 404) {
+          toast.error(error.message || 'Failed to fetch current calendar');
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [promptFor2FA]
+  );
 
   const fetchHistory = async () => {
     try {
+      setLoading(true);
       const data = await rosApi.getAllCalendars();
-      setCalendarHistory(data);
-    } catch (error) {
+      setCalendarHistory(data || []);
+    } catch (error: any) {
       console.error('Failed to fetch calendar history', error);
+      toast.error(error.message || 'Failed to fetch calendar history');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (activeTab === 'current') fetchCurrent();
     if (activeTab === 'history') fetchHistory();
-  }, [activeTab]);
+  }, [activeTab, fetchCurrent]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,9 +157,169 @@ export function CalendarManagement() {
       setWeekStartDate('');
       fetchCurrent();
       setActiveTab('current');
-    } catch (error) {
-      console.error('Failed to create calendar', error);
-      toast.error('Failed to create calendar');
+    } catch (error: any) {
+      console.error('[CalendarManagement] Failed to create calendar:', error);
+
+      // Extract error message from various possible locations
+      const errorData = error.response?.data;
+      const errorCode = errorData?.error?.code;
+      const errorMsg =
+        error.message || errorData?.message || errorData?.error?.message || '';
+
+      // Log each property separately to avoid serialization issues
+      console.error('[CalendarManagement] Error details:');
+      console.error('  - Message:', error.message);
+      console.error('  - Code:', error.code);
+      console.error('  - Is Network Error:', error.isNetworkError);
+      console.error('  - Has Response:', !!error.response);
+      if (error.response) {
+        console.error('  - Response Status:', error.response.status);
+        console.error('  - Response Data:', error.response.data);
+        console.error(
+          '  - Response Data (Stringified):',
+          JSON.stringify(error.response.data, null, 2)
+        );
+      }
+      console.error('  - Error Message:', errorMsg);
+      console.error('  - Error Code:', errorCode);
+
+      // Check if calendar already exists (409 Conflict) - handle before 2FA check
+      if (error.response?.status === 409) {
+        toast.error(
+          error.response?.data?.message ||
+            errorData?.message ||
+            'A calendar for this week already exists.'
+        );
+        return;
+      }
+
+      // Check if it's a 2FA error FIRST - check error message string even if no response
+      // The error message "2FA code is required for admin operations" indicates a 2FA error
+      const is2FAError =
+        errorCode === '2FA_CODE_REQUIRED' ||
+        errorCode === '2FA_CODE_INVALID' ||
+        errorCode === '2FA_MANDATORY' ||
+        errorMsg.toLowerCase().includes('2fa') ||
+        errorMsg.toLowerCase().includes('two-factor') ||
+        errorMsg.toLowerCase().includes('two factor') ||
+        errorMsg.toLowerCase().includes('2fa code is required');
+
+      // Check if status is 400 or 403 (both can mean 2FA required for admin endpoints)
+      const statusCode = error.response?.status;
+      const is2FAStatus = statusCode === 400 || statusCode === 403;
+
+      if (is2FAError || is2FAStatus) {
+        // For 403 errors or 2FA-related messages, prompt for 2FA code
+        console.log(
+          '[CalendarManagement] 2FA required, prompting for code...',
+          {
+            is2FAError,
+            is2FAStatus,
+            statusCode,
+            errorMessage: errorMsg,
+            errorCode,
+            hasResponse: !!error.response,
+          }
+        );
+        // Prompt for 2FA code and retry
+        try {
+          console.log('[CalendarManagement] Calling promptFor2FA()...');
+          const twoFACode = await promptFor2FA();
+          console.log(
+            '[CalendarManagement] Received 2FA code:',
+            twoFACode ? 'YES' : 'NO'
+          );
+          if (twoFACode) {
+            // Retry with 2FA code
+            console.log('[CalendarManagement] Retrying with 2FA code...');
+            const startDateISO = new Date(weekStartDate).toISOString();
+            const payload =
+              mode === 'random'
+                ? {
+                    weekStartDate: startDateISO,
+                    targetWeeklyPercentage: weeklyTarget,
+                    description: `Week starting ${weekStartDate} - Random ${weeklyTarget}%`,
+                  }
+                : {
+                    weekStartDate: startDateISO,
+                    dailyPercentages: manualPercentages,
+                    description: `Week starting ${weekStartDate} - Manual`,
+                  };
+
+            console.log('[CalendarManagement] Retry payload:', payload);
+            console.log(
+              '[CalendarManagement] Retry with 2FA code:',
+              twoFACode ? 'YES' : 'NO'
+            );
+
+            await rosApi.createCalendar(payload, twoFACode);
+            toast.success('Calendar created successfully');
+            setWeekStartDate('');
+            fetchCurrent();
+            setActiveTab('current');
+            return;
+          } else {
+            toast.error('2FA code is required to create calendar');
+            return;
+          }
+        } catch (retryError: any) {
+          console.error('[CalendarManagement] Retry failed:', retryError);
+
+          // Check if it's still a network error after providing 2FA code
+          if (retryError.isNetworkError || !retryError.response) {
+            toast.error(
+              'Network error: The backend endpoint may not be implemented. ' +
+                'Please check with the backend team if the calendar creation endpoint exists.'
+            );
+            return;
+          }
+
+          // Check if 2FA code was invalid
+          const retryErrorCode = retryError.response?.data?.error?.code;
+          if (retryErrorCode === '2FA_CODE_INVALID') {
+            toast.error('Invalid 2FA code. Please try again.');
+            return;
+          }
+
+          // Check if calendar already exists (409 Conflict)
+          if (retryError.response?.status === 409) {
+            toast.error(
+              retryError.response?.data?.message ||
+                'A calendar for this week already exists.'
+            );
+            return;
+          }
+
+          const retryErrorMessage =
+            retryError.message ||
+            retryError.response?.data?.message ||
+            retryError.response?.data?.error?.message ||
+            'Failed to create calendar with 2FA code.';
+          toast.error(retryErrorMessage);
+          return;
+        }
+      }
+
+      // Check if it's a network error (only after checking for 2FA)
+      if (
+        error.isNetworkError ||
+        (!error.response &&
+          !is2FAError &&
+          !errorMsg.toLowerCase().includes('2fa'))
+      ) {
+        toast.error(
+          error.message ||
+            'Network error: Unable to connect to the backend. Please check your internet connection and ensure the backend server is running.'
+        );
+        return;
+      }
+
+      const finalErrorMessage =
+        error.message ||
+        error.response?.data?.message ||
+        error.response?.data?.error?.message ||
+        'Failed to create calendar. Please check the backend endpoint is implemented.';
+      toast.error(finalErrorMessage);
     } finally {
       setLoading(false);
     }
@@ -136,7 +353,12 @@ export function CalendarManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {currentCalendar ? (
+              {loading ? (
+                <div className="text-muted-foreground flex h-40 items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading calendar...
+                </div>
+              ) : currentCalendar ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="rounded-lg border p-4">
@@ -249,10 +471,14 @@ export function CalendarManagement() {
                       type="number"
                       step="0.01"
                       required
-                      value={weeklyTarget}
-                      onChange={(e) =>
-                        setWeeklyTarget(parseFloat(e.target.value))
-                      }
+                      value={weeklyTarget || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const numValue = value === '' ? 0 : parseFloat(value);
+                        if (!isNaN(numValue)) {
+                          setWeeklyTarget(numValue);
+                        }
+                      }}
                     />
                   </div>
                 ) : (
@@ -263,13 +489,28 @@ export function CalendarManagement() {
                         <Input
                           type="number"
                           step="0.01"
-                          value={(manualPercentages as any)[day]}
-                          onChange={(e) =>
-                            setManualPercentages((prev) => ({
-                              ...prev,
-                              [day]: parseFloat(e.target.value),
-                            }))
+                          value={
+                            Number.isFinite((manualPercentages as any)[day])
+                              ? (manualPercentages as any)[day]
+                              : ''
                           }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              setManualPercentages((prev) => ({
+                                ...prev,
+                                [day]: 0,
+                              }));
+                              return;
+                            }
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue) && isFinite(numValue)) {
+                              setManualPercentages((prev) => ({
+                                ...prev,
+                                [day]: numValue,
+                              }));
+                            }
+                          }}
                         />
                       </div>
                     ))}

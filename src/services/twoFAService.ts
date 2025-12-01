@@ -52,7 +52,7 @@ class TwoFAService {
    * Step 1: Generate 2FA Secret
    * POST /api/v1/better-auth/mfa/setup
    */
-  async generateSecret(email?: string): Promise<Generate2FASecretResponse> {
+  async generateSecret(): Promise<Generate2FASecretResponse> {
     const token = adminAuthService.getToken();
     if (!token) throw new Error('Not authenticated');
 

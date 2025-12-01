@@ -54,8 +54,8 @@ export default function AdminLoginPage() {
     if (adminAuthService.isAuthenticated()) {
       const admin = adminAuthService.getCurrentAdmin();
       if (admin) {
-        // Check if 2FA is enabled
-        if (admin.twoFAEnabled && admin.twoFASecret) {
+        // Check if 2FA is enabled - only check twoFAEnabled, not twoFASecret
+        if (admin.twoFAEnabled === true) {
           router.push('/admin/overview');
         } else {
           router.push('/admin/setup-2fa');
@@ -135,7 +135,8 @@ export default function AdminLoginPage() {
         if (token) {
           // If we have admin data, check 2FA status
           if (admin) {
-            if (admin.twoFAEnabled && admin.twoFASecret) {
+            // Only check twoFAEnabled - twoFASecret is not needed after initial setup
+            if (admin.twoFAEnabled === true) {
               // Redirect to admin dashboard
               const redirectTo =
                 searchParams.get('redirect') || '/admin/overview';

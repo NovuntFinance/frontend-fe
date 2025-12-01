@@ -5,8 +5,10 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
+import { TwoFAInputModal } from '@/components/admin/TwoFAInputModal';
 
 interface TwoFAContextType {
   twoFACode: string | null;
@@ -21,21 +23,45 @@ const TwoFAContext = createContext<TwoFAContextType | undefined>(undefined);
 export function TwoFAProvider({ children }: { children: ReactNode }) {
   const [twoFACode, set2FACode] = useState<string | null>(null);
   const [isPrompting, setIsPrompting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const resolveRef = useRef<((value: string | null) => void) | null>(null);
+  const rejectRef = useRef<((reason?: any) => void) | null>(null);
 
   const promptFor2FA = useCallback((): Promise<string | null> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // Store resolve/reject so we can call them when modal confirms/cancels
+      resolveRef.current = resolve;
+      rejectRef.current = reject;
       setIsPrompting(true);
-      // This will be handled by the TwoFAInputModal component
-      // For now, use a simple prompt (can be replaced with modal)
-      const code = prompt('Enter 2FA code from your authenticator app:');
-      setIsPrompting(false);
-      if (code && code.length === 6) {
-        set2FACode(code);
-        resolve(code);
-      } else {
-        resolve(null);
+      setIsModalOpen(true);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[TwoFAContext] Opening 2FA modal...');
       }
     });
+  }, []);
+
+  const handleModalConfirm = useCallback((code: string) => {
+    set2FACode(code);
+    setIsPrompting(false);
+    setIsModalOpen(false);
+    if (resolveRef.current) {
+      resolveRef.current(code);
+      resolveRef.current = null;
+    }
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsPrompting(false);
+    setIsModalOpen(false);
+    if (resolveRef.current) {
+      resolveRef.current(null);
+      resolveRef.current = null;
+    }
+    if (rejectRef.current) {
+      rejectRef.current(new Error('2FA prompt cancelled'));
+      rejectRef.current = null;
+    }
   }, []);
 
   const clear2FA = useCallback(() => {
@@ -53,6 +79,19 @@ export function TwoFAProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ display: 'none' }}>
+          Modal State: {isModalOpen ? 'OPEN' : 'CLOSED'} | Prompting:{' '}
+          {isPrompting ? 'YES' : 'NO'}
+        </div>
+      )}
+      <TwoFAInputModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        onConfirm={handleModalConfirm}
+        title="Two-Factor Authentication Required"
+        description="Enter the 6-digit code from your authenticator app to continue with this admin operation"
+      />
     </TwoFAContext.Provider>
   );
 }

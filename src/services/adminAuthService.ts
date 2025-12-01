@@ -142,10 +142,11 @@ class AdminAuthService {
                 | 'admin'
                 | 'superAdmin',
               // Use twoFAEnabled from backend response if available
+              // Backend response takes precedence over JWT token
               twoFAEnabled:
                 backendTwoFA !== undefined
                   ? backendTwoFA
-                  : payload.twoFAEnabled === true,
+                  : payload.twoFAEnabled === true || false,
               twoFASecret: payload.twoFASecret || undefined,
               isActive: payload.isActive !== false,
               emailVerified: payload.emailVerified !== false,
@@ -180,6 +181,12 @@ class AdminAuthService {
 
         // Store user data
         if (user) {
+          // Log stored user data for debugging
+          console.log('[AdminAuthService] Storing user data:', {
+            email: user.email,
+            role: user.role,
+            twoFAEnabled: user.twoFAEnabled,
+          });
           this.setUser(user);
         }
 
@@ -227,10 +234,11 @@ class AdminAuthService {
 
   /**
    * Check if admin has 2FA enabled
+   * Note: Only checks twoFAEnabled status, not twoFASecret (which isn't needed after setup)
    */
   has2FAEnabled(): boolean {
     const user = this.getCurrentAdmin();
-    return user?.twoFAEnabled === true && !!user?.twoFASecret;
+    return user?.twoFAEnabled === true;
   }
 
   /**
