@@ -17,12 +17,38 @@ import type {
 
 export const transferApi = {
   /**
+   * Detect identifier type from user input
+   * Returns the appropriate identifier fields based on input
+   */
+  detectIdentifierType(input: string): {
+    recipientId?: string;
+    recipientUsername?: string;
+    recipientEmail?: string;
+  } {
+    const trimmed = input.trim();
+
+    // Check if it's an email (contains @)
+    if (trimmed.includes('@')) {
+      return { recipientEmail: trimmed.toLowerCase() };
+    }
+
+    // Check if it's a MongoDB ObjectId (24 hex characters)
+    if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+      return { recipientId: trimmed };
+    }
+
+    // Otherwise, treat as username
+    return { recipientUsername: trimmed.toLowerCase() };
+  },
+
+  /**
    * Transfer Funds
    * POST /api/v1/transfer
    */
   async transferFunds(data: TransferRequest): Promise<TransferResponse> {
     console.log('[transferApi] Initiating transfer:', {
-      recipient: data.recipientUsername || data.recipientId,
+      recipient:
+        data.recipientEmail || data.recipientUsername || data.recipientId,
       amount: data.amount,
       hasMemo: !!data.memo,
     });
@@ -30,6 +56,7 @@ export const transferApi = {
     const response = await apiRequest<TransferResponse>('post', '/transfer', {
       recipientId: data.recipientId,
       recipientUsername: data.recipientUsername?.toLowerCase(),
+      recipientEmail: data.recipientEmail?.toLowerCase().trim(),
       amount: data.amount,
       memo: data.memo,
       twoFACode: data.twoFACode,
@@ -52,7 +79,7 @@ export const transferApi = {
     filters: TransferHistoryFilters = {}
   ): Promise<TransferHistoryResponse> {
     const params = new URLSearchParams();
-    
+
     if (filters.page) params.append('page', filters.page.toString());
     if (filters.limit) params.append('limit', filters.limit.toString());
     if (filters.direction) params.append('direction', filters.direction);
@@ -95,10 +122,10 @@ export const transferApi = {
 
       const transfers = historyResponse.data?.transfers || [];
       const searchLower = query.trim().toLowerCase();
-      
+
       // Extract unique recipients from transfer history
       const pastRecipients = new Map<string, UserSearchResult>();
-      
+
       transfers.forEach((transfer) => {
         // Check if transfer has a recipient (for outgoing transfers)
         if (transfer.recipient && transfer.direction === 'out') {
@@ -119,7 +146,7 @@ export const transferApi = {
       });
 
       const results = Array.from(pastRecipients.values());
-      
+
       console.log('[transferApi] Past recipients found:', results.length);
 
       return results;
@@ -132,10 +159,10 @@ export const transferApi = {
   /**
    * Get 2FA Code (Development/Testing Only)
    * GET /api/test/2fa-code
-   * 
+   *
    * NOTE: This endpoint is for testing purposes only.
    * In production, users generate codes from their authenticator app.
-   * 
+   *
    * IMPORTANT: This endpoint is at /api/test/2fa-code (not /api/v1/test/2fa-code)
    */
   async get2FACode(): Promise<TwoFACodeResponse> {
@@ -143,20 +170,23 @@ export const transferApi = {
 
     // The test endpoint is at /api/test/2fa-code (not /api/v1/test/2fa-code)
     // So we need to use the base URL without /v1
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
     const testBaseURL = baseURL.replace('/api/v1', '/api');
-    
+
     // Get auth token
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('accessToken') || localStorage.getItem('authToken')
-      : null;
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('accessToken') ||
+          localStorage.getItem('authToken')
+        : null;
 
     // Use axios directly since this endpoint is outside the /v1 namespace
     const response = await axios.get<TwoFACodeResponse>(
       `${testBaseURL}/test/2fa-code`,
       {
         headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
+          Authorization: token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json',
         },
         withCredentials: true, // Include cookies for authentication
@@ -175,7 +205,10 @@ export const transferApi = {
    * Validate Transfer Amount
    * Client-side validation before API call
    */
-  validateTransferAmount(amount: number, availableBalance: number): {
+  validateTransferAmount(
+    amount: number,
+    availableBalance: number
+  ): {
     isValid: boolean;
     error?: string;
   } {
@@ -204,6 +237,51 @@ export const transferApi = {
       return {
         isValid: false,
         error: 'Insufficient balance for this transfer',
+      };
+    }
+
+    return { isValid: true };
+  },
+
+  /**
+   * Validate Recipient Identifier
+   * Validates email, username, or user ID format
+   */
+  validateRecipientIdentifier(identifier: string): {
+    isValid: boolean;
+    error?: string;
+  } {
+    if (!identifier || identifier.trim().length === 0) {
+      return {
+        isValid: false,
+        error: 'Recipient email, username, or user ID is required',
+      };
+    }
+
+    const trimmed = identifier.trim();
+
+    // If it looks like an email, validate email format
+    if (trimmed.includes('@')) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmed)) {
+        return {
+          isValid: false,
+          error: 'Please enter a valid email address',
+        };
+      }
+    }
+
+    // If it looks like a MongoDB ObjectId, validate format
+    if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+      // Valid ObjectId format
+      return { isValid: true };
+    }
+
+    // Username validation (basic check - at least 2 characters)
+    if (trimmed.length < 2) {
+      return {
+        isValid: false,
+        error: 'Username must be at least 2 characters',
       };
     }
 
@@ -260,7 +338,7 @@ export const transferApi = {
 
     // Handle specific error messages
     const message = error?.message || error?.error?.message || '';
-    
+
     if (message.includes('Minimum transfer')) {
       return 'Transfer amount is below the minimum (1 USDT)';
     }
@@ -273,8 +351,30 @@ export const transferApi = {
     if (message.includes('Invalid 2FA')) {
       return 'Invalid 2FA code. Please try again.';
     }
-    if (message.includes('not found') || message.includes('User with username')) {
-      return 'Recipient not found. Please check the username.';
+    // Handle email-specific errors
+    if (
+      (message.includes('email') && message.includes('not found')) ||
+      message.includes('No user found with that email')
+    ) {
+      return 'No user found with that email address';
+    }
+    // Handle username-specific errors
+    if (
+      (message.includes('username') && message.includes('not found')) ||
+      message.includes('User with username')
+    ) {
+      return 'No user found with that username';
+    }
+    // Handle generic "not found" errors
+    if (
+      message.includes('not found') ||
+      message.includes('Recipient not found')
+    ) {
+      return 'Recipient not found. Please check the email, username, or user ID.';
+    }
+    // Handle invalid identifier errors
+    if (message.includes('Invalid recipient identifier')) {
+      return 'Please enter a valid email, username, or user ID';
     }
     if (message.includes('Duplicate transfer')) {
       return 'A similar transfer is already being processed. Please wait.';
@@ -284,7 +384,8 @@ export const transferApi = {
     }
 
     // Default error message
-    return message || 'An error occurred during the transfer. Please try again.';
+    return (
+      message || 'An error occurred during the transfer. Please try again.'
+    );
   },
 };
-

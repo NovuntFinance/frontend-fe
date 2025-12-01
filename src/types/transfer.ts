@@ -4,37 +4,38 @@
  */
 
 export interface TransferRequest {
-  recipientId?: string;        // MongoDB ObjectId (optional if recipientUsername provided)
-  recipientUsername?: string;  // Username (optional if recipientId provided)
-  amount: number;              // Required: Positive number, minimum 1 USDT
-  memo?: string;               // Optional: Note for the transfer
-  twoFACode: string;           // Required: 6-digit 2FA code from authenticator app
+  recipientId?: string; // MongoDB ObjectId (optional if recipientEmail or recipientUsername provided)
+  recipientUsername?: string; // Username (optional if recipientEmail or recipientId provided)
+  recipientEmail?: string; // Email address (optional if recipientUsername or recipientId provided)
+  amount: number; // Required: Positive number, minimum 1 USDT
+  memo?: string; // Optional: Note for the transfer
+  twoFACode: string; // Required: 6-digit 2FA code from authenticator app
 }
 
 export interface TransferResponse {
   success: boolean;
   message: string;
-  txId: string;               // Transaction ID
+  txId: string; // Transaction ID
   details: {
     amount: number;
-    recipient: string;         // Recipient username
-    fee: number;              // Always 0 (transfers are FREE)
-    feePercentage: number;    // Always 0
-    totalDeducted: number;    // Amount deducted from sender
+    recipient: string; // Recipient username
+    fee: number; // Always 0 (transfers are FREE)
+    feePercentage: number; // Always 0
+    totalDeducted: number; // Amount deducted from sender
     transferredToWallet: string; // Always "transfer"
-    note: string;             // "P2P transfers are FREE"
+    note: string; // "P2P transfers are FREE"
   };
 }
 
 export interface Transfer {
-  id: string;                  // Transaction ID
-  direction: 'in' | 'out';     // Transfer direction
-  amount: number;              // Transfer amount
-  fee: number;                // Always 0
-  recipient?: string;          // Recipient username (for outgoing)
-  sender?: string;             // Sender username (for incoming)
-  memo?: string;               // Optional memo
-  timestamp: string;           // ISO timestamp
+  id: string; // Transaction ID
+  direction: 'in' | 'out'; // Transfer direction
+  amount: number; // Transfer amount
+  fee: number; // Always 0
+  recipient?: string; // Recipient username (for outgoing)
+  sender?: string; // Sender username (for incoming)
+  memo?: string; // Optional memo
+  timestamp: string; // ISO timestamp
   status?: 'completed' | 'pending' | 'failed';
 }
 
@@ -53,15 +54,15 @@ export interface TransferHistoryResponse {
 }
 
 export interface TransferHistoryFilters {
-  page?: number;               // Default: 1
-  limit?: number;             // Default: 10, Max: 100
-  direction?: 'in' | 'out' | 'all';  // Default: 'all'
+  page?: number; // Default: 1
+  limit?: number; // Default: 10, Max: 100
+  direction?: 'in' | 'out' | 'all'; // Default: 'all'
 }
 
 export interface TransferNotification {
   _id: string;
-  title: string;               // "Transfer Successful" or "Funds Received"
-  message: string;             // Detailed message
+  title: string; // "Transfer Successful" or "Funds Received"
+  message: string; // Detailed message
   type: 'success' | 'info' | 'warning' | 'error';
   category: 'general' | 'rank_system' | string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -75,7 +76,7 @@ export interface TransferNotification {
     txId?: string;
     timestamp?: string;
   };
-  createdAt: string;           // ISO timestamp
+  createdAt: string; // ISO timestamp
 }
 
 export interface TransferNotificationsResponse {
@@ -106,19 +107,19 @@ export interface TwoFACodeResponse {
       username: string;
     };
     codes: {
-      current: string;         // Current 6-digit code
-      previous: string;        // Previous code (valid for 2 minutes)
-      next: string;            // Next code (valid for 2 minutes)
+      current: string; // Current 6-digit code
+      previous: string; // Previous code (valid for 2 minutes)
+      next: string; // Next code (valid for 2 minutes)
     };
-    timeRemaining: number;     // Seconds until code expires
-    validFor: string;          // "2 minutes"
+    timeRemaining: number; // Seconds until code expires
+    validFor: string; // "2 minutes"
   };
 }
 
 export interface TransferError {
   success: false;
-  message: string;              // Human-readable error message
-  code?: string;               // Error code (e.g., "INSUFFICIENT_BALANCE")
+  message: string; // Human-readable error message
+  code?: string; // Error code (e.g., "INSUFFICIENT_BALANCE")
   error?: {
     code: string;
     message: string;
@@ -127,10 +128,10 @@ export interface TransferError {
 
 // Transfer validation constants
 export const TRANSFER_LIMITS = {
-  MIN_AMOUNT: 1,              // Minimum 1 USDT
-  MAX_AMOUNT: 1000000,        // Maximum per transfer
-  FEE: 0,                     // Transfers are FREE
-  FEE_PERCENTAGE: 0,          // No fee percentage
+  MIN_AMOUNT: 1, // Minimum 1 USDT
+  MAX_AMOUNT: 1000000, // Maximum per transfer
+  FEE: 0, // Transfers are FREE
+  FEE_PERCENTAGE: 0, // No fee percentage
 } as const;
 
 // Transfer error codes
@@ -150,4 +151,3 @@ export const TRANSFER_NOTIFICATION_TITLES = {
   SENT: 'Transfer Successful',
   RECEIVED: 'Funds Received',
 } as const;
-

@@ -183,18 +183,42 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     setLoading(true);
 
     try {
-      const response = await transferApi.transferFunds({
-        recipientUsername: selectedUser.username,
+      // Build transfer request with appropriate identifier
+      // Priority: email > username > ID (as per backend guide)
+      const transferRequest: any = {
         amount: parseFloat(amount),
         memo: memo || undefined,
         twoFACode: twoFACode,
-      });
+      };
+
+      // If selectedUser has an email and it looks like one, use email
+      if (selectedUser.email && selectedUser.email.includes('@')) {
+        transferRequest.recipientEmail = selectedUser.email
+          .toLowerCase()
+          .trim();
+      } else if (
+        selectedUser.userId &&
+        /^[0-9a-fA-F]{24}$/.test(selectedUser.userId)
+      ) {
+        // If it's a MongoDB ObjectId, use ID
+        transferRequest.recipientId = selectedUser.userId;
+      } else {
+        // Otherwise use username
+        transferRequest.recipientUsername = selectedUser.username.toLowerCase();
+      }
+
+      const response = await transferApi.transferFunds(transferRequest);
 
       setTransferResponse(response);
       setStep('success');
 
+      const recipientDisplay =
+        selectedUser.email && selectedUser.email.includes('@')
+          ? selectedUser.email
+          : `@${selectedUser.username}`;
+
       toast.success('Transfer successful!', {
-        description: `${amount} USDT sent to @${selectedUser.username}`,
+        description: `${amount} USDT sent to ${recipientDisplay}`,
         duration: 5000,
       });
 
@@ -309,8 +333,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                         <Input
                           id="search"
-                          type="text"
-                          placeholder="Type username to add new recipient..."
+                          type={searchQuery.includes('@') ? 'email' : 'text'}
+                          placeholder="Enter email, username, or user ID..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="pl-10"
@@ -323,8 +347,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         )}
                       </div>
                       <p className="text-muted-foreground text-xs">
-                        Shows past recipients first, or type a username to send
-                        to someone new
+                        You can send to a user by entering their email address,
+                        username, or user ID
                       </p>
                     </div>
 
@@ -337,11 +361,19 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
-                              // Allow selecting the typed username directly (new recipient)
+                              const trimmedQuery = searchQuery.trim();
+                              // Detect identifier type (email, ID, or username)
+                              const identifier =
+                                transferApi.detectIdentifierType(trimmedQuery);
+
                               const newUser: DisplayUser = {
-                                userId: '', // Will be resolved by backend using username
-                                username: searchQuery.trim().toLowerCase(),
-                                displayName: searchQuery.trim(),
+                                userId: identifier.recipientId || '',
+                                username:
+                                  identifier.recipientUsername ||
+                                  trimmedQuery.toLowerCase(),
+                                displayName:
+                                  identifier.recipientEmail || trimmedQuery,
+                                email: identifier.recipientEmail,
                               };
                               handleSelectUser(newUser);
                             }}
@@ -352,10 +384,16 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-semibold">
-                                @{searchQuery.trim()}
+                                {searchQuery.trim().includes('@')
+                                  ? searchQuery.trim()
+                                  : `@${searchQuery.trim()}`}
                               </p>
                               <p className="text-muted-foreground text-sm">
-                                Send to new recipient
+                                {searchQuery.trim().includes('@')
+                                  ? 'Send to email address'
+                                  : /^[0-9a-fA-F]{24}$/.test(searchQuery.trim())
+                                    ? 'Send to user ID'
+                                    : 'Send to new recipient'}
                               </p>
                             </div>
                             <Send className="text-primary h-4 w-4" />
@@ -366,7 +404,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         {searchQuery.trim().length < 3 && !searchLoading && (
                           <div className="text-muted-foreground bg-muted/50 rounded-xl p-6 text-center">
                             <p className="text-sm">
-                              Type at least 3 characters to add a new recipient
+                              Type at least 3 characters, an email address, or a
+                              user ID to add a new recipient
                             </p>
                           </div>
                         )}
@@ -432,10 +471,16 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         </div>
                         <div>
                           <p className="font-semibold">
-                            @{selectedUser.username}
+                            {selectedUser.email &&
+                            selectedUser.email.includes('@')
+                              ? selectedUser.email
+                              : `@${selectedUser.username}`}
                           </p>
                           <p className="text-muted-foreground text-sm">
-                            {selectedUser.displayName}
+                            {selectedUser.email &&
+                            selectedUser.email.includes('@')
+                              ? 'Email address'
+                              : selectedUser.displayName}
                           </p>
                         </div>
                       </div>
@@ -606,10 +651,16 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                             </div>
                             <div className="text-left">
                               <p className="font-semibold">
-                                @{selectedUser.username}
+                                {selectedUser.email &&
+                                selectedUser.email.includes('@')
+                                  ? selectedUser.email
+                                  : `@${selectedUser.username}`}
                               </p>
                               <p className="text-muted-foreground text-xs">
-                                {selectedUser.displayName}
+                                {selectedUser.email &&
+                                selectedUser.email.includes('@')
+                                  ? 'Email address'
+                                  : selectedUser.displayName}
                               </p>
                             </div>
                           </div>
@@ -755,8 +806,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         Transfer Successful!
                       </h3>
                       <p className="text-muted-foreground text-lg">
-                        ${parseFloat(amount).toFixed(2)} sent to @
-                        {selectedUser.username}
+                        ${parseFloat(amount).toFixed(2)} sent to{' '}
+                        {selectedUser.email && selectedUser.email.includes('@')
+                          ? selectedUser.email
+                          : `@${selectedUser.username}`}
                       </p>
                     </div>
 
@@ -772,7 +825,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                           Recipient:
                         </span>
                         <span className="font-semibold">
-                          @{selectedUser.username}
+                          {selectedUser.email &&
+                          selectedUser.email.includes('@')
+                            ? selectedUser.email
+                            : `@${selectedUser.username}`}
                         </span>
                       </div>
                       <div className="flex justify-between">
