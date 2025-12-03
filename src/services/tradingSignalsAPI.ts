@@ -56,6 +56,39 @@ export interface MarketPricesResponse {
   count: number;
 }
 
+/**
+ * Statistics for a specific time period (24h or 7d)
+ */
+export interface TradingSignalsStatsPeriod {
+  totalSignals: number;
+  profitableSignals: number;
+  dayTrades: number;
+  totalProfit: number;
+  winRate: number;
+}
+
+/**
+ * Trading Signals Statistics
+ *
+ * The backend now returns stats in a nested structure:
+ * - avg24h: Statistics for the last 24 hours (totals, not averages)
+ * - avg7d: Statistics for the last 7 days (totals, not averages)
+ *
+ * The flat structure (totalSignals, profitableSignals, etc.) is maintained
+ * for backward compatibility and uses 24-hour data.
+ */
+export interface TradingSignalsStats {
+  // New nested structure (24-hour and 7-day stats)
+  avg24h?: TradingSignalsStatsPeriod;
+  avg7d?: TradingSignalsStatsPeriod;
+  // Backward compatibility - flat structure (uses 24h data)
+  totalSignals?: number;
+  profitableSignals?: number;
+  dayTrades?: number;
+  totalProfit?: number;
+  winRate?: number;
+}
+
 export interface SignalsResponse {
   success: boolean;
   data: TradingSignal[];
@@ -63,13 +96,7 @@ export interface SignalsResponse {
   page?: number;
   totalPages?: number;
   hasMore?: boolean;
-  stats?: {
-    totalSignals: number;
-    profitableSignals: number;
-    dayTrades: number;
-    totalProfit: number;
-    winRate: number;
-  };
+  stats?: TradingSignalsStats;
 }
 
 export interface StatisticsResponse {

@@ -170,12 +170,21 @@ export default function TradingSignalsHistoryPage() {
   const stats = useMemo(() => {
     // If backend provides aggregate statistics, use those (covers ALL matching signals)
     if (data?.stats) {
-      return {
-        total: data.stats.totalSignals,
-        profitable: data.stats.profitableSignals,
+      // Prefer new nested structure (avg24h), fallback to flat structure for backward compatibility
+      const statsData = data.stats.avg24h || {
+        totalSignals: data.stats.totalSignals,
+        profitableSignals: data.stats.profitableSignals,
         dayTrades: data.stats.dayTrades,
         totalProfit: data.stats.totalProfit,
         winRate: data.stats.winRate,
+      };
+
+      return {
+        total: statsData.totalSignals ?? 0,
+        profitable: statsData.profitableSignals ?? 0,
+        dayTrades: statsData.dayTrades ?? 0,
+        totalProfit: statsData.totalProfit ?? 0,
+        winRate: statsData.winRate ?? 0,
       };
     }
 
