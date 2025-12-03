@@ -1,9 +1,9 @@
 /**
  * Trading Signals API Service
- * 
+ *
  * Connects to the backend trading signals system
  * Backend automatically fetches real prices and generates trades
- * 
+ *
  * @see FRONTEND_INTEGRATION_PACKAGE.md for full documentation
  */
 
@@ -11,7 +11,7 @@ import { api } from '@/lib/api';
 
 export interface MarketPrice {
   symbol: string;
-  marketType: 'forex' | 'crypto' | 'metals';
+  marketType: 'forex' | 'crypto' | 'metals' | 'commodities';
   currentPrice: number;
   high24h?: number;
   low24h?: number;
@@ -24,7 +24,7 @@ export interface MarketPrice {
 export interface TradingSignal {
   id: string;
   symbol: string;
-  marketType: 'forex' | 'crypto' | 'metals';
+  marketType: 'forex' | 'crypto' | 'metals' | 'commodities';
   direction: 'LONG' | 'SHORT';
   entryPrice: number;
   exitPrice: number;
@@ -60,6 +60,16 @@ export interface SignalsResponse {
   success: boolean;
   data: TradingSignal[];
   count: number;
+  page?: number;
+  totalPages?: number;
+  hasMore?: boolean;
+  stats?: {
+    totalSignals: number;
+    profitableSignals: number;
+    dayTrades: number;
+    totalProfit: number;
+    winRate: number;
+  };
 }
 
 export interface StatisticsResponse {
@@ -75,23 +85,33 @@ export const tradingSignalsAPI = {
    * Get all market prices
    * Backend auto-updates every 5 minutes
    */
-  getMarketPrices: async (marketType?: string): Promise<MarketPricesResponse> => {
+  getMarketPrices: async (
+    marketType?: string
+  ): Promise<MarketPricesResponse> => {
     try {
-      const url = marketType 
+      const url = marketType
         ? `/trading-signals/market-prices?marketType=${marketType}`
         : `/trading-signals/market-prices`;
-      
+
       const response = await api.get<MarketPricesResponse>(url);
       return response;
     } catch (error: any) {
-      const err = error as { code?: string; message?: string; response?: { status?: number }; statusCode?: number };
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[Trading Signals API] ⚠️ Network error fetching market prices - backend might be unavailable');
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error fetching market prices - backend might be unavailable'
+        );
       } else {
         console.error('[Trading Signals API] Failed to fetch market prices:', {
           code: err?.code,
@@ -115,19 +135,28 @@ export const tradingSignalsAPI = {
       return response;
     } catch (error: any) {
       // Better error logging for network errors
-      const err = error as { code?: string; message?: string; response?: { status?: number }; statusCode?: number };
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[Trading Signals API] ⚠️ Network error - backend might be unavailable', {
-          code: err?.code,
-          message: err?.message,
-          endpoint: '/trading-signals/signals',
-          limit,
-        });
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error - backend might be unavailable',
+          {
+            code: err?.code,
+            message: err?.message,
+            endpoint: '/trading-signals/signals',
+            limit,
+          }
+        );
       } else {
         console.error('[Trading Signals API] Failed to fetch signals:', {
           code: err?.code,
@@ -136,6 +165,95 @@ export const tradingSignalsAPI = {
           endpoint: '/trading-signals/signals',
           limit,
         });
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get trading signals history (100 days)
+   * Supports filtering by profit, day trades, pair, and search
+   */
+  getSignalsHistory: async (params?: {
+    days?: number;
+    limit?: number;
+    offset?: number;
+    profitableOnly?: boolean;
+    dayTradesOnly?: boolean;
+    marketType?: 'forex' | 'crypto' | 'metals' | 'commodities';
+    symbol?: string;
+    search?: string;
+  }): Promise<SignalsResponse> => {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params?.days) queryParams.append('days', params.days.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      if (params?.offset)
+        queryParams.append('offset', params.offset.toString());
+      if (params?.profitableOnly) queryParams.append('profitableOnly', 'true');
+      if (params?.dayTradesOnly) queryParams.append('dayTradesOnly', 'true');
+      if (params?.marketType)
+        queryParams.append('marketType', params.marketType);
+      if (params?.symbol) queryParams.append('symbol', params.symbol);
+      if (params?.search) queryParams.append('search', params.search);
+
+      const url = `/trading-signals/history${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await api.get<SignalsResponse>(url);
+
+      // Debug logging
+      console.log('🔍 [Trading Signals API] Raw response:', response);
+      console.log('🔍 [Trading Signals API] Response type:', typeof response);
+      console.log(
+        '🔍 [Trading Signals API] Response keys:',
+        response ? Object.keys(response) : 'null'
+      );
+      console.log('🔍 [Trading Signals API] Response.data:', response?.data);
+      console.log(
+        '🔍 [Trading Signals API] Response.data length:',
+        Array.isArray(response?.data) ? response.data.length : 'not an array'
+      );
+      console.log('🔍 [Trading Signals API] Response.count:', response?.count);
+      console.log(
+        '🔍 [Trading Signals API] Response.success:',
+        response?.success
+      );
+
+      return response;
+    } catch (error: any) {
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
+      if (isNetworkError) {
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error fetching history - backend might be unavailable',
+          {
+            code: err?.code,
+            message: err?.message,
+            endpoint: '/trading-signals/history',
+            params,
+          }
+        );
+      } else {
+        console.error(
+          '[Trading Signals API] Failed to fetch signals history:',
+          {
+            code: err?.code,
+            message: err?.message,
+            status: err?.response?.status || err?.statusCode,
+            endpoint: '/trading-signals/history',
+            params,
+          }
+        );
       }
       throw error;
     }
@@ -151,14 +269,22 @@ export const tradingSignalsAPI = {
       );
       return response;
     } catch (error: any) {
-      const err = error as { code?: string; message?: string; response?: { status?: number }; statusCode?: number };
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[Trading Signals API] ⚠️ Network error fetching statistics - backend might be unavailable');
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error fetching statistics - backend might be unavailable'
+        );
       } else {
         console.error('[Trading Signals API] Failed to fetch statistics:', {
           code: err?.code,
@@ -173,21 +299,32 @@ export const tradingSignalsAPI = {
   /**
    * Get specific instrument price
    */
-  getPrice: async (symbol: string): Promise<{ success: boolean; data: MarketPrice }> => {
+  getPrice: async (
+    symbol: string
+  ): Promise<{ success: boolean; data: MarketPrice }> => {
     try {
       const response = await api.get<{ success: boolean; data: MarketPrice }>(
         `/trading-signals/price/${symbol}`
       );
       return response;
     } catch (error: any) {
-      const err = error as { code?: string; message?: string; response?: { status?: number }; statusCode?: number };
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[Trading Signals API] ⚠️ Network error fetching price - backend might be unavailable', { symbol });
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error fetching price - backend might be unavailable',
+          { symbol }
+        );
       } else {
         console.error('[Trading Signals API] Failed to fetch price:', {
           code: err?.code,
@@ -203,21 +340,35 @@ export const tradingSignalsAPI = {
   /**
    * Health check
    */
-  healthCheck: async (): Promise<{ success: boolean; status: string; message: string }> => {
+  healthCheck: async (): Promise<{
+    success: boolean;
+    status: string;
+    message: string;
+  }> => {
     try {
-      const response = await api.get<{ success: boolean; status: string; message: string }>(
-        `/trading-signals/health`
-      );
+      const response = await api.get<{
+        success: boolean;
+        status: string;
+        message: string;
+      }>(`/trading-signals/health`);
       return response;
     } catch (error: any) {
-      const err = error as { code?: string; message?: string; response?: { status?: number }; statusCode?: number };
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number };
+        statusCode?: number;
+      };
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[Trading Signals API] ⚠️ Network error during health check - backend might be unavailable');
+        console.warn(
+          '[Trading Signals API] ⚠️ Network error during health check - backend might be unavailable'
+        );
       } else {
         console.error('[Trading Signals API] Health check failed:', {
           code: err?.code,
@@ -227,6 +378,5 @@ export const tradingSignalsAPI = {
       }
       throw error;
     }
-  }
+  },
 };
-
