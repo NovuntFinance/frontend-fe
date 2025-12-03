@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -110,6 +111,7 @@ export default function TradingSignalsHistoryPage() {
     search: '',
   });
   const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<'24h' | '7d'>('24h');
   const itemsPerPage = 20;
 
   // Fetch trading signals history from backend
@@ -166,8 +168,8 @@ export default function TradingSignalsHistoryPage() {
   // Backend handles all filtering, so we just use the signals directly
   const filteredSignals = signals;
 
-  // Calculate statistics - prefer backend aggregate stats, fallback to current page calculation
-  const stats = useMemo(() => {
+  // Calculate statistics - separate 24h and 7d stats
+  const stats24h = useMemo(() => {
     // If backend provides aggregate statistics, use those (covers ALL matching signals)
     if (data?.stats) {
       // Prefer new nested structure (avg24h), fallback to flat structure for backward compatibility
@@ -189,8 +191,6 @@ export default function TradingSignalsHistoryPage() {
         winRate: statsData.winRate ?? 0,
         label: statsData.label || 'Last 24 Hours',
         description: statsData.description || 'Totals for the last 24 hours',
-        // Include 7-day stats if available
-        stats7d: data.stats.avg7d,
       };
     }
 
@@ -217,9 +217,35 @@ export default function TradingSignalsHistoryPage() {
       winRate,
       label: 'Current Page',
       description: 'Statistics from current page only',
-      stats7d: undefined,
     };
   }, [data?.stats, filteredSignals, totalCount]);
+
+  // Calculate 7-day statistics separately
+  const stats7d = useMemo(() => {
+    if (data?.stats?.avg7d) {
+      const statsData = data.stats.avg7d;
+      // Ensure we have valid data (not just empty object)
+      if (
+        statsData.totalSignals !== undefined ||
+        statsData.profitableSignals !== undefined
+      ) {
+        return {
+          total: statsData.totalSignals ?? 0,
+          profitable: statsData.profitableSignals ?? 0,
+          dayTrades: statsData.dayTrades ?? 0,
+          totalProfit: statsData.totalProfit ?? 0, // NET profit (includes losses)
+          winRate: statsData.winRate ?? 0,
+          label: statsData.label || 'Last 7 Days',
+          description:
+            statsData.description || 'Cumulative totals for the last 7 days',
+        };
+      }
+    }
+    return null;
+  }, [data?.stats?.avg7d]);
+
+  // Get current stats based on active tab
+  const currentStats = activeTab === '24h' ? stats24h : stats7d || stats24h;
 
   const handleFilterChange = (key: keyof FilterState, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -262,97 +288,30 @@ export default function TradingSignalsHistoryPage() {
           </p>
         </motion.div>
 
-        {/* Statistics Cards */}
+        {/* Statistics Cards with Tabs */}
         <div className="mb-6">
-          {/* Period Label */}
-          {stats.label && (
-            <div className="mb-4">
-              <h2 className="text-foreground text-lg font-semibold">
-                {stats.label}
-              </h2>
-              {stats.description && (
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as '24h' | '7d')}
+          >
+            <TabsList className="mb-4">
+              <TabsTrigger value="24h">
+                {stats24h.label || 'Last 24 Hours'}
+              </TabsTrigger>
+              {stats7d && (
+                <TabsTrigger value="7d">
+                  {stats7d.label || 'Last 7 Days'}
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            {/* 24-Hour Stats Tab */}
+            <TabsContent value="24h" className="space-y-4">
+              {currentStats?.description && (
                 <p className="text-muted-foreground text-sm">
-                  {stats.description}
+                  {currentStats.description}
                 </p>
               )}
-            </div>
-          )}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  Total Signals
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.total.toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  Profitable
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {stats.profitable.toLocaleString()}
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {stats.winRate.toFixed(1)}% win rate
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  Day Trades
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.dayTrades.toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  Net Profit
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  className={`text-2xl font-bold ${
-                    stats.totalProfit >= 0
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {stats.totalProfit >= 0 ? '+' : ''}$
-                  {stats.totalProfit.toLocaleString()}
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Includes losses
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          {/* 7-Day Stats (if available) */}
-          {stats.stats7d && (
-            <div className="mt-6">
-              <div className="mb-4">
-                <h2 className="text-foreground text-lg font-semibold">
-                  {stats.stats7d.label || 'Last 7 Days'}
-                </h2>
-                {stats.stats7d.description && (
-                  <p className="text-muted-foreground text-sm">
-                    {stats.stats7d.description}
-                  </p>
-                )}
-              </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <Card>
                   <CardHeader className="pb-3">
@@ -362,7 +321,7 @@ export default function TradingSignalsHistoryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats.stats7d.totalSignals.toLocaleString()}
+                      {currentStats?.total.toLocaleString() || 0}
                     </div>
                   </CardContent>
                 </Card>
@@ -374,10 +333,10 @@ export default function TradingSignalsHistoryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {stats.stats7d.profitableSignals.toLocaleString()}
+                      {currentStats?.profitable.toLocaleString() || 0}
                     </div>
                     <p className="text-muted-foreground mt-1 text-xs">
-                      {stats.stats7d.winRate.toFixed(1)}% win rate
+                      {currentStats?.winRate.toFixed(1) || '0.0'}% win rate
                     </p>
                   </CardContent>
                 </Card>
@@ -389,7 +348,7 @@ export default function TradingSignalsHistoryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats.stats7d.dayTrades.toLocaleString()}
+                      {currentStats?.dayTrades.toLocaleString() || 0}
                     </div>
                   </CardContent>
                 </Card>
@@ -402,13 +361,13 @@ export default function TradingSignalsHistoryPage() {
                   <CardContent>
                     <div
                       className={`text-2xl font-bold ${
-                        stats.stats7d.totalProfit >= 0
+                        (currentStats?.totalProfit ?? 0) >= 0
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-red-600 dark:text-red-400'
                       }`}
                     >
-                      {stats.stats7d.totalProfit >= 0 ? '+' : ''}$
-                      {stats.stats7d.totalProfit.toLocaleString()}
+                      {(currentStats?.totalProfit ?? 0) >= 0 ? '+' : ''}$
+                      {(currentStats?.totalProfit ?? 0).toLocaleString()}
                     </div>
                     <p className="text-muted-foreground mt-1 text-xs">
                       Includes losses
@@ -416,8 +375,90 @@ export default function TradingSignalsHistoryPage() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          )}
+            </TabsContent>
+
+            {/* 7-Day Stats Tab */}
+            <TabsContent value="7d" className="space-y-4">
+              {stats7d?.description && (
+                <p className="text-muted-foreground text-sm">
+                  {stats7d.description}
+                </p>
+              )}
+              {stats7d ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                        Total Signals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {stats7d.total.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                        Profitable
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                        {stats7d.profitable.toLocaleString()}
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {stats7d.winRate.toFixed(1)}% win rate
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                        Day Trades
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {stats7d.dayTrades.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                        Net Profit
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        className={`text-2xl font-bold ${
+                          stats7d.totalProfit >= 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {stats7d.totalProfit >= 0 ? '+' : ''}$
+                        {stats7d.totalProfit.toLocaleString()}
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        Includes losses
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-muted-foreground">
+                      7-day statistics are not available
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Filters */}
