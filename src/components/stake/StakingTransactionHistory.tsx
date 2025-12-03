@@ -91,20 +91,6 @@ export function StakingTransactionHistory() {
     }
   }, [activeTab, stakingData, earningsData]);
 
-  // Get summary data
-  const stakingSummary = stakingData?.summary?.staking || {
-    totalStaked: 0,
-    stakeCount: 0,
-    totalCompletions: 0,
-    completionCount: 0,
-  };
-
-  const earningsSummary = earningsData?.summary?.earnings || {
-    rosPayouts: 0,
-    rosCount: 0,
-    poolPayouts: 0,
-  };
-
   const handleRefresh = () => {
     refetchStaking();
     refetchEarnings();
@@ -131,90 +117,6 @@ export function StakingTransactionHistory() {
           />
           Refresh
         </Button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">Total Staked</p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(stakingSummary.totalStaked)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {stakingSummary.stakeCount} stake
-                  {stakingSummary.stakeCount !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <div className="rounded-lg bg-blue-500/10 p-3">
-                <TrendingUp className="h-6 w-6 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">ROS Earnings</p>
-                <p className="text-2xl font-bold text-emerald-500">
-                  {formatCurrency(earningsSummary.rosPayouts)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {earningsSummary.rosCount} payout
-                  {earningsSummary.rosCount !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <div className="rounded-lg bg-emerald-500/10 p-3">
-                <DollarSign className="h-6 w-6 text-emerald-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">Pool Earnings</p>
-                <p className="text-2xl font-bold text-amber-500">
-                  {formatCurrency(earningsSummary.poolPayouts)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Bonus rewards
-                </p>
-              </div>
-              <div className="rounded-lg bg-amber-500/10 p-3">
-                <Award className="h-6 w-6 text-amber-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">
-                  Completed Stakes
-                </p>
-                <p className="text-2xl font-bold text-purple-500">
-                  {formatCurrency(stakingSummary.totalCompletions)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {stakingSummary.completionCount} completion
-                  {stakingSummary.completionCount !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <div className="rounded-lg bg-purple-500/10 p-3">
-                <Target className="h-6 w-6 text-purple-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabs */}

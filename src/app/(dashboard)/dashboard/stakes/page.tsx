@@ -139,6 +139,14 @@ export default function StakesPage() {
             Track your stakes and ROS progress
           </p>
         </div>
+        <Button
+          onClick={() => openModal('create-stake')}
+          size="lg"
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:from-emerald-700 hover:to-teal-700"
+        >
+          <Plus className="mr-2 h-5 w-5" />
+          Stake Now
+        </Button>
       </div>
 
       {/* Overview Cards */}
