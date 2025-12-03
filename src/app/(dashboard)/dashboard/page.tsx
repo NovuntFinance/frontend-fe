@@ -333,18 +333,70 @@ export default function DashboardPage() {
     };
   }, [ranks]);
 
-  // Generate initial activity and update every 30 seconds
-  const [currentActivity, setCurrentActivity] = React.useState(() =>
-    generateRandomActivity()
-  );
+  // Fetch platform activity from API (with fallback to mock)
+  const {
+    activity: apiActivity,
+    loading: activityLoading,
+    error: activityError,
+  } = usePlatformActivity({
+    limit: 1,
+    pollInterval: 30000,
+    enabled: true,
+  });
 
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentActivity(generateRandomActivity());
-    }, 30000); // 30 seconds
+  // Map activity type to icon and color
+  const getActivityIcon = React.useCallback((type: string) => {
+    const iconMap: Record<string, typeof ArrowDownRight> = {
+      deposit: ArrowDownRight,
+      withdraw: ArrowUpRight,
+      stake: TrendingUp,
+      referral: Users,
+      ros: DollarSign,
+      rank: Gift,
+      promotion: Star,
+      transfer: Send,
+      registration_bonus: Gift,
+      stake_completion: TrendingUp,
+      bonus_activation: Star,
+      new_signup: Users,
+    };
+    return iconMap[type] || Circle;
+  }, []);
 
-    return () => clearInterval(interval);
-  }, [generateRandomActivity]);
+  const getActivityColor = React.useCallback((type: string) => {
+    const colorMap: Record<string, string> = {
+      deposit: 'text-blue-600 dark:text-blue-400',
+      withdraw: 'text-purple-600 dark:text-purple-400',
+      stake: 'text-emerald-600 dark:text-emerald-400',
+      referral: 'text-green-600 dark:text-green-400',
+      ros: 'text-green-600 dark:text-green-400',
+      rank: 'text-orange-600 dark:text-orange-400',
+      promotion: 'text-yellow-600 dark:text-yellow-400',
+      transfer: 'text-cyan-600 dark:text-cyan-400',
+      registration_bonus: 'text-green-600 dark:text-green-400',
+      stake_completion: 'text-emerald-600 dark:text-emerald-400',
+      bonus_activation: 'text-yellow-600 dark:text-yellow-400',
+      new_signup: 'text-blue-600 dark:text-blue-400',
+    };
+    return colorMap[type] || 'text-foreground';
+  }, []);
+
+  // Convert API activity to display format (with fallback to mock)
+  const currentActivity = React.useMemo(() => {
+    if (apiActivity) {
+      return {
+        user: apiActivity.user,
+        action: apiActivity.action,
+        amount: apiActivity.amount,
+        icon: getActivityIcon(apiActivity.type),
+        color: getActivityColor(apiActivity.type),
+        time: apiActivity.timeAgo,
+      };
+    }
+
+    // Fallback to mock data if API fails or is loading
+    return generateRandomActivity();
+  }, [apiActivity, getActivityIcon, getActivityColor, generateRandomActivity]);
 
   // Check if ALL queries have failed (indicating auth issue)
   const allQueriesFailed =
@@ -506,7 +558,7 @@ export default function DashboardPage() {
                 colorTheme={stat.colorTheme}
                 className="h-full"
               >
-                {isLoading || activityLoading ? (
+                {isLoading || (stat.isActivity && activityLoading) ? (
                   <Skeleton className="h-10 w-32" />
                 ) : stat.isActivity ? (
                   // Live Activity Display
