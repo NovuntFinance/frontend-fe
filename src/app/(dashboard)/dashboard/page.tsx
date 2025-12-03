@@ -20,9 +20,9 @@ import {
 import {
   useWalletBalance,
   useActiveStakes,
-  useTransactions,
   useDashboardOverview,
 } from '@/lib/queries';
+import { useTransactionHistory } from '@/hooks/useWallet';
 import {
   Card,
   CardContent,
@@ -45,6 +45,8 @@ import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { TestShareButton } from '@/components/dev/TestShareButton';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/useUser';
+import { usePlatformActivity } from '@/hooks/usePlatformActivity';
+import type { PlatformActivity } from '@/types/platformActivity';
 
 /**
  * Modern Dashboard Home Page
@@ -107,11 +109,20 @@ export default function DashboardPage() {
     isLoading: stakesLoading,
     error: stakesError,
   } = useActiveStakes();
+  // Fetch recent transactions from transaction history API
   const {
-    data: transactions,
+    data: transactionHistoryData,
     isLoading: transactionsLoading,
     error: transactionsError,
-  } = useTransactions();
+  } = useTransactionHistory({
+    page: 1,
+    limit: 5, // Show only 5 most recent transactions
+    sortBy: 'timestamp',
+    sortOrder: 'desc',
+  });
+
+  // Extract transactions from the response
+  const transactions = transactionHistoryData?.transactions || [];
   const {
     data: overview,
     isLoading: overviewLoading,
@@ -131,7 +142,7 @@ export default function DashboardPage() {
     []
   );
 
-  // Generate random platform activity
+  // Generate random platform activity (fallback)
   const generateRandomActivity = React.useCallback(() => {
     const generateMaskedName = () => {
       const firstNames = [
@@ -495,7 +506,7 @@ export default function DashboardPage() {
                 colorTheme={stat.colorTheme}
                 className="h-full"
               >
-                {isLoading ? (
+                {isLoading || activityLoading ? (
                   <Skeleton className="h-10 w-32" />
                 ) : stat.isActivity ? (
                   // Live Activity Display
