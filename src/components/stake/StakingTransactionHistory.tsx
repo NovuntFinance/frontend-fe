@@ -80,8 +80,30 @@ export function StakingTransactionHistory() {
       case 'earnings':
         return earningsTxs;
       case 'all':
-        // Merge and sort by timestamp (newest first)
-        return [...stakingTxs, ...earningsTxs].sort((a, b) => {
+        // Merge, deduplicate by _id, and sort by timestamp (newest first)
+        const allTxs = [...stakingTxs, ...earningsTxs];
+        const uniqueTxsMap = new Map<string, Transaction>();
+        const duplicateIds = new Set<string>();
+
+        // Deduplicate: if a transaction appears in both arrays, keep only one
+        allTxs.forEach((tx) => {
+          if (!uniqueTxsMap.has(tx._id)) {
+            uniqueTxsMap.set(tx._id, tx);
+          } else {
+            duplicateIds.add(tx._id);
+          }
+        });
+
+        // Log duplicates in development mode for debugging
+        if (process.env.NODE_ENV === 'development' && duplicateIds.size > 0) {
+          console.warn(
+            '[StakingTransactionHistory] ⚠️ Found duplicate transactions:',
+            Array.from(duplicateIds)
+          );
+        }
+
+        const uniqueTxs = Array.from(uniqueTxsMap.values());
+        return uniqueTxs.sort((a, b) => {
           return (
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
