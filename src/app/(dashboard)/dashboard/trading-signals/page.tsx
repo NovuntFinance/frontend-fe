@@ -177,14 +177,20 @@ export default function TradingSignalsHistoryPage() {
         dayTrades: data.stats.dayTrades,
         totalProfit: data.stats.totalProfit,
         winRate: data.stats.winRate,
+        label: 'Last 24 Hours',
+        description: 'Totals for the last 24 hours',
       };
 
       return {
         total: statsData.totalSignals ?? 0,
         profitable: statsData.profitableSignals ?? 0,
         dayTrades: statsData.dayTrades ?? 0,
-        totalProfit: statsData.totalProfit ?? 0,
+        totalProfit: statsData.totalProfit ?? 0, // NET profit (includes losses)
         winRate: statsData.winRate ?? 0,
+        label: statsData.label || 'Last 24 Hours',
+        description: statsData.description || 'Totals for the last 24 hours',
+        // Include 7-day stats if available
+        stats7d: data.stats.avg7d,
       };
     }
 
@@ -209,6 +215,9 @@ export default function TradingSignalsHistoryPage() {
       dayTrades, // Only current page - backend should provide total via stats
       totalProfit, // Only current page - backend should provide total via stats
       winRate,
+      label: 'Current Page',
+      description: 'Statistics from current page only',
+      stats7d: undefined,
     };
   }, [data?.stats, filteredSignals, totalCount]);
 
@@ -254,58 +263,161 @@ export default function TradingSignalsHistoryPage() {
         </motion.div>
 
         {/* Statistics Cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-medium">
-                Total Signals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.total.toLocaleString()}
+        <div className="mb-6">
+          {/* Period Label */}
+          {stats.label && (
+            <div className="mb-4">
+              <h2 className="text-foreground text-lg font-semibold">
+                {stats.label}
+              </h2>
+              {stats.description && (
+                <p className="text-muted-foreground text-sm">
+                  {stats.description}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
+                  Total Signals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {stats.total.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
+                  Profitable
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {stats.profitable.toLocaleString()}
+                </div>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {stats.winRate.toFixed(1)}% win rate
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
+                  Day Trades
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {stats.dayTrades.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
+                  Net Profit
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className={`text-2xl font-bold ${
+                    stats.totalProfit >= 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {stats.totalProfit >= 0 ? '+' : ''}$
+                  {stats.totalProfit.toLocaleString()}
+                </div>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Includes losses
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          {/* 7-Day Stats (if available) */}
+          {stats.stats7d && (
+            <div className="mt-6">
+              <div className="mb-4">
+                <h2 className="text-foreground text-lg font-semibold">
+                  {stats.stats7d.label || 'Last 7 Days'}
+                </h2>
+                {stats.stats7d.description && (
+                  <p className="text-muted-foreground text-sm">
+                    {stats.stats7d.description}
+                  </p>
+                )}
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-medium">
-                Profitable
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {stats.profitable.toLocaleString()}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                      Total Signals
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.stats7d.totalSignals.toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                      Profitable
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {stats.stats7d.profitableSignals.toLocaleString()}
+                    </div>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {stats.stats7d.winRate.toFixed(1)}% win rate
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                      Day Trades
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.stats7d.dayTrades.toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                      Net Profit
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className={`text-2xl font-bold ${
+                        stats.stats7d.totalProfit >= 0
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}
+                    >
+                      {stats.stats7d.totalProfit >= 0 ? '+' : ''}$
+                      {stats.stats7d.totalProfit.toLocaleString()}
+                    </div>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Includes losses
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                {stats.winRate.toFixed(1)}% win rate
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-medium">
-                Day Trades
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.dayTrades.toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-medium">
-                Total Profit
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                ${stats.totalProfit.toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
 
         {/* Filters */}

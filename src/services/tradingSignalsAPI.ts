@@ -58,13 +58,19 @@ export interface MarketPricesResponse {
 
 /**
  * Statistics for a specific time period (24h or 7d)
+ *
+ * Note: totalProfit is NET profit (includes losses)
+ * - Positive values = net profit
+ * - Negative values = net loss
  */
 export interface TradingSignalsStatsPeriod {
   totalSignals: number;
   profitableSignals: number;
   dayTrades: number;
-  totalProfit: number;
+  totalProfit: number; // NET profit (sum of all profitUSD, including losses)
   winRate: number;
+  label: string; // Display label (e.g., "Last 24 Hours", "Last 7 Days")
+  description: string; // Description text (e.g., "Totals for the last 24 hours")
 }
 
 /**
