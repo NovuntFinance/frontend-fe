@@ -1,12 +1,23 @@
-"use client";
+'use client';
 
 import { ReactNode, useMemo, useState } from 'react';
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
+import { RefreshCw } from 'lucide-react';
 import AdminMetricCard from '@/components/admin/AdminMetricCard';
 import AdminRecentActivity from '@/components/admin/AdminRecentActivity';
 import AdminChartSection from '@/components/admin/AdminChartSection';
+import { ActivityList } from '@/components/dashboard/ActivityList';
+import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { AdminDashboardTimeframe } from '@/types/admin';
 import { useAdminDashboard } from '@/lib/queries';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 const DEFAULT_TIMEFRAME: AdminDashboardTimeframe = '30d';
 
@@ -42,8 +53,16 @@ const calculateChange = (series: number[]) => {
 };
 
 export default function AdminOverviewPage() {
-  const [timeframe, setTimeframe] = useState<AdminDashboardTimeframe>(DEFAULT_TIMEFRAME);
+  const [timeframe, setTimeframe] =
+    useState<AdminDashboardTimeframe>(DEFAULT_TIMEFRAME);
   const { data, isLoading, isFetching, error } = useAdminDashboard(timeframe);
+
+  // Platform Activity Feed (shows multiple activities for admin)
+  const platformActivity = usePlatformActivity({
+    limit: 10,
+    pollInterval: 30000,
+    enabled: true,
+  });
 
   const metrics = data?.metrics;
   const charts = data?.charts;
@@ -51,17 +70,27 @@ export default function AdminOverviewPage() {
 
   const chartIsLoading = useMemo(() => {
     const hasChartData = charts
-      ? Boolean(charts.revenue.length || charts.userGrowth.length || charts.stakes.length)
+      ? Boolean(
+          charts.revenue.length ||
+            charts.userGrowth.length ||
+            charts.stakes.length
+        )
       : false;
     return !hasChartData && (isLoading || isFetching);
   }, [charts, isFetching, isLoading]);
 
   const metricCards = useMemo(() => {
-  if (!metrics) return [] as Array<{ id: string; content: ReactNode }>;
+    if (!metrics) return [] as Array<{ id: string; content: ReactNode }>;
 
-    const userSparkline = takeLast(charts?.userGrowth.map((point) => Math.max(point.value, 0)) ?? []);
-    const revenueSparkline = takeLast(charts?.revenue.map((point) => Math.max(point.value, 0)) ?? []);
-    const stakeSparkline = takeLast(charts?.stakes.map((point) => Math.max(point.value, 0)) ?? []);
+    const userSparkline = takeLast(
+      charts?.userGrowth.map((point) => Math.max(point.value, 0)) ?? []
+    );
+    const revenueSparkline = takeLast(
+      charts?.revenue.map((point) => Math.max(point.value, 0)) ?? []
+    );
+    const stakeSparkline = takeLast(
+      charts?.stakes.map((point) => Math.max(point.value, 0)) ?? []
+    );
 
     const userChange = calculateChange(userSparkline);
     const stakeChange = calculateChange(stakeSparkline);
@@ -131,7 +160,11 @@ export default function AdminOverviewPage() {
         content: (
           <AdminMetricCard
             title="Monthly Revenue"
-            value={formatCurrency(metrics.platform.profit ?? revenueSparkline[revenueSparkline.length - 1] ?? 0)}
+            value={formatCurrency(
+              metrics.platform.profit ??
+                revenueSparkline[revenueSparkline.length - 1] ??
+                0
+            )}
             change={revenueChange}
             icon="dollar"
             trend={getTrend(revenueChange)}
@@ -146,7 +179,11 @@ export default function AdminOverviewPage() {
           <AdminMetricCard
             title="KYC Pending"
             value={(metrics.kyc?.pending ?? 0).toLocaleString()}
-            secondaryValue={metrics.kyc?.highPriority ? `${metrics.kyc.highPriority} high priority` : undefined}
+            secondaryValue={
+              metrics.kyc?.highPriority
+                ? `${metrics.kyc.highPriority} high priority`
+                : undefined
+            }
             icon="shield"
             trend="neutral"
             alert={(metrics.kyc?.highPriority ?? 0) > 0}
@@ -168,17 +205,23 @@ export default function AdminOverviewPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Admin Dashboard</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            Admin Dashboard
+          </h2>
           {lastUpdatedLabel && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Updated {lastUpdatedLabel}</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Updated {lastUpdatedLabel}
+            </p>
           )}
         </div>
         <div className="flex items-center gap-2">
           {error && (
-            <span className="text-sm text-red-600 dark:text-red-400">Failed to load insights. Please retry.</span>
+            <span className="text-sm text-red-600 dark:text-red-400">
+              Failed to load insights. Please retry.
+            </span>
           )}
           <button
-            className="inline-flex items-center gap-2 rounded-md bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm border border-gray-300 dark:border-gray-600"
+            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
             type="button"
             onClick={() => setTimeframe((prev) => prev)}
           >
@@ -201,28 +244,33 @@ export default function AdminOverviewPage() {
           </button>
         </div>
       </div>
-      
+
       {/* Metrics Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {isLoading && metricCards.length === 0 ? (
           // Skeleton loaders
-          Array(6).fill(0).map((_, index) => (
-            <div key={index} className="animate-pulse h-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-          ))
+          Array(6)
+            .fill(0)
+            .map((_, index) => (
+              <div
+                key={index}
+                className="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"
+              />
+            ))
         ) : metrics ? (
-          metricCards.map((card) => (
-            <div key={card.id}>{card.content}</div>
-          ))
+          metricCards.map((card) => <div key={card.id}>{card.content}</div>)
         ) : (
-          <div className="col-span-3 text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Error loading metrics. Please try again.</p>
+          <div className="col-span-3 py-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              Error loading metrics. Please try again.
+            </p>
           </div>
         )}
       </div>
-      
+
       {/* Charts & Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <AdminChartSection
             charts={charts}
             timeframe={timeframe}
@@ -230,8 +278,38 @@ export default function AdminOverviewPage() {
             isLoading={chartIsLoading}
           />
         </div>
-        <div className="lg:col-span-1">
-          <AdminRecentActivity activities={recentActivity} isLoading={isFetching && !recentActivity?.length} />
+        <div className="space-y-6 lg:col-span-1">
+          <AdminRecentActivity
+            activities={recentActivity}
+            isLoading={isFetching && !recentActivity?.length}
+          />
+
+          {/* Platform Activity Feed */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>Live Platform Activity</CardTitle>
+                <CardDescription>Real-time user activities</CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => platformActivity.refetch()}
+                disabled={platformActivity.loading}
+                className="h-8 w-8"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${platformActivity.loading ? 'animate-spin' : ''}`}
+                />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ActivityList
+                activities={platformActivity.activities}
+                isLoading={platformActivity.loading}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
