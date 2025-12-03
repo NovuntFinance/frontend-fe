@@ -36,9 +36,22 @@ Sentry.init({
   // Filter errors before sending
   beforeSend(event, hint) {
     if (process.env.NODE_ENV === 'development') {
-      // Log locally but don't send in development
-
-      console.error('[Sentry Event]', event);
+      // Only log errors, not all events (reduce console noise)
+      const error = hint?.originalException;
+      if (error instanceof Error) {
+        // Skip logging MetaMask extension errors (they're not app errors)
+        if (
+          error.message?.includes('MetaMask') ||
+          error.message?.includes('Failed to connect to MetaMask') ||
+          error.stack?.includes(
+            'chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn'
+          )
+        ) {
+          return null;
+        }
+        // Log actual errors for debugging
+        console.error('[Sentry Event]', event);
+      }
       return null;
     }
 
@@ -48,6 +61,17 @@ Sentry.init({
       if (
         error.message.includes('Test error from Sentry') ||
         error.message.includes('Error with breadcrumbs')
+      ) {
+        return null;
+      }
+
+      // Ignore MetaMask extension errors (not app errors)
+      if (
+        error.message?.includes('MetaMask') ||
+        error.message?.includes('Failed to connect to MetaMask') ||
+        error.stack?.includes(
+          'chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn'
+        )
       ) {
         return null;
       }
@@ -71,6 +95,15 @@ Sentry.init({
       return null;
     }
 
+    // Filter out MetaMask extension URLs
+    if (
+      event.request?.url?.includes(
+        'chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn'
+      )
+    ) {
+      return null;
+    }
+
     return event;
   },
 
@@ -87,6 +120,10 @@ Sentry.init({
     'Error with breadcrumbs',
     // Ignore favicon errors
     'favicon.ico',
+    // Ignore MetaMask extension errors
+    'Failed to connect to MetaMask',
+    'MetaMask',
+    'chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn',
   ],
 
   // Ignore transactions (performance tracking) for certain URLs

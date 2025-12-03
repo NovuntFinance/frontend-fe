@@ -57,6 +57,7 @@ export interface UserWallet {
     totalTransferSent: number;
     totalStaked: number;
     totalStakeReturns: number;
+    totalEarned: number; // Total of ALL earnings combined (ROS, pools, bonuses, referrals, stake returns)
   };
 
   // Metadata

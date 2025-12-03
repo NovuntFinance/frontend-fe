@@ -32,6 +32,91 @@ export function Providers({ children }: { children: React.ReactNode }) {
     } else {
       logger.success('NEXT_PUBLIC_API_URL is configured', { url: apiBaseURL });
     }
+
+    // Suppress MetaMask extension errors (they're not app errors)
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.error = (...args: any[]) => {
+      const message = args[0]?.toString() || '';
+      const stack = args[1]?.stack || args[0]?.stack || '';
+
+      // Suppress MetaMask extension errors
+      if (
+        message.includes('MetaMask') ||
+        message.includes('Failed to connect to MetaMask') ||
+        stack.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn') ||
+        args.some(
+          (arg) =>
+            typeof arg === 'string' &&
+            arg.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
+        )
+      ) {
+        // Silently ignore MetaMask extension errors
+        return;
+      }
+
+      originalError.apply(console, args);
+    };
+
+    console.warn = (...args: any[]) => {
+      const message = args[0]?.toString() || '';
+
+      // Suppress MetaMask extension warnings
+      if (
+        message.includes('MetaMask') ||
+        message.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
+      ) {
+        // Silently ignore MetaMask extension warnings
+        return;
+      }
+
+      originalWarn.apply(console, args);
+    };
+
+    // Global error handler for unhandled errors
+    const handleError = (event: ErrorEvent) => {
+      const error = event.error || event.message || '';
+      const errorString = error.toString() || '';
+      const stack = event.error?.stack || '';
+
+      // Suppress MetaMask extension errors
+      if (
+        errorString.includes('MetaMask') ||
+        errorString.includes('Failed to connect to MetaMask') ||
+        stack.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
+      ) {
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    // Global unhandled promise rejection handler
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason?.toString() || '';
+      const stack = event.reason?.stack || '';
+
+      // Suppress MetaMask extension promise rejections
+      if (
+        reason.includes('MetaMask') ||
+        reason.includes('Failed to connect to MetaMask') ||
+        stack.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
+      ) {
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    // Cleanup
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
   }, []);
 
   const [queryClient] = useState(

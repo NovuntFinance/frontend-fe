@@ -57,6 +57,7 @@ export function useWallet(): {
               totalTransferSent: 0,
               totalStaked: 0,
               totalStakeReturns: 0,
+              totalEarned: 0,
             },
             walletAddress: null,
             createdAt: new Date().toISOString(),

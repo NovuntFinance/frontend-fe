@@ -30,6 +30,7 @@ export interface UserWallet {
     totalTransferSent: number;
     totalStaked: number;
     totalStakeReturns: number;
+    totalEarned: number; // Total of ALL earnings combined (ROS, pools, bonuses, referrals, stake returns)
   };
 
   // Metadata
@@ -208,6 +209,21 @@ export const walletApi = {
     const response = await api.get<{ success: boolean; wallet: UserWallet }>(
       '/wallets/info'
     );
+
+    // Debug logging to check if statistics.totalEarned is in the response
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[walletApi.getWalletInfo] 📥 Raw API response:', response);
+      console.log(
+        '[walletApi.getWalletInfo] 📊 Wallet statistics:',
+        response?.wallet?.statistics
+      );
+      console.log('[walletApi.getWalletInfo] 🔍 totalEarned field:', {
+        exists: response?.wallet?.statistics?.totalEarned !== undefined,
+        value: response?.wallet?.statistics?.totalEarned,
+        type: typeof response?.wallet?.statistics?.totalEarned,
+      });
+    }
+
     return response;
   },
 

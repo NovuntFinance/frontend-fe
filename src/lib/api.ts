@@ -929,6 +929,26 @@ export async function apiRequest<T>(
     console.log('[apiRequest] Response data type:', typeof response.data);
   }
 
+  // Debug logging for trading signals history responses
+  if (url.includes('/trading-signals/history')) {
+    console.log('[apiRequest] === TRADING SIGNALS HISTORY RESPONSE DEBUG ===');
+    console.log('[apiRequest] Response status:', response.status);
+    console.log('[apiRequest] Response data:', response.data);
+    console.log('[apiRequest] Response data type:', typeof response.data);
+    console.log(
+      '[apiRequest] Response data keys:',
+      response.data ? Object.keys(response.data) : 'null'
+    );
+    console.log(
+      '[apiRequest] Response.data.data:',
+      (response.data as any)?.data
+    );
+    console.log(
+      '[apiRequest] Response.data.count:',
+      (response.data as any)?.count
+    );
+  }
+
   const responseData = response.data as ApiResponse<T> | T;
 
   // CRITICAL DEBUG: Log the exact response structure for login endpoint
@@ -953,7 +973,10 @@ export async function apiRequest<T>(
     }
   }
 
+  // Don't unwrap trading signals history responses - they need the full response structure
+  // (success, data, count, page, totalPages, hasMore)
   if (
+    !url.includes('/trading-signals/history') &&
     typeof responseData === 'object' &&
     responseData !== null &&
     'data' in responseData &&

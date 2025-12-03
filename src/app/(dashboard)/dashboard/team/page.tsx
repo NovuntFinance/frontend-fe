@@ -14,6 +14,7 @@ import {
   Search,
   AlertCircle,
 } from 'lucide-react';
+import { ReferralTreeVisualization } from '@/components/referral/ReferralTreeVisualization';
 import {
   useReferralStats,
   useReferralInfo,
@@ -566,7 +567,19 @@ export default function TeamPage() {
             </Card>
           </motion.div>
 
-          {/* Referral Tree with Expand/Collapse */}
+          {/* New Tree Visualization Component */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <ReferralTreeVisualization
+              treeEntries={referralTree?.tree || []}
+              stats={referralTree?.stats}
+              isLoading={treeLoading}
+              maxLevels={maxLevels}
+            />
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
