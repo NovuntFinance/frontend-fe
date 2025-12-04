@@ -166,12 +166,50 @@ export const teamRankApi = {
   async getTeamInfo(): Promise<TeamInfoResponse> {
     try {
       const response = await api.get<TeamInfoResponse>('/user-rank/my-team');
-      
+
       console.log('[teamRankApi] Team info response:', response);
+
+      // Ensure response has proper structure
+      if (!response) {
+        console.warn('[teamRankApi] Empty response received');
+        return {
+          success: false,
+          data: {
+            teamStats: {
+              totalTeamMembers: 0,
+              totalDirectDownlines: 0,
+              rankDistribution: {},
+              totalTeamStake: 0,
+              activeDownlines: 0,
+            },
+            directDownlines: [],
+          },
+        };
+      }
+
       return response;
     } catch (error: any) {
-      console.error('[teamRankApi] Failed to get team info:', error);
-      throw error;
+      console.error('[teamRankApi] Failed to get team info:', {
+        message: error?.message || 'Unknown error',
+        response: error?.response?.data,
+        status: error?.response?.status,
+        error: error,
+      });
+
+      // Return a structured error response instead of throwing
+      return {
+        success: false,
+        data: {
+          teamStats: {
+            totalTeamMembers: 0,
+            totalDirectDownlines: 0,
+            rankDistribution: {},
+            totalTeamStake: 0,
+            activeDownlines: 0,
+          },
+          directDownlines: [],
+        },
+      };
     }
   },
 
@@ -183,18 +221,24 @@ export const teamRankApi = {
   async getRankInfo(): Promise<RankInfoResponse> {
     try {
       const response = await api.get<RankInfoResponse>('/user-rank/my-rank');
-      
+
       console.log('[teamRankApi] Rank info response:', response);
       return response;
     } catch (error: any) {
       // The API client transforms errors into ApiError objects
       // Use getOwnPropertyNames to get ALL properties (including non-enumerable)
-      const allProps = error && typeof error === 'object' ? Object.getOwnPropertyNames(error) : [];
-      const allDescriptors = error && typeof error === 'object' ? Object.getOwnPropertyDescriptors(error) : {};
-      
+      const allProps =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyNames(error)
+          : [];
+      const allDescriptors =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyDescriptors(error)
+          : {};
+
       // Extract values from descriptors
       const extractedProps: Record<string, unknown> = {};
-      Object.keys(allDescriptors).forEach(key => {
+      Object.keys(allDescriptors).forEach((key) => {
         try {
           const descriptor = allDescriptors[key];
           if (descriptor.value !== undefined) {
@@ -210,11 +254,20 @@ export const teamRankApi = {
           // Skip
         }
       });
-      
-      const statusCode = extractedProps.statusCode as number ?? error?.statusCode ?? error?.response?.status ?? error?.status ?? null;
-      const message = extractedProps.message as string ?? error?.message ?? error?.response?.data?.message ?? 'Unknown error';
-      const code = extractedProps.code as string ?? error?.code ?? null;
-      
+
+      const statusCode =
+        (extractedProps.statusCode as number) ??
+        error?.statusCode ??
+        error?.response?.status ??
+        error?.status ??
+        null;
+      const message =
+        (extractedProps.message as string) ??
+        error?.message ??
+        error?.response?.data?.message ??
+        'Unknown error';
+      const code = (extractedProps.code as string) ?? error?.code ?? null;
+
       const errorDetails: Record<string, unknown> = {
         message,
         statusCode,
@@ -225,15 +278,24 @@ export const teamRankApi = {
         allPropertyNames: allProps,
         extractedProperties: extractedProps,
       };
-      
+
       console.error('[teamRankApi] Failed to get rank info:', errorDetails);
       console.error('[teamRankApi] Error property names:', allProps);
       console.error('[teamRankApi] Extracted properties:', extractedProps);
-      console.error('[teamRankApi] Direct access - statusCode:', error?.statusCode, 'message:', error?.message, 'code:', error?.code);
-      
+      console.error(
+        '[teamRankApi] Direct access - statusCode:',
+        error?.statusCode,
+        'message:',
+        error?.message,
+        'code:',
+        error?.code
+      );
+
       // Handle 404 gracefully
       if (statusCode === 404) {
-        console.log('[teamRankApi] Rank info not found (404) - returning default structure');
+        console.log(
+          '[teamRankApi] Rank info not found (404) - returning default structure'
+        );
         return {
           success: false,
           data: {
@@ -251,7 +313,7 @@ export const teamRankApi = {
           },
         };
       }
-      
+
       throw error;
     }
   },
@@ -263,8 +325,10 @@ export const teamRankApi = {
    */
   async calculateRank(): Promise<RankInfoResponse> {
     try {
-      const response = await api.get<RankInfoResponse>('/user-rank/calculate-rank');
-      
+      const response = await api.get<RankInfoResponse>(
+        '/user-rank/calculate-rank'
+      );
+
       console.log('[teamRankApi] Calculate rank response:', response);
       return response;
     } catch (error: any) {
@@ -280,19 +344,27 @@ export const teamRankApi = {
    */
   async getNextRankRequirements(): Promise<NextRankRequirementsResponse> {
     try {
-      const response = await api.get<NextRankRequirementsResponse>('/user-rank/next-rank-requirements');
-      
+      const response = await api.get<NextRankRequirementsResponse>(
+        '/user-rank/next-rank-requirements'
+      );
+
       console.log('[teamRankApi] Next rank requirements response:', response);
       return response;
     } catch (error: any) {
       // The API client transforms errors into ApiError objects
       // Use getOwnPropertyNames to get ALL properties (including non-enumerable)
-      const allProps = error && typeof error === 'object' ? Object.getOwnPropertyNames(error) : [];
-      const allDescriptors = error && typeof error === 'object' ? Object.getOwnPropertyDescriptors(error) : {};
-      
+      const allProps =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyNames(error)
+          : [];
+      const allDescriptors =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyDescriptors(error)
+          : {};
+
       // Extract values from descriptors
       const extractedProps: Record<string, unknown> = {};
-      Object.keys(allDescriptors).forEach(key => {
+      Object.keys(allDescriptors).forEach((key) => {
         try {
           const descriptor = allDescriptors[key];
           if (descriptor.value !== undefined) {
@@ -308,11 +380,20 @@ export const teamRankApi = {
           // Skip
         }
       });
-      
-      const statusCode = extractedProps.statusCode as number ?? error?.statusCode ?? error?.response?.status ?? error?.status ?? null;
-      const message = extractedProps.message as string ?? error?.message ?? error?.response?.data?.message ?? 'Unknown error';
-      const code = extractedProps.code as string ?? error?.code ?? null;
-      
+
+      const statusCode =
+        (extractedProps.statusCode as number) ??
+        error?.statusCode ??
+        error?.response?.status ??
+        error?.status ??
+        null;
+      const message =
+        (extractedProps.message as string) ??
+        error?.message ??
+        error?.response?.data?.message ??
+        'Unknown error';
+      const code = (extractedProps.code as string) ?? error?.code ?? null;
+
       const errorDetails: Record<string, unknown> = {
         message,
         statusCode,
@@ -323,21 +404,33 @@ export const teamRankApi = {
         allPropertyNames: allProps,
         extractedProperties: extractedProps,
       };
-      
-      console.error('[teamRankApi] Failed to get next rank requirements:', errorDetails);
+
+      console.error(
+        '[teamRankApi] Failed to get next rank requirements:',
+        errorDetails
+      );
       console.error('[teamRankApi] Error property names:', allProps);
       console.error('[teamRankApi] Extracted properties:', extractedProps);
-      console.error('[teamRankApi] Direct access - statusCode:', error?.statusCode, 'message:', error?.message, 'code:', error?.code);
-      
+      console.error(
+        '[teamRankApi] Direct access - statusCode:',
+        error?.statusCode,
+        'message:',
+        error?.message,
+        'code:',
+        error?.code
+      );
+
       // Handle 404 gracefully
       if (statusCode === 404) {
-        console.log('[teamRankApi] Next rank requirements not found (404) - returning null');
+        console.log(
+          '[teamRankApi] Next rank requirements not found (404) - returning null'
+        );
         return {
           success: false,
           data: undefined,
         };
       }
-      
+
       throw error;
     }
   },
@@ -360,20 +453,26 @@ export const teamRankApi = {
       if (distributionType) {
         url += `&distributionType=${distributionType}`;
       }
-      
+
       const response = await api.get<PoolDistributionResponse>(url);
-      
+
       console.log('[teamRankApi] Pool distributions response:', response);
       return response;
     } catch (error: any) {
       // The API client transforms errors into ApiError objects
       // Use getOwnPropertyNames to get ALL properties (including non-enumerable)
-      const allProps = error && typeof error === 'object' ? Object.getOwnPropertyNames(error) : [];
-      const allDescriptors = error && typeof error === 'object' ? Object.getOwnPropertyDescriptors(error) : {};
-      
+      const allProps =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyNames(error)
+          : [];
+      const allDescriptors =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyDescriptors(error)
+          : {};
+
       // Extract values from descriptors
       const extractedProps: Record<string, unknown> = {};
-      Object.keys(allDescriptors).forEach(key => {
+      Object.keys(allDescriptors).forEach((key) => {
         try {
           const descriptor = allDescriptors[key];
           if (descriptor.value !== undefined) {
@@ -389,11 +488,20 @@ export const teamRankApi = {
           // Skip
         }
       });
-      
-      const statusCode = extractedProps.statusCode as number ?? error?.statusCode ?? error?.response?.status ?? error?.status ?? null;
-      const message = extractedProps.message as string ?? error?.message ?? error?.response?.data?.message ?? 'Unknown error';
-      const code = extractedProps.code as string ?? error?.code ?? null;
-      
+
+      const statusCode =
+        (extractedProps.statusCode as number) ??
+        error?.statusCode ??
+        error?.response?.status ??
+        error?.status ??
+        null;
+      const message =
+        (extractedProps.message as string) ??
+        error?.message ??
+        error?.response?.data?.message ??
+        'Unknown error';
+      const code = (extractedProps.code as string) ?? error?.code ?? null;
+
       const errorDetails: Record<string, unknown> = {
         message,
         statusCode,
@@ -404,15 +512,27 @@ export const teamRankApi = {
         allPropertyNames: allProps,
         extractedProperties: extractedProps,
       };
-      
-      console.error('[teamRankApi] Failed to get pool distributions:', errorDetails);
+
+      console.error(
+        '[teamRankApi] Failed to get pool distributions:',
+        errorDetails
+      );
       console.error('[teamRankApi] Error property names:', allProps);
       console.error('[teamRankApi] Extracted properties:', extractedProps);
-      console.error('[teamRankApi] Direct access - statusCode:', error?.statusCode, 'message:', error?.message, 'code:', error?.code);
-      
+      console.error(
+        '[teamRankApi] Direct access - statusCode:',
+        error?.statusCode,
+        'message:',
+        error?.message,
+        'code:',
+        error?.code
+      );
+
       // Handle 404 gracefully
       if (statusCode === 404) {
-        console.log('[teamRankApi] Pool distributions not found (404) - returning empty structure');
+        console.log(
+          '[teamRankApi] Pool distributions not found (404) - returning empty structure'
+        );
         return {
           success: false,
           data: {
@@ -431,7 +551,7 @@ export const teamRankApi = {
           },
         };
       }
-      
+
       throw error;
     }
   },
@@ -443,19 +563,27 @@ export const teamRankApi = {
    */
   async getIncentiveWallet(): Promise<IncentiveWalletResponse> {
     try {
-      const response = await api.get<IncentiveWalletResponse>('/user-rank/my-incentive-wallet');
-      
+      const response = await api.get<IncentiveWalletResponse>(
+        '/user-rank/my-incentive-wallet'
+      );
+
       console.log('[teamRankApi] Incentive wallet response:', response);
       return response;
     } catch (error: any) {
       // The API client transforms errors into ApiError objects
       // Use getOwnPropertyNames to get ALL properties (including non-enumerable)
-      const allProps = error && typeof error === 'object' ? Object.getOwnPropertyNames(error) : [];
-      const allDescriptors = error && typeof error === 'object' ? Object.getOwnPropertyDescriptors(error) : {};
-      
+      const allProps =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyNames(error)
+          : [];
+      const allDescriptors =
+        error && typeof error === 'object'
+          ? Object.getOwnPropertyDescriptors(error)
+          : {};
+
       // Extract values from descriptors
       const extractedProps: Record<string, unknown> = {};
-      Object.keys(allDescriptors).forEach(key => {
+      Object.keys(allDescriptors).forEach((key) => {
         try {
           const descriptor = allDescriptors[key];
           if (descriptor.value !== undefined) {
@@ -471,11 +599,20 @@ export const teamRankApi = {
           // Skip
         }
       });
-      
-      const statusCode = extractedProps.statusCode as number ?? error?.statusCode ?? error?.response?.status ?? error?.status ?? null;
-      const message = extractedProps.message as string ?? error?.message ?? error?.response?.data?.message ?? 'Unknown error';
-      const code = extractedProps.code as string ?? error?.code ?? null;
-      
+
+      const statusCode =
+        (extractedProps.statusCode as number) ??
+        error?.statusCode ??
+        error?.response?.status ??
+        error?.status ??
+        null;
+      const message =
+        (extractedProps.message as string) ??
+        error?.message ??
+        error?.response?.data?.message ??
+        'Unknown error';
+      const code = (extractedProps.code as string) ?? error?.code ?? null;
+
       const errorDetails: Record<string, unknown> = {
         message,
         statusCode,
@@ -486,15 +623,27 @@ export const teamRankApi = {
         allPropertyNames: allProps,
         extractedProperties: extractedProps,
       };
-      
-      console.error('[teamRankApi] Failed to get incentive wallet:', errorDetails);
+
+      console.error(
+        '[teamRankApi] Failed to get incentive wallet:',
+        errorDetails
+      );
       console.error('[teamRankApi] Error property names:', allProps);
       console.error('[teamRankApi] Extracted properties:', extractedProps);
-      console.error('[teamRankApi] Direct access - statusCode:', error?.statusCode, 'message:', error?.message, 'code:', error?.code);
-      
+      console.error(
+        '[teamRankApi] Direct access - statusCode:',
+        error?.statusCode,
+        'message:',
+        error?.message,
+        'code:',
+        error?.code
+      );
+
       // Handle 404 gracefully
       if (statusCode === 404) {
-        console.log('[teamRankApi] Incentive wallet not found (404) - returning default structure');
+        console.log(
+          '[teamRankApi] Incentive wallet not found (404) - returning default structure'
+        );
         return {
           success: false,
           data: {
@@ -512,9 +661,8 @@ export const teamRankApi = {
           },
         };
       }
-      
+
       throw error;
     }
   },
 };
-

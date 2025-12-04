@@ -845,8 +845,53 @@ export function useReferralTree(maxLevels: number = 5) {
   return useQuery({
     queryKey: queryKeys.referralTree(maxLevels),
     queryFn: async () => {
-      const response = await referralApi.getReferralTree(maxLevels);
-      return response.data;
+      try {
+        const response = await referralApi.getReferralTree(maxLevels);
+
+        // Log for debugging
+        console.log('[useReferralTree] Response received:', {
+          hasResponse: !!response,
+          hasData: !!response?.data,
+          hasTree: !!response?.data?.tree,
+          treeLength: response?.data?.tree?.length || 0,
+          responseStructure: response ? Object.keys(response) : [],
+        });
+
+        // Ensure we always return a valid object, never undefined
+        const treeData = response?.data || {
+          tree: [],
+          stats: {
+            totalReferrals: 0,
+            activeReferrals: 0,
+            totalEarned: 0,
+            currentBalance: 0,
+            canWithdraw: false,
+          },
+          maxLevels,
+        };
+
+        console.log('[useReferralTree] Returning tree data:', {
+          treeLength: treeData.tree?.length || 0,
+          hasStats: !!treeData.stats,
+          maxLevels: treeData.maxLevels,
+        });
+
+        return treeData;
+      } catch (error) {
+        console.error('[useReferralTree] Error fetching referral tree:', error);
+        // Return default structure on error
+        return {
+          tree: [],
+          stats: {
+            totalReferrals: 0,
+            activeReferrals: 0,
+            totalEarned: 0,
+            currentBalance: 0,
+            canWithdraw: false,
+          },
+          maxLevels,
+        };
+      }
     },
     staleTime: 30 * 1000, // 30 seconds - tree updates when referrals join
     refetchInterval: 60 * 1000, // Poll every 60 seconds on referral dashboard
@@ -937,8 +982,31 @@ export function useTeamInfo() {
   return useQuery({
     queryKey: queryKeys.teamInfo,
     queryFn: async () => {
-      const response = await teamRankApi.getTeamInfo();
-      return response.data;
+      try {
+        const response = await teamRankApi.getTeamInfo();
+        // Ensure we always return a valid object, never undefined
+        return (
+          response.data || {
+            teamStats: {
+              totalTeamMembers: 0,
+              totalDirectDownlines: 0,
+              rankDistribution: {},
+            },
+            directDownlines: [],
+          }
+        );
+      } catch (error) {
+        console.error('[useTeamInfo] Error fetching team info:', error);
+        // Return default structure on error
+        return {
+          teamStats: {
+            totalTeamMembers: 0,
+            totalDirectDownlines: 0,
+            rankDistribution: {},
+          },
+          directDownlines: [],
+        };
+      }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - team grows slowly
   });

@@ -74,12 +74,14 @@ export const referralApi = {
    * @param referralCode - The referral code to validate
    * @returns Validation result with referrer name if valid
    */
-  async validateReferralCode(referralCode: string): Promise<ValidateReferralCodeResponse> {
+  async validateReferralCode(
+    referralCode: string
+  ): Promise<ValidateReferralCodeResponse> {
     try {
       const response = await api.get<ValidateReferralCodeResponse>(
         `/referral/validate?referralCode=${encodeURIComponent(referralCode)}`
       );
-      
+
       console.log('[referralApi] Validate referral code response:', response);
       return response;
     } catch (error: any) {
@@ -92,18 +94,24 @@ export const referralApi = {
    * Get referral information
    * GET /api/v1/better-auth/referral-info
    * @returns User's referral code, link, and basic stats
-   * 
+   *
    * NOTE: Backend uses better-auth routes, not auth routes
    */
   async getReferralInfo(): Promise<ReferralInfoResponse> {
     try {
       // Call the API - api.get may or may not unwrap the response
-      const response = await api.get<ReferralInfoResponse | ReferralInfoResponse['data']>('/better-auth/referral-info');
-      
+      const response = await api.get<
+        ReferralInfoResponse | ReferralInfoResponse['data']
+      >('/better-auth/referral-info');
+
       console.log('[referralApi] Raw API response:', response);
-      
+
       // Check if response is already unwrapped (has referralCode directly)
-      if (response && typeof response === 'object' && 'referralCode' in response) {
+      if (
+        response &&
+        typeof response === 'object' &&
+        'referralCode' in response
+      ) {
         console.log('[referralApi] Response is already unwrapped:', response);
         // Response is already the data object { referralCode, referralLink, ... }
         return {
@@ -111,15 +119,18 @@ export const referralApi = {
           data: response as ReferralInfoResponse['data'],
         };
       }
-      
+
       // Check if response has the wrapped structure { success, data }
       if (response && typeof response === 'object' && 'data' in response) {
         console.log('[referralApi] Response has wrapped structure:', response);
         return response as ReferralInfoResponse;
       }
-      
+
       // Fallback: assume it's the data object
-      console.warn('[referralApi] Unexpected response structure, treating as data:', response);
+      console.warn(
+        '[referralApi] Unexpected response structure, treating as data:',
+        response
+      );
       return {
         success: true,
         data: response as ReferralInfoResponse['data'],
@@ -140,17 +151,96 @@ export const referralApi = {
     try {
       // Validate maxLevels
       const levels = Math.max(1, Math.min(20, maxLevels));
-      
-      const response = await api.get<ReferralTreeResponse>(
-        `/referral/my-tree?maxLevels=${levels}`
-      );
-      
+
+      const response = await api.get<
+        ReferralTreeResponse | ReferralTreeResponse['data']
+      >(`/referral/my-tree?maxLevels=${levels}`);
+
       console.log('[referralApi] Referral tree response:', response);
-      return response;
+
+      // Handle both unwrapped (data object) and wrapped (full response) formats
+      // api.get() unwraps responses, so response is likely already the data object
+      const treeData = (response as any)?.data || response;
+
+      // Detailed logging for debugging
+      if (treeData?.tree) {
+        console.log('[referralApi] Tree entries details:', {
+          totalEntries: treeData.tree.length,
+          entries: treeData.tree.map((e: any) => ({
+            email: e.email,
+            username: e.username,
+            level: e.level,
+            referrer: e.referrer,
+            referral: e.referral,
+            hasQualifyingStake: e.hasQualifyingStake,
+          })),
+          entriesByLevel: treeData.tree.reduce(
+            (acc: any, e: any) => {
+              acc[e.level] = (acc[e.level] || 0) + 1;
+              return acc;
+            },
+            {} as Record<number, number>
+          ),
+          stats: treeData.stats,
+        });
+      } else {
+        console.warn('[referralApi] No tree data found in response:', {
+          response,
+          hasData: !!(response as any)?.data,
+          hasTree: !!treeData?.tree,
+          responseKeys: response ? Object.keys(response) : [],
+        });
+      }
+
+      // Ensure response has proper structure
+      if (!treeData || !treeData.tree) {
+        console.warn(
+          '[referralApi] Invalid response structure, returning empty tree'
+        );
+        return {
+          success: false,
+          data: {
+            tree: [],
+            stats: {
+              totalReferrals: 0,
+              activeReferrals: 0,
+              totalEarned: 0,
+              currentBalance: 0,
+              canWithdraw: false,
+            },
+            maxLevels: levels,
+          },
+        };
+      }
+
+      // Return in expected format (wrapped)
+      return {
+        success: true,
+        data: treeData as ReferralTreeResponse['data'],
+      };
     } catch (error: any) {
-      console.error('[referralApi] Failed to get referral tree:', error);
-      throw error;
+      console.error('[referralApi] Failed to get referral tree:', {
+        message: error?.message || 'Unknown error',
+        response: error?.response?.data,
+        status: error?.response?.status,
+        error: error,
+      });
+
+      // Return a structured error response instead of throwing
+      return {
+        success: false,
+        data: {
+          tree: [],
+          stats: {
+            totalReferrals: 0,
+            activeReferrals: 0,
+            totalEarned: 0,
+            currentBalance: 0,
+            canWithdraw: false,
+          },
+          maxLevels: Math.max(1, Math.min(20, maxLevels)),
+        },
+      };
     }
   },
 };
-
