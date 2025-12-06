@@ -69,91 +69,72 @@ export function ReferralTreeNode({
       className="relative"
     >
       <NovuntPremiumCard
-        title={entry.username}
-        subtitle={`Level ${level} • ${commissionRate}% commission`}
+        title=""
+        subtitle=""
         icon={Users}
         colorTheme={theme}
-        tooltip={`Referral at level ${level}. Earns ${commissionRate}% commission from this user's activities. ${hasChildren ? 'Click to ' + (isExpanded ? 'collapse' : 'expand') + ' their referrals.' : ''}`}
-        className={`relative z-10 ${hasChildren ? 'cursor-pointer' : ''}`}
+        tooltip={`${entry.username} - Level ${level} referral. Earns ${commissionRate}% commission. ${hasChildren ? 'Click to ' + (isExpanded ? 'collapse' : 'expand') + ' their referrals.' : 'This user has no referrals yet.'}`}
+        className={`relative z-10 ${hasChildren ? 'cursor-pointer hover:border-opacity-70' : ''}`}
         onClick={hasChildren ? onToggle : undefined}
       >
-        <div className="space-y-4">
-          {/* User Info Section */}
-          <div className="flex items-start gap-4">
-            <Avatar className="border-border h-12 w-12 border-2">
-              <AvatarFallback className="from-primary/20 to-primary/10 text-primary bg-gradient-to-br font-semibold">
+        <div className="space-y-3">
+          {/* Compact User Info - Single Line */}
+          <div className="flex items-center gap-3">
+            <Avatar className="border-border h-10 w-10 border-2 flex-shrink-0">
+              <AvatarFallback className="from-primary/20 to-primary/10 text-primary bg-gradient-to-br font-semibold text-sm">
                 {getInitials(entry.username)}
               </AvatarFallback>
             </Avatar>
 
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex items-center gap-2">
-                <h4 className="text-foreground truncate font-semibold">
-                  {entry.username}
-                </h4>
-                {entry.hasQualifyingStake ? (
-                  <Badge
-                    variant="outline"
-                    className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                  >
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    Active
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="bg-muted text-muted-foreground"
-                  >
-                    <XCircle className="mr-1 h-3 w-3" />
-                    Inactive
-                  </Badge>
-                )}
-              </div>
+            <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
+              <h4 className="text-foreground font-semibold truncate">
+                {entry.username}
+              </h4>
+              
+              {entry.hasQualifyingStake ? (
+                <Badge
+                  variant="outline"
+                  className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs"
+                >
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  Active
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="bg-muted text-muted-foreground text-xs"
+                >
+                  <XCircle className="mr-1 h-3 w-3" />
+                  Inactive
+                </Badge>
+              )}
 
-              <p className="text-muted-foreground mb-2 truncate text-sm">
-                {entry.email}
-              </p>
-
-              <div className="text-muted-foreground flex items-center gap-4 text-xs">
+              <div className="text-muted-foreground flex items-center gap-3 text-xs flex-wrap">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {formatDate(entry.joinedAt)}
                 </span>
                 <span className="flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  Level {level}
+                  L{level} • {commissionRate}%
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Stats Section */}
-          <div className="border-border/50 grid grid-cols-2 gap-3 border-t pt-3">
-            <div>
-              <p className="text-muted-foreground mb-1 text-xs">
-                Commission Rate
-              </p>
-              <p className="text-foreground text-lg font-bold">
-                {commissionRate}%
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-1 text-xs">Status</p>
-              <p
-                className={`text-sm font-medium ${entry.hasQualifyingStake ? 'text-emerald-400' : 'text-muted-foreground'}`}
-              >
-                {entry.hasQualifyingStake ? 'Qualified' : 'Pending'}
-              </p>
-            </div>
-          </div>
-
-          {/* Expand/Collapse Indicator */}
-          {hasChildren && (
+          {/* Expand/Collapse Indicator or No Referrals Message */}
+          {hasChildren ? (
             <div className="bg-muted/50 border-border/50 mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium">
               <span className="text-muted-foreground">
                 {isExpanded ? '▼' : '▶'} {isExpanded ? 'Hide' : 'Show'}{' '}
                 {node.children.length} referral
                 {node.children.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          ) : (
+            <div className="bg-muted/30 border-border/30 mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-2 text-sm">
+              <span className="text-muted-foreground italic">
+                No referrals yet
               </span>
             </div>
           )}

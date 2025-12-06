@@ -19,6 +19,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
 import { REFERRAL_COMMISSION_RATES } from '@/types/referral';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useIsAdmin } from '@/store/selectors';
 
 interface ReferralTreeVisualizationProps {
   treeEntries: ReferralTreeEntry[];
@@ -32,43 +33,6 @@ interface ReferralTreeVisualizationProps {
   maxLevels?: number;
 }
 
-/**
- * Builds a hierarchical tree structure from flat array of entries
- * (Currently unused - tree is built inline in useMemo)
- */
-function _buildTree(entries: ReferralTreeEntry[]): TreeNode[] {
-  // Create a map of referral ID to node
-  const nodeMap = new Map<string, TreeNode>();
-
-  // First pass: create all nodes
-  entries.forEach((entry) => {
-    nodeMap.set(entry.referral, {
-      entry,
-      children: [],
-    });
-  });
-
-  // Second pass: build parent-child relationships
-  const rootNodes: TreeNode[] = [];
-
-  entries.forEach((entry) => {
-    const node = nodeMap.get(entry.referral);
-    if (!node) return;
-
-    // If this entry's referrer is in the map, add as child
-    if (entry.referrer && nodeMap.has(entry.referrer)) {
-      const parentNode = nodeMap.get(entry.referrer);
-      if (parentNode) {
-        parentNode.children.push(node);
-      }
-    } else {
-      // This is a root node (direct referral of current user)
-      rootNodes.push(node);
-    }
-  });
-
-  return rootNodes;
-}
 
 /**
  * Flattens tree for search filtering
@@ -123,6 +87,7 @@ export function ReferralTreeVisualization({
     rawDataCount: number;
     treeStructureCount: number;
   } | null>(null);
+  const isAdmin = useIsAdmin();
 
   // Update expanded nodes when treeEntries change
   useEffect(() => {
@@ -613,9 +578,16 @@ export function ReferralTreeVisualization({
             <Input
               placeholder="Search by username or email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
               className="bg-background/50 pl-9"
             />
+            {searchQuery && (
+              <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-xs">
+                {flattenTree(filteredTree).length} result{flattenTree(filteredTree).length !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -663,15 +635,17 @@ export function ReferralTreeVisualization({
             <ChevronRight className="mr-1 h-3 w-3" />
             Collapse All
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDebug(!showDebug)}
-            className="text-xs"
-          >
-            <Bug className="mr-1 h-3 w-3" />
-            {showDebug ? 'Hide' : 'Show'} Debug
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs"
+            >
+              <Bug className="mr-1 h-3 w-3" />
+              {showDebug ? 'Hide' : 'Show'} Debug
+            </Button>
+          )}
         </div>
 
         {/* Debug Panel */}
