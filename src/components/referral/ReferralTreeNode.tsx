@@ -73,8 +73,9 @@ export function ReferralTreeNode({
         subtitle={`Level ${level} • ${commissionRate}% commission`}
         icon={Users}
         colorTheme={theme}
-        tooltip={`Referral at level ${level}. Earns ${commissionRate}% commission from this user's activities.`}
-        className="relative z-10"
+        tooltip={`Referral at level ${level}. Earns ${commissionRate}% commission from this user's activities. ${hasChildren ? 'Click to ' + (isExpanded ? 'collapse' : 'expand') + ' their referrals.' : ''}`}
+        className={`relative z-10 ${hasChildren ? 'cursor-pointer' : ''}`}
+        onClick={hasChildren ? onToggle : undefined}
       >
         <div className="space-y-4">
           {/* User Info Section */}
@@ -146,22 +147,15 @@ export function ReferralTreeNode({
             </div>
           </div>
 
-          {/* Expand/Collapse Button */}
+          {/* Expand/Collapse Indicator */}
           {hasChildren && (
-            <motion.button
-              onClick={onToggle}
-              className="bg-muted/50 hover:bg-muted text-foreground mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>{isExpanded ? 'Collapse' : 'Expand'} Children</span>
-              <motion.span
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                ↓
-              </motion.span>
-            </motion.button>
+            <div className="bg-muted/50 border-border/50 mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium">
+              <span className="text-muted-foreground">
+                {isExpanded ? '▼' : '▶'} {isExpanded ? 'Hide' : 'Show'}{' '}
+                {node.children.length} referral
+                {node.children.length !== 1 ? 's' : ''}
+              </span>
+            </div>
           )}
         </div>
       </NovuntPremiumCard>
