@@ -41,16 +41,6 @@ const optionalTrimmedString = (max: number, message: string) =>
     })
     .optional();
 
-const optionalTrimmedString = (max: number, message: string) =>
-  z
-    .string()
-    .max(max, message)
-    .transform((value) => {
-      const trimmed = value.trim();
-      return trimmed.length === 0 ? undefined : trimmed;
-    })
-    .optional();
-
 export default function CreateStakePage() {
   const router = useRouter();
   const { balances, isLoading: walletLoading } = useWallet();

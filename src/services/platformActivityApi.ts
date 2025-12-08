@@ -35,24 +35,60 @@ export class PlatformActivityService {
         `${this.ENDPOINT}?${params.toString()}`
       );
 
+      console.log('[PlatformActivityService] DEBUG_V2 Raw response:', response);
+      console.log(
+        '[PlatformActivityService] DEBUG_V2 Response data type:',
+        typeof response.data
+      );
+      console.log(
+        '[PlatformActivityService] DEBUG_V2 Response keys:',
+        response.data ? Object.keys(response.data) : 'null'
+      );
+
       // Handle both wrapped and unwrapped responses
       let data: PlatformActivityResponse;
-      if (response.data && 'success' in response.data) {
-        data = response.data as PlatformActivityResponse;
+
+      // Check if response data exists and has success property (standard API wrapper)
+      if (
+        response.data &&
+        typeof response.data === 'object' &&
+        'success' in response.data
+      ) {
+        data = response.data as unknown as PlatformActivityResponse;
       } else {
-        // If response is unwrapped, wrap it
+        // If response is unwrapped or doesn't match standard format, wrap it optimistically
         data = {
           success: true,
-          data: response.data as PlatformActivity[],
+          data: (Array.isArray(response.data)
+            ? response.data
+            : []) as PlatformActivity[],
           count: Array.isArray(response.data) ? response.data.length : 0,
         };
       }
 
-      if (data.success && data.data) {
+      // Check specifically for failure response from backend
+      if (data.success === false) {
+        const errorMsg =
+          (data as any).error?.message ||
+          (data as any).message ||
+          'Failed to fetch platform activities';
+        const errorCode =
+          (data as any).error?.code || (data as any).code || 'UNKNOWN_ERROR';
+        console.error(
+          `[PlatformActivityService] Backend error: ${errorCode} - ${errorMsg}`
+        );
+        throw new Error(errorMsg);
+      }
+
+      if (data.data) {
         return data.data;
       }
 
-      throw new Error('Invalid response format');
+      console.error(
+        '[PlatformActivityService] DEBUG_V2 success check failed. Data:',
+        data
+      );
+      throw new Error('Invalid response format: missing data field (DEBUG_V2)');
     } catch (error: any) {
       console.error('[Platform Activity] Error fetching activities:', error);
 

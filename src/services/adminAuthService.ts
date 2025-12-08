@@ -95,11 +95,19 @@ class AdminAuthService {
         token = responseData.accessToken;
       }
 
-      // Extract user data
+      // Extract user data - handle both old and new backend formats
       if (responseData?.user) {
         user = responseData.user;
+        // Handle backend format where user has 'id' instead of '_id'
+        if (user && !user._id && (user as any).id) {
+          user = { ...user, _id: (user as any).id } as AdminUser;
+        }
       } else if (responseData?.data?.user) {
         user = responseData.data.user;
+        // Handle backend format where user has 'id' instead of '_id'
+        if (user && !user._id && (user as any).id) {
+          user = { ...user, _id: (user as any).id } as AdminUser;
+        }
       }
 
       // Extract refresh token
@@ -108,6 +116,14 @@ class AdminAuthService {
       } else if (responseData?.data?.refreshToken) {
         refreshToken = responseData.data.refreshToken;
       }
+
+      // Extract role and twoFAEnabled from responseData (they might be at the same level as user/token)
+      const backendRole =
+        responseData?.role || (response.data as any)?.data?.role;
+      const backendTwoFA =
+        responseData?.twoFAEnabled !== undefined
+          ? responseData.twoFAEnabled
+          : (response.data as any)?.data?.twoFAEnabled;
 
       // If we have a token, store it and return success
       if (token) {
@@ -125,10 +141,6 @@ class AdminAuthService {
           try {
             // Decode JWT token to extract user info
             const payload = JSON.parse(atob(token.split('.')[1]));
-
-            // Use role and twoFAEnabled from backend response if available
-            const backendRole = responseData.role;
-            const backendTwoFA = responseData.twoFAEnabled;
 
             // Create admin user object from token payload
             user = {
@@ -163,19 +175,20 @@ class AdminAuthService {
               _id: '',
               email: '',
               username: '',
-              role: (responseData.role || 'admin') as 'admin' | 'superAdmin',
-              twoFAEnabled: responseData.twoFAEnabled === true,
+              role: (backendRole || 'admin') as 'admin' | 'superAdmin',
+              twoFAEnabled: backendTwoFA === true,
               isActive: true,
               emailVerified: false,
             } as AdminUser;
           }
         } else {
           // User data provided by backend - merge with response data if needed
-          if (responseData.role) {
-            user.role = responseData.role as 'admin' | 'superAdmin';
+          // Use the extracted backendRole and backendTwoFA from above
+          if (backendRole) {
+            user.role = backendRole as 'admin' | 'superAdmin';
           }
-          if (responseData.twoFAEnabled !== undefined) {
-            user.twoFAEnabled = responseData.twoFAEnabled;
+          if (backendTwoFA !== undefined) {
+            user.twoFAEnabled = backendTwoFA;
           }
         }
 
@@ -216,15 +229,65 @@ class AdminAuthService {
         message: responseData.message || 'Login failed. No token received.',
       } as AdminLoginResponse;
     } catch (error: any) {
-      // Enhanced error logging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[AdminAuthService] Login failed:', {
-          url,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          errorData: error.response?.data,
-          message: error.message,
-        });
+      // Enhanced error logging - log each property separately to avoid serialization issues
+      console.error('[AdminAuthService] Login failed');
+      console.error('  - URL:', url);
+      console.error(
+        '  - Error Type:',
+        error?.constructor?.name || typeof error
+      );
+      console.error('  - Error Message:', error?.message || 'No message');
+      console.error('  - Error Code:', error?.code || 'No code');
+
+      if (error.response) {
+        console.error('  - Response Status:', error.response.status);
+        console.error('  - Response Status Text:', error.response.statusText);
+        console.error('  - Response Headers:', error.response.headers);
+
+        if (error.response.data) {
+          try {
+            console.error(
+              '  - Response Data:',
+              JSON.stringify(error.response.data, null, 2)
+            );
+            console.error('  - Response Data (Raw):', error.response.data);
+
+            // Log specific error fields if they exist
+            if (error.response.data.message) {
+              console.error(
+                '  - Backend Message:',
+                error.response.data.message
+              );
+            }
+            if (error.response.data.error) {
+              console.error(
+                '  - Backend Error Object:',
+                error.response.data.error
+              );
+              if (error.response.data.error.code) {
+                console.error(
+                  '  - Error Code:',
+                  error.response.data.error.code
+                );
+              }
+              if (error.response.data.error.message) {
+                console.error(
+                  '  - Error Message:',
+                  error.response.data.error.message
+                );
+              }
+            }
+          } catch {
+            console.error(
+              '  - Response Data (could not serialize):',
+              error.response.data
+            );
+          }
+        } else {
+          console.error('  - Response Data: No data');
+        }
+      } else {
+        console.error('  - No response object (network error?)');
       }
 
       // Re-throw the error so the component can handle it
@@ -307,6 +370,7 @@ class AdminAuthService {
         );
       } catch (error) {
         console.error('Logout error:', error);
+        // Continue with logout even if API call fails
       }
     }
 
@@ -315,10 +379,21 @@ class AdminAuthService {
     localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem('adminRefreshToken');
 
-    // Clear admin cookie
+    // Clear admin cookie - ensure it's cleared with proper attributes
     if (typeof document !== 'undefined') {
+      // Clear cookie with all possible paths and attributes
       document.cookie =
         'adminToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie =
+        'adminToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin;';
+      document.cookie =
+        'adminToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
+      document.cookie =
+        'adminToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin; SameSite=Lax;';
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AdminAuthService] Admin auth data cleared');
+      }
     }
   }
 

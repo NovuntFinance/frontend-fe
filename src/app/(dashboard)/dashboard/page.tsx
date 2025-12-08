@@ -46,7 +46,6 @@ import { TestShareButton } from '@/components/dev/TestShareButton';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
-import type { PlatformActivity } from '@/types/platformActivity';
 
 /**
  * Modern Dashboard Home Page
@@ -334,15 +333,12 @@ export default function DashboardPage() {
   }, [ranks]);
 
   // Fetch platform activity from API (with fallback to mock)
-  const {
-    activity: apiActivity,
-    loading: activityLoading,
-    error: activityError,
-  } = usePlatformActivity({
-    limit: 1,
-    pollInterval: 30000,
-    enabled: true,
-  });
+  const { activity: apiActivity, loading: activityLoading } =
+    usePlatformActivity({
+      limit: 1,
+      pollInterval: 30000,
+      enabled: true,
+    });
 
   // Map activity type to icon and color
   const getActivityIcon = React.useCallback((type: string) => {
@@ -702,7 +698,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.8 }}
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {/* ROS Card */}
+          {/* Weekly ROS Card */}
           <WeeklyROSCard />
 
           {/* Streak Card */}

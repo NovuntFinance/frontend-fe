@@ -9,6 +9,51 @@ const ROS_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://novunt-backend-uw3z.onrender.com');
 
+/**
+ * Check if a JWT token is expired
+ */
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp;
+    if (!exp) return false; // No expiration claim, assume valid
+    const now = Math.floor(Date.now() / 1000);
+    return exp < now;
+  } catch {
+    return true; // If we can't parse, assume expired
+  }
+};
+
+/**
+ * Handle 401 authentication errors by redirecting to admin login
+ */
+const handleAuthError = (error: any): void => {
+  if (
+    axios.isAxiosError(error) &&
+    error.response?.status === 401 &&
+    typeof window !== 'undefined'
+  ) {
+    const errorData = error.response?.data;
+    const errorCode = errorData?.error?.code;
+    const errorMessage = errorData?.error?.message || errorData?.message;
+
+    // Check if it's specifically an invalid/expired token error
+    if (
+      errorCode === 'INVALID_TOKEN' ||
+      errorMessage?.toLowerCase().includes('invalid') ||
+      errorMessage?.toLowerCase().includes('expired')
+    ) {
+      console.warn(
+        '[rosApi] Admin token expired or invalid. Redirecting to login...'
+      );
+      // Clear admin auth data
+      adminAuthService.logout();
+      // Redirect to admin login
+      window.location.href = '/admin/login?reason=session_expired';
+    }
+  }
+};
+
 // For user endpoints (daily earnings, weekly summary)
 const getUserAuthHeader = () => {
   const token =
@@ -19,7 +64,31 @@ const getUserAuthHeader = () => {
 // For admin endpoints (calendar management)
 const getAdminAuthHeader = (): Record<string, string> => {
   const token = adminAuthService.getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Check if token exists and is valid
+  if (!token) {
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      console.warn('[rosApi] No admin token found');
+    }
+    return {};
+  }
+
+  // Check if token is expired
+  if (isTokenExpired(token)) {
+    if (typeof window !== 'undefined') {
+      console.warn(
+        '[rosApi] Admin token expired. Clearing auth and redirecting...'
+      );
+      adminAuthService.logout();
+      window.location.href = '/admin/login?reason=token_expired';
+    }
+    return {};
+  }
+
+  return { Authorization: `Bearer ${token}` };
 };
 
 // Types
@@ -80,6 +149,22 @@ export interface CalendarEntry {
   isActive: boolean;
   isRandomized: boolean;
   createdAt: string;
+}
+
+export interface TodayRosData {
+  date: string;
+  dayOfWeek: number; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  dayName: string;
+  percentage: number;
+  weekNumber: number;
+  year: number;
+  weeklyTotalPercentage?: number; // Only present at end of week
+  message?: string; // Only present at end of week
+  timing: {
+    currentTime: string;
+    displayRule: string;
+    isEndOfWeek: boolean;
+  };
 }
 
 export interface CreateCalendarRequest {
@@ -171,8 +256,106 @@ export const rosApi = {
     }
   },
 
+  /**
+   * Get Today's ROS (User-Facing Endpoint)
+   * GET /api/v1/ros/today
+   *
+   * Returns today's ROS percentage for stakeholders.
+   * No 2FA required - uses regular user authentication token.
+   *
+   * Timing Rules:
+   * - ROS displayed at END of day, not beginning
+   * - During day: Shows previous day's ROS
+   * - At end of day: Shows today's ROS
+   * - At end of week: Shows week's total percentage
+   */
+  getTodayRos: async (): Promise<TodayRosData | null> => {
+    const endpoints = [
+      `${ROS_BASE_URL}/api/v1/ros/today`,
+      `${ROS_BASE_URL}/api/ros/today`,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await axios.get(endpoint, {
+          headers: getUserAuthHeader(),
+          withCredentials: true,
+        });
+
+        // Extract data from response
+        const responseData =
+          response.data.success && response.data.data
+            ? response.data.data
+            : response.data.data || response.data;
+
+        // Validate response structure - ensure timing object exists
+        if (responseData && typeof responseData === 'object') {
+          // Ensure timing object exists with defaults
+          if (!responseData.timing || typeof responseData.timing !== 'object') {
+            const now = new Date();
+            responseData.timing = {
+              currentTime: now.toISOString(),
+              displayRule: 'ROS displayed at end of day',
+              isEndOfWeek: false,
+            };
+          }
+
+          // Ensure required fields exist
+          if (typeof responseData.percentage !== 'number') {
+            responseData.percentage = 0;
+          }
+          if (!responseData.dayName) {
+            const dayNames = [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+            ];
+            responseData.dayName =
+              dayNames[responseData.dayOfWeek || new Date().getDay()] ||
+              'Today';
+          }
+          if (!responseData.date) {
+            responseData.date = new Date().toISOString().split('T')[0];
+          }
+
+          return responseData as TodayRosData;
+        }
+
+        // If data structure is invalid, return null
+        console.warn('[rosApi] getTodayRos: Invalid response structure');
+        return null;
+      } catch (error) {
+        // If it's not a 404, throw immediately
+        if (axios.isAxiosError(error) && error.response?.status !== 404) {
+          // If this is the last endpoint, throw the error
+          if (endpoint === endpoints[endpoints.length - 1]) {
+            throw error;
+          }
+          // Otherwise try next endpoint
+          continue;
+        }
+        // If it's a 404 and this is the last endpoint, return null
+        if (endpoint === endpoints[endpoints.length - 1]) {
+          console.warn(
+            '[rosApi] getTodayRos endpoint not found (404) - returning null'
+          );
+          return null;
+        }
+        // Otherwise try next endpoint
+        continue;
+      }
+    }
+
+    // Fallback (shouldn't reach here)
+    return null;
+  },
+
   // Admin Endpoints - Try both /api/v1 and /api paths
-  getAllCalendars: async (): Promise<CalendarEntry[]> => {
+  getAllCalendars: async (twoFACode?: string): Promise<CalendarEntry[]> => {
     const endpoints = [
       `${ROS_BASE_URL}/api/v1/admin/ros-calendar`,
       `${ROS_BASE_URL}/api/admin/ros-calendar`,
@@ -180,13 +363,48 @@ export const rosApi = {
 
     for (const endpoint of endpoints) {
       try {
-        const response = await axios.get(endpoint, {
+        const config: any = {
           headers: getAdminAuthHeader(),
           withCredentials: true,
-        });
+        };
+
+        // Add 2FA code as query parameter for GET requests
+        if (twoFACode) {
+          config.params = { twoFACode };
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[rosApi] getAllCalendars with 2FA code (query param):',
+              {
+                endpoint,
+                hasTwoFACode: true,
+              }
+            );
+          }
+        }
+
+        const response = await axios.get(endpoint, config);
         return response.data.data || [];
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          // Handle 401 authentication errors first
+          if (error.response?.status === 401) {
+            handleAuthError(error);
+            throw error;
+          }
+
+          // Check for 2FA errors - preserve them so component can handle
+          const errorData = error.response?.data;
+          const errorCode = errorData?.error?.code;
+          const is2FAError =
+            errorCode === '2FA_CODE_REQUIRED' ||
+            errorCode === '2FA_CODE_INVALID' ||
+            errorCode === '2FA_MANDATORY';
+
+          if (is2FAError) {
+            // Preserve the error structure so component can check it
+            throw error;
+          }
+
           // If it's not a 404, throw immediately
           if (error.response?.status !== 404) {
             throw error;
@@ -224,25 +442,50 @@ export const rosApi = {
           withCredentials: true,
         };
 
-        // Try query parameter approach (GET requests can't have body)
-        // If backend doesn't support this, it will return 2FA required error which we'll handle gracefully
+        // Use query parameter only (CORS blocks custom headers)
+        // Backend accepts twoFACode as query parameter (?twoFACode=123456) for GET requests
         if (twoFACode) {
+          // Use query parameter only - headers cause CORS issues
           config.params = { twoFACode };
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              '[rosApi] getCurrentCalendar with 2FA code (query param):',
-              {
-                endpoint,
-                hasTwoFACode: true,
-              }
-            );
-          }
+          // Always log when sending 2FA code for debugging
+          console.log(
+            '[rosApi] getCurrentCalendar with 2FA code (query param only):',
+            {
+              endpoint,
+              hasTwoFACode: true,
+              twoFACodeLength: twoFACode.length,
+              twoFACodePreview: twoFACode.substring(0, 2) + '****',
+              fullUrl: `${endpoint}?twoFACode=${twoFACode}`,
+            }
+          );
+        }
+
+        // Log the actual request URL that will be sent (for debugging)
+        if (twoFACode && process.env.NODE_ENV === 'development') {
+          const urlWithParams = new URL(endpoint);
+          urlWithParams.searchParams.set('twoFACode', twoFACode);
+          console.log('[rosApi] Actual request URL:', urlWithParams.toString());
         }
 
         const response = await axios.get(endpoint, config);
+
+        // Log success when 2FA code was used
+        if (twoFACode && process.env.NODE_ENV === 'development') {
+          console.log(
+            '[rosApi] ✅ Successfully fetched calendar with 2FA code'
+          );
+        }
+
         return response.data.data || null;
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          // Handle 401 authentication errors first
+          if (error.response?.status === 401) {
+            handleAuthError(error);
+            // After redirect, throw error to stop execution
+            throw error;
+          }
+
           // Enhanced logging for errors
           if (process.env.NODE_ENV === 'development') {
             console.error('[rosApi] getCurrentCalendar error:');
@@ -267,9 +510,21 @@ export const rosApi = {
             (error.response?.status === 400 &&
               errorData?.message?.toLowerCase().includes('2fa'));
 
-          // For 2FA errors, we'll throw to let the component handle it
-          // This allows the component to prompt for 2FA and retry
+          // For 2FA errors, throw immediately - don't try other endpoints
+          // If we sent a code but still got REQUIRED, it's a critical error
           if (is2FAError) {
+            // If we sent a 2FA code but still got REQUIRED, log detailed error
+            if (errorCode === '2FA_CODE_REQUIRED' && twoFACode) {
+              console.error(
+                '[rosApi] ⚠️ CRITICAL: Sent 2FA code but backend still requires it!'
+              );
+              console.error('[rosApi] Endpoint:', endpoint);
+              console.error(
+                '[rosApi] Code sent:',
+                twoFACode.substring(0, 2) + '****'
+              );
+              console.error('[rosApi] Query param should be in URL');
+            }
             // Preserve the error structure so component can check it
             throw error;
           }
@@ -310,28 +565,6 @@ export const rosApi = {
       }
     }
     return null;
-  },
-
-  getTodayRos: async (): Promise<{ ros: number; date: string } | null> => {
-    try {
-      const response = await axios.get(
-        `${ROS_BASE_URL}/api/admin/ros-calendar/today`,
-        {
-          headers: getAdminAuthHeader(),
-          withCredentials: true,
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      // Handle 404 gracefully - endpoint may not be implemented yet
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        console.warn(
-          '[rosApi] getTodayRos endpoint not found (404) - returning null'
-        );
-        return null;
-      }
-      throw error;
-    }
   },
 
   createCalendar: async (
@@ -430,6 +663,26 @@ export const rosApi = {
           });
         }
 
+        // Final verification - ensure 2FA code is definitely in the body
+        if (twoFACode) {
+          if (!finalRequestData.twoFACode) {
+            console.error(
+              '[rosApi] ⚠️ CRITICAL: 2FA code was provided but not in finalRequestData!'
+            );
+            console.error('[rosApi] twoFACode parameter:', twoFACode);
+            console.error('[rosApi] finalRequestData:', finalRequestData);
+            // Force add it
+            finalRequestData.twoFACode = twoFACode;
+          }
+          // Always log the final body before sending
+          console.log('[rosApi] ✅ Final request body includes 2FA code:', {
+            hasTwoFACode: !!finalRequestData.twoFACode,
+            twoFACodeValue: finalRequestData.twoFACode,
+            allKeys: Object.keys(finalRequestData),
+            fullBody: JSON.stringify(finalRequestData, null, 2),
+          });
+        }
+
         let response;
         try {
           response = await axios.post(endpoint, finalRequestData, {
@@ -438,6 +691,16 @@ export const rosApi = {
             timeout: 30000, // 30 second timeout
           });
         } catch (requestError: any) {
+          // Handle 401 authentication errors immediately
+          if (
+            axios.isAxiosError(requestError) &&
+            requestError.response?.status === 401
+          ) {
+            handleAuthError(requestError);
+            // After redirect, throw error to stop execution
+            throw requestError;
+          }
+
           // Immediately log the error before any processing
           console.error('[rosApi] 🚨 IMMEDIATE ERROR in axios.post');
           console.error('[rosApi] Error details:', {
@@ -584,6 +847,13 @@ export const rosApi = {
         }
 
         if (axios.isAxiosError(error)) {
+          // Handle 401 authentication errors first
+          if (error.response?.status === 401) {
+            handleAuthError(error);
+            // After redirect, don't try other endpoints
+            break;
+          }
+
           // Network error (no response) - don't try other endpoints
           if (!error.response) {
             console.error('[rosApi] Network error (no response):');
@@ -649,7 +919,14 @@ export const rosApi = {
 
     // If we get here, all endpoints failed
     if (axios.isAxiosError(lastError)) {
-      // Check for 2FA errors FIRST - before checking for network errors
+      // Handle 401 authentication errors first
+      if (lastError.response?.status === 401) {
+        handleAuthError(lastError);
+        // After redirect, throw error to stop execution
+        throw lastError;
+      }
+
+      // Check for 2FA errors - before checking for network errors
       // This is because the response might contain 2FA error messages even if it looks like a network error
       const responseMessage =
         lastError.response?.data?.message ||
@@ -665,15 +942,10 @@ export const rosApi = {
             responseMessage.toLowerCase().includes('two-factor') ||
             responseMessage.toLowerCase().includes('two factor')));
 
-      // If it's a 2FA error or 400/403/401, preserve the full error structure
+      // If it's a 2FA error or 400/403, preserve the full error structure
       // 400 can also indicate 2FA required (Bad Request with 2FA error code)
       const statusCode = lastError.response?.status;
-      if (
-        is2FAError ||
-        statusCode === 400 ||
-        statusCode === 403 ||
-        statusCode === 401
-      ) {
+      if (is2FAError || statusCode === 400 || statusCode === 403) {
         // Don't wrap the error - preserve it so components can check error codes and messages
         throw lastError;
       }

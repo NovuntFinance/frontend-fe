@@ -1,14 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { usePathname } from 'next/navigation';
+import { adminAuthService } from '@/services/adminAuthService';
 
 // Since we're having issues with the lucide-react imports, we'll use simple SVG icons instead
 const AdminSidebar = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = async () => {
+    await adminAuthService.logout();
+    // Force full page reload to ensure all auth data is cleared
+    // This prevents auto-login issues
+    window.location.href = '/admin/login';
+  };
 
   const menuItems = [
     {
@@ -205,10 +210,7 @@ const AdminSidebar = () => {
       </div>
       <div className="border-t border-gray-200 p-4 dark:border-gray-700">
         <button
-          onClick={() => {
-            logout();
-            router.replace('/login');
-          }}
+          onClick={handleLogout}
           className="flex w-full items-center rounded-md px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50"
         >
           <svg

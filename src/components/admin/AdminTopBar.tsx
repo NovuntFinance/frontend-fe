@@ -2,14 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { adminAuthService } from '@/services/adminAuthService';
 
 const AdminTopBar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = async () => {
+    await adminAuthService.logout();
+    // Force full page reload to ensure all auth data is cleared
+    // This prevents auto-login issues
+    window.location.href = '/admin/login';
+  };
 
   return (
     <header className="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -115,8 +119,7 @@ const AdminTopBar = () => {
                     role="menuitem"
                     onClick={() => {
                       setIsDropdownOpen(false);
-                      logout();
-                      router.replace('/login');
+                      handleLogout();
                     }}
                   >
                     Sign out

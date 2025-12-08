@@ -10,12 +10,7 @@ import {
   UseQueryOptions,
 } from '@tanstack/react-query';
 import { api } from './api';
-import {
-  UserProfile,
-  ChangePasswordPayload,
-  KYCDocument,
-  Session,
-} from '@/types/user';
+import { ChangePasswordPayload, Session } from '@/types/user';
 import { WalletBalance, DepositAddress } from '@/types/wallet';
 import { DashboardOverview } from '@/types/dashboard';
 import { StakeWithGoal, StakeStats, ROIPayoutHistory } from '@/types/stake';
@@ -33,19 +28,11 @@ import {
 } from '@/types/withdrawal';
 import {
   ReferralStats,
-  ReferralTree,
   ReferralLeaderboard,
   ReferralInfo,
-  ReferralTreeData,
 } from '@/types/referral';
 import { referralApi } from '@/services/referralApi';
-import {
-  TeamInfo,
-  RankInfo,
-  NextRankRequirements,
-  PoolDistributionsData,
-  IncentiveWallet,
-} from '@/types/teamRank';
+// TeamRank types are inferred from API responses, no explicit imports needed
 import { teamRankApi } from '@/services/teamRankApi';
 import { registrationBonusApi } from '@/services/registrationBonusApi';
 import {
@@ -142,63 +129,6 @@ interface WalletInfoBackendResponse {
     };
   };
 }
-
-// Legacy format for backward compatibility
-interface WalletBalanceApiResponse {
-  depositWallet:
-    | number
-    | {
-        balance?: number;
-        availableBalance?: number;
-        lockedBalance?: number;
-      };
-  earningsWallet:
-    | number
-    | {
-        balance?: number;
-        availableBalance?: number;
-        lockedBalance?: number;
-      };
-  totalBalance: number;
-  availableForWithdrawal?: number;
-  lockedInStakes?: number;
-  pendingWithdrawals?: number;
-}
-
-const normaliseWalletSection = (
-  section: WalletBalanceApiResponse['depositWallet'],
-  fallbackAvailable = 0,
-  fallbackLocked = 0
-) => {
-  if (typeof section === 'number') {
-    const balance = section;
-    const availableBalance = Math.max(fallbackAvailable || balance, 0);
-    const lockedBalance = Math.max(
-      fallbackLocked || balance - availableBalance,
-      0
-    );
-
-    return {
-      balance,
-      availableBalance,
-      lockedBalance,
-    };
-  }
-
-  const balance = section.balance ?? 0;
-  const availableBalance =
-    section.availableBalance ?? fallbackAvailable ?? balance;
-  const lockedBalance =
-    section.lockedBalance ??
-    fallbackLocked ??
-    Math.max(balance - availableBalance, 0);
-
-  return {
-    balance,
-    availableBalance: Math.max(availableBalance, 0),
-    lockedBalance: Math.max(lockedBalance, 0),
-  };
-};
 
 // ============================================
 // AUTH QUERIES
@@ -1378,6 +1308,9 @@ export function useKYCStatus() {
 // ============================================
 
 export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
+
   return useQuery({
     queryKey: queryKeys.adminDashboard(timeframe),
     queryFn: () =>
@@ -1385,6 +1318,7 @@ export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
         params: { timeframe },
       }),
     staleTime: 60 * 1000,
+    enabled: isAdmin, // Only fetch if user is admin to prevent 403s
   });
 }
 

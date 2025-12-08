@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { PlatformActivityService } from '@/services/platformActivityApi';
+// Force HMR update
 import type {
   PlatformActivity,
   PlatformActivityType,

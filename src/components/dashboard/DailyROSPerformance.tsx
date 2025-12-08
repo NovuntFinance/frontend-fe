@@ -2,11 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Clock, Info } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { rosApi, TimeRange, DailyEarning } from '@/services/rosApi';
+import { useTodayRos } from '@/hooks/useTodayRos';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const timeRanges: TimeRange[] = ['7D', '30D'];
 
@@ -15,6 +23,9 @@ export function DailyROSPerformance() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [data, setData] = useState<DailyEarning[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Fetch today's ROS
+  const { data: todayRos } = useTodayRos(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +69,86 @@ export function DailyROSPerformance() {
       className="h-full"
     >
       <div className="space-y-6">
+        {/* Today's ROS Display */}
+        {todayRos && todayRos.timing && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 backdrop-blur-sm"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-emerald-500/20 p-2">
+                  <TrendingUp className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-sm font-medium">
+                      Today&apos;s ROS
+                    </span>
+                    {todayRos.timing?.displayRule
+                      ?.toLowerCase()
+                      .includes('previous') && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-xs">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Previous Day
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">
+                              {todayRos.timing?.displayRule ||
+                                'Previous day&apos;s ROS'}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {typeof todayRos.percentage === 'number'
+                        ? todayRos.percentage.toFixed(2)
+                        : '0.00'}
+                      %
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {todayRos.dayName || 'Today'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Week's Total (End of Week) */}
+              {todayRos.timing?.isEndOfWeek &&
+                todayRos.weeklyTotalPercentage !== undefined && (
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-xs font-medium">
+                      Week&apos;s Total
+                    </p>
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {todayRos.weeklyTotalPercentage.toFixed(2)}%
+                    </p>
+                  </div>
+                )}
+            </div>
+
+            {/* Timing Information */}
+            {todayRos.timing?.displayRule && (
+              <div className="text-muted-foreground mt-3 flex items-start gap-2 border-t border-emerald-500/20 pt-3 text-xs">
+                <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                <p>
+                  {todayRos.timing?.displayRule ||
+                    'ROS displayed at end of day'}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Controls & Summary */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
