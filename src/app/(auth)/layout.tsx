@@ -34,13 +34,13 @@ export default function AuthLayout({
   ];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       {/* Left Side - Branding & Info */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/90"
+        className="from-primary via-primary/95 to-primary/90 relative hidden overflow-hidden bg-gradient-to-br lg:flex lg:w-1/2"
       >
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden">
@@ -55,7 +55,7 @@ export default function AuthLayout({
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-white/20 to-transparent rounded-full blur-3xl"
+            className="absolute -top-1/2 -left-1/2 h-full w-full rounded-full bg-gradient-to-br from-white/20 to-transparent blur-3xl"
           />
           <motion.div
             animate={{
@@ -69,79 +69,81 @@ export default function AuthLayout({
               ease: 'easeInOut',
               delay: 5,
             }}
-            className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-secondary/30 to-transparent rounded-full blur-3xl"
+            className="from-secondary/30 absolute -right-1/2 -bottom-1/2 h-full w-full rounded-full bg-gradient-to-tl to-transparent blur-3xl"
           />
-          
+
           {/* Floating Particles - Fixed positions to avoid hydration mismatch */}
-          {mounted && [
-            { top: 15, left: 25, delay: 0, duration: 8 },
-            { top: 45, left: 75, delay: 1, duration: 7 },
-            { top: 70, left: 15, delay: 2, duration: 9 },
-            { top: 30, left: 85, delay: 0.5, duration: 6 },
-            { top: 85, left: 45, delay: 3, duration: 8 },
-            { top: 20, left: 55, delay: 1.5, duration: 7 },
-            { top: 60, left: 90, delay: 2.5, duration: 9 },
-            { top: 50, left: 10, delay: 0.8, duration: 6 },
-            { top: 10, left: 65, delay: 3.5, duration: 8 },
-            { top: 75, left: 35, delay: 1.2, duration: 7 },
-            { top: 40, left: 50, delay: 2.8, duration: 9 },
-            { top: 55, left: 20, delay: 0.3, duration: 6 },
-            { top: 25, left: 80, delay: 3.2, duration: 8 },
-            { top: 90, left: 60, delay: 1.8, duration: 7 },
-            { top: 35, left: 40, delay: 2.2, duration: 9 },
-          ].map((particle, i) => (
-            <motion.div
-              key={i}
-              animate={{
-                y: [-20, 20, -20],
-                x: [-10, 10, -10],
-                opacity: [0.2, 0.5, 0.2],
-              }}
-              transition={{
-                duration: particle.duration,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: particle.delay,
-              }}
-              className="absolute w-2 h-2 bg-white/40 rounded-full blur-sm"
-              style={{
-                top: `${particle.top}%`,
-                left: `${particle.left}%`,
-              }}
-            />
-          ))}
+          {mounted &&
+            [
+              { top: 15, left: 25, delay: 0, duration: 8 },
+              { top: 45, left: 75, delay: 1, duration: 7 },
+              { top: 70, left: 15, delay: 2, duration: 9 },
+              { top: 30, left: 85, delay: 0.5, duration: 6 },
+              { top: 85, left: 45, delay: 3, duration: 8 },
+              { top: 20, left: 55, delay: 1.5, duration: 7 },
+              { top: 60, left: 90, delay: 2.5, duration: 9 },
+              { top: 50, left: 10, delay: 0.8, duration: 6 },
+              { top: 10, left: 65, delay: 3.5, duration: 8 },
+              { top: 75, left: 35, delay: 1.2, duration: 7 },
+              { top: 40, left: 50, delay: 2.8, duration: 9 },
+              { top: 55, left: 20, delay: 0.3, duration: 6 },
+              { top: 25, left: 80, delay: 3.2, duration: 8 },
+              { top: 90, left: 60, delay: 1.8, duration: 7 },
+              { top: 35, left: 40, delay: 2.2, duration: 9 },
+            ].map((particle, i) => (
+              <motion.div
+                key={i}
+                animate={{
+                  y: [-20, 20, -20],
+                  x: [-10, 10, -10],
+                  opacity: [0.2, 0.5, 0.2],
+                }}
+                transition={{
+                  duration: particle.duration,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                  delay: particle.delay,
+                }}
+                className="absolute h-2 w-2 rounded-full bg-white/40 blur-sm"
+                style={{
+                  top: `${particle.top}%`,
+                  left: `${particle.left}%`,
+                }}
+              />
+            ))}
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+        <div className="relative z-10 flex w-full flex-col justify-between p-12 text-white">
           {/* Logo */}
           <Link href="/" className="group inline-flex">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Image
-              src="/icons/novunt.png"
-              alt="Novunt"
-              width={180}
-              height={48}
-                className="h-10 w-auto object-contain transition-transform brightness-0 invert"
-            />
+              <Image
+                src="/icons/novunt.png"
+                alt="Novunt"
+                width={180}
+                height={48}
+                className="h-10 w-auto object-contain brightness-0 invert transition-transform"
+              />
             </motion.div>
           </Link>
 
           {/* Main Message */}
-          <div className="space-y-8 max-w-lg">
+          <div className="max-w-lg space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <h1 className="text-5xl font-bold leading-tight mb-4">
+              <h1 className="mb-4 text-5xl leading-tight font-bold">
                 Build Your Wealth,
                 <br />
                 <span className="text-white/90">One Stake at a Time</span>
               </h1>
-              <p className="text-xl text-white/80 leading-relaxed">
-                Join thousands of investors earning up to 200% returns through smart staking.
-                Secure, transparent, and designed for your financial growth.
+              <p className="text-xl leading-relaxed text-white/80">
+                Join thousands of investors earning up to 200% returns through
+                smart staking. Secure, transparent, and designed for your
+                financial growth.
               </p>
             </motion.div>
 
@@ -161,12 +163,14 @@ export default function AuthLayout({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.6 + index * 0.1 }}
                     whileHover={{ scale: 1.02, x: 5 }}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-all duration-300 group"
+                    className="group flex items-center gap-4 rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-white/15"
                   >
-                    <div className="p-2 rounded-lg bg-white/20 group-hover:scale-110 transition-transform">
+                    <div className="rounded-lg bg-white/20 p-2 transition-transform group-hover:scale-110">
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="text-white/90 font-medium">{feature.text}</span>
+                    <span className="font-medium text-white/90">
+                      {feature.text}
+                    </span>
                   </motion.div>
                 );
               })}
@@ -177,7 +181,7 @@ export default function AuthLayout({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
-              className="flex items-center gap-6 pt-6 border-t border-white/20"
+              className="flex items-center gap-6 border-t border-white/20 pt-6"
             >
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-white/80" />
@@ -200,10 +204,16 @@ export default function AuthLayout({
           <div className="flex items-center justify-between text-sm text-white/60">
             <p>&copy; 2025 Novunt. All rights reserved.</p>
             <div className="flex gap-4">
-              <Link href="/privacy" className="hover:text-white transition-colors">
+              <Link
+                href="/privacy"
+                className="transition-colors hover:text-white"
+              >
                 Privacy
               </Link>
-              <Link href="/terms" className="hover:text-white transition-colors">
+              <Link
+                href="/terms"
+                className="transition-colors hover:text-white"
+              >
                 Terms
               </Link>
             </div>
@@ -212,7 +222,7 @@ export default function AuthLayout({
       </motion.div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex flex-col relative bg-background">
+      <div className="bg-background relative flex flex-1 flex-col">
         {/* Theme Toggle */}
         {mounted && (
           <div className="absolute top-6 right-6 z-20">
@@ -220,33 +230,33 @@ export default function AuthLayout({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors shadow-lg border border-border/50"
+              className="bg-muted hover:bg-muted/80 border-border/50 rounded-xl border p-3 shadow-lg transition-colors"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-foreground" />
+                <Sun className="text-foreground h-5 w-5" />
               ) : (
-                <Moon className="h-5 w-5 text-foreground" />
+                <Moon className="text-foreground h-5 w-5" />
               )}
             </motion.button>
           </div>
         )}
 
         {/* Mobile Logo */}
-        <div className="lg:hidden pt-8 px-6">
+        <div className="px-6 pt-8 lg:hidden">
           <Link href="/">
             <Image
               src="/icons/novunt.png"
               alt="Novunt"
               width={160}
               height={42}
-              className="h-8 w-auto object-contain dark:brightness-0 dark:invert"
+              className="h-8 w-auto object-contain brightness-0 dark:invert"
             />
           </Link>
         </div>
 
         {/* Form Container */}
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+        <div className="flex flex-1 items-center justify-center p-6 sm:p-8 lg:p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -258,7 +268,7 @@ export default function AuthLayout({
         </div>
 
         {/* Mobile Footer */}
-        <div className="lg:hidden p-6 text-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground p-6 text-center text-sm lg:hidden">
           <p>&copy; 2025 Novunt. All rights reserved.</p>
         </div>
       </div>
