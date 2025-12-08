@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useStakingConfig } from '@/hooks/useStakingConfig';
 
 // Dynamically import components to avoid SSR issues
 const Typing = dynamic(() => import('@/components/ui/typing'), { ssr: false });
@@ -97,6 +98,7 @@ function SocialButton({
 }
 
 export default function LandingPageContent() {
+  const stakingConfig = useStakingConfig();
   const [mounted, setMounted] = useState(false);
   const [currentBgImage, setCurrentBgImage] = useState(BACKGROUND_IMAGES[0]);
   const [Icons, setIcons] = useState<{
@@ -282,9 +284,10 @@ export default function LandingPageContent() {
                 transition={{ delay: 0.4 }}
                 className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-indigo-100/90 drop-shadow-md sm:mt-6 sm:text-lg lg:mx-0 lg:text-xl"
               >
-                Stake USDT and grow with Novunt. Earn up to 200% ROS, tap into
-                Performance and Premium Pool rewards, and secure NLP tokens
-                ahead of the blockchain launch.
+                Stake USDT and grow with Novunt. Earn up to{' '}
+                {stakingConfig.goalTargetPercentage}% ROS, tap into Performance
+                and Premium Pool rewards, and secure NLP tokens ahead of the
+                blockchain launch.
               </motion.p>
 
               {/* CTA Buttons */}
@@ -471,9 +474,10 @@ export default function LandingPageContent() {
                     Smart Goal Staking
                   </h3>
                   <p className="text-sm leading-relaxed text-white/80 sm:text-base">
-                    Set clear financial goals with progress tracking toward 200%
-                    returns. Stake multiple times and collect weekly ROS
-                    directly to your Earning Wallet.
+                    Set clear financial goals with progress tracking toward{' '}
+                    {stakingConfig.goalTargetPercentage}% returns. Stake
+                    multiple times and collect weekly ROS directly to your
+                    Earning Wallet.
                   </p>
                 </div>
               </div>

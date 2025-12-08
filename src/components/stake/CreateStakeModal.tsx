@@ -219,7 +219,8 @@ export function CreateStakeModal() {
                             Create New Stake
                           </h2>
                           <p className="mt-0.5 text-xs font-medium text-white/90">
-                            Earn weekly ROS until 200% return
+                            Earn weekly ROS until{' '}
+                            {stakingConfig.goalTargetPercentage}% return
                           </p>
                         </div>
                       </div>
@@ -381,8 +382,9 @@ export function CreateStakeModal() {
                           Guaranteed Returns
                         </h4>
                         <p className="text-xs leading-relaxed text-emerald-700 dark:text-emerald-400/80">
-                          Your stake is locked until you receive 200% total
-                          return through weekly payouts.
+                          Your stake is locked until you receive{' '}
+                          {stakingConfig.goalTargetPercentage}% total return
+                          through weekly payouts.
                         </p>
                       </div>
                     </div>
