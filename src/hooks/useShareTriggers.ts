@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react';
 import { openShareModal } from '@/store/shareModalStore';
+import { useStakingConfig } from '@/hooks/useStakingConfig';
 
 // Milestone thresholds
 const PROFIT_MILESTONES = [100, 500, 1000, 5000, 10000];
@@ -15,6 +16,9 @@ const PROFIT_MILESTONES = [100, 500, 1000, 5000, 10000];
 const shownMilestones = new Set<string>();
 
 export function useShareTriggers() {
+  // Get staking config for dynamic goal target percentage
+  const stakingConfig = useStakingConfig();
+
   useEffect(() => {
     // Trigger 1: Profit Milestone Reached
     const handleProfitMilestone = (event: CustomEvent) => {
@@ -30,7 +34,7 @@ export function useShareTriggers() {
 
         openShareModal('profit', {
           title: `You've Earned $${milestone}!`,
-          message: `🎉 I just earned $${totalEarnings.toLocaleString()} on Novunt!\nStart staking and earn returns.`,
+          message: `🎉 I just earned $${totalEarnings.toLocaleString()} on Novunt!\nStart staking and earn up to ${stakingConfig.goalTargetPercentage}% returns.`,
           amount: totalEarnings,
         });
       }
@@ -143,7 +147,7 @@ export function useShareTriggers() {
         handleBonusCompleted as EventListener
       );
     };
-  }, []);
+  }, [stakingConfig.goalTargetPercentage]);
 }
 
 // Helper functions to trigger events from components
