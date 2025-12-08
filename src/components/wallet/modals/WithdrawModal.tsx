@@ -96,8 +96,8 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
     setError('');
 
-    // Check if withdrawal amount exceeds $1,000
-    if (!skipDialogs && amount > 1000) {
+    // Check if withdrawal amount exceeds instant withdrawal threshold
+    if (!skipDialogs && amount > withdrawalConfig.instantThreshold) {
       setShowLargeWithdrawalDialog(true);
       return;
     }
@@ -602,7 +602,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       <DailyLimitDialog
         open={showDailyLimitDialog}
         onOpenChange={setShowDailyLimitDialog}
-        dailyLimit={5000} // TODO: Get from backend/user settings
+        dailyLimit={withdrawalConfig.dailyLimit} // Uses dynamic config
         withdrawnToday={4000} // TODO: Get from backend
         remainingLimit={1000} // TODO: Calculate from backend data
         resetTime={(() => {
