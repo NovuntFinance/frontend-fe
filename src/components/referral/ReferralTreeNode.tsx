@@ -14,7 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDate } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
-import { REFERRAL_COMMISSION_RATES } from '@/types/referral';
 
 interface ReferralTreeNodeProps {
   node: TreeNode;
@@ -56,10 +55,17 @@ export function ReferralTreeNode({
 }: ReferralTreeNodeProps) {
   const { entry } = node;
   const theme = getLevelTheme(level);
+  const referralRates = useReferralRates();
   const commissionRate =
-    REFERRAL_COMMISSION_RATES[
-      `level${Math.min(level, 5)}` as keyof typeof REFERRAL_COMMISSION_RATES
-    ] || 0;
+    level === 1
+      ? referralRates.level1
+      : level === 2
+        ? referralRates.level2
+        : level === 3
+          ? referralRates.level3
+          : level === 4
+            ? referralRates.level4
+            : referralRates.level5;
 
   return (
     <motion.div
@@ -74,27 +80,27 @@ export function ReferralTreeNode({
         icon={Users}
         colorTheme={theme}
         tooltip={`${entry.username} - Level ${level} referral. Earns ${commissionRate}% commission. ${hasChildren ? 'Click to ' + (isExpanded ? 'collapse' : 'expand') + ' their referrals.' : 'This user has no referrals yet.'}`}
-        className={`relative z-10 ${hasChildren ? 'cursor-pointer hover:border-opacity-70' : ''}`}
+        className={`relative z-10 ${hasChildren ? 'hover:border-opacity-70 cursor-pointer' : ''}`}
         onClick={hasChildren ? onToggle : undefined}
       >
         <div className="space-y-3">
           {/* Compact User Info - Single Line */}
           <div className="flex items-center gap-3">
-            <Avatar className="border-border h-10 w-10 border-2 flex-shrink-0">
-              <AvatarFallback className="from-primary/20 to-primary/10 text-primary bg-gradient-to-br font-semibold text-sm">
+            <Avatar className="border-border h-10 w-10 flex-shrink-0 border-2">
+              <AvatarFallback className="from-primary/20 to-primary/10 text-primary bg-gradient-to-br text-sm font-semibold">
                 {getInitials(entry.username)}
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
-              <h4 className="text-foreground font-semibold truncate">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+              <h4 className="text-foreground truncate font-semibold">
                 {entry.username}
               </h4>
-              
+
               {entry.hasQualifyingStake ? (
                 <Badge
                   variant="outline"
-                  className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs"
+                  className="border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-400"
                 >
                   <CheckCircle className="mr-1 h-3 w-3" />
                   Active
@@ -109,14 +115,13 @@ export function ReferralTreeNode({
                 </Badge>
               )}
 
-              <div className="text-muted-foreground flex items-center gap-3 text-xs flex-wrap">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {formatDate(entry.joinedAt)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  L{level} • {commissionRate}%
+                  <TrendingUp className="h-3 w-3" />L{level} • {commissionRate}%
                 </span>
               </div>
             </div>

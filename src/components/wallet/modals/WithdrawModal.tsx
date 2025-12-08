@@ -14,6 +14,7 @@ import { useWalletBalance } from '@/lib/queries';
 import { useInitiateWithdrawal } from '@/lib/mutations/transactionMutations';
 import { LargeWithdrawalDialog } from '@/components/dialogs/LargeWithdrawalDialog';
 import { DailyLimitDialog } from '@/components/dialogs/DailyLimitDialog';
+import { useWithdrawalConfig } from '@/hooks/useWithdrawalConfig';
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -49,9 +50,11 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [showDailyLimitDialog, setShowDailyLimitDialog] = useState(false);
   const [pendingWithdrawal, setPendingWithdrawal] = useState(false);
 
-  const MIN_WITHDRAWAL = 10;
-  const FEE_PERCENTAGE = 5;
-  const DAILY_LIMIT = 2;
+  // Get withdrawal config from dynamic config system
+  const withdrawalConfig = useWithdrawalConfig();
+  const MIN_WITHDRAWAL = withdrawalConfig.minAmount;
+  const FEE_PERCENTAGE = withdrawalConfig.feePercentage;
+  const DAILY_LIMIT = withdrawalConfig.dailyLimit;
 
   const availableBalance = wallet?.earnings?.availableBalance || 0;
   const amount = parseFloat(formData.amount) || 0;

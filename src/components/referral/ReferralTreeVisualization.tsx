@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
-import { REFERRAL_COMMISSION_RATES } from '@/types/referral';
+import { useReferralRates } from '@/hooks/useReferralRates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsAdmin } from '@/store/selectors';
 
@@ -32,7 +32,6 @@ interface ReferralTreeVisualizationProps {
   isLoading?: boolean;
   maxLevels?: number;
 }
-
 
 /**
  * Flattens tree for search filtering
@@ -61,6 +60,9 @@ export function ReferralTreeVisualization({
   isLoading,
   maxLevels = 5,
 }: ReferralTreeVisualizationProps) {
+  // Get referral rates from dynamic config
+  const referralRates = useReferralRates();
+
   // Initialize with level 1 nodes expanded by default
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
     const initial = new Set<string>();
@@ -585,7 +587,8 @@ export function ReferralTreeVisualization({
             />
             {searchQuery && (
               <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-xs">
-                {flattenTree(filteredTree).length} result{flattenTree(filteredTree).length !== 1 ? 's' : ''}
+                {flattenTree(filteredTree).length} result
+                {flattenTree(filteredTree).length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -817,9 +820,15 @@ export function ReferralTreeVisualization({
                 };
                 const color = levelColors[lvl as keyof typeof levelColors];
                 const commissionRate =
-                  REFERRAL_COMMISSION_RATES[
-                    `level${lvl}` as keyof typeof REFERRAL_COMMISSION_RATES
-                  ] || 0;
+                  lvl === 1
+                    ? referralRates.level1
+                    : lvl === 2
+                      ? referralRates.level2
+                      : lvl === 3
+                        ? referralRates.level3
+                        : lvl === 4
+                          ? referralRates.level4
+                          : referralRates.level5;
                 return (
                   <div
                     key={lvl}

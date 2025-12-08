@@ -24,6 +24,7 @@ import { transferApi } from '@/services/transferApi';
 import type { TransferResponse, UserSearchResult } from '@/types/transfer';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queries';
+import { useTransferLimits } from '@/hooks/useTransferLimits';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -68,7 +69,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   // Use earnings.availableBalance (or earnings.balance) for transfers
   const availableBalance =
     wallet?.earnings?.availableBalance || wallet?.earnings?.balance || 0;
-  const MIN_TRANSFER = 1;
+
+  // Get transfer limits from dynamic config
+  const transferLimits = useTransferLimits();
+  const MIN_TRANSFER = transferLimits.minAmount;
 
   // Reset on open
   useEffect(() => {
