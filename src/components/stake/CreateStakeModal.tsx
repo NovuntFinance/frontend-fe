@@ -16,6 +16,7 @@ import { useCreateStake } from '@/lib/mutations/stakingMutations';
 import { useWalletBalance } from '@/lib/queries';
 import { toast } from 'sonner';
 import { useUIStore } from '@/store/uiStore';
+import { useStakingConfig } from '@/hooks/useStakingConfig';
 
 export function CreateStakeModal() {
   const { isModalOpen, closeModal } = useUIStore();
@@ -33,9 +34,11 @@ export function CreateStakeModal() {
   const { data: walletBalance } = useWalletBalance();
   const createStake = useCreateStake();
 
+  // Get staking config from dynamic config system
+  const stakingConfig = useStakingConfig();
   const amountNum = parseFloat(amount) || 0;
-  const targetReturn = amountNum * 2; // 200% ROS
-  const minStake = 20;
+  const targetReturn = amountNum * (stakingConfig.goalTargetPercentage / 100); // Dynamic target percentage
+  const minStake = stakingConfig.minAmount;
   const requires2FA = amountNum > 500;
 
   // Calculate available balance based on source

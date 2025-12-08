@@ -11,7 +11,14 @@ import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useCreateStake } from '@/lib/mutations';
 import { useWallet } from '@/hooks/useWallet';
 import { formatCurrency } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useStakingConfig } from '@/hooks/useStakingConfig';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,27 +41,51 @@ const optionalTrimmedString = (max: number, message: string) =>
     })
     .optional();
 
-const createStakeSchema = z.object({
-  amount: z.coerce
-    .number()
-    .positive('Amount must be greater than 0')
-    .min(1000, 'Minimum stake amount is $1,000')
-    .max(5_000_000, 'Maximum stake amount is $5,000,000'),
-  goalTitle: optionalTrimmedString(60, 'Goal title should be 60 characters or less'),
-  goalDescription: optionalTrimmedString(240, 'Goal description should be 240 characters or less'),
-});
-
-type CreateStakeFormSchema = typeof createStakeSchema;
-type CreateStakeFormInputs = z.input<CreateStakeFormSchema>;
-type CreateStakeFormValues = z.output<CreateStakeFormSchema>;
+const optionalTrimmedString = (max: number, message: string) =>
+  z
+    .string()
+    .max(max, message)
+    .transform((value) => {
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    })
+    .optional();
 
 export default function CreateStakePage() {
   const router = useRouter();
   const { balances, isLoading: walletLoading } = useWallet();
-  const {
-    mutateAsync: createStake,
-    isPending: isCreating,
-  } = useCreateStake();
+  const { mutateAsync: createStake, isPending: isCreating } = useCreateStake();
+
+  // Get staking config from dynamic config system
+  const stakingConfig = useStakingConfig();
+
+  // Create schema with dynamic min/max values
+  const createStakeSchema = z.object({
+    amount: z.coerce
+      .number()
+      .positive('Amount must be greater than 0')
+      .min(
+        stakingConfig.minAmount,
+        `Minimum stake amount is $${stakingConfig.minAmount.toLocaleString()}`
+      )
+      .max(
+        stakingConfig.maxAmount,
+        `Maximum stake amount is $${stakingConfig.maxAmount.toLocaleString()}`
+      ),
+    goalTitle: optionalTrimmedString(
+      60,
+      'Goal title should be 60 characters or less'
+    ),
+    goalDescription: optionalTrimmedString(
+      240,
+      'Goal description should be 240 characters or less'
+    ),
+  });
+
+  type CreateStakeFormSchema = typeof createStakeSchema;
+  type CreateStakeFormInputs = z.input<CreateStakeFormSchema>;
+  type CreateStakeFormValues = z.output<CreateStakeFormSchema>;
+
   const form = useForm<CreateStakeFormInputs, unknown, CreateStakeFormValues>({
     resolver: zodResolver(createStakeSchema),
     defaultValues: {
@@ -68,8 +99,16 @@ export default function CreateStakePage() {
   const amountInput = form.watch('amount');
   const amount = useMemo(() => Number(amountInput) || 0, [amountInput]);
 
-  const projectedDailyROS = useMemo(() => amount * 0.02, [amount]);
-  const projectedCompletionValue = useMemo(() => amount * 2, [amount]);
+  // Use dynamic config values for calculations
+  const weeklyROIPercentage = stakingConfig.weeklyReturnPercentage / 100;
+  const projectedDailyROS = useMemo(
+    () => amount * (weeklyROIPercentage / 7),
+    [amount, weeklyROIPercentage]
+  );
+  const projectedCompletionValue = useMemo(
+    () => amount * (stakingConfig.goalTargetPercentage / 100),
+    [amount, stakingConfig.goalTargetPercentage]
+  );
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
@@ -95,10 +134,13 @@ export default function CreateStakePage() {
       className="space-y-6"
     >
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Create a New Stake</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Create a New Stake
+        </h1>
         <p className="text-muted-foreground">
-          Choose the amount you would like to stake from your funded wallet. You&apos;ll earn
-          weekly ROS credited to your earnings wallet until you double your stake.
+          Choose the amount you would like to stake from your funded wallet.
+          You&apos;ll earn weekly ROS credited to your earnings wallet until you
+          double your stake.
         </p>
       </div>
 
@@ -123,16 +165,19 @@ export default function CreateStakePage() {
                         <Input
                           type="number"
                           inputMode="numeric"
-                          min={1000}
+                          min={stakingConfig.minAmount}
                           step={100}
-                          placeholder="Enter amount in USDT"
+                          placeholder={`Enter amount in USDT (min $${stakingConfig.minAmount.toLocaleString()})`}
                           disabled={isCreating}
                           value={
-                            typeof field.value === 'number' || typeof field.value === 'string'
+                            typeof field.value === 'number' ||
+                            typeof field.value === 'string'
                               ? field.value
                               : ''
                           }
-                          onChange={(event) => field.onChange(event.target.value)}
+                          onChange={(event) =>
+                            field.onChange(event.target.value)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -151,7 +196,9 @@ export default function CreateStakePage() {
                           <Input
                             placeholder="E.g. New Laptop Fund"
                             disabled={isCreating}
-                            value={typeof field.value === 'string' ? field.value : ''}
+                            value={
+                              typeof field.value === 'string' ? field.value : ''
+                            }
                             onChange={field.onChange}
                           />
                         </FormControl>
@@ -171,7 +218,9 @@ export default function CreateStakePage() {
                             rows={4}
                             placeholder="Describe what this stake will help you achieve"
                             disabled={isCreating}
-                            value={typeof field.value === 'string' ? field.value : ''}
+                            value={
+                              typeof field.value === 'string' ? field.value : ''
+                            }
                             onChange={field.onChange}
                           />
                         </FormControl>
@@ -181,18 +230,21 @@ export default function CreateStakePage() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm md:flex-row md:items-center md:justify-between">
+                <div className="border-primary/40 bg-primary/5 flex flex-col gap-3 rounded-lg border border-dashed p-4 text-sm md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="h-10 w-10 text-primary" />
+                    <ShieldCheck className="text-primary h-10 w-10" />
                     <div>
                       <p className="font-medium">Security Notice</p>
                       <p className="text-muted-foreground">
-                        Funds are locked for the duration of the stake. Early withdrawals may incur penalties.
+                        Funds are locked for the duration of the stake. Early
+                        withdrawals may incur penalties.
                       </p>
                     </div>
                   </div>
                   <div className="text-right text-sm">
-                    <p className="text-muted-foreground">Powered by Novunt&apos;s staking engine</p>
+                    <p className="text-muted-foreground">
+                      Powered by Novunt&apos;s staking engine
+                    </p>
                     <p className="font-semibold">Target ROS: 100%</p>
                   </div>
                 </div>
@@ -226,16 +278,18 @@ export default function CreateStakePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-primary" />
+                <Wallet className="text-primary h-5 w-5" />
                 Funded Wallet
               </CardTitle>
-              <CardDescription>Available balance you can stake from.</CardDescription>
+              <CardDescription>
+                Available balance you can stake from.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-3xl font-bold">
                 {walletLoading ? 'Loading…' : formatCurrency(fundedBalance)}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Ensure you have enough balance to cover the stake amount.
               </p>
             </CardContent>
@@ -247,11 +301,16 @@ export default function CreateStakePage() {
                 <TrendingUp className="h-5 w-5 text-green-500" />
                 Projected Returns
               </CardTitle>
-              <CardDescription>Estimated outcome based on 100% ROS target.</CardDescription>
+              <CardDescription>
+                Estimated outcome based on {stakingConfig.goalTargetPercentage}%
+                ROS target.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Weekly ROS (approx)</span>
+                <span className="text-muted-foreground">
+                  Weekly ROS (approx)
+                </span>
                 <span className="font-medium text-green-600">
                   {formatCurrency(projectedDailyROS || 0)}
                 </span>
@@ -262,8 +321,9 @@ export default function CreateStakePage() {
                   {formatCurrency(projectedCompletionValue || 0)}
                 </span>
               </div>
-              <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                Calculations assume a typical ROS schedule. Actual payout frequency is confirmed in the staking agreement.
+              <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
+                Calculations assume a typical ROS schedule. Actual payout
+                frequency is confirmed in the staking agreement.
               </div>
             </CardContent>
           </Card>

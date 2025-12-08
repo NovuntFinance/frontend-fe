@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDate } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
+import { useReferralRates } from '@/hooks/useReferralRates';
 
 interface ReferralTreeNodeProps {
   node: TreeNode;
