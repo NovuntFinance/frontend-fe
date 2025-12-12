@@ -14,7 +14,7 @@ import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { ReferralTreeNode, TreeNode } from './ReferralTreeNode';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { formatCurrency } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
 import { useReferralRates } from '@/hooks/useReferralRates';
@@ -515,7 +515,7 @@ export function ReferralTreeVisualization({
       >
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full" />
+            <ShimmerCard key={i} className="h-32" />
           ))}
         </div>
       </NovuntPremiumCard>

@@ -4,7 +4,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { Card, CardContent } from '@/components/ui/card';
 
 /**
@@ -12,13 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
  */
 const ModalSkeleton = () => (
   <div className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-    <Card className="w-full max-w-lg">
-      <CardContent className="p-6">
-        <Skeleton className="mb-4 h-8 w-3/4" />
-        <Skeleton className="mb-4 h-20 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </CardContent>
-    </Card>
+    <ShimmerCard className="h-64 w-full max-w-lg" />
   </div>
 );
 
@@ -67,13 +61,7 @@ export const LiveTradingSignals = dynamic(
       default: mod.LiveTradingSignals,
     })),
   {
-    loading: () => (
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-    ),
+    loading: () => <ShimmerCard className="h-64" />,
     ssr: false,
   }
 );

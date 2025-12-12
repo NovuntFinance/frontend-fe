@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWalletBalance } from '@/lib/queries';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 /**
  * Hero Section - Total Portfolio Balance
@@ -25,8 +25,8 @@ export function WalletHero() {
 
   if (isLoading) {
     return (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-foreground/10 p-8">
-        <Skeleton className="h-32 w-full bg-primary-foreground/20" />
+      <div className="from-primary via-primary to-primary-foreground/10 relative overflow-hidden rounded-3xl bg-gradient-to-br p-8">
+        <ShimmerCard className="h-32 w-full" />
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function WalletHero() {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-novunt-blue-700 p-8 shadow-2xl"
+      className="from-primary via-primary to-novunt-blue-700 relative overflow-hidden rounded-3xl bg-gradient-to-br p-8 shadow-2xl"
     >
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden">
@@ -50,7 +50,7 @@ export function WalletHero() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute -top-24 -right-24 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"
+          className="bg-secondary/20 absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -63,16 +63,16 @@ export function WalletHero() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl"
+          className="bg-accent/10 absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
         />
       </div>
 
       {/* Content */}
       <div className="relative z-10">
         {/* Header with Controls */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-primary-foreground/80 text-sm font-medium mb-1">
+            <p className="text-primary-foreground/80 mb-1 text-sm font-medium">
               Total Portfolio Value
             </p>
             <div className="flex items-center gap-3">
@@ -81,9 +81,10 @@ export function WalletHero() {
                   key="balance"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-5xl font-bold text-primary-foreground tracking-tight"
+                  className="text-primary-foreground text-5xl font-bold tracking-tight"
                 >
-                  ${totalBalance.toLocaleString('en-US', {
+                  $
+                  {totalBalance.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -93,12 +94,12 @@ export function WalletHero() {
                   key="hidden"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-5xl font-bold text-primary-foreground"
+                  className="text-primary-foreground text-5xl font-bold"
                 >
                   ••••••
                 </motion.div>
               )}
-              <span className="text-xl text-primary-foreground/60 font-medium">
+              <span className="text-primary-foreground/60 text-xl font-medium">
                 USDT
               </span>
             </div>
@@ -137,7 +138,7 @@ export function WalletHero() {
           {/* Percentage Change */}
           <div className="flex items-center gap-2">
             <div
-              className={`flex items-center gap-1 px-3 py-1 rounded-full ${
+              className={`flex items-center gap-1 rounded-full px-3 py-1 ${
                 isPositive
                   ? 'bg-success/20 text-success'
                   : 'bg-danger/20 text-danger'
@@ -151,13 +152,11 @@ export function WalletHero() {
                 {percentageChange}%
               </span>
             </div>
-            <span className="text-sm text-primary-foreground/60">
-              Today
-            </span>
+            <span className="text-primary-foreground/60 text-sm">Today</span>
           </div>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-primary-foreground/20" />
+          <div className="bg-primary-foreground/20 h-6 w-px" />
 
           {/* Quick Wallet Breakdown */}
           <div className="flex items-center gap-4 text-sm">
@@ -177,9 +176,8 @@ export function WalletHero() {
         </div>
 
         {/* Glass Morphism Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
+        <div className="from-primary/20 pointer-events-none absolute inset-0 bg-gradient-to-t to-transparent" />
       </div>
     </motion.div>
   );
 }
-

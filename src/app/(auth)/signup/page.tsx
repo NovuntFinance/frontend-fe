@@ -112,7 +112,7 @@ function SignupPageContent() {
         const hasShownToast = sessionStorage.getItem('referralCodeToastShown');
         if (!hasShownToast) {
           toast.success('Referral code applied!', {
-            description: `You'll receive bonus rewards when you sign up with code: ${trimmedCode}`,
+            description: `The referrer will receive bonus rewards when you complete signup with code: ${trimmedCode}`,
           });
           sessionStorage.setItem('referralCodeToastShown', 'true');
         }
@@ -707,8 +707,8 @@ function SignupPageContent() {
                     )}
                     <p className="text-muted-foreground text-sm">
                       {searchParams.get('ref')
-                        ? `Referral code from link: ${searchParams.get('ref')} - You'll receive bonus rewards!`
-                        : 'Have a referral code? Enter it to get bonus rewards!'}
+                        ? `Referral code from link: ${searchParams.get('ref')} - The referrer will receive bonus rewards when you complete signup!`
+                        : 'Have a referral code? Enter it to support your referrer!'}
                     </p>
                   </div>
 

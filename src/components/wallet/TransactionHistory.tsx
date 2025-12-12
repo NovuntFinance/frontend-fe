@@ -724,6 +724,52 @@ export function TransactionHistory() {
       }
     }
 
+    // TEMPORARY WORKAROUND: Filter out referral_bonus transactions incorrectly created for downlines
+    // STATUS: Backend has fixed this issue (see REFERRAL_BONUS_LEVEL_FIX_VERIFICATION.md)
+    // KEEP THIS WORKAROUND temporarily until backend fix is verified in production
+    // TODO: Remove this workaround after confirming backend fix works correctly
+    // This filter removes referral_bonus transactions where the current user is the relatedUserId
+    // (meaning they're the downline who staked, not the referrer who earned the bonus)
+    if (user?._id) {
+      const beforeReferralFilter = filtered.length;
+      filtered = filtered.filter((tx) => {
+        // If it's a referral_bonus transaction and the current user's ID matches the relatedUserId,
+        // filter it out because this transaction was incorrectly created for the downline
+        // Only the referrer should see referral_bonus transactions
+        if (
+          (tx.type === 'referral_bonus' ||
+            tx.type?.toLowerCase() === 'referral_bonus') &&
+          tx.metadata?.relatedUserId &&
+          (tx.metadata.relatedUserId === user._id ||
+            String(tx.metadata.relatedUserId) === String(user._id))
+        ) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(
+              '[TransactionHistory] 🚫 Filtering out incorrectly created referral_bonus transaction for downline:',
+              {
+                id: tx._id,
+                type: tx.type,
+                relatedUserId: tx.metadata.relatedUserId,
+                currentUserId: user._id,
+                description: tx.description,
+              }
+            );
+          }
+          return false;
+        }
+        return true;
+      });
+
+      if (
+        process.env.NODE_ENV === 'development' &&
+        beforeReferralFilter !== filtered.length
+      ) {
+        console.warn(
+          `[TransactionHistory] 🚫 Filtered out ${beforeReferralFilter - filtered.length} incorrectly created referral_bonus transactions for downlines. Backend fix required - see BACKEND_REFERRAL_BONUS_DUPLICATION_FIX.md`
+        );
+      }
+    }
+
     if (process.env.NODE_ENV === 'development' && filters.category) {
       console.log(
         '[TransactionHistory] 🔍 Filter: Starting with',

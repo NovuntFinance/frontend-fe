@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWalletBalance } from '@/lib/queries';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import {
   Tooltip,
   TooltipContent,
@@ -186,8 +186,8 @@ export function WalletCards() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Skeleton className="h-48 rounded-2xl" />
-        <Skeleton className="h-48 rounded-2xl" />
+        <ShimmerCard className="h-48" />
+        <ShimmerCard className="h-48" />
       </div>
     );
   }

@@ -17,7 +17,7 @@ import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
-import { NovuntSpinner } from '@/components/ui/novunt-spinner';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 
 export default function StakesPage() {
@@ -26,13 +26,13 @@ export default function StakesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <NovuntSpinner size="lg" className="mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading your stakes...
-          </p>
+      <div className="space-y-6">
+        <ShimmerCard className="h-64" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <ShimmerCard className="h-48" />
+          <ShimmerCard className="h-48" />
         </div>
+        <ShimmerCard className="h-96" />
       </div>
     );
   }

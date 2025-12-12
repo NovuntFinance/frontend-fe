@@ -1,6 +1,7 @@
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { AdminActivityItem } from '@/types/admin';
 import { useAuthStore } from '@/store/authStore';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 interface AdminRecentActivityProps {
   activities?: AdminActivityItem[];
@@ -209,17 +210,11 @@ const AdminRecentActivity = ({
         </div>
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="flex items-center gap-3 p-4">
-              <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-3/5 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-3 w-2/5 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
-            </div>
+            <ShimmerCard key={index} className="h-16" />
           ))}
         </div>
         <div className="border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/70">
-          <div className="h-3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          <ShimmerCard className="h-3" />
         </div>
       </div>
     );

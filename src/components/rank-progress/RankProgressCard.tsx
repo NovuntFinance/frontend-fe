@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -34,7 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useRankProgress } from '@/lib/queries/rankProgressQueries';
+import { useRankProgressLightweight } from '@/lib/queries/rankProgressQueries';
 import { cn } from '@/lib/utils';
 import type { Requirement } from '@/types/rankProgress';
 
@@ -42,7 +42,8 @@ import type { Requirement } from '@/types/rankProgress';
  * Main Rank Progress Card
  */
 export function RankProgressCard() {
-  const { data, isLoading, error } = useRankProgress();
+  // Use lightweight endpoint for dashboard (fast loading < 100ms)
+  const { data, isLoading, error } = useRankProgressLightweight();
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [prevProgress, setPrevProgress] = React.useState<{
     performance: number;
@@ -52,9 +53,14 @@ export function RankProgressCard() {
   // Track progress changes for regression badge
   React.useEffect(() => {
     if (data) {
+      // Use overall_progress_percent if available (detailed), otherwise use progress_percent (lightweight)
+      const performanceProgress =
+        data.overall_progress_percent ?? data.progress_percent ?? 0;
+      const premiumProgress = data.premium_progress_percent ?? 0;
+
       const newProgress = {
-        performance: data.overall_progress_percent,
-        premium: data.premium_progress_percent,
+        performance: performanceProgress,
+        premium: premiumProgress,
       };
 
       if (prevProgress === null) {
@@ -88,6 +94,7 @@ export function RankProgressCard() {
     current_rank_icon,
     next_rank,
     next_rank_icon,
+    progress_percent,
     overall_progress_percent,
     premium_progress_percent,
     requirements,
@@ -97,11 +104,15 @@ export function RankProgressCard() {
   const isMaxRank = next_rank === null;
   const isStakeholder = current_rank === 'Stakeholder';
 
+  // Use overall_progress_percent if available (detailed), otherwise use progress_percent (lightweight)
+  const performanceProgress = overall_progress_percent ?? progress_percent ?? 0;
+  const premiumProgress = premium_progress_percent ?? 0;
+
   // Check for regression
   const performanceDecreased =
-    prevProgress && overall_progress_percent < prevProgress.performance;
+    prevProgress && performanceProgress < prevProgress.performance;
   const premiumDecreased =
-    prevProgress && premium_progress_percent < prevProgress.premium;
+    prevProgress && premiumProgress < prevProgress.premium;
 
   return (
     <Card className="border-border/50 from-card via-card to-muted/20 overflow-hidden bg-gradient-to-br transition-all duration-300">
@@ -303,13 +314,13 @@ export function RankProgressCard() {
                         : 'text-blue-600 dark:text-blue-400'
                     )}
                   >
-                    {overall_progress_percent}%
+                    {performanceProgress}%
                   </span>
                 </div>
               </div>
               <div className="bg-muted relative h-3 overflow-hidden rounded-full">
                 <motion.div
-                  animate={{ width: `${overall_progress_percent}%` }}
+                  animate={{ width: `${performanceProgress}%` }}
                   transition={{ duration: 0.8, ease: 'easeInOut' }}
                   className={cn(
                     'h-full rounded-full shadow-lg transition-colors duration-500',
@@ -382,7 +393,7 @@ export function RankProgressCard() {
                           : 'text-emerald-600 dark:text-emerald-400'
                       )}
                     >
-                      {premium_progress_percent}%
+                      {premiumProgress}%
                     </span>
                   )}
                 </div>
@@ -395,7 +406,7 @@ export function RankProgressCard() {
                 ) : (
                   <>
                     <motion.div
-                      animate={{ width: `${premium_progress_percent}%` }}
+                      animate={{ width: `${premiumProgress}%` }}
                       transition={{ duration: 0.8, ease: 'easeInOut' }}
                       className={cn(
                         'h-full rounded-full shadow-lg transition-colors duration-500',
@@ -466,65 +477,82 @@ export function RankProgressCard() {
                     Requirements
                   </h4>
                   <div className="space-y-2.5">
-                    <RequirementItem
-                      icon={DollarSign}
-                      title="Personal Stake"
-                      requirement={requirements.personal_stake}
-                      unit="$"
-                    />
-                    <RequirementItem
-                      icon={Users}
-                      title="Team Stake"
-                      requirement={requirements.team_stake}
-                      unit="$"
-                    />
-                    <RequirementItem
-                      icon={Users}
-                      title="Direct Downlines"
-                      requirement={requirements.direct_downlines}
-                    />
-                    {requirements.lower_rank_downlines.required > 0 && (
+                    {requirements?.personal_stake && (
                       <RequirementItem
-                        icon={TrendingUp}
-                        title={requirements.lower_rank_downlines.description}
-                        requirement={requirements.lower_rank_downlines}
+                        icon={DollarSign}
+                        title="Personal Stake"
+                        requirement={requirements.personal_stake}
+                        unit="$"
                       />
                     )}
+                    {requirements?.team_stake && (
+                      <RequirementItem
+                        icon={Users}
+                        title="Team Stake"
+                        requirement={requirements.team_stake}
+                        unit="$"
+                      />
+                    )}
+                    {requirements?.direct_downlines && (
+                      <RequirementItem
+                        icon={Users}
+                        title="Direct Downlines"
+                        requirement={requirements.direct_downlines}
+                      />
+                    )}
+                    {requirements?.lower_rank_downlines &&
+                      requirements.lower_rank_downlines.required &&
+                      requirements.lower_rank_downlines.required > 0 && (
+                        <RequirementItem
+                          icon={TrendingUp}
+                          title={
+                            requirements.lower_rank_downlines.description ||
+                            'Lower Rank Downlines'
+                          }
+                          requirement={requirements.lower_rank_downlines}
+                        />
+                      )}
                   </div>
                 </div>
 
                 {/* Pool Qualifications */}
-                <div className="space-y-3">
-                  <h4 className="flex items-center gap-2 text-sm font-semibold">
-                    <Shield className="h-4 w-4 text-blue-500" />
-                    Pool Qualifications
-                  </h4>
-                  <div className="grid gap-3">
-                    <PoolBadge
-                      title="Performance Pool"
-                      isQualified={
-                        pool_qualification.performance_pool.is_qualified
-                      }
-                      message={pool_qualification.performance_pool.message}
-                      type="performance"
-                    />
-                    <PoolBadge
-                      title="Premium Pool"
-                      isQualified={
-                        isStakeholder
-                          ? false
-                          : pool_qualification.premium_pool.is_qualified
-                      }
-                      message={
-                        isStakeholder
-                          ? 'Stakeholders are not eligible for Premium Pool'
-                          : pool_qualification.premium_pool.message
-                      }
-                      type="premium"
-                      isStakeholder={isStakeholder}
-                    />
+                {pool_qualification && (
+                  <div className="space-y-3">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold">
+                      <Shield className="h-4 w-4 text-blue-500" />
+                      Pool Qualifications
+                    </h4>
+                    <div className="grid gap-3">
+                      {pool_qualification.performance_pool && (
+                        <PoolBadge
+                          title="Performance Pool"
+                          isQualified={
+                            pool_qualification.performance_pool.is_qualified
+                          }
+                          message={pool_qualification.performance_pool.message}
+                          type="performance"
+                        />
+                      )}
+                      {pool_qualification.premium_pool && (
+                        <PoolBadge
+                          title="Premium Pool"
+                          isQualified={
+                            isStakeholder
+                              ? false
+                              : pool_qualification.premium_pool.is_qualified
+                          }
+                          message={
+                            isStakeholder
+                              ? 'Stakeholders are not eligible for Premium Pool'
+                              : pool_qualification.premium_pool.message
+                          }
+                          type="premium"
+                          isStakeholder={isStakeholder}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -548,14 +576,22 @@ function RequirementItem({
   requirement: Requirement;
   unit?: string;
 }) {
-  const { current, required, is_met } = requirement;
+  // Backend now always provides is_met field (both lightweight and detailed endpoints)
+  const { current = 0, required = 0, is_met } = requirement;
+  // Fallback calculation for backward compatibility (backend should always provide is_met)
+  const isMet = is_met ?? current >= required;
+
+  // Safety check - if requirement is invalid, don't render
+  if (!requirement || required === undefined) {
+    return null;
+  }
 
   return (
     <div className="bg-muted/50 border-border/50 hover:bg-muted/80 flex items-center gap-3 rounded-lg border p-3 transition-colors">
       <div
         className={cn(
           'rounded-lg p-2',
-          is_met
+          isMet
             ? 'bg-green-500/10 text-green-600 dark:text-green-500'
             : 'bg-muted'
         )}
@@ -565,7 +601,7 @@ function RequirementItem({
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center justify-between">
           <span className="truncate text-sm font-medium">{title}</span>
-          {is_met ? (
+          {isMet ? (
             <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-500" />
           ) : (
             <Circle className="text-muted-foreground h-4 w-4 flex-shrink-0" />
@@ -579,10 +615,10 @@ function RequirementItem({
           </span>
           <span
             className={
-              is_met ? 'font-medium text-green-600 dark:text-green-500' : ''
+              isMet ? 'font-medium text-green-600 dark:text-green-500' : ''
             }
           >
-            {is_met ? 'Completed' : 'In Progress'}
+            {isMet ? 'Completed' : 'In Progress'}
           </span>
         </div>
       </div>
@@ -655,30 +691,7 @@ function PoolBadge({
  * Loading Skeleton
  */
 function RankProgressSkeleton() {
-  return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-48" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-14 w-32" />
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-14 w-32" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-full" />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <ShimmerCard className="h-full" />;
 }
 
 /**

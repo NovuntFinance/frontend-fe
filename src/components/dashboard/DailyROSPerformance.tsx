@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { rosApi, TimeRange, DailyEarning } from '@/services/rosApi';
 import { useTodayRos } from '@/hooks/useTodayRos';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import {
   Tooltip,
   TooltipContent,
@@ -153,19 +154,21 @@ export function DailyROSPerformance() {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
             {loading ? (
-              <div className="h-8 w-32 animate-pulse rounded bg-emerald-500/20" />
+              <ShimmerCard className="h-8 w-32" />
             ) : (
-              <h2 className="text-3xl font-bold text-emerald-500">
-                $
-                {totalEarnings.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </h2>
+              <>
+                <h2 className="text-3xl font-bold text-emerald-500">
+                  $
+                  {totalEarnings.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </h2>
+                <span className="text-muted-foreground text-sm">
+                  earned in {selectedRange}
+                </span>
+              </>
             )}
-            <span className="text-muted-foreground text-sm">
-              earned in {selectedRange}
-            </span>
           </div>
 
           <div className="bg-muted/50 flex rounded-lg p-1">
@@ -187,23 +190,14 @@ export function DailyROSPerformance() {
           </div>
         </div>
 
-        {/* Legend - Simplified since API doesn't provide breakdown */}
-        <div className="flex flex-wrap gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-emerald-500" />
-            <span className="text-muted-foreground">Total Earnings</span>
-            <span className="font-semibold">${totalEarnings.toFixed(2)}</span>
-          </div>
-        </div>
-
-        {/* Chart Area */}
+        {/* Chart Area - Legend removed to eliminate repetition */}
         <div className="relative mt-4 h-[220px] w-full select-none">
           {loading ? (
             <div className="flex h-full items-end justify-between gap-2">
               {Array.from({ length: 7 }).map((_, i) => (
-                <div
+                <ShimmerCard
                   key={i}
-                  className="w-full animate-pulse rounded-t bg-emerald-500/10"
+                  className="w-full rounded-t"
                   style={{ height: `${Math.random() * 50 + 20}%` }}
                 />
               ))}

@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -141,17 +141,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="bg-muted/50 flex items-center gap-4 rounded-xl p-4"
-              >
-                <Skeleton className="h-12 w-12 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-                <Skeleton className="h-6 w-20" />
-              </div>
+              <ShimmerCard key={i} className="h-20" />
             ))}
           </div>
         </CardContent>

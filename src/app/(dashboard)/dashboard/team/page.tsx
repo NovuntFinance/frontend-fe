@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
@@ -188,13 +188,13 @@ export default function TeamPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
+        <ShimmerCard className="h-10 w-64" />
         <div className="grid gap-6 md:grid-cols-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
+          <ShimmerCard className="h-40" />
+          <ShimmerCard className="h-40" />
+          <ShimmerCard className="h-40" />
         </div>
-        <Skeleton className="h-96" />
+        <ShimmerCard className="h-96" />
       </div>
     );
   }
@@ -353,7 +353,7 @@ export default function TeamPage() {
                   Referral Link
                 </label>
                 {infoLoading ? (
-                  <Skeleton className="h-10 w-full" />
+                  <ShimmerCard className="h-10 w-full" />
                 ) : referralLink ? (
                   <div className="flex gap-2">
                     <Input
@@ -394,7 +394,7 @@ export default function TeamPage() {
                   Referral Code
                 </label>
                 {infoLoading ? (
-                  <Skeleton className="h-10 w-full" />
+                  <ShimmerCard className="h-10 w-full" />
                 ) : referralCode ? (
                   <div className="flex gap-2">
                     <Input

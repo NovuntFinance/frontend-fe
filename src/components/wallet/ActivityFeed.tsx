@@ -14,12 +14,18 @@ import {
   Loader2,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { Badge } from '@/components/ui/badge';
 
 interface Transaction {
   id: string;
-  type: 'deposit' | 'withdrawal' | 'transfer_sent' | 'transfer_received' | 'roi' | 'bonus';
+  type:
+    | 'deposit'
+    | 'withdrawal'
+    | 'transfer_sent'
+    | 'transfer_received'
+    | 'roi'
+    | 'bonus';
   amount: number;
   status: 'pending' | 'confirmed' | 'failed';
   timestamp: string;
@@ -42,7 +48,7 @@ const useRecentActivity = () => {
       {
         id: '2',
         type: 'roi',
-        amount: 15.50,
+        amount: 15.5,
         status: 'confirmed',
         timestamp: new Date(Date.now() - 86400000).toISOString(),
         description: 'Weekly ROS earnings',
@@ -91,11 +97,11 @@ const getTransactionIcon = (type: Transaction['type']) => {
 const getStatusIcon = (status: Transaction['status']) => {
   switch (status) {
     case 'confirmed':
-      return <CheckCircle2 className="h-4 w-4 text-success" />;
+      return <CheckCircle2 className="text-success h-4 w-4" />;
     case 'pending':
-      return <Loader2 className="h-4 w-4 text-warning animate-spin" />;
+      return <Loader2 className="text-warning h-4 w-4 animate-spin" />;
     case 'failed':
-      return <XCircle className="h-4 w-4 text-destructive" />;
+      return <XCircle className="text-destructive h-4 w-4" />;
   }
 };
 
@@ -139,75 +145,81 @@ export function ActivityFeed() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.3 }}
-      className="rounded-2xl bg-card border border-border/50 shadow-lg h-fit"
+      className="bg-card border-border/50 h-fit rounded-2xl border shadow-lg"
     >
       {/* Header */}
-      <div className="p-6 border-b border-border/50">
+      <div className="border-border/50 border-b p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">
+            <h3 className="text-foreground text-lg font-semibold">
               Recent Activity
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Your latest transactions
             </p>
           </div>
-          <Clock className="h-5 w-5 text-muted-foreground" />
+          <Clock className="text-muted-foreground h-5 w-5" />
         </div>
       </div>
 
       {/* Activity List */}
       <ScrollArea className="h-[500px]">
         {isLoading ? (
-          <div className="p-6 space-y-4">
+          <div className="space-y-4 p-6">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+              <ShimmerCard key={i} className="h-20 w-full" />
             ))}
           </div>
         ) : !transactions || transactions.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="inline-flex p-4 rounded-full bg-muted mb-4">
-              <Clock className="h-8 w-8 text-muted-foreground" />
+            <div className="bg-muted mb-4 inline-flex rounded-full p-4">
+              <Clock className="text-muted-foreground h-8 w-8" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              No transactions yet
-            </p>
+            <p className="text-muted-foreground text-sm">No transactions yet</p>
           </div>
         ) : (
-          <div className="p-6 space-y-3">
+          <div className="space-y-3 p-6">
             {transactions.map((transaction, index) => (
               <motion.div
                 key={transaction.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer group"
+                className="hover:bg-muted/50 group flex cursor-pointer items-center gap-4 rounded-xl p-4 transition-colors"
               >
                 {/* Icon */}
-                <div className={`
-                  p-3 rounded-xl
-                  ${transaction.amount > 0 ? 'bg-success/10' : 'bg-destructive/10'}
-                  group-hover:scale-110 transition-transform
-                `}>
-                  <div className={transaction.amount > 0 ? 'text-success' : 'text-destructive'}>
+                <div
+                  className={`rounded-xl p-3 ${transaction.amount > 0 ? 'bg-success/10' : 'bg-destructive/10'} transition-transform group-hover:scale-110`}
+                >
+                  <div
+                    className={
+                      transaction.amount > 0
+                        ? 'text-success'
+                        : 'text-destructive'
+                    }
+                  >
                     {getTransactionIcon(transaction.type)}
                   </div>
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-medium text-foreground truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <p className="text-foreground truncate text-sm font-medium">
                       {transaction.description}
                     </p>
                     {getStatusIcon(transaction.status)}
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {formatTimestamp(transaction.timestamp)}
                     </p>
                     <Badge
-                      variant={transaction.status === 'confirmed' ? 'default' : 'secondary'}
+                      variant={
+                        transaction.status === 'confirmed'
+                          ? 'default'
+                          : 'secondary'
+                      }
                       className="text-xs"
                     >
                       {transaction.status}
@@ -217,16 +229,16 @@ export function ActivityFeed() {
 
                 {/* Amount */}
                 <div className="text-right">
-                  <p className={`text-sm font-bold ${getTransactionColor(transaction.type)}`}>
-                    {transaction.amount > 0 ? '+' : ''}
-                    ${Math.abs(transaction.amount).toLocaleString('en-US', {
+                  <p
+                    className={`text-sm font-bold ${getTransactionColor(transaction.type)}`}
+                  >
+                    {transaction.amount > 0 ? '+' : ''}$
+                    {Math.abs(transaction.amount).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    USDT
-                  </p>
+                  <p className="text-muted-foreground text-xs">USDT</p>
                 </div>
               </motion.div>
             ))}
@@ -236,8 +248,8 @@ export function ActivityFeed() {
 
       {/* Footer */}
       {transactions && transactions.length > 0 && (
-        <div className="p-4 border-t border-border/50">
-          <button className="w-full text-sm text-primary hover:text-primary/80 font-medium transition-colors">
+        <div className="border-border/50 border-t p-4">
+          <button className="text-primary hover:text-primary/80 w-full text-sm font-medium transition-colors">
             View All Transactions →
           </button>
         </div>
@@ -245,4 +257,3 @@ export function ActivityFeed() {
     </motion.div>
   );
 }
-

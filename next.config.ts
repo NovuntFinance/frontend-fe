@@ -28,9 +28,6 @@ const withPWAConfig = withPWA({
 });
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -59,7 +56,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  output: 'standalone',
+  // Disable standalone output on Windows to avoid path issues
+  // Re-enable for production deployments if needed
+  output: process.platform === 'win32' ? undefined : 'standalone',
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {

@@ -46,9 +46,9 @@ export interface CreateStakeResponse {
 /**
  * Create New Stake
  * POST /api/v1/staking/create
- * 
+ *
  * Creates a new permanent stake with 200% ROI target
- * 
+ *
  * Rules:
  * - Minimum stake: $20 USDT
  * - Can stake from Deposit Wallet, Earnings Wallet, or both
@@ -75,12 +75,15 @@ export function useCreateStake() {
         sourceWallet: 'auto', // Backend requires 'auto' for automatic wallet deduction
         duration: 0, // Backend requires 0 for permanent stake (200% ROS)
       };
-      
+
       // Add optional fields
       if (data.goal) payload.goal = data.goal;
       if (data.twoFactorCode) payload.twoFactorCode = data.twoFactorCode;
 
-      console.log('[Staking Mutation] 📦 Final payload being sent:', JSON.stringify(payload, null, 2));
+      console.log(
+        '[Staking Mutation] 📦 Final payload being sent:',
+        JSON.stringify(payload, null, 2)
+      );
 
       const response = await apiRequest<CreateStakeResponse>(
         'post',
@@ -98,50 +101,83 @@ export function useCreateStake() {
       return response;
     },
     onSuccess: async (data) => {
-      console.log('[Staking Mutation] ✅ Stake created, processing for registration bonus...');
-      console.log('[Staking Mutation] Response data:', JSON.stringify(data, null, 2));
-      
+      console.log(
+        '[Staking Mutation] ✅ Stake created, processing for registration bonus...'
+      );
+      console.log(
+        '[Staking Mutation] Response data:',
+        JSON.stringify(data, null, 2)
+      );
+
       // Process stake for registration bonus (this will update progress to 100% if it's the first stake)
       try {
         const stakeId = data?.stake?._id;
         const stakeAmount = data?.stake?.amount;
-        
+
         if (!stakeId || !stakeAmount) {
-          console.error('[Staking Mutation] ⚠️ Missing stakeId or amount:', { stakeId, stakeAmount, data });
+          console.error('[Staking Mutation] ⚠️ Missing stakeId or amount:', {
+            stakeId,
+            stakeAmount,
+            data,
+          });
           throw new Error('Stake ID or amount is missing from response');
         }
-        
-        console.log('[Staking Mutation] Processing stake for bonus:', { stakeId, stakeAmount });
-        const bonusResponse = await registrationBonusApi.processStake(stakeId, stakeAmount);
-        console.log('[Staking Mutation] 🎁 Registration bonus processed:', bonusResponse);
-        
+
+        console.log('[Staking Mutation] Processing stake for bonus:', {
+          stakeId,
+          stakeAmount,
+        });
+        const bonusResponse = await registrationBonusApi.processStake(
+          stakeId,
+          stakeAmount
+        );
+        console.log(
+          '[Staking Mutation] 🎁 Registration bonus processed:',
+          bonusResponse
+        );
+
         // If bonus was activated (100% progress reached), trigger confetti
         if (bonusResponse.success && bonusResponse.bonusActivated) {
-          console.log('[Staking Mutation] 🎉 Bonus activated! Progress reached 100%');
+          console.log(
+            '[Staking Mutation] 🎉 Bonus activated! Progress reached 100%'
+          );
           // Dispatch custom event to trigger confetti in banner
-          window.dispatchEvent(new CustomEvent('registrationBonusCompleted', {
-            detail: { bonusAmount: bonusResponse.bonusAmount }
-          }));
+          window.dispatchEvent(
+            new CustomEvent('registrationBonusCompleted', {
+              detail: { bonusAmount: bonusResponse.bonusAmount },
+            })
+          );
         }
       } catch (error) {
-        console.error('[Staking Mutation] ⚠️ Failed to process stake for bonus (non-critical):', error);
+        console.error(
+          '[Staking Mutation] ⚠️ Failed to process stake for bonus (non-critical):',
+          error
+        );
         // Don't fail the whole stake creation if bonus processing fails
       }
-      
+
       // Invalidate all staking-related queries
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.dashboard });
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.history });
-      
+
       // Invalidate wallet balance
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
-      
+
       // Invalidate dashboard overview
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardOverview });
-      
+
       // Invalidate registration bonus status to show updated progress
-      queryClient.invalidateQueries({ queryKey: queryKeys.registrationBonusStatus });
-      
-      console.log('[Staking Mutation] ✅ All queries invalidated and refetched');
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.registrationBonusStatus,
+      });
+
+      // Refresh rank progress (ranks update instantly on backend after stake creation)
+      // This ensures the user sees their updated rank immediately
+      queryClient.invalidateQueries({ queryKey: ['rankProgress'] });
+
+      console.log(
+        '[Staking Mutation] ✅ All queries invalidated and refetched'
+      );
     },
     onError: (error) => {
       console.error('[Staking Mutation] ❌ Failed to create stake:', error);
@@ -152,7 +188,7 @@ export function useCreateStake() {
 /**
  * Cancel Stake (If backend implements this in future)
  * POST /api/v1/staking/:stakeId/cancel
- * 
+ *
  * Note: Currently stakes are permanent, but keeping this for future use
  */
 export function useCancelStake() {
@@ -171,7 +207,9 @@ export function useCancelStake() {
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.dashboard });
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.history });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
+
+      // Refresh rank progress (ranks update instantly on backend after stake cancellation)
+      queryClient.invalidateQueries({ queryKey: ['rankProgress'] });
     },
   });
 }
-

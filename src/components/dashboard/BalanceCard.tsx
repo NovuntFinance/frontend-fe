@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 interface BalanceCardProps {
   title: string;
@@ -60,18 +60,7 @@ export function BalanceCard({
   }, [value, isVisible, isLoading]);
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-10 rounded-lg" />
-          </div>
-          <Skeleton className="h-8 w-32 mb-2" />
-          <Skeleton className="h-4 w-20" />
-        </CardContent>
-      </Card>
-    );
+    return <ShimmerCard className="h-full" />;
   }
 
   return (
@@ -80,14 +69,12 @@ export function BalanceCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
     >
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="transition-shadow hover:shadow-lg">
         <CardContent className="p-6">
           {/* Header with icon */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-muted-foreground">
-              {title}
-            </p>
-            <div className={`p-2 rounded-lg ${bgColor}`}>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-muted-foreground text-sm font-medium">{title}</p>
+            <div className={`rounded-lg p-2 ${bgColor}`}>
               <Icon className={`h-5 w-5 ${color}`} />
             </div>
           </div>
@@ -95,7 +82,7 @@ export function BalanceCard({
           {/* Value */}
           <div className="space-y-1">
             <motion.p
-              className="text-2xl sm:text-3xl font-bold tracking-tight"
+              className="text-2xl font-bold tracking-tight sm:text-3xl"
               key={displayValue}
             >
               {isVisible ? (
@@ -112,14 +99,14 @@ export function BalanceCard({
                   changeType === 'positive'
                     ? 'text-green-600 dark:text-green-400'
                     : changeType === 'negative'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-muted-foreground'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-muted-foreground'
                 }`}
               >
                 {change}
               </span>
               {changeType !== 'neutral' && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   vs last month
                 </span>
               )}

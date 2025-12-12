@@ -1050,7 +1050,25 @@ export function usePoolDistributions(
           limit,
           distributionType
         );
-        return response.data;
+        // Ensure we always return a value, even if data is undefined
+        if (response?.data) {
+          return response.data;
+        }
+        // Return empty structure if data is undefined
+        return {
+          distributions: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+          totalEarnings: {
+            rankPool: 0,
+            redistributionPool: 0,
+            total: 0,
+          },
+        };
       } catch (error: any) {
         // If it's a 404, return empty structure instead of throwing
         if (error?.statusCode === 404 || error?.response?.status === 404) {
@@ -1093,7 +1111,24 @@ export function useIncentiveWallet() {
     queryFn: async () => {
       try {
         const response = await teamRankApi.getIncentiveWallet();
-        return response.data;
+        // Ensure we always return a value, even if data is undefined
+        if (response?.data) {
+          return response.data;
+        }
+        // Return empty wallet structure if data is undefined
+        return {
+          totalEarnings: 0,
+          rankPoolEarnings: 0,
+          redistributionPoolEarnings: 0,
+          currentBalance: 0,
+          qualificationStatus: {
+            performancePoolQualified: false,
+            premiumPoolQualified: false,
+            rankPoolQualified: false,
+            redistributionPoolQualified: false,
+          },
+          recentDistributions: [],
+        };
       } catch (error: any) {
         // If it's a 404, return empty wallet structure instead of throwing
         if (error?.statusCode === 404 || error?.response?.status === 404) {

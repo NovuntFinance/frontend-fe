@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTodayRos } from '@/hooks/useTodayRos';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import {
   Tooltip,
   TooltipContent,
@@ -24,23 +24,7 @@ export function TodayROSCard() {
   const { data, loading, error, refetch } = useTodayRos(true);
 
   if (loading) {
-    return (
-      <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
-        <CardHeader className="relative pb-2">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-12 w-12 rounded-xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="relative">
-          <Skeleton className="h-16 w-full" />
-        </CardContent>
-      </Card>
-    );
+    return <ShimmerCard className="h-full" />;
   }
 
   if (error) {

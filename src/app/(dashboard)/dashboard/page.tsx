@@ -31,7 +31,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
@@ -555,7 +555,7 @@ export default function DashboardPage() {
                 className="h-full"
               >
                 {isLoading || (stat.isActivity && activityLoading) ? (
-                  <Skeleton className="h-10 w-32" />
+                  <ShimmerCard className="h-10 w-32" />
                 ) : stat.isActivity ? (
                   // Live Activity Display
                   <motion.div

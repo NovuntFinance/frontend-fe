@@ -19,6 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { rosApi, WeeklySummaryData } from '@/services/rosApi';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 export function WeeklyROSCard() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -108,7 +109,7 @@ export function WeeklyROSCard() {
       <CardContent className="relative">
         <div className="mb-3 flex items-baseline gap-3">
           {loading ? (
-            <div className="h-12 w-32 animate-pulse rounded bg-emerald-500/20" />
+            <ShimmerCard className="h-12 w-32" />
           ) : (
             <motion.span
               initial={{ opacity: 0, scale: 0.5 }}

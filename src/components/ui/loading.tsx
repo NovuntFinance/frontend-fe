@@ -7,32 +7,36 @@
 
 import { Logo } from '@/components/ui/logo';
 import { cn } from '@/lib/utils';
+import { ShimmerCard } from '@/components/ui/shimmer';
 
 interface LoadingProps {
-	/** Optional label shown under the spinner. */
-	label?: string;
-	/** Additional tailwind classes for the container. */
-	className?: string;
-	/** Size of the spinner in rem units (default 3rem). */
-	size?: number;
+  /** Optional label shown under the spinner. */
+  label?: string;
+  /** Additional tailwind classes for the container. */
+  className?: string;
+  /** Size of the spinner in rem units (default 3rem). */
+  size?: number;
 }
 
 const Loading = ({ label = 'Loading…', className, size = 3 }: LoadingProps) => {
-	const spinnerSize = `${size}rem`;
+  const spinnerSize = `${size}rem`;
 
-	return (
-		<div
-			role="status"
-			aria-live="polite"
-			className={cn('flex flex-col items-center gap-4 text-muted-foreground', className)}
-		>
-			<div
-				className="animate-spin rounded-full border-4 border-primary/80 border-t-transparent"
-				style={{ width: spinnerSize, height: spinnerSize }}
-			/>
-			{label ? <span className="text-sm font-medium">{label}</span> : null}
-		</div>
-	);
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn(
+        'text-muted-foreground flex flex-col items-center gap-4',
+        className
+      )}
+    >
+      <div
+        className="border-primary/80 animate-spin rounded-full border-4 border-t-transparent"
+        style={{ width: spinnerSize, height: spinnerSize }}
+      />
+      {label ? <span className="text-sm font-medium">{label}</span> : null}
+    </div>
+  );
 };
 
 export default Loading;
@@ -52,15 +56,17 @@ export function LoadingScreen({
   className?: string;
 }) {
   return (
-    <div className={cn(
-      'fixed inset-0 z-50 flex flex-col items-center justify-center',
-      'bg-gradient-to-b from-novunt-blue-900 to-background',
-      className
-    )}>
+    <div
+      className={cn(
+        'fixed inset-0 z-50 flex flex-col items-center justify-center',
+        'from-novunt-blue-900 to-background bg-gradient-to-b',
+        className
+      )}
+    >
       {/* Animated background blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-novunt-gold-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="bg-novunt-gold-500/20 absolute top-1/4 left-1/4 h-96 w-96 animate-pulse rounded-full blur-3xl" />
+        <div className="bg-primary/20 absolute right-1/4 bottom-1/4 h-96 w-96 animate-pulse rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
@@ -73,11 +79,11 @@ export function LoadingScreen({
 
         {/* Loading spinner */}
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <div className="border-primary/20 border-t-primary h-16 w-16 animate-spin rounded-full border-4" />
         </div>
 
         {message && (
-          <p className="text-lg font-medium text-white/90 animate-pulse">
+          <p className="animate-pulse text-lg font-medium text-white/90">
             {message}
           </p>
         )}
@@ -88,6 +94,7 @@ export function LoadingScreen({
 
 /**
  * Loading skeleton for content
+ * Uses ShimmerCard for consistent loading experience
  */
 export function LoadingSkeleton({
   lines = 3,
@@ -99,11 +106,7 @@ export function LoadingSkeleton({
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className="h-4 bg-primary/10 rounded animate-pulse"
-          style={{ width: `${100 - i * 10}%` }}
-        />
+        <ShimmerCard key={i} className="h-4" />
       ))}
     </div>
   );
