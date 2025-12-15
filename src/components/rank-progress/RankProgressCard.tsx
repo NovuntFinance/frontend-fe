@@ -918,3 +918,6 @@ function RankProgressError({ error }: { error: string }) {
     </Card>
   );
 }
+
+// Default export for Next.js/Turbopack compatibility
+export default RankProgressCard;
