@@ -487,8 +487,8 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Stats Grid - Premium Cards */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-4">
+        {/* Stats Grid - Premium Cards (2x2 layout) */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
           {[
             {
               title: 'Total Deposited',
