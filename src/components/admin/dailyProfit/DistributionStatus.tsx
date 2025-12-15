@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PlayCircle, CheckCircle2, Clock, DollarSign } from 'lucide-react';
+import {
+  ArrowRightCircle,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -10,7 +15,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTestDistributeDailyProfit } from '@/lib/mutations';
@@ -65,7 +69,7 @@ export function DistributionStatus() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <PlayCircle className="h-5 w-5" />
+          <ArrowRightCircle className="h-5 w-5" />
           Test Distribution
         </CardTitle>
         <CardDescription>
@@ -101,7 +105,7 @@ export function DistributionStatus() {
             </>
           ) : (
             <>
-              <PlayCircle className="mr-2 h-4 w-4" />
+              <ArrowRightCircle className="mr-2 h-4 w-4" />
               Trigger Distribution
             </>
           )}
