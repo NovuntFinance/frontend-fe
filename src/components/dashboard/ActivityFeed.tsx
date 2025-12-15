@@ -164,12 +164,40 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest transactions</CardDescription>
+      <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
+        <motion.div
+          animate={{
+            x: [0, -15, 0],
+            y: [0, 10, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+        />
+        <CardHeader className="relative p-4 sm:p-6">
+          <div className="mb-2 flex items-center gap-2 sm:gap-3">
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: -10 }}
+              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+            >
+              <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+            </motion.div>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                Recent Activity
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs">
+                Your latest transactions
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <ShimmerCard key={i} className="h-20" />
@@ -181,16 +209,39 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   }
 
   return (
-    <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 rounded-lg p-2">
-              <TrendingUp className="text-primary h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription className="text-xs">
+    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
+
+      {/* Animated Floating Blob */}
+      <motion.div
+        animate={{
+          x: [0, -15, 0],
+          y: [0, 10, 0],
+          scale: [1, 1.15, 1],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+      />
+
+      <CardHeader className="relative p-4 sm:p-6">
+        <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: -10 }}
+              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+            >
+              <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+            </motion.div>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                Recent Activity
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs">
                 Your latest transactions
               </CardDescription>
             </div>

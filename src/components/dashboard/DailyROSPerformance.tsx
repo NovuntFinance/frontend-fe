@@ -3,7 +3,13 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
-import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useProfitHistory } from '@/lib/queries';
@@ -68,197 +74,230 @@ export function DailyROSPerformance() {
   }, [chartData]);
 
   return (
-    <NovuntPremiumCard
-      title="Daily ROS Performance"
-      subtitle="Declared percentages over time"
-      icon={TrendingUp}
-      colorTheme="emerald"
-      className="h-full"
-    >
-      <div className="space-y-4 sm:space-y-6">
-        {/* Controls & Summary */}
-        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-baseline gap-1.5 sm:gap-2">
-            {isLoading ? (
-              <ShimmerCard className="h-7 w-24 sm:h-8 sm:w-32" />
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
-                  {averagePercentage.toFixed(2)}%
-                </h2>
-                <span className="text-muted-foreground text-xs sm:text-sm">
-                  avg in {selectedRange}
-                </span>
-              </>
-            )}
-          </div>
+    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-transparent" />
 
-          <div className="bg-muted/50 flex rounded-lg p-1">
-            {timeRanges.map((range) => (
-              <Button
-                key={range}
-                variant={selectedRange === range ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedRange(range)}
-                className={cn(
-                  'h-7 text-xs font-medium transition-all',
-                  selectedRange === range &&
-                    'bg-emerald-600 text-white hover:bg-emerald-700'
-                )}
-              >
-                {range}
-              </Button>
-            ))}
+      {/* Animated Floating Blob */}
+      <motion.div
+        animate={{
+          x: [0, -15, 0],
+          y: [0, 10, 0],
+          scale: [1, 1.15, 1],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
+      />
+
+      <CardHeader className="relative p-4 sm:p-6">
+        <div className="mb-2 flex items-center gap-2 sm:gap-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -10 }}
+            className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+          >
+            <TrendingUp className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+              Daily ROS Performance
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs">
+              Declared percentages over time
+            </CardDescription>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Chart Area */}
-        <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
-          {isLoading ? (
-            <div className="flex h-full items-end justify-between gap-2">
-              {Array.from({ length: Math.min(limit, 7) }).map((_, i) => (
-                <ShimmerCard
-                  key={i}
-                  className="w-full rounded-t"
-                  style={{ height: `${Math.random() * 50 + 20}%` }}
-                />
+      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Controls & Summary */}
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              {isLoading ? (
+                <ShimmerCard className="h-7 w-24 sm:h-8 sm:w-32" />
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
+                    {averagePercentage.toFixed(2)}%
+                  </h2>
+                  <span className="text-muted-foreground text-xs sm:text-sm">
+                    avg in {selectedRange}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="bg-muted/50 flex rounded-lg p-1">
+              {timeRanges.map((range) => (
+                <Button
+                  key={range}
+                  variant={selectedRange === range ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSelectedRange(range)}
+                  className={cn(
+                    'h-7 text-xs font-medium transition-all',
+                    selectedRange === range &&
+                      'bg-emerald-600 text-white hover:bg-emerald-700'
+                  )}
+                >
+                  {range}
+                </Button>
               ))}
             </div>
-          ) : chartData.length === 0 ? (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-muted-foreground text-sm">
-                No data available for {selectedRange}
-              </p>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
-              {chartData.map((day, index) => {
-                const percentage = day.profitPercentage || 0;
-                const heightPercent =
-                  maxPercentage > 0 ? (percentage / maxPercentage) * 100 : 0;
+          </div>
 
-                const isHovered = hoveredIndex === index;
-                const date = new Date(day.date);
-                const isToday =
-                  date.toDateString() === new Date().toDateString();
-                const isYesterday =
-                  date.toDateString() ===
-                  new Date(Date.now() - 86400000).toDateString();
+          {/* Chart Area */}
+          <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
+            {isLoading ? (
+              <div className="flex h-full items-end justify-between gap-2">
+                {Array.from({ length: Math.min(limit, 7) }).map((_, i) => (
+                  <ShimmerCard
+                    key={i}
+                    className="w-full rounded-t"
+                    style={{ height: `${Math.random() * 50 + 20}%` }}
+                  />
+                ))}
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-muted-foreground text-sm">
+                  No data available for {selectedRange}
+                </p>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
+                {chartData.map((day, index) => {
+                  const percentage = day.profitPercentage || 0;
+                  const heightPercent =
+                    maxPercentage > 0 ? (percentage / maxPercentage) * 100 : 0;
 
-                // Format date label based on range
-                const getDateLabel = () => {
-                  if (selectedRange === '7D') {
-                    return date.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                    });
-                  } else if (selectedRange === '30D') {
-                    return index % 5 === 0
-                      ? date.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      : '';
-                  } else {
-                    // 100D - show fewer labels
-                    return index % 15 === 0
-                      ? date.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      : '';
-                  }
-                };
+                  const isHovered = hoveredIndex === index;
+                  const date = new Date(day.date);
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
+                  const isYesterday =
+                    date.toDateString() ===
+                    new Date(Date.now() - 86400000).toDateString();
 
-                return (
-                  <div
-                    key={index}
-                    className="group relative flex h-full flex-1 flex-col justify-end"
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                  >
-                    {/* Tooltip */}
-                    <AnimatePresence>
-                      {isHovered && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2"
-                        >
-                          <div className="bg-popover/95 border-border/50 rounded-xl border p-3 text-xs shadow-xl backdrop-blur-md">
-                            <p className="border-border/50 mb-2 border-b pb-1 text-center font-semibold">
-                              {date.toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                              })}
-                            </p>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">
-                                  Declared Percentage
-                                </span>
-                                <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                                  {percentage.toFixed(2)}%
-                                </span>
-                              </div>
-                              {(isToday || isYesterday) && (
-                                <div className="text-muted-foreground pt-1 text-[10px] italic">
-                                  {isToday ? 'Today' : 'Yesterday'}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {/* Arrow */}
-                          <div className="bg-popover/95 border-border/50 absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-r border-b" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                  // Format date label based on range
+                  const getDateLabel = () => {
+                    if (selectedRange === '7D') {
+                      return date.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                      });
+                    } else if (selectedRange === '30D') {
+                      return index % 5 === 0
+                        ? date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : '';
+                    } else {
+                      // 100D - show fewer labels
+                      return index % 15 === 0
+                        ? date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : '';
+                    }
+                  };
 
-                    {/* Bar */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${heightPercent}%` }}
-                      transition={{ duration: 0.5, delay: index * 0.02 }}
-                      className={cn(
-                        'relative w-full overflow-hidden rounded-t-sm transition-all duration-200',
-                        isHovered
-                          ? 'z-10 scale-x-110 opacity-100 shadow-lg'
-                          : 'opacity-85 hover:opacity-100',
-                        isToday || isYesterday
-                          ? 'bg-emerald-600 dark:bg-emerald-500'
-                          : 'bg-emerald-500'
-                      )}
+                  return (
+                    <div
+                      key={index}
+                      className="group relative flex h-full flex-1 flex-col justify-end"
+                      onMouseEnter={() => setHoveredIndex(index)}
+                      onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      <div
-                        className="w-full bg-emerald-500 transition-colors"
-                        style={{ height: '100%' }}
-                      />
-                    </motion.div>
+                      {/* Tooltip */}
+                      <AnimatePresence>
+                        {isHovered && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2"
+                          >
+                            <div className="bg-popover/95 border-border/50 rounded-xl border p-3 text-xs shadow-xl backdrop-blur-md">
+                              <p className="border-border/50 mb-2 border-b pb-1 text-center font-semibold">
+                                {date.toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">
+                                    Declared Percentage
+                                  </span>
+                                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                                    {percentage.toFixed(2)}%
+                                  </span>
+                                </div>
+                                {(isToday || isYesterday) && (
+                                  <div className="text-muted-foreground pt-1 text-[10px] italic">
+                                    {isToday ? 'Today' : 'Yesterday'}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {/* Arrow */}
+                            <div className="bg-popover/95 border-border/50 absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-r border-b" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                    {/* X-Axis Label */}
-                    {getDateLabel() && (
-                      <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
-                        {getDateLabel()}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {/* Bar */}
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: `${heightPercent}%` }}
+                        transition={{ duration: 0.5, delay: index * 0.02 }}
+                        className={cn(
+                          'relative w-full overflow-hidden rounded-t-sm transition-all duration-200',
+                          isHovered
+                            ? 'z-10 scale-x-110 opacity-100 shadow-lg'
+                            : 'opacity-85 hover:opacity-100',
+                          isToday || isYesterday
+                            ? 'bg-emerald-600 dark:bg-emerald-500'
+                            : 'bg-emerald-500'
+                        )}
+                      >
+                        <div
+                          className="w-full bg-emerald-500 transition-colors"
+                          style={{ height: '100%' }}
+                        />
+                      </motion.div>
+
+                      {/* X-Axis Label */}
+                      {getDateLabel() && (
+                        <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
+                          {getDateLabel()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Grid Lines */}
+            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-10">
+              <div className="bg-foreground h-px w-full" />
+              <div className="bg-foreground h-px w-full" />
+              <div className="bg-foreground h-px w-full" />
+              <div className="bg-foreground h-px w-full" />
+              <div className="bg-foreground h-px w-full" />
             </div>
-          )}
-
-          {/* Grid Lines */}
-          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-10">
-            <div className="bg-foreground h-px w-full" />
-            <div className="bg-foreground h-px w-full" />
-            <div className="bg-foreground h-px w-full" />
-            <div className="bg-foreground h-px w-full" />
-            <div className="bg-foreground h-px w-full" />
           </div>
         </div>
-      </div>
-    </NovuntPremiumCard>
+      </CardContent>
+    </Card>
   );
 }

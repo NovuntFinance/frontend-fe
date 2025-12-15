@@ -170,27 +170,39 @@ export function LiveTradingSignals() {
   }, []);
 
   return (
-    <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-blue-500/5 to-transparent" />
+    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-blue-500/10 to-transparent" />
 
+      {/* Animated Floating Blob */}
       <motion.div
-        animate={{ x: [0, 15, 0], y: [0, -10, 0], scale: [1, 1.05, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-emerald-500/20 blur-2xl"
+        animate={{
+          x: [0, -15, 0],
+          y: [0, 10, 0],
+          scale: [1, 1.15, 1],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
       />
 
-      <CardHeader className="relative pb-3 sm:pb-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <CardHeader className="relative p-4 sm:p-6">
+        <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
             <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 p-2 backdrop-blur-sm sm:p-3"
+              whileHover={{ scale: 1.1, rotate: -10 }}
+              className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
             >
               <ActivityIcon className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
             </motion.div>
             <div className="min-w-0 flex-1">
-              <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
-                <span className="truncate">Live Trading Signals</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CardTitle className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                  Live Trading Signals
+                </CardTitle>
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -198,16 +210,16 @@ export function LiveTradingSignals() {
                 >
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
                 </motion.div>
-              </CardTitle>
-              <CardDescription className="mt-1 flex flex-wrap items-center gap-1 text-xs sm:gap-2">
-                <Check className="h-3 w-3 flex-shrink-0 text-emerald-500" />
+              </div>
+              <CardDescription className="text-[10px] sm:text-xs">
+                <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
                 {isLoadingPrices ? (
                   <>
-                    <RefreshCw className="inline h-3 w-3 animate-spin" />
-                    <span>Updating...</span>
+                    <RefreshCw className="mr-1 inline h-3 w-3 animate-spin" />
+                    Updating...
                   </>
                 ) : error ? (
-                  <span className="text-xs text-red-500">{error}</span>
+                  <span className="text-red-500">{error}</span>
                 ) : (
                   <span className="truncate">
                     Real market data • Verifiable
