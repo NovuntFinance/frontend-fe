@@ -15,7 +15,6 @@ interface StatCardProps {
   label: string;
   value: number;
   icon: React.ReactNode;
-  color: string;
   colorTheme?: 'purple' | 'orange' | 'emerald' | 'blue';
   className?: string;
 }
