@@ -79,7 +79,7 @@ export function WelcomeBackCard({
       title={`Welcome back, ${greetingName}! 👋`}
       icon={Target}
       colorTheme="orange"
-      className="relative h-full min-h-[400px] overflow-hidden"
+      className="relative h-full min-h-[300px] overflow-hidden sm:min-h-[400px]"
     >
       {/* Rank Icon Background - Full Card Coverage */}
       <div
@@ -95,7 +95,7 @@ export function WelcomeBackCard({
 
       <div className="relative z-10 space-y-8">
         {/* Header Actions (Eye toggle and Share button) - Positioned absolutely */}
-        <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 sm:top-6 sm:right-6 sm:gap-2">
           {/* Share Button - Circular */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -124,12 +124,12 @@ export function WelcomeBackCard({
             variant="ghost"
             size="icon"
             onClick={() => setBalanceVisible(!balanceVisible)}
-            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+            className="text-muted-foreground hover:text-foreground h-8 w-8 hover:bg-white/5 sm:h-10 sm:w-10"
           >
             {balanceVisible ? (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </Button>
         </div>
@@ -160,7 +160,7 @@ export function WelcomeBackCard({
 
         {/* Total Portfolio Value Section */}
         <div>
-          <p className="text-muted-foreground mb-2 flex items-center gap-2 text-sm">
+          <p className="text-muted-foreground mb-2 flex items-center gap-2 text-xs sm:text-sm">
             Total Portfolio Value
             <Tooltip>
               <TooltipTrigger>
@@ -180,7 +180,7 @@ export function WelcomeBackCard({
               key="portfolio"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl lg:text-7xl"
+              className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
             >
               $
               {totalPortfolioValue.toLocaleString('en-US', {
@@ -193,7 +193,7 @@ export function WelcomeBackCard({
               key="hidden"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-muted-foreground/50 text-5xl font-bold sm:text-6xl lg:text-7xl"
+              className="text-muted-foreground/50 text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
             >
               ••••••••
             </motion.div>

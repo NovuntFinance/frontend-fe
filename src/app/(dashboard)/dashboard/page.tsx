@@ -488,7 +488,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Stats Grid - Premium Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-4">
           {[
             {
               title: 'Total Deposited',
@@ -735,7 +735,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {/* Streak Card */}
           {streakLoading ? (
@@ -775,28 +775,28 @@ export default function DashboardPage() {
                   >
                     <Clock className="h-6 w-6 text-blue-500" />
                   </motion.div>
-                  <div>
-                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
                       Staking Streak
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-[10px] sm:text-xs">
                       Consecutive active days
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="relative">
-                <div className="mb-4 flex items-baseline gap-3">
+              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
                   <motion.span
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.9 }}
                     key={streakData?.currentStreak || 0}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-5xl font-black text-transparent"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl"
                   >
                     {streakData?.currentStreak || 0}
                   </motion.span>
-                  <span className="text-muted-foreground text-lg font-semibold">
+                  <span className="text-muted-foreground text-sm font-semibold sm:text-base md:text-lg">
                     days
                   </span>
                 </div>
@@ -863,11 +863,11 @@ export default function DashboardPage() {
               }`}
             />
 
-            <CardHeader className="relative">
-              <div className="mb-2 flex items-center gap-3">
+            <CardHeader className="relative p-4 sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: -10 }}
-                  className={`rounded-xl p-3 shadow-lg backdrop-blur-sm ${
+                  className={`rounded-xl p-2 shadow-lg backdrop-blur-sm sm:p-3 ${
                     (lastWeekProfitChange ?? 0) >= 0
                       ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/20'
                       : 'bg-gradient-to-br from-orange-500/30 to-red-500/20'
@@ -875,19 +875,19 @@ export default function DashboardPage() {
                 >
                   {(lastWeekProfitChange ?? 0) >= 0 ? (
                     <TrendingUp
-                      className={`h-6 w-6 ${
+                      className={`h-5 w-5 sm:h-6 sm:w-6 ${
                         (lastWeekProfitChange ?? 0) >= 0
                           ? 'text-emerald-500'
                           : 'text-orange-500'
                       }`}
                     />
                   ) : (
-                    <TrendingDown className="h-6 w-6 text-orange-500" />
+                    <TrendingDown className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
                   )}
                 </motion.div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <CardTitle
-                    className={`bg-clip-text text-lg font-bold text-transparent ${
+                    className={`truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg ${
                       (lastWeekProfitChange ?? 0) >= 0
                         ? 'bg-gradient-to-r from-emerald-600 to-green-600'
                         : 'bg-gradient-to-r from-orange-600 to-red-600'
@@ -895,20 +895,20 @@ export default function DashboardPage() {
                   >
                     Last Week&apos;s Profit
                   </CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardDescription className="text-[10px] sm:text-xs">
                     Profit made last week
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="relative">
-              <div className="mb-4 flex items-baseline gap-3">
+            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
                 <motion.span
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.9 }}
                   key={lastWeekProfit ?? 0}
-                  className={`bg-clip-text text-5xl font-black text-transparent ${
+                  className={`bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl ${
                     (lastWeekProfitChange ?? 0) >= 0
                       ? 'bg-gradient-to-r from-emerald-600 to-green-600'
                       : 'bg-gradient-to-r from-orange-600 to-red-600'
@@ -968,25 +968,25 @@ export default function DashboardPage() {
               className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
             />
 
-            <CardHeader className="relative">
-              <div className="mb-2 flex items-center gap-3">
+            <CardHeader className="relative p-4 sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
+                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                 >
-                  <Circle className="h-6 w-6 text-blue-500" />
+                  <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
                 </motion.div>
-                <div>
-                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
                     Live Platform Activity
                   </CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardDescription className="text-[10px] sm:text-xs">
                     Real-time user activities
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="relative">
+            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
               {activityLoading ? (
                 <ShimmerCard className="h-20" />
               ) : (

@@ -119,13 +119,13 @@ export function NovuntPremiumCard({
         )}
       />
 
-      <CardContent className="relative z-10 p-6">
+      <CardContent className="relative z-10 p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-4 flex items-center gap-2 sm:mb-6 sm:gap-4">
           {Icon && (
             <motion.div
               className={cn(
-                'rounded-xl border p-2.5 backdrop-blur-sm',
+                'rounded-xl border p-2 backdrop-blur-sm sm:p-2.5',
                 theme.iconBg,
                 theme.border
               )}
@@ -139,12 +139,17 @@ export function NovuntPremiumCard({
                 ease: 'easeInOut',
               }}
             >
-              <Icon className={cn('h-5 w-5', theme.iconColor)} />
+              <Icon className={cn('h-4 w-4 sm:h-5 sm:w-5', theme.iconColor)} />
             </motion.div>
           )}
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className={cn('text-lg font-bold', theme.iconColor)}>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h3
+                className={cn(
+                  'truncate text-base font-bold sm:text-lg',
+                  theme.iconColor
+                )}
+              >
                 {title}
               </h3>
               {tooltip && (
@@ -161,13 +166,15 @@ export function NovuntPremiumCard({
               )}
             </div>
             {subtitle && (
-              <p className="text-muted-foreground text-sm">{subtitle}</p>
+              <p className="text-muted-foreground truncate text-xs sm:text-sm">
+                {subtitle}
+              </p>
             )}
           </div>
         </div>
 
         {/* Content Body */}
-        <div className="space-y-4">{children}</div>
+        <div className="space-y-3 sm:space-y-4">{children}</div>
       </CardContent>
     </Card>
   );
