@@ -622,39 +622,39 @@ export default function DashboardPage() {
                     className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full ${colors.blob} blur-2xl`}
                   />
 
-                  <CardHeader className="relative">
-                    <div className="mb-2 flex items-center gap-3">
+                  <CardHeader className="relative p-4 sm:p-6">
+                    <div className="mb-2 flex items-center gap-2 sm:gap-3">
                       <motion.div
                         whileHover={{ scale: 1.1, rotate: -10 }}
-                        className={`rounded-xl bg-gradient-to-br ${colors.iconBg} p-3 shadow-lg backdrop-blur-sm`}
+                        className={`rounded-xl bg-gradient-to-br ${colors.iconBg} p-2 shadow-lg backdrop-blur-sm sm:p-3`}
                       >
                         <IconComponent
-                          className={`h-6 w-6 ${colors.iconColor}`}
+                          className={`h-5 w-5 sm:h-6 sm:w-6 ${colors.iconColor}`}
                         />
                       </motion.div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <CardTitle
-                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-lg font-bold text-transparent`}
+                          className={`bg-gradient-to-r ${colors.textGradient} truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg`}
                         >
                           {stat.title}
                         </CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription className="truncate text-[10px] sm:text-xs">
                           {stat.tooltip.split('.')[0]}
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="relative">
+                  <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
                     {isLoading ? (
-                      <ShimmerCard className="h-20" />
+                      <ShimmerCard className="h-16 sm:h-20" />
                     ) : (
-                      <div className="mb-4 flex items-baseline gap-3">
+                      <div className="mb-2 flex min-w-0 items-baseline gap-2 sm:mb-4 sm:gap-3">
                         <motion.span
                           initial={{ opacity: 0, scale: 0.5 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.9 }}
                           key={stat.value ?? 0}
-                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-5xl font-black text-transparent`}
+                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-2xl leading-tight font-black break-all text-transparent sm:text-3xl md:text-4xl lg:text-5xl`}
                         >
                           {balanceVisible
                             ? stat.displayValue ||
