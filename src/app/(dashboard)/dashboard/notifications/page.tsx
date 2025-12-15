@@ -143,15 +143,15 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 py-6">
+    <div className="container mx-auto max-w-4xl space-y-4 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-3xl font-bold">
-            <Bell className="h-8 w-8" />
-            Notifications
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
+            <Bell className="h-6 w-6 shrink-0 sm:h-8 sm:w-8" />
+            <span className="truncate">Notifications</span>
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Stay updated with your account activities
           </p>
         </div>
@@ -229,11 +229,13 @@ export default function NotificationsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-[160px] justify-start"
+                    className="w-full min-w-[140px] shrink-0 justify-start sm:w-[160px]"
                     onClick={() => setShowDatePicker(true)}
                   >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    <span className="truncate">{getDateFilterLabel()}</span>
+                    <Calendar className="mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate text-xs sm:text-sm">
+                      {getDateFilterLabel()}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -448,15 +450,21 @@ export default function NotificationsPage() {
                 variant={filterUnread ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterUnread(!filterUnread)}
+                className="w-full shrink-0 text-xs sm:w-auto sm:text-sm"
               >
-                Unread Only
+                <span className="whitespace-nowrap">Unread Only</span>
               </Button>
 
               {/* Mark All Read */}
               {unreadCount > 0 && (
-                <Button variant="outline" size="sm" onClick={markAllAsRead}>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Mark All Read
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="w-full shrink-0 text-xs sm:w-auto sm:text-sm"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">Mark All Read</span>
                 </Button>
               )}
             </div>

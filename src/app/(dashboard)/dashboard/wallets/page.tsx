@@ -28,15 +28,17 @@ export default function WalletPage() {
 
   return (
     <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <h1 className="text-foreground mb-2 text-3xl font-bold">Wallet</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-foreground mb-2 text-2xl font-bold sm:text-3xl">
+            Wallet
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage your funds, deposits, and withdrawals
           </p>
         </motion.div>

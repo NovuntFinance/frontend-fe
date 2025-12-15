@@ -42,14 +42,14 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
 
       <DropdownMenuContent
         align="end"
-        className="flex h-[600px] w-[420px] flex-col overflow-hidden p-0"
+        className="flex h-[calc(100vh-4rem)] w-[calc(100vw-2rem)] max-w-[420px] flex-col overflow-hidden p-0 sm:h-[600px] sm:w-[420px]"
         sideOffset={8}
       >
         {/* Fixed Header */}
-        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-          <h3 className="font-semibold">Notifications</h3>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
+        <div className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-4 sm:py-3">
+          <h3 className="text-sm font-semibold sm:text-base">Notifications</h3>
+          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </div>
 
@@ -62,15 +62,15 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
           <TabsList className="w-full shrink-0 justify-start rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               value="all"
-              className="data-[state=active]:border-primary rounded-none border-b-2 border-transparent px-4"
+              className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
             >
-              All Notifications
+              <span className="whitespace-nowrap">All Notifications</span>
             </TabsTrigger>
             <TabsTrigger
               value="system"
-              className="data-[state=active]:border-primary rounded-none border-b-2 border-transparent px-4"
+              className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
             >
-              System & Alerts
+              <span className="whitespace-nowrap">System & Alerts</span>
             </TabsTrigger>
           </TabsList>
 

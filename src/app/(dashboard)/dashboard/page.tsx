@@ -475,7 +475,7 @@ export default function DashboardPage() {
 
   return (
     <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <div className="space-y-6">
+      <div className="space-y-4 px-4 sm:space-y-6 sm:px-6">
         {/* Hero Section - Welcome Card */}
         {/* Hero Section - Welcome Card */}
         {/* Hero Section - Welcome Card */}
