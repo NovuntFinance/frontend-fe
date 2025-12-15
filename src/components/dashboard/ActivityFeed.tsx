@@ -13,6 +13,7 @@ import {
   XCircle,
   DollarSign,
   Wallet,
+  ChevronRight,
 } from 'lucide-react';
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
@@ -180,6 +181,18 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
           className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
         />
         <CardHeader className="relative p-4 sm:p-6">
+          {/* Arrow Icon - Top Right */}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+          >
+            <a href="/dashboard/wallets?tab=transactions">
+              <ChevronRight className="h-5 w-5" />
+            </a>
+          </Button>
+
           <div className="mb-2 flex items-center gap-2 sm:gap-3">
             <motion.div
               whileHover={{ scale: 1.1, rotate: -10 }}
@@ -229,26 +242,33 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
       />
 
       <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: -10 }}
-              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-            >
-              <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-            </motion.div>
-            <div className="min-w-0 flex-1">
-              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                Recent Activity
-              </CardTitle>
-              <CardDescription className="text-[10px] sm:text-xs">
-                Your latest transactions
-              </CardDescription>
-            </div>
+        {/* Arrow Icon - Top Right */}
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+        >
+          <a href="/dashboard/wallets?tab=transactions">
+            <ChevronRight className="h-5 w-5" />
+          </a>
+        </Button>
+
+        <div className="mb-2 flex items-center gap-2 sm:gap-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -10 }}
+            className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+          >
+            <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+              Recent Activity
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs">
+              Your latest transactions
+            </CardDescription>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/dashboard/wallets?tab=transactions">View All</a>
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">

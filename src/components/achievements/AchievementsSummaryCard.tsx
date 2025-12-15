@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Award, ArrowRight } from 'lucide-react';
+import { Award, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -324,18 +324,6 @@ export function AchievementsSummaryCard() {
               </div>
             </div>
           )}
-
-          {/* View All Button */}
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={() => {
-              router.push('/dashboard/achievements');
-            }}
-          >
-            <span>View All Achievements</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
         </div>
       </CardContent>
     </Card>

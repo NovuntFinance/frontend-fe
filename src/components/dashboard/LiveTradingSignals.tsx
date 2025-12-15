@@ -11,7 +11,7 @@ import {
   TrendingUp as ActivityIcon,
   Star as ZapIcon,
   RefreshCw,
-  ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Card,
@@ -190,59 +190,56 @@ export function LiveTradingSignals() {
       />
 
       <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: -10 }}
-              className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-            >
-              <ActivityIcon className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-            </motion.div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CardTitle className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                  Live Trading Signals
-                </CardTitle>
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="flex-shrink-0"
-                >
-                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                </motion.div>
-              </div>
-              <CardDescription className="text-[10px] sm:text-xs">
-                <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
-                {isLoadingPrices ? (
-                  <>
-                    <RefreshCw className="mr-1 inline h-3 w-3 animate-spin" />
-                    Updating...
-                  </>
-                ) : error ? (
-                  <span className="text-red-500">{error}</span>
-                ) : (
-                  <span className="truncate">
-                    Real market data • Verifiable
-                  </span>
-                )}
-              </CardDescription>
+        {/* Arrow Icon - Top Right */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/dashboard/trading-signals')}
+          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+
+        <div className="mb-2 flex items-center gap-2 sm:gap-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -10 }}
+            className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+          >
+            <ActivityIcon className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <CardTitle className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                Live Trading Signals
+              </CardTitle>
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="flex-shrink-0"
+              >
+                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              </motion.div>
             </div>
+            <CardDescription className="text-[10px] sm:text-xs">
+              <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
+              {isLoadingPrices ? (
+                <>
+                  <RefreshCw className="mr-1 inline h-3 w-3 animate-spin" />
+                  Updating...
+                </>
+              ) : error ? (
+                <span className="text-red-500">{error}</span>
+              ) : (
+                <span className="truncate">Real market data • Verifiable</span>
+              )}
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1 text-xs"
-              onClick={() => router.push('/dashboard/trading-signals')}
-            >
-              View All
-              <ArrowRight className="h-3 w-3" />
-            </Button>
-            <Badge className="w-fit self-start border-emerald-500/30 bg-emerald-500/20 text-emerald-700 sm:self-auto dark:text-emerald-300">
-              <ZapIcon className="mr-1 h-3 w-3" />
-              Live
-            </Badge>
-          </div>
+        </div>
+        <div className="flex items-center justify-end">
+          <Badge className="w-fit border-emerald-500/30 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+            <ZapIcon className="mr-1 h-3 w-3" />
+            Live
+          </Badge>
         </div>
       </CardHeader>
 
