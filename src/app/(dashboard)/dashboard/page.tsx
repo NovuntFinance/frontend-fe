@@ -488,14 +488,15 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Stats Grid - Premium Cards (2x2 layout) */}
+        {/* REORDERED: Total Earned FIRST (most motivating), then Total Staked, Total Deposited, Total Withdrawn */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
           {[
             {
-              title: 'Total Deposited',
-              value: totalDeposited,
-              tooltip: 'Total amount deposited to your wallet.',
-              icon: ArrowDownRight,
-              colorTheme: 'purple' as const,
+              title: 'Total Earned',
+              value: totalEarned,
+              tooltip: 'Total earnings from all sources.',
+              icon: TrendingUp,
+              colorTheme: 'emerald' as const,
             },
             {
               title: 'Total Staked',
@@ -505,11 +506,11 @@ export default function DashboardPage() {
               colorTheme: 'orange' as const,
             },
             {
-              title: 'Total Earned',
-              value: totalEarned,
-              tooltip: 'Total earnings from all sources.',
-              icon: TrendingUp,
-              colorTheme: 'emerald' as const,
+              title: 'Total Deposited',
+              value: totalDeposited,
+              tooltip: 'Total amount deposited to your wallet.',
+              icon: ArrowDownRight,
+              colorTheme: 'purple' as const,
             },
             {
               title: 'Total Withdrawn',
@@ -674,6 +675,15 @@ export default function DashboardPage() {
           })}
         </div>
 
+        {/* Daily ROS Performance - MOVED UP (Critical for showing earning potential) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <DailyROSPerformance />
+        </motion.div>
+
         {/* Quick Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -701,20 +711,11 @@ export default function DashboardPage() {
           <AchievementsSummaryCard />
         </motion.div>
 
-        {/* Portfolio Performance - Full Width */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <DailyROSPerformance />
-        </motion.div>
-
         {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.5 }}
         >
           <ActivityFeed
             transactions={transactions || []}
@@ -722,23 +723,12 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Live Trading Signals */}
+        {/* Staking Streak - MOVED UP (Critical for habit building and retention) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.75 }}
+          transition={{ delay: 0.55 }}
         >
-          <LiveTradingSignals />
-        </motion.div>
-
-        {/* Performance Metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {/* Streak Card */}
           {streakLoading ? (
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
               <CardHeader className="relative">
@@ -835,209 +825,233 @@ export default function DashboardPage() {
           )}
 
           {/* Last Week's Profit Card */}
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div
-              className={`absolute inset-0 bg-gradient-to-br ${
-                (lastWeekProfitChange ?? 0) >= 0
-                  ? 'from-emerald-500/20 via-green-500/10 to-transparent'
-                  : 'from-orange-500/20 via-red-500/10 to-transparent'
-              }`}
-            />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+              {/* Animated Gradient Background */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${
+                  (lastWeekProfitChange ?? 0) >= 0
+                    ? 'from-emerald-500/20 via-green-500/10 to-transparent'
+                    : 'from-orange-500/20 via-red-500/10 to-transparent'
+                }`}
+              />
 
-            {/* Animated Floating Blob */}
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full blur-2xl ${
-                (lastWeekProfitChange ?? 0) >= 0
-                  ? 'bg-emerald-500/30'
-                  : 'bg-orange-500/30'
-              }`}
-            />
+              {/* Animated Floating Blob */}
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full blur-2xl ${
+                  (lastWeekProfitChange ?? 0) >= 0
+                    ? 'bg-emerald-500/30'
+                    : 'bg-orange-500/30'
+                }`}
+              />
 
-            <CardHeader className="relative p-4 sm:p-6">
-              <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
-                  className={`rounded-xl p-2 shadow-lg backdrop-blur-sm sm:p-3 ${
-                    (lastWeekProfitChange ?? 0) >= 0
-                      ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/20'
-                      : 'bg-gradient-to-br from-orange-500/30 to-red-500/20'
-                  }`}
-                >
-                  {(lastWeekProfitChange ?? 0) >= 0 ? (
-                    <TrendingUp
-                      className={`h-5 w-5 sm:h-6 sm:w-6 ${
+              <CardHeader className="relative p-4 sm:p-6">
+                <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className={`rounded-xl p-2 shadow-lg backdrop-blur-sm sm:p-3 ${
+                      (lastWeekProfitChange ?? 0) >= 0
+                        ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/20'
+                        : 'bg-gradient-to-br from-orange-500/30 to-red-500/20'
+                    }`}
+                  >
+                    {(lastWeekProfitChange ?? 0) >= 0 ? (
+                      <TrendingUp
+                        className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                          (lastWeekProfitChange ?? 0) >= 0
+                            ? 'text-emerald-500'
+                            : 'text-orange-500'
+                        }`}
+                      />
+                    ) : (
+                      <TrendingDown className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
+                    )}
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle
+                      className={`truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg ${
                         (lastWeekProfitChange ?? 0) >= 0
-                          ? 'text-emerald-500'
-                          : 'text-orange-500'
+                          ? 'bg-gradient-to-r from-emerald-600 to-green-600'
+                          : 'bg-gradient-to-r from-orange-600 to-red-600'
                       }`}
-                    />
-                  ) : (
-                    <TrendingDown className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
-                  )}
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle
-                    className={`truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg ${
+                    >
+                      Last Week&apos;s Profit
+                    </CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
+                      Profit made last week
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.9 }}
+                    key={lastWeekProfit ?? 0}
+                    className={`bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl ${
                       (lastWeekProfitChange ?? 0) >= 0
                         ? 'bg-gradient-to-r from-emerald-600 to-green-600'
                         : 'bg-gradient-to-r from-orange-600 to-red-600'
                     }`}
                   >
-                    Last Week&apos;s Profit
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs">
-                    Profit made last week
-                  </CardDescription>
+                    $
+                    {(lastWeekProfit ?? 0).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </motion.span>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-              <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.9 }}
-                  key={lastWeekProfit ?? 0}
-                  className={`bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl ${
-                    (lastWeekProfitChange ?? 0) >= 0
-                      ? 'bg-gradient-to-r from-emerald-600 to-green-600'
-                      : 'bg-gradient-to-r from-orange-600 to-red-600'
-                  }`}
-                >
-                  $
-                  {(lastWeekProfit ?? 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </motion.span>
-              </div>
-              {(lastWeekProfitChange ?? 0) !== 0 && (
-                <div className="mt-3">
-                  <Badge
-                    variant="outline"
-                    className={`${
-                      (lastWeekProfitChange ?? 0) >= 0
-                        ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                        : 'border-orange-500/30 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'
-                    } px-3 py-1 text-sm font-semibold`}
-                  >
-                    <TrendingUp
-                      className={`mr-1.5 h-3.5 w-3.5 ${
-                        (lastWeekProfitChange ?? 0) >= 0
-                          ? 'text-emerald-400'
-                          : 'rotate-180 text-orange-400'
-                      }`}
-                    />
-                    <span className="font-bold">
-                      {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
-                      {(lastWeekProfitChange ?? 0).toFixed(1)}% vs last week
-                    </span>
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Live Platform Activity Card */}
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-            />
-
-            <CardHeader className="relative p-4 sm:p-6">
-              <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                >
-                  <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                    Live Platform Activity
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs">
-                    Real-time user activities
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-              {activityLoading ? (
-                <ShimmerCard className="h-20" />
-              ) : (
-                <motion.div
-                  key={currentActivity.user + currentActivity.time}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.5 }}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-blue-500/10 p-2">
-                      <currentActivity.icon
-                        className={`h-5 w-5 ${currentActivity.color}`}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-foreground truncate text-sm font-semibold">
-                        {currentActivity.user}
-                      </p>
-                      <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                        {currentActivity.action}
-                        {currentActivity.amount && (
-                          <span className="text-foreground font-semibold">
-                            ${currentActivity.amount.toLocaleString()}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="border-border/50 flex items-center justify-between border-t pt-2">
+                {(lastWeekProfitChange ?? 0) !== 0 && (
+                  <div className="mt-3">
                     <Badge
                       variant="outline"
-                      className="bg-background/50 text-xs"
+                      className={`${
+                        (lastWeekProfitChange ?? 0) >= 0
+                          ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                          : 'border-orange-500/30 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'
+                      } px-3 py-1 text-sm font-semibold`}
                     >
-                      {currentActivity.time}
-                    </Badge>
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                      <span className="text-xs font-medium text-green-500">
-                        Live
+                      <TrendingUp
+                        className={`mr-1.5 h-3.5 w-3.5 ${
+                          (lastWeekProfitChange ?? 0) >= 0
+                            ? 'text-emerald-400'
+                            : 'rotate-180 text-orange-400'
+                        }`}
+                      />
+                      <span className="font-bold">
+                        {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
+                        {(lastWeekProfitChange ?? 0).toFixed(1)}% vs last week
                       </span>
-                    </div>
+                    </Badge>
                   </div>
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
+
+        {/* Additional Value Cards - Lower Priority */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+          {/* Live Trading Signals - MOVED DOWN (Additional value, less critical) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <LiveTradingSignals />
+          </motion.div>
+
+          {/* Live Platform Activity Card - MOVED DOWN (Social proof, less personal relevance) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75 }}
+          >
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+              {/* Animated Gradient Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
+
+              {/* Animated Floating Blob */}
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+              />
+
+              <CardHeader className="relative p-4 sm:p-6">
+                <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+                  >
+                    <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                      Live Platform Activity
+                    </CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
+                      Real-time user activities
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+                {activityLoading ? (
+                  <ShimmerCard className="h-20" />
+                ) : (
+                  <motion.div
+                    key={currentActivity.user + currentActivity.time}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-blue-500/10 p-2">
+                        <currentActivity.icon
+                          className={`h-5 w-5 ${currentActivity.color}`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-foreground truncate text-sm font-semibold">
+                          {currentActivity.user}
+                        </p>
+                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                          {currentActivity.action}
+                          {currentActivity.amount && (
+                            <span className="text-foreground font-semibold">
+                              ${currentActivity.amount.toLocaleString()}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-border/50 flex items-center justify-between border-t pt-2">
+                      <Badge
+                        variant="outline"
+                        className="bg-background/50 text-xs"
+                      >
+                        {currentActivity.time}
+                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                        <span className="text-xs font-medium text-green-500">
+                          Live
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
 
       {/* Welcome Modal for First-Time Users */}
