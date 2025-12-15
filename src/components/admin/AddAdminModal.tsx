@@ -39,8 +39,8 @@ const createAdminSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   fname: z.string().min(1, 'First name is required'),
   lname: z.string().min(1, 'Last name is required'),
-  role: z.enum(['admin', 'superAdmin'], {
-    required_error: 'Please select a role',
+  role: z.enum(['admin', 'superAdmin'] as const, {
+    message: 'Please select a role',
   }),
   phoneNumber: z.string().optional(),
 });

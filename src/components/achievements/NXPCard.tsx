@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp, Award, Target } from 'lucide-react';
+import { Award, TrendingUp, Target } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Progress } from '@/components/ui/progress';
 import type { NXPBalance } from '@/types/achievements';
@@ -47,7 +47,7 @@ export function NXPCard({ nxp }: NXPCardProps) {
     <NovuntPremiumCard
       title="Novunt Experience Points"
       subtitle={`Level ${nxp.nxpLevel} • ${nxp.nxpToNextLevel} NXP to next level`}
-      icon={Trophy}
+      icon={Award}
       colorTheme="purple"
       tooltip="Earn NXP by unlocking badges, upgrading ranks, and reaching milestones"
     >
@@ -70,7 +70,7 @@ export function NXPCard({ nxp }: NXPCardProps) {
           <div
             className={`text-2xl font-bold ${levelColor} flex items-center gap-2`}
           >
-            <Trophy className="h-6 w-6" />
+            <Award className="h-6 w-6" />
             Level {nxp.nxpLevel}
           </div>
         </div>
@@ -124,7 +124,7 @@ export function NXPCard({ nxp }: NXPCardProps) {
           </div>
           <div className="bg-muted/50 border-border/50 rounded-lg border p-3">
             <div className="mb-1 flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-orange-500" />
+              <Award className="h-4 w-4 text-orange-500" />
               <span className="text-muted-foreground text-xs">
                 Total Earned
               </span>

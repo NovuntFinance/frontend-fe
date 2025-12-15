@@ -84,20 +84,22 @@ export function useStakeDashboard() {
         const response = await api.get<StakingDashboard>('/staking/dashboard');
 
         // 🔍 DEBUG: Log raw API response
+        const responseData = response.data as StakingDashboard | any;
         console.log('🔍 [useStakeDashboard] ✅ API Response Received:', {
-          status: response.status,
-          hasData: !!response.data,
+          status: (response as any).status,
+          hasData: !!responseData,
           responseStructure: {
-            hasSuccess: 'success' in (response.data || {}),
-            hasNestedData: 'data' in (response.data || {}),
-            directKeys: response.data ? Object.keys(response.data) : [],
+            hasSuccess: 'success' in (responseData || {}),
+            hasNestedData: 'data' in (responseData || {}),
+            directKeys: responseData ? Object.keys(responseData) : [],
           },
         });
 
         // Handle both response formats:
         // 1. { success: true, data: {...} } - Standard API response
         // 2. { wallets: {...}, activeStakes: [...] } - Direct data
-        const dashboardData = response.data?.data || response.data || response;
+        const dashboardData =
+          (responseData as StakingDashboard)?.data || responseData || response;
 
         // 🔍 Map field names if backend uses different field names
         // Backend might use totalReturnsEarned internally, but should return totalEarned

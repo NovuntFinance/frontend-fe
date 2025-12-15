@@ -1306,11 +1306,11 @@ export function useDeclareBulkDailyProfit() {
       );
       return dailyProfitService.declareBulkProfit(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      const count = response.data?.declared?.length || 0;
+      const count = data?.declared?.length || 0;
       toast.success(`Declared ${count} daily profit(s) successfully`);
     },
     onError: (error: any) => {
@@ -1409,11 +1409,11 @@ export function useTestDistributeDailyProfit() {
       );
       return dailyProfitService.testDistribute(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      const result = response.data;
+      const result = data?.data || data;
       toast.success(
         `Distribution completed: ${result.totalDistributed} USDT to ${result.processedStakes} stakes`
       );

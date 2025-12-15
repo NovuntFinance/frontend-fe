@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Play, CheckCircle2, Clock, DollarSign } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -65,7 +65,7 @@ export function DistributionStatus() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Play className="h-5 w-5" />
+          <PlayCircle className="h-5 w-5" />
           Test Distribution
         </CardTitle>
         <CardDescription>
@@ -101,7 +101,7 @@ export function DistributionStatus() {
             </>
           ) : (
             <>
-              <Play className="mr-2 h-4 w-4" />
+              <PlayCircle className="mr-2 h-4 w-4" />
               Trigger Distribution
             </>
           )}

@@ -22,6 +22,7 @@ import {
 import { motion } from 'framer-motion';
 import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
+import { openShareModal } from '@/store/shareModalStore';
 
 interface WelcomeBackCardProps {
   user: any;

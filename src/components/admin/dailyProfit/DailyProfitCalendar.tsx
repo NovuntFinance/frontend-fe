@@ -1,14 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Calendar,
-  Plus,
-  Edit,
-  Trash2,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react';
+import { Calendar, Plus, Edit, Trash, CheckCircle2, Clock } from 'lucide-react';
 import {
   Card,
   CardContent,

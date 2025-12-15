@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 
 const declarePoolSchema = z.object({
-  autoDistribute: z.boolean().default(false),
+  autoDistribute: z.boolean(),
   notes: z.string().optional(),
 });
 

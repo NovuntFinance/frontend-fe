@@ -22,7 +22,6 @@ import {
   Loader2,
   Info,
   Check,
-  Save,
   Clock,
   Lock,
 } from 'lucide-react';
@@ -156,9 +155,6 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     reset,
   } = useForm<WithdrawalFormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      network: 'BEP20', // Only BEP20 is supported
-    },
   });
 
   const amount = watch('amount');
@@ -249,7 +245,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
   }, [amount, limits]);
 
   const onSubmit = async (data: WithdrawalFormData) => {
-    const finalNetwork = data.network || 'TRC20';
+    const finalNetwork = 'BEP20'; // Only BEP20 is supported
 
     // Check if user has a default address set
     if (!hasDefaultAddress || !actualAddress) {

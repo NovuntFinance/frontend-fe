@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
   Calendar,
   Edit,
-  Trash2,
+  Trash,
   CheckCircle2,
   Clock,
   Filter,
@@ -218,7 +218,7 @@ export function DeclaredProfitsList() {
                                 size="sm"
                                 onClick={() => handleDelete(profit)}
                               >
-                                <Trash2 className="h-4 w-4 text-red-500" />
+                                <Trash className="h-4 w-4 text-red-500" />
                               </Button>
                             </>
                           )}

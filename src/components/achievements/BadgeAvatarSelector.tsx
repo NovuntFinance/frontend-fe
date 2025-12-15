@@ -137,7 +137,7 @@ export function BadgeAvatarSelector({
                 isSelected
                   ? 'border-primary bg-primary/10 shadow-md'
                   : 'border-border hover:border-primary/50 hover:bg-muted/50',
-                isCurrent && 'ring-2 ring-emerald-500/50'
+                isCurrent ? 'ring-2 ring-emerald-500/50' : undefined
               )}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Calendar,
   DollarSign,
-  BarChart3,
   ArrowLeft,
 } from 'lucide-react';
 import {
@@ -583,7 +582,7 @@ export default function TradingSignalsHistoryPage() {
               </div>
             ) : filteredSignals.length === 0 ? (
               <div className="py-12 text-center">
-                <BarChart3 className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                <TrendingUp className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                 <p className="text-muted-foreground mb-2">
                   No trading signals found
                 </p>

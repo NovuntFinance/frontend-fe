@@ -6,7 +6,7 @@
 'use client';
 
 import React from 'react';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Badge } from '@/components/ui/badge';
 import { useNXPLeaderboard } from '@/lib/queries/achievementQueries';
@@ -17,8 +17,8 @@ import type { LeaderboardEntry } from '@/types/achievements';
  * Get position icon
  */
 function getPositionIcon(position: number) {
-  if (position === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-  if (position === 2) return <Medal className="h-5 w-5 text-gray-400" />;
+  if (position === 1) return <Award className="h-5 w-5 text-yellow-500" />;
+  if (position === 2) return <Award className="h-5 w-5 text-gray-400" />;
   if (position === 3) return <Award className="h-5 w-5 text-orange-500" />;
   return null;
 }
@@ -43,7 +43,7 @@ export function NXPLeaderboard() {
       <NovuntPremiumCard
         title="NXP Leaderboard"
         subtitle="Top users by experience points"
-        icon={Trophy}
+        icon={Award}
         colorTheme="orange"
       >
         <div className="space-y-3">
@@ -65,13 +65,13 @@ export function NXPLeaderboard() {
       <NovuntPremiumCard
         title="NXP Leaderboard"
         subtitle="Top users by experience points"
-        icon={Trophy}
+        icon={Award}
         colorTheme="orange"
       >
         <div className="py-8 text-center">
           {isUnderDevelopment ? (
             <>
-              <Trophy className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
+              <Award className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
               <h3 className="mb-2 text-lg font-semibold">Coming Soon</h3>
               <p className="text-muted-foreground mb-4 text-sm">
                 The NXP leaderboard will be available soon.
@@ -82,7 +82,7 @@ export function NXPLeaderboard() {
             </>
           ) : (
             <>
-              <Trophy className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
+              <Award className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
               <p className="text-muted-foreground text-sm">
                 Unable to load leaderboard
               </p>
@@ -103,7 +103,7 @@ export function NXPLeaderboard() {
     <NovuntPremiumCard
       title="NXP Leaderboard"
       subtitle="Top users by experience points"
-      icon={Trophy}
+      icon={Award}
       colorTheme="orange"
     >
       <div className="space-y-4">
@@ -159,7 +159,7 @@ export function NXPLeaderboard() {
           </>
         ) : (
           <div className="py-12 text-center">
-            <Trophy className="text-muted-foreground mx-auto mb-3 h-12 w-12" />
+            <Award className="text-muted-foreground mx-auto mb-3 h-12 w-12" />
             <h3 className="mb-2 text-lg font-semibold">No Leaderboard Data</h3>
             <p className="text-muted-foreground text-sm">
               Be the first to earn NXP and appear on the leaderboard!

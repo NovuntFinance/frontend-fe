@@ -113,7 +113,7 @@ export default function StakesPage() {
   // Calculate Today's Profit
   // Get today's profit amount from active stakes based on today's declared percentage
   const todayProfitAmount = todayProfitData?.profitPercentage
-    ? activeStakes.reduce((total, stake) => {
+    ? activeStakes.reduce((total: number, stake: Stake) => {
         // Calculate today's profit: (stake amount) × (today's ROS %) / 100
         const stakeProfit =
           (stake.amount * (todayProfitData.profitPercentage || 0)) / 100;
@@ -187,7 +187,10 @@ export default function StakesPage() {
           <p className="text-3xl font-bold">
             $
             {activeStakes
-              .reduce((sum, stake) => sum + (stake.amount || 0), 0)
+              .reduce(
+                (sum: number, stake: Stake) => sum + (stake.amount || 0),
+                0
+              )
               .toFixed(2)}
           </p>
         </motion.div>
@@ -337,7 +340,7 @@ export default function StakesPage() {
             Active Stakes ({activeStakes.length})
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {activeStakes.map((stake, index) => (
+            {activeStakes.map((stake: Stake, index: number) => (
               <motion.div
                 key={stake._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -385,7 +388,7 @@ export default function StakesPage() {
             Completed Stakes ({stakeHistory.length})
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {stakeHistory.slice(0, 6).map((stake, index) => (
+            {stakeHistory.slice(0, 6).map((stake: Stake, index: number) => (
               <motion.div
                 key={stake._id}
                 initial={{ opacity: 0, y: 20 }}

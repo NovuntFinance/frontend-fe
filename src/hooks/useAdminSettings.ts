@@ -23,7 +23,7 @@ export function useAdminSettings(category?: string) {
         // If no 2FA code provided, prompt for it
         let code = twoFACode;
         if (!code) {
-          code = await promptFor2FA();
+          code = (await promptFor2FA()) || undefined;
           if (!code) {
             setError(new Error('2FA code is required to fetch settings'));
             setLoading(false);
@@ -54,7 +54,7 @@ export function useAdminSettings(category?: string) {
 
           if (errorCode === '2FA_CODE_REQUIRED' && !twoFACode) {
             // Retry with 2FA code
-            const code = await promptFor2FA();
+            const code = (await promptFor2FA()) || undefined;
             if (code) {
               await fetchSettings(code);
               return;
@@ -93,7 +93,7 @@ export function useAdminSettings(category?: string) {
         // If no 2FA code provided, prompt for it
         let code = twoFACode;
         if (!code) {
-          code = await promptFor2FA();
+          code = (await promptFor2FA()) || undefined;
           if (!code) {
             toast.error('2FA code is required to update settings');
             throw new Error('2FA code is required');
@@ -117,7 +117,7 @@ export function useAdminSettings(category?: string) {
 
           if (errorCode === '2FA_CODE_REQUIRED' && !twoFACode) {
             // Retry with 2FA code
-            const code = await promptFor2FA();
+            const code = (await promptFor2FA()) || undefined;
             if (code) {
               await updateSetting(key, value, reason, code);
               return;
@@ -147,7 +147,7 @@ export function useAdminSettings(category?: string) {
         // If no 2FA code provided, prompt for it
         let code = twoFACode;
         if (!code) {
-          code = await promptFor2FA();
+          code = (await promptFor2FA()) || undefined;
           if (!code) {
             toast.error('2FA code is required to update settings');
             throw new Error('2FA code is required');
@@ -175,7 +175,7 @@ export function useAdminSettings(category?: string) {
 
           if (errorCode === '2FA_CODE_REQUIRED' && !twoFACode) {
             // Retry with 2FA code
-            const code = await promptFor2FA();
+            const code = (await promptFor2FA()) || undefined;
             if (code) {
               await updateMultipleSettings(updates, reason, code);
               return;

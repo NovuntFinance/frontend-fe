@@ -8,11 +8,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Trophy,
+  Award,
   TrendingUp,
   Target,
   Gift,
-  Zap,
+  Bolt,
   ChevronRight,
   ChevronLeft,
   ChevronDown,
@@ -32,13 +32,13 @@ import type { NXPSource } from '@/types/achievements';
 function getSourceIcon(source: NXPSource) {
   switch (source) {
     case 'badge':
-      return Trophy;
+      return Award;
     case 'rank':
       return TrendingUp;
     case 'milestone':
       return Target;
     case 'activity':
-      return Zap;
+      return Bolt;
     case 'bonus':
       return Gift;
     default:

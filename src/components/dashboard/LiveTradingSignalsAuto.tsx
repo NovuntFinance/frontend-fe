@@ -151,6 +151,28 @@ const FALLBACK_DATA: Record<MarketType, MarketInstrument[]> = {
       name: 'Silver',
     },
   ],
+  commodities: [
+    {
+      symbol: 'WTI/USD',
+      decimals: 2,
+      pipValue: 50,
+      todayHigh: 78.45,
+      todayLow: 77.85,
+      currentPrice: 78.15,
+      marketType: 'commodities',
+      name: 'Crude Oil',
+    },
+    {
+      symbol: 'NG/USD',
+      decimals: 3,
+      pipValue: 50,
+      todayHigh: 2.845,
+      todayLow: 2.725,
+      currentPrice: 2.785,
+      marketType: 'commodities',
+      name: 'Natural Gas',
+    },
+  ],
 };
 
 // Fetch real crypto prices from CoinGecko (FREE, no API key!)
@@ -365,19 +387,21 @@ const fetchMetalsPrices = async (): Promise<MarketInstrument[]> => {
 // Fetch all market data
 const fetchAllMarketData = async (): Promise<MarketInstrument[]> => {
   try {
-    const [crypto, forex, metals] = await Promise.all([
+    const [crypto, forex, metals, commodities] = await Promise.all([
       fetchCryptoPrices(),
       fetchForexPrices(),
       fetchMetalsPrices(),
+      Promise.resolve(FALLBACK_DATA.commodities), // Use fallback for commodities
     ]);
 
-    return [...forex, ...crypto, ...metals];
+    return [...forex, ...crypto, ...metals, ...commodities];
   } catch (error) {
     console.error('[Trading Signals] Failed to fetch market data:', error);
     return [
       ...FALLBACK_DATA.forex,
       ...FALLBACK_DATA.crypto,
       ...FALLBACK_DATA.metals,
+      ...FALLBACK_DATA.commodities,
     ];
   }
 };
