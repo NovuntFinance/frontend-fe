@@ -46,6 +46,7 @@ import { AchievementsSummaryCard } from '@/components/achievements/AchievementsS
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
+import type { PlatformActivity } from '@/types/platformActivity';
 
 /**
  * Modern Dashboard Home Page
@@ -350,10 +351,10 @@ export default function DashboardPage() {
     };
   }, [ranks]);
 
-  // Fetch platform activity from API (with fallback to mock)
-  const { activity: apiActivity, loading: activityLoading } =
+  // Fetch platform activities from API (with fallback to mock) - Fetch multiple for scrollable list
+  const { activities: apiActivities, loading: activityLoading } =
     usePlatformActivity({
-      limit: 1,
+      limit: 4, // Fetch 4 activities to match Live Trading Signals
       pollInterval: 30000,
       enabled: true,
     });
@@ -395,22 +396,28 @@ export default function DashboardPage() {
     return colorMap[type] || 'text-foreground';
   }, []);
 
-  // Convert API activity to display format (with fallback to mock)
-  const currentActivity = React.useMemo(() => {
-    if (apiActivity) {
-      return {
-        user: apiActivity.user,
-        action: apiActivity.action,
-        amount: apiActivity.amount,
-        icon: getActivityIcon(apiActivity.type),
-        color: getActivityColor(apiActivity.type),
-        time: apiActivity.timeAgo,
-      };
+  // Convert API activities to display format (with fallback to mock)
+  const displayActivities = React.useMemo(() => {
+    if (apiActivities && apiActivities.length > 0) {
+      return apiActivities.map((activity: PlatformActivity) => ({
+        user: activity.user,
+        action: activity.action,
+        amount: activity.amount,
+        icon: getActivityIcon(activity.type),
+        color: getActivityColor(activity.type),
+        time: activity.timeAgo,
+        type: activity.type,
+      }));
     }
 
     // Fallback to mock data if API fails or is loading
-    return generateRandomActivity();
-  }, [apiActivity, getActivityIcon, getActivityColor, generateRandomActivity]);
+    return Array.from({ length: 4 }, () => generateRandomActivity());
+  }, [
+    apiActivities,
+    getActivityIcon,
+    getActivityColor,
+    generateRandomActivity,
+  ]);
 
   // Check if ALL queries have failed (indicating auth issue)
   const allQueriesFailed =
@@ -985,72 +992,127 @@ export default function DashboardPage() {
               />
 
               <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                  >
-                    <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                      Live Platform Activity
-                    </CardTitle>
-                    <CardDescription className="text-[10px] sm:text-xs">
-                      Real-time user activities
-                    </CardDescription>
+                <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: -10 }}
+                      className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+                    >
+                      <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                    </motion.div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                          Live Platform Activity
+                        </CardTitle>
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="flex-shrink-0"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        </motion.div>
+                      </div>
+                      <CardDescription className="text-[10px] sm:text-xs">
+                        <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
+                        Real-time user activities
+                      </CardDescription>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+              <CardContent className="custom-scrollbar relative max-h-[400px] space-y-2 overflow-y-auto p-4 pt-0 sm:max-h-[450px] sm:space-y-3 sm:p-6 sm:pt-0">
                 {activityLoading ? (
-                  <ShimmerCard className="h-20" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <ShimmerCard key={i} className="h-20" />
+                    ))}
+                  </div>
+                ) : displayActivities.length === 0 ? (
+                  <div className="text-muted-foreground py-8 text-center">
+                    <Circle className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                    <p className="text-sm">No activities available</p>
+                  </div>
                 ) : (
-                  <motion.div
-                    key={currentActivity.user + currentActivity.time}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.5 }}
-                    className="space-y-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-blue-500/10 p-2">
-                        <currentActivity.icon
-                          className={`h-5 w-5 ${currentActivity.color}`}
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-foreground truncate text-sm font-semibold">
-                          {currentActivity.user}
-                        </p>
-                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                          {currentActivity.action}
-                          {currentActivity.amount && (
-                            <span className="text-foreground font-semibold">
-                              ${currentActivity.amount.toLocaleString()}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="border-border/50 flex items-center justify-between border-t pt-2">
-                      <Badge
-                        variant="outline"
-                        className="bg-background/50 text-xs"
-                      >
-                        {currentActivity.time}
-                      </Badge>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                        <span className="text-xs font-medium text-green-500">
-                          Live
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
+                  <AnimatePresence mode="popLayout">
+                    {displayActivities.map((activity, index) => {
+                      const ActivityIcon = activity.icon;
+                      return (
+                        <motion.div
+                          key={`${activity.user}-${activity.time}-${index}`}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 transition-all hover:border-blue-500/40 hover:shadow-md sm:p-4"
+                        >
+                          <div className="mb-2 flex items-start justify-between gap-2 sm:mb-3">
+                            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+                              <div className="flex-shrink-0 rounded-lg bg-blue-500/20 p-1.5 sm:p-2">
+                                <ActivityIcon
+                                  className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${activity.color}`}
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-foreground truncate text-sm font-bold sm:text-base">
+                                  {activity.user}
+                                </p>
+                                <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                                  {activity.action}
+                                  {activity.amount && (
+                                    <span className="text-foreground font-semibold">
+                                      ${activity.amount.toLocaleString()}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-border/50 flex items-center justify-between border-t pt-2 sm:pt-3">
+                            <Badge
+                              variant="outline"
+                              className="bg-background/50 text-xs"
+                            >
+                              {activity.time}
+                            </Badge>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 )}
+
+                {/* Footer */}
+                <div className="border-border/50 border-t pt-3">
+                  <p className="text-muted-foreground flex flex-wrap items-center justify-center gap-1 px-2 text-center text-xs sm:gap-1.5">
+                    <Check className="h-3 w-3 flex-shrink-0 text-emerald-500" />
+                    <strong className="whitespace-nowrap">Auto-updated</strong>
+                    <span className="text-muted-foreground/60 hidden sm:inline">
+                      •
+                    </span>
+                    <span className="whitespace-nowrap">
+                      Real-time platform activities
+                    </span>
+                  </p>
+                </div>
               </CardContent>
+
+              <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background: hsl(var(--muted-foreground) / 0.3);
+                  border-radius: 3px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                  background: hsl(var(--muted-foreground) / 0.5);
+                }
+              `}</style>
             </Card>
           </motion.div>
         </div>
