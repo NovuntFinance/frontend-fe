@@ -119,6 +119,18 @@ export function AchievementsSummaryCard() {
       />
 
       <CardHeader className="relative p-4 sm:p-6">
+        {/* Arrow Icon - Top Right */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            router.push('/dashboard/achievements');
+          }}
+          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
             whileHover={{ scale: 1.1, rotate: -10 }}

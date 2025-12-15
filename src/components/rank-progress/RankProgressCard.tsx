@@ -237,61 +237,45 @@ export function RankProgressCard() {
       />
 
       <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: -10 }}
-              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-            >
-              <Target className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-            </motion.div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CardTitle className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                  {isMaxRank
-                    ? `${current_rank} Progress`
-                    : next_rank
-                      ? `${next_rank} Progress`
-                      : 'Rank Progress'}
-                </CardTitle>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="text-muted-foreground h-3.5 w-3.5 cursor-help sm:h-4 sm:w-4" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>
-                        Track your journey through the ranks. Progress is based
-                        on active stakes and team performance.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <CardDescription className="text-[10px] sm:text-xs">
-                {isMaxRank
-                  ? 'Highest rank achieved!'
-                  : next_rank
-                    ? `Progressing to ${next_rank}`
-                    : 'Your journey to the next level'}
-              </CardDescription>
-            </div>
+        {/* ChevronDown Icon - Top Right (only show if not max rank) */}
+        {!isMaxRank && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+          >
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
+          </Button>
+        )}
+
+        <div className="mb-2 flex items-center gap-2 sm:gap-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -10 }}
+            className="rounded-xl bg-gradient-to-br from-blue-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+          >
+            <Target className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+              {isMaxRank
+                ? `${current_rank} Progress`
+                : next_rank
+                  ? `${next_rank} Progress`
+                  : 'Rank Progress'}
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs">
+              {isMaxRank
+                ? 'Highest rank achieved!'
+                : next_rank
+                  ? `Progressing to ${next_rank}`
+                  : 'Your journey to the next level'}
+            </CardDescription>
           </div>
-          {!isMaxRank && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="gap-1 text-xs sm:text-sm"
-            >
-              {isExpanded ? 'Hide' : 'Details'}
-              {isExpanded ? (
-                <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
-              ) : (
-                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
-              )}
-            </Button>
-          )}
         </div>
       </CardHeader>
 
