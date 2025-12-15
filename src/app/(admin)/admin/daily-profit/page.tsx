@@ -7,10 +7,12 @@ import { DeclaredProfitsList } from '@/components/admin/dailyProfit/DeclaredProf
 
 export default function DailyProfitPage() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
       <div>
-        <h1 className="text-3xl font-bold">Daily Profit Management</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <h1 className="text-2xl font-bold sm:text-3xl">
+          Daily Profit Management
+        </h1>
+        <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
           Declare and manage daily profit percentages for the next 30 days
         </p>
       </div>
