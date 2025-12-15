@@ -862,7 +862,7 @@ export default function DashboardPage() {
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full blur-2xl ${
+                className={`absolute -bottom-8 -left-12 h-24 w-24 rounded-full blur-2xl ${
                   (lastWeekProfitChange ?? 0) >= 0
                     ? 'bg-emerald-500/30'
                     : 'bg-orange-500/30'
