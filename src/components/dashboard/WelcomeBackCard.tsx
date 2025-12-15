@@ -173,45 +173,6 @@ export function WelcomeBackCard({
       <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
         <div className="space-y-4 sm:space-y-6">
           {/* Header Actions (Eye toggle and Share button) - Positioned absolutely */}
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 sm:top-6 sm:right-6 sm:gap-2">
-            {/* Share Button - Circular */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    openShareModal('profit', {
-                      title: 'Share Your Success!',
-                      message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
-                      amount: totalEarnings,
-                    });
-                  }}
-                  className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Share your success</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Eye Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setBalanceVisible(!balanceVisible)}
-              className="text-muted-foreground hover:text-foreground h-8 w-8 hover:bg-white/5 sm:h-10 sm:w-10"
-            >
-              {balanceVisible ? (
-                <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-              ) : (
-                <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
-              )}
-            </Button>
-          </div>
-
           {/* User Status Section - Only Weekly Profit Badge */}
           {lastWeekProfitChange !== 0 && (
             <div className="mb-2 sm:mb-4">
