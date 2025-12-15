@@ -75,18 +75,18 @@ export function DailyROSPerformance() {
       colorTheme="emerald"
       className="h-full"
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Controls & Summary */}
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-baseline gap-2">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
             {isLoading ? (
-              <ShimmerCard className="h-8 w-32" />
+              <ShimmerCard className="h-7 w-24 sm:h-8 sm:w-32" />
             ) : (
               <>
-                <h2 className="text-3xl font-bold text-emerald-500">
+                <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
                   {averagePercentage.toFixed(2)}%
                 </h2>
-                <span className="text-muted-foreground text-sm">
+                <span className="text-muted-foreground text-xs sm:text-sm">
                   avg in {selectedRange}
                 </span>
               </>
@@ -113,7 +113,7 @@ export function DailyROSPerformance() {
         </div>
 
         {/* Chart Area */}
-        <div className="relative mt-4 h-[220px] w-full select-none">
+        <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
           {isLoading ? (
             <div className="flex h-full items-end justify-between gap-2">
               {Array.from({ length: Math.min(limit, 7) }).map((_, i) => (
