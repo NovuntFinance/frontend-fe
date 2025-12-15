@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wallet,
   TrendingUp,
@@ -16,6 +16,7 @@ import {
   Star,
   Gift,
   Send,
+  Check,
 } from 'lucide-react';
 import {
   useWalletBalance,
@@ -728,6 +729,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
+          className="mb-6"
         >
           {streakLoading ? (
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
