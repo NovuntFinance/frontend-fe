@@ -1310,7 +1310,10 @@ export function useDeclareBulkDailyProfit() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      const count = data?.declared?.length || 0;
+      const count =
+        (data as any)?.declared?.length ||
+        (data as any)?.data?.declared?.length ||
+        0;
       toast.success(`Declared ${count} daily profit(s) successfully`);
     },
     onError: (error: any) => {
