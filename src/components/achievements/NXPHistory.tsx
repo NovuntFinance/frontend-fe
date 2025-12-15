@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Target,
   Gift,
-  Bolt,
+  Activity,
   ChevronRight,
   ChevronLeft,
   ChevronDown,
@@ -38,7 +38,7 @@ function getSourceIcon(source: NXPSource) {
     case 'milestone':
       return Target;
     case 'activity':
-      return Bolt;
+      return Activity;
     case 'bonus':
       return Gift;
     default:
