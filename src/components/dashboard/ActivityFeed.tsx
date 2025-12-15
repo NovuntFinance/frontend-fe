@@ -251,7 +251,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
         {safeTransactions.length === 0 ? (
           <div className="py-12 text-center">
             <div className="bg-muted mb-4 inline-flex rounded-full p-4">

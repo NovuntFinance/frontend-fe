@@ -768,8 +768,8 @@ export default function DashboardPage() {
                 className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
               />
 
-              <CardHeader className="relative">
-                <div className="mb-2 flex items-center gap-3">
+              <CardHeader className="relative p-4 sm:p-6">
+                <div className="mb-2 flex items-center gap-2 sm:gap-3">
                   <motion.div
                     whileHover={{ scale: 1.1, rotate: -10 }}
                     className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
