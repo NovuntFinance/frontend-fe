@@ -37,6 +37,27 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
     rbacService.set2FACodeGetter(get2FACode);
     adminService.set2FACodeGetter(get2FACode);
+
+    // Initialize daily profit service with 2FA context
+    import('@/services/dailyProfitService')
+      .then((module) => {
+        module.dailyProfitService.set2FACodeGetter(get2FACode);
+      })
+      .catch((err) => {
+        console.warn(
+          '[AdminLayout] Failed to initialize daily profit service:',
+          err
+        );
+      });
+
+    // Initialize pool service with 2FA context
+    import('@/services/poolService')
+      .then((module) => {
+        module.poolService.set2FACodeGetter(get2FACode);
+      })
+      .catch((err) => {
+        console.warn('[AdminLayout] Failed to initialize pool service:', err);
+      });
   }, [promptFor2FA, isLoginPage]);
 
   useEffect(() => {
@@ -53,9 +74,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Don't refresh admin data here - it requires 2FA and causes 403 errors
+      // Use cached data from login instead
+      // The 2FA status will be updated when user logs in or sets up 2FA
+
       // Check if 2FA is enabled
       // Only check twoFAEnabled - twoFASecret is not needed after initial setup
       const is2FAEnabled = admin.twoFAEnabled === true;
+
+      // Clear 2FA cache if 2FA is disabled (in case it was reset)
+      if (!is2FAEnabled) {
+        adminService.clearCached2FA();
+        rbacService.clearCached2FA();
+      }
 
       // Reset needs2FA state
       setNeeds2FA(false);

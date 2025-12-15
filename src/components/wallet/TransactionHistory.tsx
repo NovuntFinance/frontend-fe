@@ -206,6 +206,8 @@ export function TransactionHistory() {
   // Shared categorization function - used by both breakdown computation and filtering
   // This ensures consistency between the breakdown counts and filtered results
   // Based on backend API documentation: transactions have proper category field
+  // IMPORTANT: Only registration_bonus should be categorized as "bonus"
+  // All other earnings (referral_bonus, ros_payout, pool payouts) should be "earnings"
   const categorizeTransaction = useCallback((tx: Transaction): string => {
     const typeLower = (tx.type || '').toLowerCase();
     const descLower = (tx.description || '').toLowerCase();
@@ -214,6 +216,8 @@ export function TransactionHistory() {
     // PRIORITY 1: Use backend category if it's valid (backend properly categorizes transactions)
     // Backend now correctly returns category: "earnings" for referral_bonus transactions
     // Backend sets category correctly: "staking" for stake/stake_completion, "earnings" for payouts
+    // IMPORTANT: Override backend category for referral_bonus if it's incorrectly set as "bonus"
+    // Only registration_bonus should be categorized as "bonus"
     if (
       tx.category &&
       tx.category !== 'system' &&
@@ -227,7 +231,25 @@ export function TransactionHistory() {
         'fee',
       ].includes(tx.category.toLowerCase())
     ) {
-      const backendCategory = tx.category.toLowerCase();
+      let backendCategory = tx.category.toLowerCase();
+
+      // CRITICAL FIX: referral_bonus should ALWAYS be "earnings", not "bonus"
+      // Override backend category if it's incorrectly set
+      if (typeLower === 'referral_bonus' && backendCategory === 'bonus') {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[TransactionHistory] ⚠️ Overriding backend category for referral_bonus:',
+            {
+              id: tx._id,
+              type: tx.type,
+              backendCategory: 'bonus',
+              correctedCategory: 'earnings',
+            }
+          );
+        }
+        backendCategory = 'earnings';
+      }
+
       if (
         process.env.NODE_ENV === 'development' &&
         (typeLower.includes('stake') || backendCategory === 'staking')
@@ -1552,8 +1574,7 @@ function TransactionItem({
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <p className="text-foreground font-semibold">
-                {transaction.typeLabel ||
-                  formatTransactionType(transaction.type)}
+                {formatTransactionType(transaction.type, transaction.typeLabel)}
               </p>
               <Badge
                 className={`${statusInfo.bgColor} ${statusInfo.color} text-xs`}
@@ -1967,10 +1988,10 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
             <div className="space-y-2">
               <DetailRow
                 label="Type"
-                value={
-                  transaction.typeLabel ||
-                  formatTransactionType(transaction.type)
-                }
+                value={formatTransactionType(
+                  transaction.type,
+                  transaction.typeLabel
+                )}
               />
               <DetailRow
                 label="Status"

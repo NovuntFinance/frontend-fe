@@ -42,6 +42,9 @@ export function useRankProgressLightweight() {
  * Response time: 1-3 seconds
  * Use for: Pool page, "Show Details" button, full rank information
  *
+ * Also used in hybrid approach: Dashboard uses lightweight for fast load,
+ * then fetches detailed separately for Premium Pool progress
+ *
  * No polling - ranks update instantly on backend. Refresh after user actions.
  */
 export function useRankProgressDetailed() {
@@ -53,6 +56,9 @@ export function useRankProgressDetailed() {
     // No refetchInterval - ranks update instantly on backend, refresh after actions
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Allow this to run in background - don't block UI if it's slow
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 }
 

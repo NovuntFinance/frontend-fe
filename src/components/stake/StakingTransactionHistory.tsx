@@ -270,8 +270,7 @@ function StakingTransactionItem({
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <p className="text-foreground font-semibold">
-                {transaction.typeLabel ||
-                  formatTransactionType(transaction.type)}
+                {formatTransactionType(transaction.type, transaction.typeLabel)}
               </p>
               <Badge
                 className={`${statusInfo.bgColor} ${statusInfo.color} text-xs`}

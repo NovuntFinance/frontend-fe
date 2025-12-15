@@ -18,11 +18,12 @@ import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
 import { ShimmerCard } from '@/components/ui/shimmer';
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+import { useTodayProfit } from '@/lib/queries';
 
 export default function StakesPage() {
   const { openModal } = useUIStore();
   const { data: stakingData, isLoading, error } = useStakeDashboard();
+  const { data: todayProfitData } = useTodayProfit();
 
   if (isLoading) {
     return (
@@ -56,8 +57,24 @@ export default function StakesPage() {
     );
   }
 
-  // Debug: Log what we actually received
-  console.log('[Stakes Page] stakingData received:', stakingData);
+  // 🔍 DEBUG: Log what we actually received with detailed stake info
+  console.log('[Stakes Page] 🔍 stakingData received:', {
+    fullData: stakingData,
+    activeStakesCount: stakingData?.activeStakes?.length || 0,
+    firstStakeDetails: stakingData?.activeStakes?.[0]
+      ? {
+          _id: stakingData.activeStakes[0]._id,
+          amount: stakingData.activeStakes[0].amount,
+          totalEarned: stakingData.activeStakes[0].totalEarned,
+          progressToTarget: stakingData.activeStakes[0].progressToTarget,
+          remainingToTarget: stakingData.activeStakes[0].remainingToTarget,
+          targetReturn: stakingData.activeStakes[0].targetReturn,
+          status: stakingData.activeStakes[0].status,
+          updatedAt: stakingData.activeStakes[0].updatedAt,
+        }
+      : null,
+    summary: stakingData?.summary,
+  });
 
   // The query returns the dashboard data directly (already unwrapped by the query function)
   // Structure: { wallets: {...}, activeStakes: [...], stakeHistory: [...], summary: {...} }
@@ -93,38 +110,23 @@ export default function StakesPage() {
   } = stakingData || {};
   const hasStakes = activeStakes && activeStakes.length > 0;
 
-  // Calculate This Week's Profit
-  const today = new Date();
-  const startOfCurrentWeek = startOfWeek(today);
-  const endOfCurrentWeek = endOfWeek(today);
-
-  const thisWeekProfit = activeStakes.reduce((total, stake) => {
-    if (!stake.weeklyPayouts) return total;
-
-    const weeklyAmount = stake.weeklyPayouts.reduce((weekTotal, payout) => {
-      // Check if payout date is valid and within current week
-      if (payout.date && payout.status === 'paid') {
-        const payoutDate = parseISO(payout.date);
-        if (
-          isWithinInterval(payoutDate, {
-            start: startOfCurrentWeek,
-            end: endOfCurrentWeek,
-          })
-        ) {
-          return weekTotal + (payout.amount || 0);
-        }
-      }
-      return weekTotal;
-    }, 0);
-
-    return total + weeklyAmount;
-  }, 0);
+  // Calculate Today's Profit
+  // Get today's profit amount from active stakes based on today's declared percentage
+  const todayProfitAmount = todayProfitData?.profitPercentage
+    ? activeStakes.reduce((total, stake) => {
+        // Calculate today's profit: (stake amount) × (today's ROS %) / 100
+        const stakeProfit =
+          (stake.amount * (todayProfitData.profitPercentage || 0)) / 100;
+        return total + stakeProfit;
+      }, 0)
+    : 0;
 
   console.log('[Stakes Page] Extracted data:', {
     activeStakesCount: activeStakes.length,
     hasWallets: !!wallets,
     hasSummary: !!summary,
-    thisWeekProfit,
+    todayProfitAmount,
+    todayProfitPercentage: todayProfitData?.profitPercentage,
   });
 
   return (
@@ -190,7 +192,7 @@ export default function StakesPage() {
           </p>
         </motion.div>
 
-        {/* This Week Profit */}
+        {/* Today's Profit */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -201,10 +203,15 @@ export default function StakesPage() {
             <div className="rounded-lg bg-white/20 p-3">
               <Calendar className="h-6 w-6" />
             </div>
-            <span className="text-sm font-medium opacity-90">Weekly</span>
+            <span className="text-sm font-medium opacity-90">Daily</span>
           </div>
-          <p className="mb-1 text-sm opacity-90">This Week Profit</p>
-          <p className="text-3xl font-bold">${thisWeekProfit.toFixed(2)}</p>
+          <p className="mb-1 text-sm opacity-90">Today&apos;s Profit</p>
+          <p className="text-3xl font-bold">${todayProfitAmount.toFixed(2)}</p>
+          {todayProfitData?.profitPercentage && (
+            <p className="mt-1 text-xs opacity-75">
+              {todayProfitData.profitPercentage.toFixed(2)}% ROS
+            </p>
+          )}
         </motion.div>
 
         {/* Total Earned */}
@@ -357,7 +364,7 @@ export default function StakesPage() {
             </h3>
             <p className="mb-6 text-gray-600 dark:text-gray-400">
               Start earning with Novunt&apos;s 200% ROS staking model. Create
-              your first stake and receive weekly payouts!
+              your first stake and receive daily payouts!
             </p>
             <Button
               onClick={() => openModal('create-stake')}
@@ -406,11 +413,11 @@ export default function StakesPage() {
             </h3>
             <p className="mb-3 text-sm text-amber-800 dark:text-amber-200">
               {summary?.stakingModel ||
-                'Weekly ROS based on Novunt trading performance until 200% returns'}
+                'Daily ROS based on Novunt trading performance until 200% returns'}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
               {summary?.note ||
-                'Stakes are permanent commitments. You benefit through weekly ROS payouts to your Earning Wallet until 200% maturity.'}
+                'Stakes are permanent commitments. You benefit through daily ROS payouts to your Earning Wallet until 200% maturity.'}
             </p>
           </div>
         </div>

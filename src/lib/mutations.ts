@@ -1276,14 +1276,18 @@ export function useDeclareDailyProfit() {
       );
       return dailyProfitService.declareProfit(data);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      // Toast notification handled by component
+      toast.success('Daily profit declared successfully');
     },
     onError: (error: any) => {
-      // Error toast handled by component
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to declare daily profit';
+      toast.error(message);
     },
   });
 }
@@ -1306,10 +1310,15 @@ export function useDeclareBulkDailyProfit() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      // Toast notification handled by component
+      const count = response.data?.declared?.length || 0;
+      toast.success(`Declared ${count} daily profit(s) successfully`);
     },
     onError: (error: any) => {
-      // Error toast handled by component
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to declare bulk profits';
+      toast.error(message);
     },
   });
 }
@@ -1334,14 +1343,18 @@ export function useUpdateDailyProfit() {
       );
       return dailyProfitService.updateProfit(date, data);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      // Toast notification handled by component
+      toast.success('Daily profit updated successfully');
     },
     onError: (error: any) => {
-      // Error toast handled by component
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to update daily profit';
+      toast.error(message);
     },
   });
 }
@@ -1370,10 +1383,14 @@ export function useDeleteDailyProfit() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      // Toast notification handled by component
+      toast.success('Daily profit deleted successfully');
     },
     onError: (error: any) => {
-      // Error toast handled by component
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to delete daily profit';
+      toast.error(message);
     },
   });
 }
@@ -1396,10 +1413,17 @@ export function useTestDistributeDailyProfit() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.declaredDailyProfits(),
       });
-      // Toast notification handled by component
+      const result = response.data;
+      toast.success(
+        `Distribution completed: ${result.totalDistributed} USDT to ${result.processedStakes} stakes`
+      );
     },
     onError: (error: any) => {
-      // Error toast handled by component
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to distribute profits';
+      toast.error(message);
     },
   });
 }

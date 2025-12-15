@@ -118,12 +118,34 @@ class AdminAuthService {
       }
 
       // Extract role and twoFAEnabled from responseData (they might be at the same level as user/token)
+      // Check multiple possible locations for role
       const backendRole =
-        responseData?.role || (response.data as any)?.data?.role;
+        responseData?.role ||
+        responseData?.user?.role ||
+        (response.data as any)?.data?.role ||
+        (response.data as any)?.data?.user?.role ||
+        (response.data as any)?.role ||
+        (response.data as any)?.user?.role;
+
       const backendTwoFA =
         responseData?.twoFAEnabled !== undefined
           ? responseData.twoFAEnabled
-          : (response.data as any)?.data?.twoFAEnabled;
+          : responseData?.user?.twoFAEnabled !== undefined
+            ? responseData.user.twoFAEnabled
+            : (response.data as any)?.data?.twoFAEnabled !== undefined
+              ? (response.data as any).data.twoFAEnabled
+              : (response.data as any)?.data?.user?.twoFAEnabled !== undefined
+                ? (response.data as any).data.user.twoFAEnabled
+                : undefined;
+
+      // Log role extraction for debugging
+      console.log('[AdminAuthService] Role extraction:', {
+        backendRole,
+        responseDataRole: responseData?.role,
+        userRole: responseData?.user?.role,
+        responseDataKeys: Object.keys(responseData || {}),
+        userKeys: responseData?.user ? Object.keys(responseData.user) : [],
+      });
 
       // If we have a token, store it and return success
       if (token) {
@@ -194,11 +216,23 @@ class AdminAuthService {
 
         // Store user data
         if (user) {
+          // Ensure role is set correctly (prioritize backendRole)
+          if (backendRole) {
+            user.role = backendRole as 'admin' | 'superAdmin';
+            console.log(
+              '[AdminAuthService] Role set from backend response:',
+              backendRole
+            );
+          }
+
           // Log stored user data for debugging
           console.log('[AdminAuthService] Storing user data:', {
             email: user.email,
+            username: user.username,
             role: user.role,
+            isSuperAdmin: user.role === 'superAdmin',
             twoFAEnabled: user.twoFAEnabled,
+            backendRole,
           });
           this.setUser(user);
         }
@@ -340,6 +374,21 @@ class AdminAuthService {
   setUser(user: AdminUser): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  /**
+   * Refresh admin user data from backend
+   * GET /api/v1/admin/profile
+   * NOTE: This requires 2FA, so it should only be called when 2FA is available
+   * Use adminService.getProfile() instead for proper 2FA handling
+   */
+  async refreshAdminData(): Promise<AdminUser | null> {
+    // This method is deprecated - use adminService.getProfile() instead
+    // It requires 2FA which causes chicken-and-egg problems
+    console.warn(
+      '[AdminAuthService] refreshAdminData is deprecated - use adminService.getProfile() instead'
+    );
+    return this.getCurrentAdmin();
   }
 
   /**

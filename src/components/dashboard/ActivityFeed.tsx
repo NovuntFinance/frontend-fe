@@ -104,11 +104,42 @@ const getTransactionDate = (tx: TransactionUnion): Date => {
 };
 
 // Helper to get transaction type label
+// IMPORTANT: Only registration_bonus should show as "Bonus"
+// All other earnings (referral_bonus, ros_payout, pool payouts) should show as "Earning" or descriptive labels
 const getTransactionTypeLabel = (tx: TransactionUnion): string => {
-  if (isEnhancedTransaction(tx)) {
-    return tx.typeLabel || tx.type.replace('_', ' ');
+  // Always use "Daily ROS Payout" for ros_payout type
+  if (tx.type === 'ros_payout') {
+    return 'Daily ROS Payout';
   }
-  return tx.type.replace('_', ' ');
+
+  // Referral bonuses are earnings, not bonuses - display as "Earning"
+  if (tx.type === 'referral_bonus') {
+    return 'Earning';
+  }
+
+  if (isEnhancedTransaction(tx)) {
+    // Use typeLabel if provided, but clean it up for consistency
+    let label = tx.typeLabel || tx.type.replace('_', ' ');
+
+    // Replace "Weekly ROS Payout" with "Daily ROS Payout"
+    label = label.replace(/Weekly ROS Payout/gi, 'Daily ROS Payout');
+
+    // Replace "Referral Bonus" with "Earning"
+    label = label.replace(/Referral Bonus/gi, 'Earning');
+
+    // Replace "REF: BONUS" or similar patterns with "Earning"
+    label = label.replace(/REF:\s*BONUS/gi, 'Earning');
+    label = label.replace(/REF\s*BONUS/gi, 'Earning');
+
+    return label;
+  }
+
+  // For legacy transactions, format the type
+  const type = tx.type.replace('_', ' ');
+  if (type.toLowerCase() === 'referral bonus') {
+    return 'Earning';
+  }
+  return type;
 };
 
 // Helper to check if transaction is outgoing

@@ -13,6 +13,21 @@ interface StakeCardProps {
 
 export function StakeCard({ stake, onClick }: StakeCardProps) {
   const stakingConfig = useStakingConfig();
+
+  // 🔍 DEBUG: Log stake data being rendered
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[StakeCard] 🔍 Rendering stake:', {
+      _id: stake._id,
+      amount: stake.amount,
+      totalEarned: stake.totalEarned,
+      progressToTarget: stake.progressToTarget,
+      remainingToTarget: stake.remainingToTarget,
+      targetReturn: stake.targetReturn,
+      status: stake.status,
+      updatedAt: stake.updatedAt,
+    });
+  }
+
   const progress = stake.progressToTarget
     ? parseFloat(stake.progressToTarget.replace('%', ''))
     : 0;

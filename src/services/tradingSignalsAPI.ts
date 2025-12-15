@@ -181,16 +181,14 @@ export const tradingSignalsAPI = {
         (!err?.response && !err?.statusCode);
 
       if (isNetworkError) {
-        console.warn(
-          '[Trading Signals API] ⚠️ Network error - backend might be unavailable',
-          {
-            code: err?.code,
-            message: err?.message,
-            endpoint: '/trading-signals/signals',
-            limit,
-          }
-        );
+        // Only log in development to avoid console spam
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(
+            '[Trading Signals API] Network error - backend may be unavailable'
+          );
+        }
       } else {
+        // Log actual API errors (4xx, 5xx) in all environments
         console.error('[Trading Signals API] Failed to fetch signals:', {
           code: err?.code,
           message: err?.message,

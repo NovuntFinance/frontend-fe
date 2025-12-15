@@ -91,29 +91,56 @@ export async function getNotifications(
 
 /**
  * Get unread notification count
+ * Gracefully handles network errors and returns 0 if the request fails
  */
 export async function getUnreadCount(): Promise<number> {
-  const response = await apiClient.get<GetNotificationCountsResponse>(
-    '/notifications/counts'
-  );
+  try {
+    const response = await apiClient.get<GetNotificationCountsResponse>(
+      '/notifications/counts'
+    );
 
-  // Handle different response structures safely
-  if (
-    response.data &&
-    response.data.data &&
-    typeof response.data.data.unreadCount === 'number'
-  ) {
-    return response.data.data.unreadCount;
+    // Handle different response structures safely
+    if (
+      response.data &&
+      response.data.data &&
+      typeof response.data.data.unreadCount === 'number'
+    ) {
+      return response.data.data.unreadCount;
+    }
+
+    // Fallback: maybe it's directly in data (e.g. { success: true, unreadCount: 5 })
+    // or maybe response.data IS the data (if interceptor unwrapped it, though we think it doesn't)
+    const anyData = response.data as any;
+    if (typeof anyData.unreadCount === 'number') {
+      return anyData.unreadCount;
+    }
+
+    return 0;
+  } catch (error: any) {
+    // Silently handle network errors (CORS, backend down, etc.)
+    // Only log in development mode to avoid console spam
+    if (process.env.NODE_ENV === 'development') {
+      // Check if it's a network error (not a 4xx/5xx response)
+      const isNetworkError =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message?.toLowerCase().includes('network error') ||
+        !error?.response; // No response means network error
+
+      if (isNetworkError) {
+        // Log once, not repeatedly
+        console.warn(
+          '[notificationApi.getUnreadCount] Network error (backend may be unavailable):',
+          error?.message || 'Network Error'
+        );
+      } else {
+        // Log actual API errors (4xx, 5xx)
+        console.error('[notificationApi.getUnreadCount] API error:', error);
+      }
+    }
+
+    // Return 0 on any error to prevent UI breaking
+    return 0;
   }
-
-  // Fallback: maybe it's directly in data (e.g. { success: true, unreadCount: 5 })
-  // or maybe response.data IS the data (if interceptor unwrapped it, though we think it doesn't)
-  const anyData = response.data as any;
-  if (typeof anyData.unreadCount === 'number') {
-    return anyData.unreadCount;
-  }
-
-  return 0;
 }
 
 /**

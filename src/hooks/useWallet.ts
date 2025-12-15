@@ -28,6 +28,7 @@ export function useWallet(): {
 } {
   const queryResult = useQuery({
     queryKey: queryKeys.walletInfo,
+    enabled: typeof window !== 'undefined', // Only run on client side
     queryFn: async () => {
       try {
         const response = await walletApi.getWalletInfo();

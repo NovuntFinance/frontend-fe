@@ -39,8 +39,18 @@ import {
   RegistrationBonusStatusResponse,
   BonusPayoutHistoryResponse,
 } from '@/types/registrationBonus';
-import { AdminDashboardData, AdminDashboardTimeframe } from '@/types/admin';
+import {
+  AdminDashboardData,
+  AdminDashboardTimeframe,
+  AdminUser,
+  UserFilters,
+} from '@/types/admin';
 import { useAuthStore } from '@/store/authStore';
+import {
+  getStakingStreak,
+  type StakingStreakResponse,
+} from '@/services/stakingStreakApi';
+import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
 
 // Query Keys (for cache management)
 export const queryKeys = {
@@ -65,6 +75,7 @@ export const queryKeys = {
   completedStakes: ['stakes', 'completed'] as const,
   stake: (id: string) => ['stake', id] as const,
   stakeStats: ['stakes', 'stats'] as const,
+  stakingStreak: ['staking', 'streak'] as const,
   roiHistory: (stakeId: string) => ['stake', stakeId, 'roi-history'] as const,
 
   // Transactions
@@ -104,10 +115,27 @@ export const queryKeys = {
   // KYC
   kycStatus: ['kyc', 'status'] as const,
   kycDocuments: ['kyc', 'documents'] as const,
+  // Admin Users
+  adminUsers: ['admin', 'users'] as const,
 
   // Admin
   adminDashboard: (timeframe: AdminDashboardTimeframe) =>
     ['admin', 'dashboard', timeframe] as const,
+
+  // RBAC
+  rbacPermissions: ['rbac', 'permissions'] as const,
+
+  // Analytics
+  weeklyROSSummary: ['analytics', 'weekly-ros-summary'] as const,
+
+  // Daily Profit (Admin)
+  declaredDailyProfits: (filters?: any) =>
+    ['admin', 'daily-profit', 'declared', filters] as const,
+
+  // Daily Profit (User)
+  todayProfit: ['daily-profit', 'today'] as const,
+  profitHistory: (limit?: number, offset?: number) =>
+    ['daily-profit', 'history', limit, offset] as const,
 };
 
 // Backend response format (from COMPLETE_FINANCIAL_SYSTEM_DOCUMENTATION.md)
@@ -521,6 +549,184 @@ export function useActiveStakes() {
       };
       if (err?.statusCode === 404 || err?.response?.status === 404) {
         return false; // Don't retry 404s
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get user's staking streak information
+ */
+export function useStakingStreak() {
+  return useQuery({
+    queryKey: queryKeys.stakingStreak,
+    queryFn: async () => {
+      try {
+        const response = await getStakingStreak();
+        return response.data;
+      } catch (error: any) {
+        // Handle 404 or 501 (not implemented yet)
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+        };
+        if (
+          err?.statusCode === 404 ||
+          err?.response?.status === 404 ||
+          err?.statusCode === 501
+        ) {
+          // Return default values if endpoint not available
+          return {
+            currentStreak: 0,
+            longestStreak: 0,
+            totalActiveDays: 0,
+            lastActiveDate: null,
+            streakStartDate: null,
+            isActiveToday: false,
+            daysUntilNextMilestone: 10,
+            nextMilestone: 10,
+            weeklyProgress: Array.from({ length: 7 }, () => ({
+              date: new Date().toISOString(),
+              hasActiveStake: false,
+            })),
+          };
+        }
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: unknown) => {
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+      };
+      if (
+        err?.statusCode === 404 ||
+        err?.response?.status === 404 ||
+        err?.statusCode === 501
+      ) {
+        return false; // Don't retry 404s or 501s
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * useWeeklyROSSummary - Get weekly ROS summary
+ * GET /api/analytics/weekly-summary
+ *
+ * Returns weekly Return on Stake summary including:
+ * - Weekly ROS percentage (admin-declared, shown at end of week)
+ * - Total earnings for the week (stake returns only)
+ * - Daily breakdown (Monday-Sunday)
+ * - Week information (week number, year, dates)
+ */
+export function useWeeklyROSSummary() {
+  return useQuery({
+    queryKey: queryKeys.weeklyROSSummary,
+    queryFn: async () => {
+      try {
+        const data = await rosApi.getWeeklySummary();
+        return data;
+      } catch (error: any) {
+        const err = error as {
+          statusCode?: number;
+          response?: { status?: number };
+          code?: string;
+          message?: string;
+        };
+
+        // Handle 404 gracefully - endpoint may not be implemented yet
+        if (err?.statusCode === 404 || err?.response?.status === 404) {
+          // Return empty data structure matching WeeklySummaryData interface
+          const now = new Date();
+          const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+          const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - daysSinceMonday);
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          const weekNumber = Math.ceil(
+            (now.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+          );
+
+          return {
+            weekNumber,
+            year: now.getFullYear(),
+            startDate: weekStart.toISOString(),
+            endDate: weekEnd.toISOString(),
+            totalEarnings: 0,
+            weeklyRos: 0,
+            status: 'pending' as const,
+            dailyBreakdown: [],
+          } satisfies WeeklySummaryData;
+        }
+
+        // Handle network errors gracefully
+        const isNetworkError =
+          err?.code === 'ERR_NETWORK' ||
+          err?.message?.includes('Network Error') ||
+          err?.message?.includes('Failed to fetch') ||
+          (!err?.response && !err?.statusCode);
+
+        if (isNetworkError) {
+          console.warn(
+            '[useWeeklyROSSummary] ⚠️ Network error - returning empty data'
+          );
+          // Return same empty structure as 404
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - daysSinceMonday);
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          const weekNumber = Math.ceil(
+            (now.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+          );
+
+          return {
+            weekNumber,
+            year: now.getFullYear(),
+            startDate: weekStart.toISOString(),
+            endDate: weekEnd.toISOString(),
+            totalEarnings: 0,
+            weeklyRos: 0,
+            status: 'pending' as const,
+            dailyBreakdown: [],
+          } satisfies WeeklySummaryData;
+        }
+
+        // Throw other errors
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: unknown) => {
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+        code?: string;
+      };
+      // Don't retry 404s or network errors
+      if (
+        err?.statusCode === 404 ||
+        err?.response?.status === 404 ||
+        err?.code === 'ERR_NETWORK'
+      ) {
+        return false;
       }
       return failureCount < 2;
     },
@@ -1343,17 +1549,146 @@ export function useKYCStatus() {
 // ============================================
 
 export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
-  const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
+  // Check if user is authenticated as admin (client-side check)
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // Dynamic import to avoid SSR issues
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
 
   return useQuery({
     queryKey: queryKeys.adminDashboard(timeframe),
-    queryFn: () =>
-      api.get<AdminDashboardData>('/admin/metrics', {
-        params: { timeframe },
-      }),
-    staleTime: 60 * 1000,
-    enabled: isAdmin, // Only fetch if user is admin to prevent 403s
+    queryFn: async () => {
+      const { adminService } = await import('@/services/adminService');
+      try {
+        const response = await adminService.getDashboardMetrics(timeframe);
+        // Handle both response.data and direct response structures
+        return (response.data || response) as AdminDashboardData;
+      } catch (error: any) {
+        // Clear 2FA cache on invalid code error
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          adminService.clearCached2FA();
+          console.log(
+            '[useAdminDashboard] Cleared 2FA cache due to invalid code'
+          );
+        }
+        throw error;
+      }
+    },
+    staleTime: 60 * 1000, // 1 minute
+    enabled: checkAdminAuth(), // Only fetch if admin is authenticated
+    retry: (failureCount, error: any) => {
+      // Don't retry on 401/403 errors (auth issues)
+      const status = error?.response?.status || error?.statusCode;
+      const errorCode = error?.response?.data?.error?.code;
+
+      if (status === 401 || status === 403) {
+        // Clear cache on auth errors (async, but don't wait)
+        if (errorCode === '2FA_CODE_INVALID') {
+          import('@/services/adminService').then(({ adminService }) => {
+            adminService.clearCached2FA();
+          });
+        }
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get paginated list of users (Admin only)
+ * GET /api/v1/admin/users
+ */
+export function useAdminUsers(
+  filters?: UserFilters & { page?: number; limit?: number }
+) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: [...queryKeys.adminUsers, filters],
+    queryFn: async () => {
+      const { adminService } = await import('@/services/adminService');
+      try {
+        const response = await adminService.getUsers(filters);
+        return response.data || response;
+      } catch (error: any) {
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          adminService.clearCached2FA();
+        }
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    enabled: checkAdminAuth(),
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get all permissions (Admin only)
+ * GET /api/v1/rbac/permissions
+ */
+export function useAllPermissions() {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: queryKeys.rbacPermissions,
+    queryFn: async () => {
+      const { rbacService } = await import('@/services/rbacService');
+      try {
+        const response = await rbacService.getAllPermissions();
+        return response.data || [];
+      } catch (error: any) {
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          const { adminService } = await import('@/services/adminService');
+          adminService.clearCached2FA();
+        }
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - permissions don't change often
+    enabled: checkAdminAuth(),
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status || error?.statusCode;
+      if (status === 401 || status === 403) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 }
 
@@ -1481,5 +1816,106 @@ export function useUpdateNotificationSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profile });
     },
+  });
+}
+
+// ============================================
+// DAILY PROFIT QUERIES
+// ============================================
+
+import type {
+  DeclaredProfitsFilters,
+  GetDeclaredProfitsResponse,
+  TodayProfitResponse,
+  ProfitHistoryResponse,
+} from '@/types/dailyProfit';
+
+/**
+ * Get all declared daily profits (Admin only)
+ * GET /api/v1/admin/daily-profit/declared
+ */
+export function useDeclaredDailyProfits(filters?: DeclaredProfitsFilters) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: queryKeys.declaredDailyProfits(filters),
+    queryFn: async () => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      try {
+        const response = await dailyProfitService.getDeclaredProfits(filters);
+        return response.data || response;
+      } catch (error: any) {
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          const { adminService } = await import('@/services/adminService');
+          adminService.clearCached2FA();
+        }
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    enabled: checkAdminAuth(),
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get today's profit (User)
+ * GET /api/v1/daily-profit/today
+ */
+export function useTodayProfit() {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: queryKeys.todayProfit,
+    queryFn: async () => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      const response = await dailyProfitService.getTodayProfit();
+      return response.data;
+    },
+    enabled: isAuthenticated,
+    retry: false, // Don't retry on 404 (no profit declared)
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
+ * Get profit history (User)
+ * GET /api/v1/daily-profit/history
+ */
+export function useProfitHistory(limit: number = 30, offset: number = 0) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: queryKeys.profitHistory(limit, offset),
+    queryFn: async () => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      const response = await dailyProfitService.getProfitHistory(limit, offset);
+      return response.data;
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

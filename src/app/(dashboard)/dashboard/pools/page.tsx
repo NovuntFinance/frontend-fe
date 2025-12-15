@@ -22,6 +22,12 @@ import {
 import { usePoolDistributions, useIncentiveWallet } from '@/lib/queries';
 import { useRankProgressDetailed } from '@/lib/queries/rankProgressQueries';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import {
+  getPremiumPoolDownlineRequirement,
+  formatPremiumPoolRequirement,
+  formatPremiumPoolTask,
+  correctPremiumPoolTask,
+} from '@/lib/utils/premiumPoolUtils';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,11 +86,51 @@ export default function PoolsPage() {
   const poolQualification = rankData?.pool_qualification;
   const details = rankData?.details;
 
+  // Debug: Log what backend is sending and what we're correcting (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    if (details) {
+      console.log('[PoolsPage] 🔍 Backend tasks:', {
+        tasks_completed: details.tasks_completed,
+        tasks_remaining: details.tasks_remaining,
+        currentRank,
+      });
+      if (details.tasks_remaining.length > 0) {
+        details.tasks_remaining.forEach((task, idx) => {
+          const corrected = correctPremiumPoolTask(task, currentRank);
+          if (task !== corrected) {
+            console.log(`[PoolsPage] ✅ Corrected task ${idx}:`, {
+              original: task,
+              corrected,
+            });
+          }
+        });
+      }
+    }
+    if (requirements?.lower_rank_downlines) {
+      const correctedDesc = getPremiumPoolDownlineRequirement(
+        currentRank,
+        requirements.lower_rank_downlines.description
+      );
+      console.log('[PoolsPage] 🔍 Lower rank downlines:', {
+        backendDescription: requirements.lower_rank_downlines.description,
+        correctedDescription: correctedDesc.description,
+        stakeRequirement: correctedDesc.stakeRequirement,
+        current: requirements.lower_rank_downlines.current,
+        required: requirements.lower_rank_downlines.required,
+        currentRank,
+      });
+    }
+  }
+
   const isStakeholder = currentRank === 'Stakeholder';
-  const performancePoolQualified =
-    poolQualification?.performance_pool?.is_qualified ?? false;
-  const premiumPoolQualified =
-    poolQualification?.premium_pool?.is_qualified ?? false;
+  // Stakeholders can NEVER qualify for premium or performance pools
+  // Qualification starts from Associate Stakeholder and above
+  const performancePoolQualified = isStakeholder
+    ? false
+    : (poolQualification?.performance_pool?.is_qualified ?? false);
+  const premiumPoolQualified = isStakeholder
+    ? false
+    : (poolQualification?.premium_pool?.is_qualified ?? false);
 
   const handleFilterChange = (newFilter: DistributionTypeFilter) => {
     setFilter(newFilter);
@@ -259,8 +305,10 @@ export default function PoolsPage() {
                   </span>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {poolQualification?.performance_pool?.message ||
-                    'Reach next rank to qualify'}
+                  {isStakeholder
+                    ? 'Stakeholders are not eligible for Performance Pool. Qualification starts from Associate Stakeholder.'
+                    : poolQualification?.performance_pool?.message ||
+                      'Reach next rank to qualify'}
                 </p>
               </div>
               <div
@@ -279,8 +327,12 @@ export default function PoolsPage() {
                   <span className="text-sm font-semibold">Premium Pool</span>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {poolQualification?.premium_pool?.message ||
-                    'Requires same-rank downlines'}
+                  {isStakeholder
+                    ? 'Stakeholders are not eligible for Premium Pool. Qualification starts from Associate Stakeholder.'
+                    : currentRank === 'Associate Stakeholder'
+                      ? 'Requires 2 Stakeholder downlines with $50+ stake each'
+                      : poolQualification?.premium_pool?.message ||
+                        'Requires lower-rank downlines'}
                 </p>
               </div>
             </div>
@@ -298,7 +350,13 @@ export default function PoolsPage() {
             transition={{ delay: 0.4 }}
           >
             <NovuntPremiumCard
-              title="Rank Progress"
+              title={
+                !nextRank
+                  ? `${currentRank} Progress`
+                  : nextRank
+                    ? `${nextRank} Progress`
+                    : 'Rank Progress'
+              }
               subtitle={
                 nextRank
                   ? `Progressing to ${nextRank}`
@@ -312,26 +370,38 @@ export default function PoolsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      Performance Progress
+                      {!nextRank
+                        ? `${currentRank} Progress`
+                        : nextRank
+                          ? `${nextRank} Progress`
+                          : 'Performance Progress'}
                     </span>
                     <span className="font-semibold">{progressPercent}%</span>
                   </div>
                   <Progress value={progressPercent} className="h-3" />
                 </div>
-                {!isStakeholder && premiumProgressPercent > 0 && (
+                {!isStakeholder && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Premium Progress
+                        Premium Pool Qualification
                       </span>
                       <span className="font-semibold">
-                        {premiumProgressPercent}%
+                        {premiumProgressPercent > 0
+                          ? `${premiumProgressPercent}%`
+                          : '0%'}
                       </span>
                     </div>
                     <Progress
                       value={premiumProgressPercent}
                       className="h-3 bg-emerald-500/20"
                     />
+                    {currentRank === 'Associate Stakeholder' &&
+                      premiumProgressPercent < 100 && (
+                        <p className="text-muted-foreground text-xs">
+                          Need 2 Stakeholder downlines with $50+ stake each
+                        </p>
+                      )}
                   </div>
                 )}
                 {isStakeholder && (
@@ -493,7 +563,7 @@ export default function PoolsPage() {
                     </div>
                   )}
 
-                  {/* Lower Rank Downlines */}
+                  {/* Lower Rank Downlines - Premium Pool Requirement */}
                   {requirements.lower_rank_downlines && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -503,12 +573,26 @@ export default function PoolsPage() {
                           ) : (
                             <Circle className="text-muted-foreground h-5 w-5" />
                           )}
-                          <div className="flex items-center gap-2">
-                            <Shield className="text-muted-foreground h-4 w-4" />
-                            <span className="font-medium">
-                              {requirements.lower_rank_downlines.description ||
-                                'Lower Rank Downlines'}
-                            </span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <Shield className="text-muted-foreground h-4 w-4" />
+                              <span className="font-medium">
+                                {
+                                  getPremiumPoolDownlineRequirement(
+                                    currentRank,
+                                    requirements.lower_rank_downlines
+                                      .description
+                                  ).description
+                                }
+                              </span>
+                            </div>
+                            {/* Show stake requirement for Associate Stakeholder */}
+                            {currentRank === 'Associate Stakeholder' && (
+                              <p className="text-muted-foreground ml-6 text-xs">
+                                Each must have $50+ stake (Premium Pool
+                                requirement)
+                              </p>
+                            )}
                           </div>
                         </div>
                         <span className="text-sm">
@@ -525,8 +609,12 @@ export default function PoolsPage() {
                       {requirements.lower_rank_downlines.remaining &&
                         requirements.lower_rank_downlines.remaining > 0 && (
                           <p className="text-muted-foreground text-xs">
-                            Need {requirements.lower_rank_downlines.remaining}{' '}
-                            more
+                            {formatPremiumPoolRequirement(
+                              currentRank,
+                              requirements.lower_rank_downlines.current,
+                              requirements.lower_rank_downlines.required,
+                              requirements.lower_rank_downlines.description
+                            )}
                           </p>
                         )}
                     </div>
@@ -562,7 +650,7 @@ export default function PoolsPage() {
                             <li key={index} className="flex items-start gap-2">
                               <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
                               <span className="text-muted-foreground">
-                                {task}
+                                {correctPremiumPoolTask(task, currentRank)}
                               </span>
                             </li>
                           ))}
@@ -579,7 +667,7 @@ export default function PoolsPage() {
                             <li key={index} className="flex items-start gap-2">
                               <Circle className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
                               <span className="text-muted-foreground">
-                                {task}
+                                {correctPremiumPoolTask(task, currentRank)}
                               </span>
                             </li>
                           ))}

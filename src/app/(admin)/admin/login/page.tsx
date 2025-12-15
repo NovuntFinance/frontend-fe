@@ -35,6 +35,7 @@ function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false);
 
   const {
     register,
@@ -47,26 +48,62 @@ function AdminLoginForm() {
   // Clear any stale error state on mount
   useEffect(() => {
     setError(null);
+
+    // SECURITY: Remove credentials from URL if present (should never be there)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('identifier') || urlParams.has('password')) {
+      console.warn(
+        '[AdminLogin] ⚠️ SECURITY: Credentials found in URL! Removing...'
+      );
+      urlParams.delete('identifier');
+      urlParams.delete('password');
+      const newUrl =
+        window.location.pathname +
+        (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
   }, []);
 
-  // Check if already logged in
+  // Optional: Check if user is already logged in (just for UI, not for redirect)
   useEffect(() => {
-    if (adminAuthService.isAuthenticated()) {
-      const admin = adminAuthService.getCurrentAdmin();
-      if (admin) {
-        // Check if 2FA is enabled - only check twoFAEnabled, not twoFASecret
-        if (admin.twoFAEnabled === true) {
-          router.push('/admin/overview');
-        } else {
-          router.push('/admin/setup-2fa');
-        }
-      }
-    }
-  }, [router]);
+    const isAuthenticated = adminAuthService.isAuthenticated();
+    const admin = adminAuthService.getCurrentAdmin();
+    setIsAlreadyLoggedIn(isAuthenticated && !!admin);
+  }, []);
+
+  // ✅ REMOVED: Auto-redirect check
+  // The login page should always be accessible, even if user is already authenticated.
+  // This allows users to:
+  // - Explicitly log in as a different user
+  // - Log out and log back in
+  // - See the login form regardless of auth status
+  // Protected routes (like /admin/overview) will handle redirecting unauthenticated users.
+
+  const handleLogout = () => {
+    adminAuthService.logout();
+    setIsAlreadyLoggedIn(false);
+    setError(null);
+    toast.success('Logged out successfully');
+  };
 
   const onSubmit = async (data: AdminLoginFormData) => {
     setIsLoading(true);
     setError(null); // Clear any previous errors
+
+    // SECURITY: Ensure credentials are never in URL
+    // Clear any existing credentials from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('identifier') || urlParams.has('password')) {
+      console.warn(
+        '[AdminLogin] ⚠️ SECURITY: Credentials found in URL! Removing...'
+      );
+      urlParams.delete('identifier');
+      urlParams.delete('password');
+      const newUrl =
+        window.location.pathname +
+        (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
 
     try {
       const response = await adminAuthService.login({
@@ -116,9 +153,29 @@ function AdminLoginForm() {
       setError(null);
       toast.success('Login successful!');
 
-      // Verify token was stored before redirecting
+      // Determine redirect destination based on response
+      const determineRedirect = () => {
+        const admin = adminAuthService.getCurrentAdmin();
+        const redirectParam = searchParams.get('redirect');
+
+        // If we have admin data, check 2FA status
+        if (admin) {
+          if (admin.twoFAEnabled === true) {
+            // 2FA enabled - go to dashboard
+            return redirectParam || '/admin/overview';
+          } else {
+            // 2FA not enabled - go to setup
+            return '/admin/setup-2fa';
+          }
+        }
+
+        // No admin data yet - default to dashboard (AdminGuard will handle)
+        return redirectParam || '/admin/overview';
+      };
+
+      // Verify token was stored and redirect
       let retryCount = 0;
-      const maxRetries = 10; // Maximum 10 retries (1 second total)
+      const maxRetries = 20; // 2 seconds total
 
       const verifyAndRedirect = () => {
         const token = adminAuthService.getToken();
@@ -127,37 +184,48 @@ function AdminLoginForm() {
         console.log('[AdminLogin] Verifying auth before redirect:', {
           hasToken: !!token,
           hasAdmin: !!admin,
+          adminRole: admin?.role,
+          isSuperAdmin: admin?.role === 'superAdmin',
+          twoFAEnabled: admin?.twoFAEnabled,
           tokenPreview: token ? token.substring(0, 30) + '...' : 'null',
           retryCount,
         });
 
-        // If we have a token, we can proceed (even without full admin data)
+        // If we have a token, proceed with redirect
         if (token) {
-          // If we have admin data, check 2FA status
-          if (admin) {
-            // Only check twoFAEnabled - twoFASecret is not needed after initial setup
-            if (admin.twoFAEnabled === true) {
-              // Redirect to admin dashboard
-              const redirectTo =
-                searchParams.get('redirect') || '/admin/overview';
-              console.log('[AdminLogin] Redirecting to:', redirectTo);
-              router.push(redirectTo);
-              return;
-            } else {
-              // Redirect to 2FA setup
-              console.log('[AdminLogin] Redirecting to 2FA setup');
-              router.push('/admin/setup-2fa');
-              return;
-            }
-          } else {
-            // We have token but no admin data - redirect to setup-2fa anyway
-            // AdminGuard will handle showing the proper page
-            console.log(
-              '[AdminLogin] Token present but no admin data, redirecting to setup-2fa'
-            );
-            router.push('/admin/setup-2fa');
-            return;
+          const redirectTo = determineRedirect();
+          console.log('[AdminLogin] Redirecting to:', redirectTo);
+
+          // Use multiple redirect methods for reliability
+          try {
+            // Method 1: router.replace (preferred)
+            router.replace(redirectTo);
+
+            // Method 2: Fallback after short delay if still on login page
+            setTimeout(() => {
+              if (window.location.pathname === '/admin/login') {
+                console.log(
+                  '[AdminLogin] Still on login page, trying router.push'
+                );
+                router.push(redirectTo);
+              }
+            }, 300);
+
+            // Method 3: Final fallback using window.location
+            setTimeout(() => {
+              if (window.location.pathname === '/admin/login') {
+                console.log(
+                  '[AdminLogin] Still on login page, using window.location'
+                );
+                window.location.href = redirectTo;
+              }
+            }, 1000);
+          } catch (redirectError) {
+            console.error('[AdminLogin] Redirect error:', redirectError);
+            // Immediate fallback
+            window.location.href = redirectTo;
           }
+          return;
         }
 
         // No token yet - retry with limit
@@ -169,15 +237,20 @@ function AdminLoginForm() {
           setTimeout(verifyAndRedirect, 100);
         } else {
           console.error(
-            '[AdminLogin] Max retries reached, token still not available'
+            '[AdminLogin] Max retries reached, attempting redirect anyway'
           );
-          setError('Login failed. Token was not stored properly.');
-          toast.error('Login failed. Please try again.');
+          // Even if token check fails, try redirecting (token might be in cookie)
+          const redirectTo = determineRedirect();
+          console.log(
+            '[AdminLogin] Attempting fallback redirect to:',
+            redirectTo
+          );
+          window.location.href = redirectTo;
         }
       };
 
-      // Start verification after a brief delay
-      setTimeout(verifyAndRedirect, 200);
+      // Start verification immediately (token should be stored synchronously)
+      verifyAndRedirect();
     } catch (err: any) {
       // Error occurred - definitely not a success
       console.error('Admin login error:', err);
@@ -265,7 +338,33 @@ function AdminLoginForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {isAlreadyLoggedIn && (
+            <Alert className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+              <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="flex items-center justify-between">
+                <span className="text-blue-800 dark:text-blue-200">
+                  You are already logged in.
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="ml-2 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900"
+                >
+                  Logout
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault(); // Prevent default form submission (which would use GET)
+              handleSubmit(onSubmit)(e);
+            }}
+            method="post" // Explicitly set to POST (though handleSubmit prevents submission)
+            className="space-y-4"
+          >
             {error && error.trim() && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -282,6 +381,7 @@ function AdminLoginForm() {
                   type="text"
                   placeholder="admin@novunt.com"
                   className="pl-10"
+                  autoComplete="username"
                   {...register('identifier')}
                   disabled={isLoading}
                 />
@@ -302,6 +402,7 @@ function AdminLoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   className="pr-10 pl-10"
+                  autoComplete="current-password"
                   {...register('password')}
                   disabled={isLoading}
                 />

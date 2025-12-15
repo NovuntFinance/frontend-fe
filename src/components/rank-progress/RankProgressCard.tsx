@@ -24,7 +24,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { Button } from '@/components/ui/button';
@@ -34,9 +33,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useRankProgressLightweight } from '@/lib/queries/rankProgressQueries';
+import {
+  useRankProgressLightweight,
+  useRankProgressDetailed,
+} from '@/lib/queries/rankProgressQueries';
 import { cn } from '@/lib/utils';
 import type { Requirement } from '@/types/rankProgress';
+import { getPremiumPoolDownlineRequirement } from '@/lib/utils/premiumPoolUtils';
 
 /**
  * Main Rank Progress Card
@@ -44,6 +47,12 @@ import type { Requirement } from '@/types/rankProgress';
 export function RankProgressCard() {
   // Use lightweight endpoint for dashboard (fast loading < 100ms)
   const { data, isLoading, error } = useRankProgressLightweight();
+
+  // Hybrid approach: Fetch detailed endpoint separately for Premium Pool progress
+  // This keeps dashboard fast while still showing Premium Pool progress
+  // The detailed query runs in background and doesn't block the UI
+  const { data: detailedData } = useRankProgressDetailed();
+
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [prevProgress, setPrevProgress] = React.useState<{
     performance: number;
@@ -56,7 +65,31 @@ export function RankProgressCard() {
       // Use overall_progress_percent if available (detailed), otherwise use progress_percent (lightweight)
       const performanceProgress =
         data.overall_progress_percent ?? data.progress_percent ?? 0;
-      const premiumProgress = data.premium_progress_percent ?? 0;
+
+      // Get Premium Pool progress from detailed endpoint (hybrid approach)
+      // Use detailed data if available, otherwise fallback to lightweight calculation
+      let premiumProgress = 0;
+      const isStakeholder = data.current_rank === 'Stakeholder';
+
+      if (!isStakeholder && detailedData) {
+        // Use premium_progress_percent from detailed endpoint
+        premiumProgress = detailedData.premium_progress_percent ?? 0;
+
+        // Fallback: Calculate from lower_rank_downlines if premium_progress_percent is 0 or missing
+        if (
+          premiumProgress === 0 &&
+          detailedData.requirements?.lower_rank_downlines
+        ) {
+          const { current = 0, required = 0 } =
+            detailedData.requirements.lower_rank_downlines;
+          if (required > 0) {
+            premiumProgress = Math.min(
+              100,
+              Math.round((current / required) * 100)
+            );
+          }
+        }
+      }
 
       const newProgress = {
         performance: performanceProgress,
@@ -75,8 +108,10 @@ export function RankProgressCard() {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  // Show loading skeleton while lightweight data loads (fast, < 100ms)
   if (isLoading) {
     return <RankProgressSkeleton />;
   }
@@ -96,19 +131,80 @@ export function RankProgressCard() {
     next_rank_icon,
     progress_percent,
     overall_progress_percent,
-    premium_progress_percent,
     requirements,
     pool_qualification,
   } = data;
+
+  // Get Premium Pool data from detailed endpoint (hybrid approach)
+  // Use detailed data for Premium Pool progress, lightweight data for everything else
+  const premiumProgressFromDetailed = detailedData?.premium_progress_percent;
+  const detailedRequirements = detailedData?.requirements;
+  const detailedPoolQualification = detailedData?.pool_qualification;
 
   const isMaxRank = next_rank === null;
   const isStakeholder = current_rank === 'Stakeholder';
 
   // Use overall_progress_percent if available (detailed), otherwise use progress_percent (lightweight)
   const performanceProgress = overall_progress_percent ?? progress_percent ?? 0;
-  const premiumProgress = premium_progress_percent ?? 0;
 
-  // Check for regression
+  // Calculate Premium Pool progress from detailed endpoint (hybrid approach)
+  let premiumProgress = 0;
+
+  if (!isStakeholder) {
+    // Priority 1: Use premium_progress_percent from detailed endpoint
+    if (
+      premiumProgressFromDetailed !== undefined &&
+      premiumProgressFromDetailed !== null
+    ) {
+      premiumProgress = premiumProgressFromDetailed;
+    }
+    // Priority 2: Calculate from lower_rank_downlines in detailed endpoint
+    else if (detailedRequirements?.lower_rank_downlines) {
+      const { current = 0, required = 0 } =
+        detailedRequirements.lower_rank_downlines;
+      if (required > 0) {
+        premiumProgress = Math.min(100, Math.round((current / required) * 100));
+      }
+    }
+    // Priority 3: Fallback to lightweight requirements (may not have lower_rank_downlines)
+    else if (requirements?.lower_rank_downlines) {
+      const { current = 0, required = 0 } = requirements.lower_rank_downlines;
+      if (required > 0) {
+        premiumProgress = Math.min(100, Math.round((current / required) * 100));
+      }
+    }
+  }
+
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development' && !isStakeholder) {
+    console.log(
+      '[RankProgressCard] 🔍 Premium Pool Progress (Hybrid Approach):',
+      {
+        current_rank,
+        lightweight_loaded: !!data,
+        detailed_loaded: !!detailedData,
+        detailed_premium_progress_percent: premiumProgressFromDetailed,
+        calculated_premiumProgress: premiumProgress,
+        detailed_lower_rank_downlines:
+          detailedRequirements?.lower_rank_downlines
+            ? {
+                current: detailedRequirements.lower_rank_downlines.current,
+                required: detailedRequirements.lower_rank_downlines.required,
+                description:
+                  detailedRequirements.lower_rank_downlines.description,
+              }
+            : null,
+        pool_qualification: detailedPoolQualification?.premium_pool
+          ? {
+              is_qualified: detailedPoolQualification.premium_pool.is_qualified,
+              message: detailedPoolQualification.premium_pool.message,
+            }
+          : null,
+      }
+    );
+  }
+
+  // Check for regression (must happen after premiumProgress is calculated)
   const performanceDecreased =
     prevProgress && performanceProgress < prevProgress.performance;
   const premiumDecreased =
@@ -138,7 +234,13 @@ export function RankProgressCard() {
             </motion.div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-lg">Rank Progress</CardTitle>
+                <CardTitle className="text-lg">
+                  {isMaxRank
+                    ? `${current_rank} Progress`
+                    : next_rank
+                      ? `${next_rank} Progress`
+                      : 'Rank Progress'}
+                </CardTitle>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -156,7 +258,9 @@ export function RankProgressCard() {
               <p className="text-muted-foreground text-sm">
                 {isMaxRank
                   ? 'Highest rank achieved!'
-                  : 'Your journey to the next level'}
+                  : next_rank
+                    ? `Progressing to ${next_rank}`
+                    : 'Your journey to the next level'}
               </p>
             </div>
           </div>
@@ -276,7 +380,11 @@ export function RankProgressCard() {
                     <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <span className="text-foreground font-medium">
-                    Performance Progress
+                    {isMaxRank
+                      ? `${current_rank} Progress`
+                      : next_rank
+                        ? `${next_rank} Progress`
+                        : 'Performance Progress'}
                   </span>
                   <TooltipProvider>
                     <Tooltip>
@@ -362,9 +470,20 @@ export function RankProgressCard() {
                       <TooltipContent className="max-w-xs">
                         <p className="mb-1 font-semibold">Premium Pool:</p>
                         <p className="text-xs">
-                          Requires maintaining active downlines at specific
-                          ranks. You can lose this qualification if downlines
-                          become inactive.
+                          {current_rank === 'Associate Stakeholder' ? (
+                            <>
+                              Requires 2 <strong>Stakeholder</strong> downlines
+                              with <strong>$50+ stake each</strong>. You can
+                              lose this qualification if downlines become
+                              inactive or their stake drops below $50.
+                            </>
+                          ) : (
+                            <>
+                              Requires maintaining active downlines at specific
+                              ranks. You can lose this qualification if
+                              downlines become inactive.
+                            </>
+                          )}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -412,21 +531,25 @@ export function RankProgressCard() {
                         'h-full rounded-full shadow-lg transition-colors duration-500',
                         premiumDecreased
                           ? 'bg-gradient-to-r from-red-500 to-orange-500'
-                          : 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-500'
+                          : premiumProgress > 0
+                            ? 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-500'
+                            : 'bg-gradient-to-r from-emerald-500/30 via-emerald-400/30 to-teal-500/30'
                       )}
                     />
-                    {/* Shimmer effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '200%' }}
-                      transition={{
-                        duration: 2.5,
-                        ease: 'easeInOut',
-                        repeat: Infinity,
-                        repeatDelay: 2,
-                      }}
-                    />
+                    {/* Shimmer effect - only show when there's progress */}
+                    {premiumProgress > 0 && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        initial={{ x: '-100%' }}
+                        animate={{ x: '200%' }}
+                        transition={{
+                          duration: 2.5,
+                          ease: 'easeInOut',
+                          repeat: Infinity,
+                          repeatDelay: 2,
+                        }}
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -436,6 +559,21 @@ export function RankProgressCard() {
                   Premium Pool
                 </p>
               )}
+              {!isStakeholder &&
+                premiumProgress < 100 &&
+                current_rank === 'Associate Stakeholder' && (
+                  <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                    Need 2 Stakeholder downlines with $50+ stake each
+                  </p>
+                )}
+              {!isStakeholder &&
+                premiumProgress === 0 &&
+                current_rank !== 'Associate Stakeholder' &&
+                !detailedData && (
+                  <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                    Loading Premium Pool progress...
+                  </p>
+                )}
             </div>
           </div>
         )}
@@ -500,51 +638,100 @@ export function RankProgressCard() {
                         requirement={requirements.direct_downlines}
                       />
                     )}
-                    {requirements?.lower_rank_downlines &&
-                      requirements.lower_rank_downlines.required &&
-                      requirements.lower_rank_downlines.required > 0 && (
+                    {/* Use detailed requirements if available, otherwise fallback to lightweight */}
+                    {((detailedRequirements?.lower_rank_downlines &&
+                      detailedRequirements.lower_rank_downlines.required &&
+                      detailedRequirements.lower_rank_downlines.required > 0) ||
+                      (requirements?.lower_rank_downlines &&
+                        requirements.lower_rank_downlines.required &&
+                        requirements.lower_rank_downlines.required > 0)) && (
+                      <div className="space-y-1">
                         <RequirementItem
                           icon={TrendingUp}
                           title={
-                            requirements.lower_rank_downlines.description ||
-                            'Lower Rank Downlines'
+                            getPremiumPoolDownlineRequirement(
+                              current_rank,
+                              detailedRequirements?.lower_rank_downlines
+                                ?.description ||
+                                requirements?.lower_rank_downlines?.description
+                            ).description
                           }
-                          requirement={requirements.lower_rank_downlines}
+                          requirement={
+                            detailedRequirements?.lower_rank_downlines ||
+                            requirements?.lower_rank_downlines || {
+                              current: 0,
+                              required: 0,
+                              progress_percent: 0,
+                              is_met: false,
+                            }
+                          }
                         />
-                      )}
+                        {/* Show stake requirement for Associate Stakeholder */}
+                        {current_rank === 'Associate Stakeholder' && (
+                          <p className="text-muted-foreground ml-11 text-xs">
+                            Each must have $50+ stake (Premium Pool requirement)
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Pool Qualifications */}
-                {pool_qualification && (
+                {/* Pool Qualifications - Use detailed data if available, otherwise lightweight */}
+                {(detailedPoolQualification || pool_qualification) && (
                   <div className="space-y-3">
                     <h4 className="flex items-center gap-2 text-sm font-semibold">
                       <Shield className="h-4 w-4 text-blue-500" />
                       Pool Qualifications
                     </h4>
                     <div className="grid gap-3">
-                      {pool_qualification.performance_pool && (
+                      {(detailedPoolQualification?.performance_pool ||
+                        pool_qualification?.performance_pool) && (
                         <PoolBadge
                           title="Performance Pool"
                           isQualified={
-                            pool_qualification.performance_pool.is_qualified
+                            isStakeholder
+                              ? false
+                              : (detailedPoolQualification?.performance_pool
+                                  ?.is_qualified ??
+                                pool_qualification?.performance_pool
+                                  ?.is_qualified ??
+                                false)
                           }
-                          message={pool_qualification.performance_pool.message}
+                          message={
+                            isStakeholder
+                              ? 'Stakeholders are not eligible for Performance Pool. Qualification starts from Associate Stakeholder.'
+                              : detailedPoolQualification?.performance_pool
+                                  ?.message ||
+                                pool_qualification?.performance_pool?.message ||
+                                'Reach next rank to qualify'
+                          }
                           type="performance"
+                          isStakeholder={isStakeholder}
                         />
                       )}
-                      {pool_qualification.premium_pool && (
+                      {(detailedPoolQualification?.premium_pool ||
+                        pool_qualification?.premium_pool) && (
                         <PoolBadge
                           title="Premium Pool"
                           isQualified={
                             isStakeholder
                               ? false
-                              : pool_qualification.premium_pool.is_qualified
+                              : (detailedPoolQualification?.premium_pool
+                                  ?.is_qualified ??
+                                pool_qualification?.premium_pool
+                                  ?.is_qualified ??
+                                false)
                           }
                           message={
                             isStakeholder
-                              ? 'Stakeholders are not eligible for Premium Pool'
-                              : pool_qualification.premium_pool.message
+                              ? 'Stakeholders are not eligible for Premium Pool. Qualification starts from Associate Stakeholder.'
+                              : current_rank === 'Associate Stakeholder'
+                                ? 'Requires 2 Stakeholder downlines with $50+ stake each'
+                                : detailedPoolQualification?.premium_pool
+                                    ?.message ||
+                                  pool_qualification?.premium_pool?.message ||
+                                  'Requires lower-rank downlines'
                           }
                           type="premium"
                           isStakeholder={isStakeholder}

@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Info,
   Target,
+  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ interface WelcomeBackCardProps {
   isRefetching: boolean;
   totalPortfolioValue: number;
   lastWeekProfitChange: number;
+  totalEarnings?: number;
 }
 
 export function WelcomeBackCard({
@@ -40,6 +42,7 @@ export function WelcomeBackCard({
   isRefetching,
   totalPortfolioValue,
   lastWeekProfitChange,
+  totalEarnings = 0,
 }: WelcomeBackCardProps) {
   const greetingName = user?.firstName
     ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
@@ -90,8 +93,32 @@ export function WelcomeBackCard({
       />
 
       <div className="relative z-10 space-y-8">
-        {/* Header Actions (Eye toggle only) - Positioned absolutely */}
+        {/* Header Actions (Eye toggle and Share button) - Positioned absolutely */}
         <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+          {/* Share Button - Circular */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  openShareModal('profit', {
+                    title: 'Share Your Success!',
+                    message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                    amount: totalEarnings,
+                  });
+                }}
+                className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:from-blue-700 hover:to-purple-700"
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Share your success</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Eye Toggle */}
           <Button
             variant="ghost"
             size="icon"

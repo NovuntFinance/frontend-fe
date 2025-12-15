@@ -125,13 +125,12 @@ export function LiveTradingSignals() {
         (!err?.response && !statusCode);
 
       if (isNetworkError) {
-        console.warn(
-          '[Trading Signals] ⚠️ Network error - backend might be unavailable',
-          {
-            code: err?.code || 'ERR_NETWORK',
-            message: err?.message || 'Network Error',
-          }
-        );
+        // Only log in development to avoid console spam
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(
+            '[Trading Signals] Network error - backend may be unavailable'
+          );
+        }
         setError(
           'Unable to connect to trading signals service. The backend server might be down.'
         );

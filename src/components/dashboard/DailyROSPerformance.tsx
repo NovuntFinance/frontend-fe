@@ -1,171 +1,93 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Clock, Info } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { rosApi, TimeRange, DailyEarning } from '@/services/rosApi';
-import { useTodayRos } from '@/hooks/useTodayRos';
+import { useProfitHistory } from '@/lib/queries';
 import { ShimmerCard } from '@/components/ui/shimmer';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
-const timeRanges: TimeRange[] = ['7D', '30D'];
+type TimeRange = '7D' | '30D' | '100D';
 
+const timeRanges: TimeRange[] = ['7D', '30D', '100D'];
+
+/**
+ * Daily ROS Performance Card
+ *
+ * Displays a graph of declared ROS percentages over time.
+ * Shows 7D, 30D, or 100D views with interactive chart.
+ */
 export function DailyROSPerformance() {
   const [selectedRange, setSelectedRange] = useState<TimeRange>('7D');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [data, setData] = useState<DailyEarning[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch today's ROS
-  const { data: todayRos } = useTodayRos(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await rosApi.getDailyEarnings(selectedRange);
-        setData(response.dailyData || []);
-      } catch (error) {
-        // Only log in development - 404s are handled gracefully by the API
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Daily earnings endpoint not available:', error);
-        }
-        // Set empty data - API already returns empty structure for 404s
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  // Determine limit based on selected range
+  const limit = useMemo(() => {
+    switch (selectedRange) {
+      case '7D':
+        return 7;
+      case '30D':
+        return 30;
+      case '100D':
+        return 100;
+      default:
+        return 7;
+    }
   }, [selectedRange]);
 
-  // Calculate totals (using amount field from DailyEarning)
-  const totalEarnings = data.reduce((sum, d) => sum + (d.amount || 0), 0);
+  // Fetch profit history for selected range
+  const { data: profitHistory, isLoading } = useProfitHistory(limit, 0);
 
-  // Since the API doesn't provide breakdown by source, we'll use the total amount
-  // and assume it's all from staking (which is the primary source)
+  // Prepare chart data - reverse to show oldest to newest (left to right)
+  const chartData = useMemo(() => {
+    if (!profitHistory?.profits) return [];
 
-  // Calculate max value for chart scaling
-  const maxDailyTotal = Math.max(
-    ...data.map((d) => d.amount || 0),
-    1 // Prevent division by zero
-  );
+    // Sort by date (oldest first) and take the last N entries
+    const sorted = [...profitHistory.profits].sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
+    return sorted.slice(-limit);
+  }, [profitHistory, limit]);
+
+  // Calculate max percentage for chart scaling
+  const maxPercentage = useMemo(() => {
+    if (chartData.length === 0) return 1;
+    const max = Math.max(...chartData.map((d) => d.profitPercentage));
+    // Add 10% padding for better visualization
+    return max * 1.1 || 1;
+  }, [chartData]);
+
+  // Calculate average percentage
+  const averagePercentage = useMemo(() => {
+    if (chartData.length === 0) return 0;
+    const sum = chartData.reduce((acc, d) => acc + d.profitPercentage, 0);
+    return sum / chartData.length;
+  }, [chartData]);
 
   return (
     <NovuntPremiumCard
       title="Daily ROS Performance"
-      subtitle="Track your daily earnings and sources"
+      subtitle="Declared percentages over time"
       icon={TrendingUp}
       colorTheme="emerald"
       className="h-full"
     >
       <div className="space-y-6">
-        {/* Today's ROS Display */}
-        {todayRos && todayRos.timing && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 backdrop-blur-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-500/20 p-2">
-                  <TrendingUp className="h-5 w-5 text-emerald-500" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm font-medium">
-                      Today&apos;s ROS
-                    </span>
-                    {todayRos.timing?.displayRule
-                      ?.toLowerCase()
-                      .includes('previous') && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge variant="outline" className="text-xs">
-                              <Clock className="mr-1 h-3 w-3" />
-                              Previous Day
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">
-                              {todayRos.timing?.displayRule ||
-                                'Previous day&apos;s ROS'}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {typeof todayRos.percentage === 'number'
-                        ? todayRos.percentage.toFixed(2)
-                        : '0.00'}
-                      %
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      {todayRos.dayName || 'Today'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Week's Total (End of Week) */}
-              {todayRos.timing?.isEndOfWeek &&
-                todayRos.weeklyTotalPercentage !== undefined && (
-                  <div className="text-right">
-                    <p className="text-muted-foreground text-xs font-medium">
-                      Week&apos;s Total
-                    </p>
-                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {todayRos.weeklyTotalPercentage.toFixed(2)}%
-                    </p>
-                  </div>
-                )}
-            </div>
-
-            {/* Timing Information */}
-            {todayRos.timing?.displayRule && (
-              <div className="text-muted-foreground mt-3 flex items-start gap-2 border-t border-emerald-500/20 pt-3 text-xs">
-                <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                <p>
-                  {todayRos.timing?.displayRule ||
-                    'ROS displayed at end of day'}
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
         {/* Controls & Summary */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
-            {loading ? (
+            {isLoading ? (
               <ShimmerCard className="h-8 w-32" />
             ) : (
               <>
                 <h2 className="text-3xl font-bold text-emerald-500">
-                  $
-                  {totalEarnings.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {averagePercentage.toFixed(2)}%
                 </h2>
                 <span className="text-muted-foreground text-sm">
-                  earned in {selectedRange}
+                  avg in {selectedRange}
                 </span>
               </>
             )}
@@ -190,11 +112,11 @@ export function DailyROSPerformance() {
           </div>
         </div>
 
-        {/* Chart Area - Legend removed to eliminate repetition */}
+        {/* Chart Area */}
         <div className="relative mt-4 h-[220px] w-full select-none">
-          {loading ? (
+          {isLoading ? (
             <div className="flex h-full items-end justify-between gap-2">
-              {Array.from({ length: 7 }).map((_, i) => (
+              {Array.from({ length: Math.min(limit, 7) }).map((_, i) => (
                 <ShimmerCard
                   key={i}
                   className="w-full rounded-t"
@@ -202,18 +124,50 @@ export function DailyROSPerformance() {
                 />
               ))}
             </div>
+          ) : chartData.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-muted-foreground text-sm">
+                No data available for {selectedRange}
+              </p>
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
-              {data.map((day, index) => {
-                const dailyTotal = day.amount || 0;
-                const heightPercent = (dailyTotal / maxDailyTotal) * 100;
-
-                // Since API doesn't provide breakdown, all earnings are from staking
-                const stakingAmount = dailyTotal;
-
-                // Calculate segment heights as percentages of the BAR height (not chart height)
+              {chartData.map((day, index) => {
+                const percentage = day.profitPercentage || 0;
+                const heightPercent =
+                  maxPercentage > 0 ? (percentage / maxPercentage) * 100 : 0;
 
                 const isHovered = hoveredIndex === index;
+                const date = new Date(day.date);
+                const isToday =
+                  date.toDateString() === new Date().toDateString();
+                const isYesterday =
+                  date.toDateString() ===
+                  new Date(Date.now() - 86400000).toDateString();
+
+                // Format date label based on range
+                const getDateLabel = () => {
+                  if (selectedRange === '7D') {
+                    return date.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                    });
+                  } else if (selectedRange === '30D') {
+                    return index % 5 === 0
+                      ? date.toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : '';
+                  } else {
+                    // 100D - show fewer labels
+                    return index % 15 === 0
+                      ? date.toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : '';
+                  }
+                };
 
                 return (
                   <div
@@ -233,28 +187,25 @@ export function DailyROSPerformance() {
                         >
                           <div className="bg-popover/95 border-border/50 rounded-xl border p-3 text-xs shadow-xl backdrop-blur-md">
                             <p className="border-border/50 mb-2 border-b pb-1 text-center font-semibold">
-                              {day.date} • Total: ${dailyTotal.toFixed(2)}
+                              {date.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
                             </p>
                             <div className="space-y-1">
-                              {stakingAmount > 0 && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <div className="h-2 w-2 rounded-full bg-emerald-500" />{' '}
-                                    Earnings
-                                  </span>
-                                  <span className="font-mono">
-                                    ${stakingAmount.toFixed(2)}
-                                  </span>
-                                </div>
-                              )}
-                              {day.ros > 0 && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    ROS
-                                  </span>
-                                  <span className="font-mono">
-                                    {day.ros.toFixed(2)}%
-                                  </span>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">
+                                  Declared Percentage
+                                </span>
+                                <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                                  {percentage.toFixed(2)}%
+                                </span>
+                              </div>
+                              {(isToday || isYesterday) && (
+                                <div className="text-muted-foreground pt-1 text-[10px] italic">
+                                  {isToday ? 'Today' : 'Yesterday'}
                                 </div>
                               )}
                             </div>
@@ -265,19 +216,21 @@ export function DailyROSPerformance() {
                       )}
                     </AnimatePresence>
 
-                    {/* Stacked Bar */}
+                    {/* Bar */}
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${heightPercent}%` }}
-                      transition={{ duration: 0.5, delay: index * 0.03 }}
+                      transition={{ duration: 0.5, delay: index * 0.02 }}
                       className={cn(
                         'relative w-full overflow-hidden rounded-t-sm transition-all duration-200',
                         isHovered
                           ? 'z-10 scale-x-110 opacity-100 shadow-lg'
-                          : 'opacity-85 hover:opacity-100'
+                          : 'opacity-85 hover:opacity-100',
+                        isToday || isYesterday
+                          ? 'bg-emerald-600 dark:bg-emerald-500'
+                          : 'bg-emerald-500'
                       )}
                     >
-                      {/* Earnings Bar - Full height since it's the only segment */}
                       <div
                         className="w-full bg-emerald-500 transition-colors"
                         style={{ height: '100%' }}
@@ -285,25 +238,18 @@ export function DailyROSPerformance() {
                     </motion.div>
 
                     {/* X-Axis Label */}
-                    <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
-                      {selectedRange === '7D'
-                        ? new Date(day.date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                          })
-                        : index % 5 === 0
-                          ? new Date(day.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          : ''}
-                    </div>
+                    {getDateLabel() && (
+                      <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
+                        {getDateLabel()}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Grid Lines (Optional background visual) */}
+          {/* Grid Lines */}
           <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-10">
             <div className="bg-foreground h-px w-full" />
             <div className="bg-foreground h-px w-full" />

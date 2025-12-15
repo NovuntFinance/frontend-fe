@@ -44,6 +44,14 @@ export interface AllPermissionsResponse {
   data: Permission[];
 }
 
+// 2FA Code Cache (valid for 85 seconds to match backend's ±2 time steps ~90-second window)
+interface Cached2FA {
+  code: string;
+  expiresAt: number;
+}
+
+let cached2FA: Cached2FA | null = null;
+
 // Create axios instance with 2FA interceptor
 const createRBACApi = (
   get2FACode: () => Promise<string | null>
@@ -61,13 +69,56 @@ const createRBACApi = (
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Add 2FA code for admin endpoints
+      // Add 2FA code for RBAC endpoints (admin endpoints)
       if (config.url?.includes('/rbac/')) {
-        const twoFACode = await get2FACode();
+        // Check cache first
+        let twoFACode: string | null = null;
+
+        if (cached2FA && Date.now() < cached2FA.expiresAt) {
+          twoFACode = cached2FA.code;
+          console.log('[RBACService] Using cached 2FA code');
+        } else {
+          // Get fresh 2FA code
+          twoFACode = await get2FACode();
+          if (twoFACode) {
+            // Cache for 85 seconds (matches backend's ±2 time steps ~90-second window)
+            // Backend accepts codes within ±2 time steps, so we cache for most of that window
+            cached2FA = {
+              code: twoFACode,
+              expiresAt: Date.now() + 85 * 1000,
+            };
+            console.log(
+              '[RBACService] Cached new 2FA code (valid for 85 seconds)'
+            );
+          }
+        }
+
         if (twoFACode) {
-          config.headers['X-2FA-Code'] = twoFACode;
-          if (config.data && typeof config.data === 'object') {
-            config.data.twoFACode = twoFACode;
+          const method = config.method?.toUpperCase();
+
+          if (method === 'GET') {
+            // For GET requests, add to query parameters (CORS-safe)
+            config.params = config.params || {};
+            config.params.twoFACode = twoFACode;
+            console.log(
+              '[RBACService] Added 2FA code to query params for GET request'
+            );
+          } else if (['POST', 'PUT', 'PATCH'].includes(method || '')) {
+            // For POST/PUT/PATCH, add to request body
+            if (config.data && typeof config.data === 'object') {
+              config.data.twoFACode = twoFACode;
+              console.log(
+                '[RBACService] Added 2FA code to request body for',
+                method
+              );
+            } else {
+              // If no body, create one
+              config.data = { twoFACode };
+              console.log(
+                '[RBACService] Created request body with 2FA code for',
+                method
+              );
+            }
           }
         }
       }
@@ -75,6 +126,28 @@ const createRBACApi = (
       return config;
     },
     (error) => Promise.reject(error)
+  );
+
+  // Response interceptor: Handle 2FA errors and clear cache
+  api.interceptors.response.use(
+    (response) => {
+      // Keep cache on successful response
+      return response;
+    },
+    async (error: any) => {
+      if (error.response?.status === 403) {
+        const errorCode = error.response.data?.error?.code;
+        if (
+          errorCode === '2FA_CODE_INVALID' ||
+          errorCode === '2FA_CODE_REQUIRED'
+        ) {
+          // Clear cache on invalid/missing code
+          cached2FA = null;
+          console.log('[RBACService] Cleared 2FA cache due to error');
+        }
+      }
+      return Promise.reject(error);
+    }
   );
 
   return api;
@@ -98,6 +171,14 @@ class RBACService {
    */
   set2FACodeGetter(getter: () => Promise<string | null>): void {
     this.get2FACode = getter;
+  }
+
+  /**
+   * Clear cached 2FA code (useful for logout or when code is invalid)
+   */
+  clearCached2FA(): void {
+    cached2FA = null;
+    console.log('[RBACService] Cleared cached 2FA code');
   }
 
   /**

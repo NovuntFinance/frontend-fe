@@ -123,8 +123,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     try {
       const count = await getUnreadCount();
       set({ unreadCount: count });
-    } catch (err) {
-      console.error('[notificationStore.fetchUnreadCount] Error:', err);
+    } catch (err: any) {
+      // getUnreadCount now handles errors internally and returns 0
+      // Only log if it's not a network error (to avoid console spam)
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.toLowerCase().includes('network error') ||
+        !err?.response;
+
+      if (!isNetworkError && process.env.NODE_ENV === 'development') {
+        console.error('[notificationStore.fetchUnreadCount] Error:', err);
+      }
+
+      // Set unreadCount to 0 on error to prevent UI issues
+      set({ unreadCount: 0 });
     }
   },
 

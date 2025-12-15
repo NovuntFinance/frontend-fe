@@ -21,6 +21,7 @@ import {
   useWalletBalance,
   useActiveStakes,
   useDashboardOverview,
+  useStakingStreak,
 } from '@/lib/queries';
 import { useTransactionHistory } from '@/hooks/useWallet';
 import {
@@ -40,12 +41,10 @@ import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
-import { WeeklyROSCard } from '@/components/dashboard/WeeklyROSCard';
-import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
-import { TestShareButton } from '@/components/dev/TestShareButton';
-import { cn } from '@/lib/utils';
+import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
+import { useWallet } from '@/hooks/useWallet';
 
 /**
  * Modern Dashboard Home Page
@@ -60,6 +59,9 @@ export default function DashboardPage() {
     email: string;
   } | null>(null);
   const { user } = useUser();
+
+  // Fetch staking streak data
+  const { data: streakData, isLoading: streakLoading } = useStakingStreak();
 
   // Check for first-time login and show welcome modal
   useEffect(() => {
@@ -127,6 +129,21 @@ export default function DashboardPage() {
     isLoading: overviewLoading,
     error: overviewError,
   } = useDashboardOverview();
+
+  // Get wallet statistics for all financial metrics
+  // Call hook at top level (required by React), but handle SSR gracefully
+  const { wallet } = useWallet();
+  const walletStats = wallet?.statistics || {
+    totalDeposited: 0,
+    totalStaked: 0,
+    totalEarned: 0,
+    totalWithdrawn: 0,
+  };
+
+  const totalDeposited = walletStats.totalDeposited ?? 0;
+  const totalStakedFromStats = walletStats.totalStaked ?? 0;
+  const totalEarned = walletStats.totalEarned ?? 0;
+  const totalWithdrawn = walletStats.totalWithdrawn ?? 0;
 
   // Platform ranks
   const ranks = React.useMemo(
@@ -425,7 +442,6 @@ export default function DashboardPage() {
       : 0);
   const totalEarnings =
     overview?.staking?.totalEarnings ?? walletBalance?.earnings?.balance ?? 0;
-  const totalReferralEarnings = overview?.referrals?.referralEarnings ?? 0;
 
   // Calculate total portfolio value (combines all stakes and wallet balances)
   const totalPortfolioValue = totalBalance + totalStaked;
@@ -467,6 +483,7 @@ export default function DashboardPage() {
             isRefetching={isRefetching}
             totalPortfolioValue={totalPortfolioValue}
             lastWeekProfitChange={lastWeekProfitChange}
+            totalEarnings={totalEarnings}
           />
         </motion.div>
 
@@ -474,40 +491,32 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {[
             {
-              title: 'Total Balance',
-              value: totalBalance,
-              tooltip: 'Funds currently available across all wallets.',
-              icon: Wallet,
+              title: 'Total Deposited',
+              value: totalDeposited,
+              tooltip: 'Total amount deposited to your wallet.',
+              icon: ArrowDownRight,
               colorTheme: 'purple' as const,
             },
             {
-              title: 'Total Earnings',
-              value: totalEarnings + totalReferralEarnings,
-              tooltip:
-                'Includes staking profits, referral bonuses, and other earnings.',
-              icon: DollarSign,
+              title: 'Total Staked',
+              value: totalStakedFromStats,
+              tooltip: 'Total amount staked across all stakes.',
+              icon: Wallet,
+              colorTheme: 'orange' as const,
+            },
+            {
+              title: 'Total Earned',
+              value: totalEarned,
+              tooltip: 'Total earnings from all sources.',
+              icon: TrendingUp,
               colorTheme: 'emerald' as const,
             },
             {
-              title: "Last Week's Profit",
-              value: lastWeekProfit ?? 0,
-              tooltip: 'Profit made last week.',
-              icon:
-                (lastWeekProfitChange ?? 0) >= 0 ? TrendingUp : TrendingDown,
-              colorTheme:
-                (lastWeekProfitChange ?? 0) >= 0
-                  ? ('emerald' as const)
-                  : ('orange' as const),
-              change: `${(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}${(lastWeekProfitChange ?? 0).toFixed(1)}%`,
-              changePositive: (lastWeekProfitChange ?? 0) >= 0,
-            },
-            {
-              title: 'Live Platform Activity',
-              value: null,
-              tooltip: 'Real-time user activities across the platform.',
-              icon: Circle,
+              title: 'Total Withdrawn',
+              value: totalWithdrawn,
+              tooltip: 'Total amount withdrawn from your wallet.',
+              icon: ArrowUpRight,
               colorTheme: 'blue' as const,
-              isActivity: true,
             },
             ...(pendingEarnings > 0
               ? [
@@ -539,108 +548,129 @@ export default function DashboardPage() {
                   },
                 ]
               : []),
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4, scale: 1.01 }}
-            >
-              <NovuntPremiumCard
-                title={stat.title}
-                tooltip={stat.tooltip}
-                icon={stat.icon}
-                colorTheme={stat.colorTheme}
-                className="h-full"
+          ].map((stat, index) => {
+            // Color theme mappings for gradient backgrounds
+            const colorConfigs: Record<
+              string,
+              {
+                gradient: string;
+                blob: string;
+                iconBg: string;
+                textGradient: string;
+                iconColor: string;
+              }
+            > = {
+              purple: {
+                gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
+                blob: 'bg-purple-500/30',
+                iconBg: 'from-purple-500/30 to-indigo-500/20',
+                textGradient: 'from-purple-600 to-indigo-600',
+                iconColor: 'text-purple-500',
+              },
+              orange: {
+                gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+                blob: 'bg-amber-500/30',
+                iconBg: 'from-amber-500/30 to-orange-500/20',
+                textGradient: 'from-amber-600 to-orange-600',
+                iconColor: 'text-amber-500',
+              },
+              emerald: {
+                gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
+                blob: 'bg-emerald-500/30',
+                iconBg: 'from-emerald-500/30 to-green-500/20',
+                textGradient: 'from-emerald-600 to-green-600',
+                iconColor: 'text-emerald-500',
+              },
+              blue: {
+                gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
+                blob: 'bg-blue-500/30',
+                iconBg: 'from-blue-500/30 to-cyan-500/20',
+                textGradient: 'from-blue-600 to-cyan-600',
+                iconColor: 'text-blue-500',
+              },
+            };
+
+            const colors = colorConfigs[stat.colorTheme] || colorConfigs.purple;
+            const IconComponent = stat.icon;
+
+            return (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -4, scale: 1.01 }}
               >
-                {isLoading || (stat.isActivity && activityLoading) ? (
-                  <ShimmerCard className="h-10 w-32" />
-                ) : stat.isActivity ? (
-                  // Live Activity Display
+                <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+                  {/* Animated Gradient Background */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${colors.gradient}`}
+                  />
+
+                  {/* Animated Floating Blob */}
                   <motion.div
-                    key={currentActivity.user + currentActivity.time}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.5 }}
-                    className="space-y-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`rounded-lg p-2 bg-${stat.colorTheme}-500/10`}
+                    animate={{
+                      x: [0, -15, 0],
+                      y: [0, 10, 0],
+                      scale: [1, 1.15, 1],
+                    }}
+                    transition={{
+                      duration: 6,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full ${colors.blob} blur-2xl`}
+                  />
+
+                  <CardHeader className="relative">
+                    <div className="mb-2 flex items-center gap-3">
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: -10 }}
+                        className={`rounded-xl bg-gradient-to-br ${colors.iconBg} p-3 shadow-lg backdrop-blur-sm`}
                       >
-                        <currentActivity.icon
-                          className={`h-4 w-4 text-${stat.colorTheme}-500`}
+                        <IconComponent
+                          className={`h-6 w-6 ${colors.iconColor}`}
                         />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-foreground truncate text-sm font-semibold">
-                          {currentActivity.user}
-                        </p>
-                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                          {currentActivity.action}
-                          {currentActivity.amount && (
-                            <span className="text-foreground font-semibold">
-                              ${currentActivity.amount.toLocaleString()}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="border-border/50 flex items-center justify-between border-t pt-2">
-                      <Badge
-                        variant="outline"
-                        className="bg-background/50 text-xs"
-                      >
-                        {currentActivity.time}
-                      </Badge>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                        <span className="text-xs font-medium text-green-500">
-                          Live
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-baseline gap-3">
-                      <p className="text-foreground text-3xl font-bold tracking-tight">
-                        {balanceVisible
-                          ? stat.displayValue ||
-                            `$${(stat.value ?? 0).toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}`
-                          : '••••••'}
-                      </p>
-                    </div>
-                    {stat.change && (
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            stat.changePositive ? 'default' : 'destructive'
-                          }
-                          className={cn(
-                            'px-2 py-0.5 text-xs font-bold',
-                            stat.changePositive
-                              ? 'border-emerald-500/20 bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30'
-                              : 'border-red-500/20 bg-red-500/20 text-red-600 hover:bg-red-500/30'
-                          )}
+                      </motion.div>
+                      <div>
+                        <CardTitle
+                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-lg font-bold text-transparent`}
                         >
-                          {stat.change}
-                        </Badge>
-                        <span className="text-muted-foreground text-xs">
-                          vs last week
-                        </span>
+                          {stat.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          {stat.tooltip.split('.')[0]}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    {isLoading ? (
+                      <ShimmerCard className="h-20" />
+                    ) : (
+                      <div className="mb-4 flex items-baseline gap-3">
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.9 }}
+                          key={stat.value ?? 0}
+                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-5xl font-black text-transparent`}
+                        >
+                          {balanceVisible
+                            ? stat.displayValue ||
+                              `$${(stat.value ?? 0).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}`
+                            : '••••••'}
+                        </motion.span>
                       </div>
                     )}
-                  </div>
-                )}
-              </NovuntPremiumCard>
-            </motion.div>
-          ))}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Quick Actions */}
@@ -659,6 +689,15 @@ export default function DashboardPage() {
           transition={{ delay: 0.45 }}
         >
           <RankProgressCard />
+        </motion.div>
+
+        {/* Achievements Summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.47 }}
+        >
+          <AchievementsSummaryCard />
         </motion.div>
 
         {/* Portfolio Performance - Full Width */}
@@ -698,10 +737,218 @@ export default function DashboardPage() {
           transition={{ delay: 0.8 }}
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {/* Weekly ROS Card */}
-          <WeeklyROSCard />
-
           {/* Streak Card */}
+          {streakLoading ? (
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
+              <CardHeader className="relative">
+                <ShimmerCard className="h-20" />
+              </CardHeader>
+              <CardContent className="relative">
+                <ShimmerCard className="h-32" />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+              {/* Animated Gradient Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
+
+              {/* Animated Floating Blob */}
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+              />
+
+              <CardHeader className="relative">
+                <div className="mb-2 flex items-center gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
+                  >
+                    <Clock className="h-6 w-6 text-blue-500" />
+                  </motion.div>
+                  <div>
+                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
+                      Staking Streak
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Consecutive active days
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                <div className="mb-4 flex items-baseline gap-3">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.9 }}
+                    key={streakData?.currentStreak || 0}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-5xl font-black text-transparent"
+                  >
+                    {streakData?.currentStreak || 0}
+                  </motion.span>
+                  <span className="text-muted-foreground text-lg font-semibold">
+                    days
+                  </span>
+                </div>
+                <div className="flex gap-1.5">
+                  {(
+                    streakData?.weeklyProgress ||
+                    Array.from({ length: 7 }, () => ({ hasActiveStake: false }))
+                  ).map((day, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ scaleY: 0, opacity: 0 }}
+                      animate={{ scaleY: 1, opacity: 1 }}
+                      transition={{ delay: 0.9 + i * 0.1, type: 'spring' }}
+                      whileHover={{ scaleY: 1.2 }}
+                      className={`h-10 flex-1 rounded-lg transition-all ${
+                        day.hasActiveStake
+                          ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
+                          : 'bg-muted/50'
+                      }`}
+                      title={
+                        day.hasActiveStake ? 'Active stake' : 'No active stake'
+                      }
+                    />
+                  ))}
+                </div>
+                {streakData?.nextMilestone &&
+                  streakData.daysUntilNextMilestone > 0 && (
+                    <div className="text-muted-foreground mt-3 text-center text-xs">
+                      {streakData.daysUntilNextMilestone} days until{' '}
+                      {streakData.nextMilestone} day milestone
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Last Week's Profit Card */}
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+            {/* Animated Gradient Background */}
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${
+                (lastWeekProfitChange ?? 0) >= 0
+                  ? 'from-emerald-500/20 via-green-500/10 to-transparent'
+                  : 'from-orange-500/20 via-red-500/10 to-transparent'
+              }`}
+            />
+
+            {/* Animated Floating Blob */}
+            <motion.div
+              animate={{
+                x: [0, -15, 0],
+                y: [0, 10, 0],
+                scale: [1, 1.15, 1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full blur-2xl ${
+                (lastWeekProfitChange ?? 0) >= 0
+                  ? 'bg-emerald-500/30'
+                  : 'bg-orange-500/30'
+              }`}
+            />
+
+            <CardHeader className="relative">
+              <div className="mb-2 flex items-center gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  className={`rounded-xl p-3 shadow-lg backdrop-blur-sm ${
+                    (lastWeekProfitChange ?? 0) >= 0
+                      ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/20'
+                      : 'bg-gradient-to-br from-orange-500/30 to-red-500/20'
+                  }`}
+                >
+                  {(lastWeekProfitChange ?? 0) >= 0 ? (
+                    <TrendingUp
+                      className={`h-6 w-6 ${
+                        (lastWeekProfitChange ?? 0) >= 0
+                          ? 'text-emerald-500'
+                          : 'text-orange-500'
+                      }`}
+                    />
+                  ) : (
+                    <TrendingDown className="h-6 w-6 text-orange-500" />
+                  )}
+                </motion.div>
+                <div>
+                  <CardTitle
+                    className={`bg-clip-text text-lg font-bold text-transparent ${
+                      (lastWeekProfitChange ?? 0) >= 0
+                        ? 'bg-gradient-to-r from-emerald-600 to-green-600'
+                        : 'bg-gradient-to-r from-orange-600 to-red-600'
+                    }`}
+                  >
+                    Last Week&apos;s Profit
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Profit made last week
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="mb-4 flex items-baseline gap-3">
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9 }}
+                  key={lastWeekProfit ?? 0}
+                  className={`bg-clip-text text-5xl font-black text-transparent ${
+                    (lastWeekProfitChange ?? 0) >= 0
+                      ? 'bg-gradient-to-r from-emerald-600 to-green-600'
+                      : 'bg-gradient-to-r from-orange-600 to-red-600'
+                  }`}
+                >
+                  $
+                  {(lastWeekProfit ?? 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </motion.span>
+              </div>
+              {(lastWeekProfitChange ?? 0) !== 0 && (
+                <div className="mt-3">
+                  <Badge
+                    variant="outline"
+                    className={`${
+                      (lastWeekProfitChange ?? 0) >= 0
+                        ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                        : 'border-orange-500/30 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'
+                    } px-3 py-1 text-sm font-semibold`}
+                  >
+                    <TrendingUp
+                      className={`mr-1.5 h-3.5 w-3.5 ${
+                        (lastWeekProfitChange ?? 0) >= 0
+                          ? 'text-emerald-400'
+                          : 'rotate-180 text-orange-400'
+                      }`}
+                    />
+                    <span className="font-bold">
+                      {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
+                      {(lastWeekProfitChange ?? 0).toFixed(1)}% vs last week
+                    </span>
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Live Platform Activity Card */}
           <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
@@ -727,48 +974,66 @@ export default function DashboardPage() {
                   whileHover={{ scale: 1.1, rotate: -10 }}
                   className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
                 >
-                  <Clock className="h-6 w-6 text-blue-500" />
+                  <Circle className="h-6 w-6 text-blue-500" />
                 </motion.div>
                 <div>
                   <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
-                    Staking Streak
+                    Live Platform Activity
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Consecutive active days
+                    Real-time user activities
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="relative">
-              <div className="mb-4 flex items-baseline gap-3">
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.9 }}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-5xl font-black text-transparent"
+              {activityLoading ? (
+                <ShimmerCard className="h-20" />
+              ) : (
+                <motion.div
+                  key={currentActivity.user + currentActivity.time}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-3"
                 >
-                  45
-                </motion.span>
-                <span className="text-muted-foreground text-lg font-semibold">
-                  days
-                </span>
-              </div>
-              <div className="flex gap-1.5">
-                {[...Array(7)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ scaleY: 0, opacity: 0 }}
-                    animate={{ scaleY: 1, opacity: 1 }}
-                    transition={{ delay: 0.9 + i * 0.1, type: 'spring' }}
-                    whileHover={{ scaleY: 1.2 }}
-                    className={`h-10 flex-1 rounded-lg transition-all ${
-                      i < 6
-                        ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
-                        : 'bg-muted/50'
-                    }`}
-                  />
-                ))}
-              </div>
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-blue-500/10 p-2">
+                      <currentActivity.icon
+                        className={`h-5 w-5 ${currentActivity.color}`}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground truncate text-sm font-semibold">
+                        {currentActivity.user}
+                      </p>
+                      <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                        {currentActivity.action}
+                        {currentActivity.amount && (
+                          <span className="text-foreground font-semibold">
+                            ${currentActivity.amount.toLocaleString()}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="border-border/50 flex items-center justify-between border-t pt-2">
+                    <Badge
+                      variant="outline"
+                      className="bg-background/50 text-xs"
+                    >
+                      {currentActivity.time}
+                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                      <span className="text-xs font-medium text-green-500">
+                        Live
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -784,9 +1049,6 @@ export default function DashboardPage() {
           email={newUserInfo.email}
         />
       )}
-
-      {/* Test Share Buttons - Remove after testing */}
-      {process.env.NODE_ENV === 'development' && <TestShareButton />}
     </div>
   );
 }

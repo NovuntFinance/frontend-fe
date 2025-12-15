@@ -133,14 +133,39 @@ export function maskWalletAddress(address: string): string {
  * @param type - Transaction type
  * @param typeLabel - Optional typeLabel from API (preferred)
  * @returns Human-readable label
+ *
+ * IMPORTANT:
+ * - Only registration_bonus should display as "Bonus"
+ * - All other earnings (referral_bonus, ros_payout, pool payouts) should display as "Earning" or descriptive labels
+ * - This ensures uniform transaction history across the platform
  */
 export function formatTransactionType(
   type: string,
   typeLabel?: string
 ): string {
-  // Use typeLabel if provided (from API)
+  // Always use "Daily ROS Payout" for ros_payout type, regardless of typeLabel
+  if (type === 'ros_payout') {
+    return 'Daily ROS Payout';
+  }
+
+  // Referral bonuses are earnings, not bonuses - display as "Earning"
+  if (type === 'referral_bonus') {
+    return 'Earning';
+  }
+
+  // Use typeLabel if provided (from API), but clean it up
   if (typeLabel) {
-    return typeLabel;
+    // Replace "Weekly ROS Payout" with "Daily ROS Payout"
+    let label = typeLabel.replace(/Weekly ROS Payout/gi, 'Daily ROS Payout');
+
+    // Replace "Referral Bonus" with "Earning" to ensure consistency
+    label = label.replace(/Referral Bonus/gi, 'Earning');
+
+    // Replace "REF: BONUS" or similar patterns with "Earning"
+    label = label.replace(/REF:\s*BONUS/gi, 'Earning');
+    label = label.replace(/REF\s*BONUS/gi, 'Earning');
+
+    return label;
   }
 
   const types: Record<string, string> = {
@@ -151,14 +176,15 @@ export function formatTransactionType(
     transfer: 'Transfer',
     stake: 'Stake',
     unstake: 'Unstake',
-    ros_payout: 'ROS Payout',
+    ros_payout: 'Daily ROS Payout',
     stake_completion: 'Stake Completion',
     stake_pool_payout: 'Stake Pool Payout',
     performance_pool_payout: 'Performance Pool Payout',
     premium_pool_payout: 'Premium Pool Payout',
-    registration_bonus: 'Registration Bonus',
-    referral_bonus: 'Referral Bonus',
+    registration_bonus: 'Registration Bonus', // Only this one shows as "Bonus"
+    referral_bonus: 'Earning', // Changed from "Referral Bonus" to "Earning"
     bonus_activation: 'Bonus Activation',
+    ranking_bonus: 'Ranking Bonus',
     bonus: 'Bonus',
     fee: 'Fee',
     adjustment: 'Adjustment',

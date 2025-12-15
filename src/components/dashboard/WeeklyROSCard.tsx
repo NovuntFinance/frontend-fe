@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
@@ -18,34 +18,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { rosApi, WeeklySummaryData } from '@/services/rosApi';
+import { useWeeklyROSSummary } from '@/lib/queries';
 import { ShimmerCard } from '@/components/ui/shimmer';
 
 export function WeeklyROSCard() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [data, setData] = useState<WeeklySummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await rosApi.getWeeklySummary();
-        setData(response);
-      } catch (error) {
-        // Only log in development - 404s are handled gracefully by the API
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Weekly summary endpoint not available:', error);
-        }
-        // Set empty data to show component in a "no data" state
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const { data, isLoading: loading } = useWeeklyROSSummary();
 
   // Calculate week progress based on daily breakdown
   const currentDay = data?.dailyBreakdown?.length || 0;
@@ -117,7 +95,7 @@ export function WeeklyROSCard() {
               transition={{ delay: 0.9 }}
               className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-5xl font-black text-transparent"
             >
-              {data?.averageRos?.toFixed(2) || 0}%
+              {data?.weeklyRos?.toFixed(2) || 0}%
             </motion.span>
           )}
 

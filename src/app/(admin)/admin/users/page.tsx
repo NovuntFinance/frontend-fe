@@ -1,128 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminUser } from '@/types/admin';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { useAdminUsers } from '@/lib/queries';
+import { useUpdateUserStatus } from '@/lib/mutations';
+import { AddUserModal } from '@/components/admin/AddUserModal';
+import { AddAdminModal } from '@/components/admin/AddAdminModal';
+import { RankBadge } from '@/components/admin/RankBadge';
+import { adminAuthService } from '@/services/adminAuthService';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedKycStatus, setSelectedKycStatus] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const isLoading = false; // Will be used with actual API calls later
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
-  // Mock users data
-  const mockUsers: AdminUser[] = [
-    {
-      id: '1',
-      fullName: 'John Doe',
-      email: 'john.doe@example.com',
-      phoneNumber: '+1234567890',
-      avatar: '',
-      role: 'user',
-      status: 'active',
-      rank: 'Gold',
-      kycStatus: 'verified',
-      totalInvested: 25000,
-      totalEarned: 5200,
-      activeStakes: 2,
-      totalReferrals: 5,
-      lastLogin: '2023-04-15T10:30:00Z',
-      createdAt: '2023-01-10T08:15:00Z',
-    },
-    {
-      id: '2',
-      fullName: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      phoneNumber: '+1987654321',
-      avatar: '',
-      role: 'user',
-      status: 'active',
-      rank: 'Platinum',
-      kycStatus: 'verified',
-      totalInvested: 75000,
-      totalEarned: 18500,
-      activeStakes: 3,
-      totalReferrals: 12,
-      lastLogin: '2023-04-17T14:22:00Z',
-      createdAt: '2022-11-05T11:42:00Z',
-    },
-    {
-      id: '3',
-      fullName: 'Robert Johnson',
-      email: 'robert.johnson@example.com',
-      phoneNumber: '+1456789012',
-      avatar: '',
-      role: 'admin',
-      status: 'active',
-      rank: 'Diamond',
-      kycStatus: 'verified',
-      totalInvested: 120000,
-      totalEarned: 32000,
-      activeStakes: 5,
-      totalReferrals: 25,
-      lastLogin: '2023-04-18T09:15:00Z',
-      createdAt: '2022-08-20T16:30:00Z',
-    },
-    {
-      id: '4',
-      fullName: 'Emily Davis',
-      email: 'emily.davis@example.com',
-      phoneNumber: '+1654321987',
-      avatar: '',
-      role: 'user',
-      status: 'suspended',
-      rank: 'Silver',
-      kycStatus: 'rejected',
-      totalInvested: 8000,
-      totalEarned: 1200,
-      activeStakes: 0,
-      totalReferrals: 1,
-      lastLogin: '2023-03-25T11:45:00Z',
-      createdAt: '2023-02-28T10:20:00Z',
-    },
-    {
-      id: '5',
-      fullName: 'Michael Wilson',
-      email: 'michael.wilson@example.com',
-      phoneNumber: '+1321654987',
-      avatar: '',
-      role: 'user',
-      status: 'active',
-      rank: 'Bronze',
-      kycStatus: 'pending',
-      totalInvested: 3500,
-      totalEarned: 420,
-      activeStakes: 1,
-      totalReferrals: 0,
-      lastLogin: '2023-04-16T19:30:00Z',
-      createdAt: '2023-03-15T08:40:00Z',
-    },
-  ];
+  // Check if current admin is super admin
+  const currentAdmin = adminAuthService.getCurrentAdmin();
+  const isSuperAdmin = currentAdmin?.role === 'superAdmin';
 
-  // Filter and sort users based on search, filters, and sorting criteria
-  const filteredUsers = mockUsers
-    .filter((user) => {
-      const matchesSearch = searchQuery
-        ? user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.id.toLowerCase().includes(searchQuery.toLowerCase())
-        : true;
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1); // Reset to first page on search
+    }, 500); // 500ms debounce
 
-      const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-      const matchesStatus =
-        selectedStatus === 'all' || user.status === selectedStatus;
-      const matchesKyc =
-        selectedKycStatus === 'all' || user.kycStatus === selectedKycStatus;
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-      return matchesSearch && matchesRole && matchesStatus && matchesKyc;
-    })
-    .sort((a, b) => {
+  // Fetch users from API
+  const {
+    data: usersData,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminUsers({
+    page: currentPage,
+    limit: 10,
+    search: debouncedSearchQuery || undefined,
+    role: selectedRole !== 'all' ? selectedRole : undefined,
+    status: selectedStatus !== 'all' ? selectedStatus : undefined,
+  });
+
+  // Update user status mutation
+  const updateUserStatus = useUpdateUserStatus();
+
+  // Handle suspend/activate
+  const handleStatusChange = async (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    updateUserStatus.mutate({
+      userId,
+      status: newStatus as 'active' | 'suspended',
+    });
+  };
+
+  const users: AdminUser[] = usersData?.users || usersData?.data?.users || [];
+  const pagination = useMemo(() => {
+    const paginationData = usersData?.pagination || usersData?.data?.pagination;
+    return {
+      page: paginationData?.page ?? 1,
+      limit: paginationData?.limit ?? 10,
+      total: paginationData?.total ?? 0,
+      totalPages: paginationData?.totalPages ?? 0,
+    };
+  }, [usersData]);
+
+  // Client-side sorting (API handles filtering and pagination)
+  const sortedUsers = useMemo(() => {
+    if (!users.length) return [];
+
+    return [...users].sort((a, b) => {
       let comparison = 0;
 
       switch (sortBy) {
@@ -136,11 +92,13 @@ export default function UsersPage() {
           comparison =
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
-        case 'invested':
+        case 'staked':
           comparison = a.totalInvested - b.totalInvested;
           break;
         case 'rank':
-          comparison = a.rank.localeCompare(b.rank);
+          const rankA = a.rank || a.rankInfo?.currentRank || '';
+          const rankB = b.rank || b.rankInfo?.currentRank || '';
+          comparison = rankA.localeCompare(rankB);
           break;
         default:
           comparison = 0;
@@ -148,14 +106,7 @@ export default function UsersPage() {
 
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-
-  // Pagination
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  }, [users, sortBy, sortDirection]);
 
   // Handle sort click
   const handleSort = (column: string) => {
@@ -227,78 +178,6 @@ export default function UsersPage() {
     );
   };
 
-  // KYC badge component
-  const KycBadge = ({ status }: { status: string }) => {
-    let bgColor = '';
-    let textColor = '';
-
-    switch (status) {
-      case 'verified':
-        bgColor = 'bg-green-100 dark:bg-green-900/30';
-        textColor = 'text-green-800 dark:text-green-400';
-        break;
-      case 'pending':
-        bgColor = 'bg-amber-100 dark:bg-amber-900/30';
-        textColor = 'text-amber-800 dark:text-amber-400';
-        break;
-      case 'rejected':
-        bgColor = 'bg-red-100 dark:bg-red-900/30';
-        textColor = 'text-red-800 dark:text-red-400';
-        break;
-      default:
-        bgColor = 'bg-gray-100 dark:bg-gray-700';
-        textColor = 'text-gray-800 dark:text-gray-300';
-    }
-
-    return (
-      <span
-        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor} ${textColor}`}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
-
-  // Rank badge component
-  const RankBadge = ({ rank }: { rank: string }) => {
-    let bgColor = '';
-    let textColor = '';
-
-    switch (rank) {
-      case 'Bronze':
-        bgColor = 'bg-amber-100 dark:bg-amber-900/30';
-        textColor = 'text-amber-800 dark:text-amber-400';
-        break;
-      case 'Silver':
-        bgColor = 'bg-gray-100 dark:bg-gray-700';
-        textColor = 'text-gray-800 dark:text-gray-300';
-        break;
-      case 'Gold':
-        bgColor = 'bg-yellow-100 dark:bg-yellow-900/30';
-        textColor = 'text-yellow-800 dark:text-yellow-400';
-        break;
-      case 'Platinum':
-        bgColor = 'bg-blue-100 dark:bg-blue-900/30';
-        textColor = 'text-blue-800 dark:text-blue-400';
-        break;
-      case 'Diamond':
-        bgColor = 'bg-indigo-100 dark:bg-indigo-900/30';
-        textColor = 'text-indigo-800 dark:text-indigo-400';
-        break;
-      default:
-        bgColor = 'bg-gray-100 dark:bg-gray-700';
-        textColor = 'text-gray-800 dark:text-gray-300';
-    }
-
-    return (
-      <span
-        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor} ${textColor}`}
-      >
-        {rank}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -325,7 +204,32 @@ export default function UsersPage() {
             </svg>
             Export CSV
           </button>
-          <button className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowAddAdminModal(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Admin
+            </button>
+          )}
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -399,26 +303,11 @@ export default function UsersPage() {
               <option value="suspended">Suspended</option>
             </select>
           </div>
-
-          {/* KYC Status Filter */}
-          <div className="w-full md:w-auto">
-            <select
-              className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-10 pl-3 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
-              value={selectedKycStatus}
-              onChange={(e) => setSelectedKycStatus(e.target.value)}
-            >
-              <option value="all">All KYC Status</option>
-              <option value="verified">Verified</option>
-              <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
-              <option value="not_submitted">Not Submitted</option>
-            </select>
-          </div>
         </div>
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {filteredUsers.length} users found
+            {pagination.total} users found
           </p>
           <button
             className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -426,7 +315,7 @@ export default function UsersPage() {
               setSearchQuery('');
               setSelectedRole('all');
               setSelectedStatus('all');
-              setSelectedKycStatus('all');
+              setCurrentPage(1);
             }}
           >
             Clear filters
@@ -559,10 +448,10 @@ export default function UsersPage() {
               >
                 <div
                   className="flex cursor-pointer items-center"
-                  onClick={() => handleSort('invested')}
+                  onClick={() => handleSort('staked')}
                 >
-                  <span>Invested</span>
-                  {sortBy === 'invested' && (
+                  <span>Staked</span>
+                  {sortBy === 'staked' && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="ml-1 h-4 w-4"
@@ -588,12 +477,6 @@ export default function UsersPage() {
                     </svg>
                   )}
                 </div>
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
-              >
-                KYC
               </th>
               <th
                 scope="col"
@@ -657,8 +540,8 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ))
-            ) : paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => (
+            ) : sortedUsers.length > 0 ? (
+              sortedUsers.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -702,18 +585,16 @@ export default function UsersPage() {
                     <RoleBadge role={user.role} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <RankBadge rank={user.rank} />
+                    <RankBadge user={user} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-100">
                       ${user.totalInvested.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {user.activeStakes} active stakes
+                      {user.activeStakes || 0} active stake
+                      {user.activeStakes !== 1 ? 's' : ''}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <KycBadge status={user.kycStatus} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={user.status} />
@@ -726,13 +607,23 @@ export default function UsersPage() {
                       <Link
                         href={`/admin/users/${user.id}`}
                         className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        onClick={(e) => {
+                          // Prevent navigation if user detail page doesn't exist yet
+                          // Will be handled by the page itself
+                        }}
                       >
                         View
                       </Link>
                       <button
-                        className={`${user.status === 'active' ? 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300' : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'}`}
+                        onClick={() => handleStatusChange(user.id, user.status)}
+                        disabled={updateUserStatus.isPending}
+                        className={`${user.status === 'active' ? 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300' : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'} disabled:cursor-not-allowed disabled:opacity-50`}
                       >
-                        {user.status === 'active' ? 'Suspend' : 'Activate'}
+                        {updateUserStatus.isPending
+                          ? 'Updating...'
+                          : user.status === 'active'
+                            ? 'Suspend'
+                            : 'Activate'}
                       </button>
                     </div>
                   </td>
@@ -752,21 +643,66 @@ export default function UsersPage() {
         </table>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                Failed to load users
+              </h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                <p>
+                  {error instanceof Error
+                    ? error.message
+                    : 'An error occurred while fetching users. Please try again.'}
+                </p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => refetch()}
+                  className="text-sm font-medium text-red-800 hover:text-red-900 dark:text-red-200 dark:hover:text-red-100"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pagination */}
-      {filteredUsers.length > 0 && (
+      {pagination && pagination.total > 0 && (
         <div className="flex items-center justify-between rounded-lg border-t border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-gray-700 dark:bg-gray-800">
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Showing{' '}
                 <span className="font-medium">
-                  {(currentPage - 1) * itemsPerPage + 1}
+                  {(pagination.page - 1) * pagination.limit + 1}
                 </span>{' '}
                 to{' '}
                 <span className="font-medium">
-                  {Math.min(currentPage * itemsPerPage, filteredUsers.length)}
+                  {Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.total
+                  )}
                 </span>{' '}
-                of <span className="font-medium">{filteredUsers.length}</span>{' '}
+                of <span className="font-medium">{pagination.total}</span>{' '}
                 results
               </p>
             </div>
@@ -801,18 +737,20 @@ export default function UsersPage() {
                   </svg>
                 </button>
 
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                {Array.from({
+                  length: Math.min(5, pagination?.totalPages || 0),
+                }).map((_, i) => {
                   // Show pages around current page
                   const pageToShow = Math.min(
                     Math.max(currentPage - 2 + i, 1),
-                    totalPages
+                    pagination?.totalPages || 1
                   );
 
                   // Only show the page if it hasn't been shown yet
                   const hasShown = Array.from({ length: i }).some((_, j) => {
                     const prevPageToShow = Math.min(
                       Math.max(currentPage - 2 + j, 1),
-                      totalPages
+                      pagination?.totalPages || 1
                     );
                     return prevPageToShow === pageToShow;
                   });
@@ -838,11 +776,13 @@ export default function UsersPage() {
 
                 <button
                   onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    setCurrentPage((prev) =>
+                      Math.min(prev + 1, pagination?.totalPages || 1)
+                    )
                   }
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage >= (pagination?.totalPages || 0)}
                   className={`relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium dark:border-gray-600 dark:bg-gray-800 ${
-                    currentPage === totalPages
+                    currentPage >= (pagination?.totalPages || 0)
                       ? 'text-gray-300 dark:text-gray-600'
                       : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'
                   }`}
@@ -865,6 +805,24 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modals */}
+      <AddUserModal
+        open={showAddUserModal}
+        onOpenChange={(open) => {
+          setShowAddUserModal(open);
+          if (!open) refetch();
+        }}
+      />
+      {isSuperAdmin && (
+        <AddAdminModal
+          open={showAddAdminModal}
+          onOpenChange={(open) => {
+            setShowAddAdminModal(open);
+            if (!open) refetch();
+          }}
+        />
       )}
     </div>
   );

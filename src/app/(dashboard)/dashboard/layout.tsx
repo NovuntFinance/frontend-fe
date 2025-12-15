@@ -22,6 +22,7 @@ import {
   Gift,
   Shield,
   Fingerprint,
+  Award,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +30,8 @@ import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
 import { useDisable2FA } from '@/lib/mutations';
 import { Avatar } from '@/components/ui/avatar';
-import { getUserAvatarUrl } from '@/lib/avatar-utils';
+import { BadgeAvatar } from '@/components/ui/BadgeAvatar';
+import { getUserAvatarUrl, isBadgeIcon } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -67,6 +69,7 @@ const navigation: NavItem[] = [
   { name: 'Stakes', href: '/dashboard/stakes', icon: TrendingUp },
   { name: 'Team', href: '/dashboard/team', icon: Users },
   { name: 'Pools', href: '/dashboard/pools', icon: Gift },
+  { name: 'Achievements', href: '/dashboard/achievements', icon: Award },
 ];
 
 /**
@@ -219,13 +222,30 @@ export default function DashboardLayout({
             {/* User profile card */}
             <div className="border-t border-white/20 p-4 dark:border-white/10">
               <div className="flex items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/60 dark:border-white/10 dark:bg-gray-800/40 dark:hover:bg-gray-800/60">
-                <Avatar className="h-10 w-10">
-                  <img
-                    src={getUserAvatarUrl(user) || ''}
-                    alt={user?.firstName || 'User'}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                </Avatar>
+                {(() => {
+                  const avatarUrl = getUserAvatarUrl(user);
+                  const isBadge = avatarUrl && isBadgeIcon(avatarUrl);
+
+                  if (isBadge && avatarUrl) {
+                    return (
+                      <BadgeAvatar
+                        badgeIcon={avatarUrl}
+                        size="md"
+                        className="h-10 w-10"
+                      />
+                    );
+                  }
+
+                  return (
+                    <Avatar className="h-10 w-10">
+                      <img
+                        src={avatarUrl || ''}
+                        alt={user?.firstName || 'User'}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </Avatar>
+                  );
+                })()}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
                     {user?.firstName} {user?.lastName}
@@ -305,13 +325,30 @@ export default function DashboardLayout({
                       size="icon"
                       className="h-10 w-10 rounded-full p-0"
                     >
-                      <Avatar className="h-10 w-10">
-                        <img
-                          src={getUserAvatarUrl(user) || ''}
-                          alt={user?.firstName || 'User'}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      </Avatar>
+                      {(() => {
+                        const avatarUrl = getUserAvatarUrl(user);
+                        const isBadge = avatarUrl && isBadgeIcon(avatarUrl);
+
+                        if (isBadge && avatarUrl) {
+                          return (
+                            <BadgeAvatar
+                              badgeIcon={avatarUrl}
+                              size="md"
+                              className="h-10 w-10"
+                            />
+                          );
+                        }
+
+                        return (
+                          <Avatar className="h-10 w-10">
+                            <img
+                              src={avatarUrl || ''}
+                              alt={user?.firstName || 'User'}
+                              className="h-full w-full rounded-full object-cover"
+                            />
+                          </Avatar>
+                        );
+                      })()}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
