@@ -399,7 +399,7 @@ export function WalletDashboard() {
         initial={reducedMotion ? false : { opacity: 0, y: 20 }}
         animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-2 gap-4 md:grid-cols-4"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 md:gap-6"
       >
         <StatCard
           label="Total Deposited"
