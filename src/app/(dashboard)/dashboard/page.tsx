@@ -644,17 +644,18 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+                  <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
                     {isLoading ? (
                       <ShimmerCard className="h-16 sm:h-20" />
                     ) : (
-                      <div className="mb-2 flex min-w-0 items-baseline gap-2 sm:mb-4 sm:gap-3">
+                      <div className="mb-2 flex w-full min-w-0 items-baseline gap-2 sm:mb-4 sm:gap-3">
                         <motion.span
                           initial={{ opacity: 0, scale: 0.5 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.9 }}
                           key={stat.value ?? 0}
-                          className={`bg-gradient-to-r ${colors.textGradient} bg-clip-text text-2xl leading-tight font-black break-all text-transparent sm:text-3xl md:text-4xl lg:text-5xl`}
+                          className={`bg-gradient-to-r ${colors.textGradient} overflow-visible bg-clip-text text-2xl leading-tight font-black whitespace-nowrap text-transparent sm:text-3xl md:text-4xl lg:text-5xl`}
+                          style={{ wordBreak: 'keep-all' }}
                         >
                           {balanceVisible
                             ? stat.displayValue ||
