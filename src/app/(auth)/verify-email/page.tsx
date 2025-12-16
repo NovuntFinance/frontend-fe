@@ -258,8 +258,10 @@ function VerifyEmailContent() {
         </motion.div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Email Verified!</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            Email Verified!
+          </h1>
+          <p className="text-white/70">
             Your email has been successfully verified. Redirecting to login...
           </p>
         </div>
@@ -271,11 +273,13 @@ function VerifyEmailContent() {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2 text-center">
-        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
-          <Mail className="text-primary h-8 w-8" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20 backdrop-blur-sm">
+          <Mail className="h-8 w-8 text-indigo-400" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Verify your email</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Verify your email
+        </h1>
+        <p className="text-white/70">
           We&apos;ve sent a 6-digit verification code to
           <br />
           <span className="text-foreground font-medium">{email}</span>
@@ -284,9 +288,11 @@ function VerifyEmailContent() {
 
       {/* Error Alert */}
       {errors.root && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errors.root.message}</AlertDescription>
+        <Alert className="mb-6 border-red-500/50 bg-red-500/10 backdrop-blur-sm">
+          <AlertCircle className="h-4 w-4 text-red-400" />
+          <AlertDescription className="text-red-200">
+            {errors.root.message}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -301,13 +307,15 @@ function VerifyEmailContent() {
       )}
 
       {/* Verification Form */}
-      <Card className="border-border/50 relative overflow-hidden shadow-2xl">
+      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
         {/* Gradient Background */}
-        <div className="from-primary/5 to-accent/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
 
         <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl">Enter Verification Code</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">
+            Enter Verification Code
+          </CardTitle>
+          <CardDescription className="text-white/70">
             Please enter the 6-digit code we sent to your email
           </CardDescription>
         </CardHeader>

@@ -376,17 +376,17 @@ function SignupPageContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="mb-8 space-y-2 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
           Create your account
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-white/70">
           Join thousands of stakeholders and start earning today
         </p>
       </div>
 
       {/* Progress Steps */}
-      <div className="from-muted/50 via-muted/30 to-muted/50 border-border/50 flex items-center justify-between rounded-2xl border bg-gradient-to-r p-6 shadow-lg">
+      <div className="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 bg-gradient-to-r p-6 shadow-lg backdrop-blur-sm">
         {STEPS.map((step, index) => (
           <div key={step.id} className="flex flex-1 items-center">
             <div className="flex flex-1 flex-col items-center">
@@ -428,22 +428,24 @@ function SignupPageContent() {
 
       {/* Error Alert */}
       {errors.root && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errors.root.message}</AlertDescription>
+        <Alert className="mb-6 border-red-500/50 bg-red-500/10 backdrop-blur-sm">
+          <AlertCircle className="h-4 w-4 text-red-400" />
+          <AlertDescription className="text-red-200">
+            {errors.root.message}
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Form Card */}
-      <Card className="border-border/50 relative overflow-hidden shadow-2xl">
+      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
         {/* Gradient Background */}
-        <div className="from-primary/5 to-secondary/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
 
         <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-bold text-white">
             {STEPS[currentStep - 1].title}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-white/70">
             {STEPS[currentStep - 1].description}
           </CardDescription>
         </CardHeader>
@@ -462,7 +464,9 @@ function SignupPageContent() {
                 >
                   {/* Email */}
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email" className="text-white/90">
+                      Email Address
+                    </Label>
                     <div className="relative">
                       <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
@@ -484,14 +488,16 @@ function SignupPageContent() {
 
                   {/* Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-white/90">
+                      Password
+                    </Label>
                     <div className="relative">
                       <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Create a strong password"
-                        className="pr-10 pl-10"
+                        className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         autoComplete="new-password"
                         {...register('password')}
                         aria-invalid={errors.password ? 'true' : 'false'}
@@ -520,14 +526,16 @@ function SignupPageContent() {
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword" className="text-white/90">
+                      Confirm Password
+                    </Label>
                     <div className="relative">
                       <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Confirm your password"
-                        className="pr-10 pl-10"
+                        className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         autoComplete="new-password"
                         {...register('confirmPassword')}
                         aria-invalid={errors.confirmPassword ? 'true' : 'false'}
@@ -566,7 +574,9 @@ function SignupPageContent() {
                 >
                   {/* Username */}
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username" className="text-white/90">
+                      Username
+                    </Label>
                     <div className="relative">
                       <AtSign className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
@@ -588,7 +598,9 @@ function SignupPageContent() {
 
                   {/* First Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName" className="text-white/90">
+                      First Name
+                    </Label>
                     <div className="relative">
                       <User className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
@@ -610,7 +622,9 @@ function SignupPageContent() {
 
                   {/* Last Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName" className="text-white/90">
+                      Last Name
+                    </Label>
                     <div className="relative">
                       <User className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                       <Input
@@ -634,7 +648,7 @@ function SignupPageContent() {
                   <div className="space-y-2">
                     <Label
                       htmlFor="phoneNumber"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 text-white/90"
                     >
                       Phone Number <span className="text-destructive">*</span>
                     </Label>
@@ -685,9 +699,9 @@ function SignupPageContent() {
                 >
                   {/* Referral Code (Optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="referralCode">
+                    <Label htmlFor="referralCode" className="text-white/90">
                       Referral Code{' '}
-                      <span className="text-muted-foreground">(Optional)</span>
+                      <span className="text-white/60">(Optional)</span>
                     </Label>
                     <div className="relative">
                       <Gift className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
@@ -760,7 +774,7 @@ function SignupPageContent() {
                   type="button"
                   variant="outline"
                   onClick={handlePrevious}
-                  className="hover:border-primary/50 flex-1 transition-all duration-300"
+                  className="flex-1 border-white/20 bg-white/5 text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-white/30 hover:bg-white/10"
                   size="lg"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -772,7 +786,7 @@ function SignupPageContent() {
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="flex-1 bg-blue-600 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-700 hover:shadow-xl dark:bg-blue-500 dark:hover:bg-blue-600"
+                  className="flex-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
                   size="lg"
                 >
                   Continue
@@ -781,7 +795,7 @@ function SignupPageContent() {
               ) : (
                 <Button
                   type="submit"
-                  className="flex-1 bg-emerald-600 font-bold text-white shadow-lg transition-all duration-300 hover:bg-emerald-700 hover:shadow-xl dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 font-bold text-white shadow-lg shadow-emerald-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/70 active:scale-[0.98]"
                   size="lg"
                   disabled={isSubmitting || signupMutation.isPending}
                 >
@@ -797,11 +811,11 @@ function SignupPageContent() {
       </Card>
 
       {/* Sign In Link */}
-      <div className="text-center text-sm">
-        <span className="text-muted-foreground">Already have an account? </span>
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm backdrop-blur-sm">
+        <span className="text-white/70">Already have an account? </span>
         <Link
           href="/login"
-          className="text-primary font-semibold hover:underline"
+          className="font-semibold text-indigo-400 hover:text-indigo-300 hover:underline"
         >
           Sign in
         </Link>
