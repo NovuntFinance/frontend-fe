@@ -560,21 +560,36 @@ export function ProfileEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-[95vw] overflow-y-auto p-4 sm:max-h-[90vh] sm:max-w-xl sm:p-6 md:max-w-2xl">
+      <DialogContent className="max-h-[85vh] max-w-[95vw] overflow-y-auto border border-white/10 bg-gradient-to-br from-slate-900/95 via-indigo-950/95 to-slate-900/95 p-4 shadow-2xl backdrop-blur-xl sm:max-h-[90vh] sm:max-w-xl sm:p-6 md:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold sm:text-2xl">
+          <DialogTitle className="text-xl font-bold text-white sm:text-2xl">
             Edit Profile
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base">
+          <DialogDescription className="text-sm text-white/70 sm:text-base">
             Update your personal information and account settings
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="personal">Personal Info</TabsTrigger>
-            <TabsTrigger value="avatar">Avatar</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 border border-white/10 bg-white/5 backdrop-blur-sm">
+            <TabsTrigger
+              value="personal"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Personal Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="avatar"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Avatar
+            </TabsTrigger>
+            <TabsTrigger
+              value="security"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Security
+            </TabsTrigger>
           </TabsList>
 
           {/* Personal Information Tab */}
@@ -585,44 +600,46 @@ export function ProfileEditModal({
               className="space-y-6"
             >
               {/* Name Section */}
-              <div className="border-border bg-card/50 rounded-lg border p-4">
-                <h3 className="mb-4 text-sm font-semibold">Full Name</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Full Name
+                </h3>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">
-                      First Name <span className="text-red-500">*</span>
+                    <Label htmlFor="firstName" className="text-white/90">
+                      First Name <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <UserIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="firstName"
                         {...register('firstName')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="John"
                       />
                     </div>
                     {errors.firstName && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-red-400">
                         {errors.firstName.message}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">
-                      Last Name <span className="text-red-500">*</span>
+                    <Label htmlFor="lastName" className="text-white/90">
+                      Last Name <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <UserIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="lastName"
                         {...register('lastName')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="Doe"
                       />
                     </div>
                     {errors.lastName && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-red-400">
                         {errors.lastName.message}
                       </p>
                     )}
@@ -631,11 +648,13 @@ export function ProfileEditModal({
               </div>
 
               {/* Phone Number Section */}
-              <div className="border-border bg-card/50 rounded-lg border p-4">
-                <h3 className="mb-4 text-sm font-semibold">Phone Number</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Phone Number
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">
-                    Phone Number <span className="text-red-500">*</span>
+                  <Label htmlFor="phoneNumber" className="text-white/90">
+                    Phone Number <span className="text-red-400">*</span>
                   </Label>
                   <Controller
                     name="phoneNumber"
@@ -652,30 +671,32 @@ export function ProfileEditModal({
                     )}
                   />
                   {errors.phoneNumber && (
-                    <p className="text-sm text-red-500">
+                    <p className="text-sm text-red-400">
                       {errors.phoneNumber.message}
                     </p>
                   )}
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-xs text-white/60">
                     Include country code (e.g., +1 for USA)
                   </p>
                 </div>
               </div>
 
               {/* Date of Birth Section */}
-              <div className="border-border bg-card/50 rounded-lg border p-4">
-                <h3 className="mb-4 text-sm font-semibold">Date of Birth</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Date of Birth
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">
-                    Date of Birth <span className="text-red-500">*</span>
+                  <Label htmlFor="dateOfBirth" className="text-white/90">
+                    Date of Birth <span className="text-red-400">*</span>
                   </Label>
                   <div className="relative">
-                    <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Calendar className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                     <Input
                       id="dateOfBirth"
                       type="date"
                       {...register('dateOfBirth')}
-                      className="pl-10"
+                      className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                       max={(() => {
                         // Set max date to 18 years ago
                         const today = new Date();
@@ -689,22 +710,24 @@ export function ProfileEditModal({
                     />
                   </div>
                   {errors.dateOfBirth && (
-                    <p className="text-sm text-red-500">
+                    <p className="text-sm text-red-400">
                       {errors.dateOfBirth.message}
                     </p>
                   )}
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-xs text-white/60">
                     You must be at least 18 years old
                   </p>
                 </div>
               </div>
 
               {/* Gender Section */}
-              <div className="border-border bg-card/50 rounded-lg border p-4">
-                <h3 className="mb-4 text-sm font-semibold">Gender</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Gender
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">
-                    Gender <span className="text-red-500">*</span>
+                  <Label htmlFor="gender" className="text-white/90">
+                    Gender <span className="text-red-400">*</span>
                   </Label>
                   <Controller
                     name="gender"
@@ -714,23 +737,41 @@ export function ProfileEditModal({
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger className="w-full">
-                          <UserIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                        <SelectTrigger className="w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15">
+                          <UserIcon className="mr-2 h-4 w-4 text-white/50" />
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="prefer_not_to_say">
+                        <SelectContent className="border-white/10 bg-slate-900/95 text-white backdrop-blur-xl">
+                          <SelectItem
+                            value="prefer_not_to_say"
+                            className="text-white focus:bg-white/10"
+                          >
                             Prefer not to say
                           </SelectItem>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem
+                            value="male"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Male
+                          </SelectItem>
+                          <SelectItem
+                            value="female"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Female
+                          </SelectItem>
+                          <SelectItem
+                            value="other"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Other
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     )}
                   />
                   {errors.gender && (
-                    <p className="text-sm text-red-500">
+                    <p className="text-sm text-red-400">
                       {errors.gender.message}
                     </p>
                   )}
@@ -738,25 +779,27 @@ export function ProfileEditModal({
               </div>
 
               {/* Address Section */}
-              <div className="border-border bg-card/50 rounded-lg border p-4">
-                <h3 className="mb-4 text-sm font-semibold">Address</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Address
+                </h3>
                 <div className="space-y-4">
                   {/* Street Address */}
                   <div className="space-y-2">
-                    <Label htmlFor="addressStreet">
-                      Street Address <span className="text-red-500">*</span>
+                    <Label htmlFor="addressStreet" className="text-white/90">
+                      Street Address <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <MapPinIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                      <MapPinIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="addressStreet"
                         {...register('addressStreet')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="123 Main Street"
                       />
                     </div>
                     {errors.addressStreet && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-red-400">
                         {errors.addressStreet.message}
                       </p>
                     )}
@@ -765,32 +808,34 @@ export function ProfileEditModal({
                   {/* City and State */}
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="addressCity">
-                        City <span className="text-red-500">*</span>
+                      <Label htmlFor="addressCity" className="text-white/90">
+                        City <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressCity"
                         {...register('addressCity')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="City"
                       />
                       {errors.addressCity && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-red-400">
                           {errors.addressCity.message}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="addressState">
-                        State/Province <span className="text-red-500">*</span>
+                      <Label htmlFor="addressState" className="text-white/90">
+                        State/Province <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressState"
                         {...register('addressState')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="State/Province"
                       />
                       {errors.addressState && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-red-400">
                           {errors.addressState.message}
                         </p>
                       )}
@@ -800,32 +845,37 @@ export function ProfileEditModal({
                   {/* Country and Postal Code */}
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="addressCountry">
-                        Country <span className="text-red-500">*</span>
+                      <Label htmlFor="addressCountry" className="text-white/90">
+                        Country <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressCountry"
                         {...register('addressCountry')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="Country"
                       />
                       {errors.addressCountry && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-red-400">
                           {errors.addressCountry.message}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="addressPostalCode">
-                        Postal/ZIP Code <span className="text-red-500">*</span>
+                      <Label
+                        htmlFor="addressPostalCode"
+                        className="text-white/90"
+                      >
+                        Postal/ZIP Code <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressPostalCode"
                         {...register('addressPostalCode')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="12345"
                       />
                       {errors.addressPostalCode && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-red-400">
                           {errors.addressPostalCode.message}
                         </p>
                       )}
@@ -839,7 +889,7 @@ export function ProfileEditModal({
                 <Button
                   type="submit"
                   disabled={!isDirty || isSubmitting}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
                 >
                   {isSubmitting ? (
                     <>
@@ -857,21 +907,23 @@ export function ProfileEditModal({
             </form>
 
             {/* Read-only Fields */}
-            <div className="space-y-4 border-t pt-6">
-              <h3 className="text-muted-foreground text-sm font-semibold">
+            <div className="space-y-4 border-t border-white/10 pt-6">
+              <h3 className="text-sm font-semibold text-white/70">
                 Account Information (Cannot be changed)
               </h3>
 
               {/* Email (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-white/90">
+                  Email
+                </Label>
                 <div className="relative">
-                  <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="email"
                     value={user.email}
                     disabled
-                    className="bg-muted cursor-not-allowed pl-10 opacity-60"
+                    className="cursor-not-allowed border-white/10 bg-white/5 pl-10 text-white/60 opacity-60"
                   />
                 </div>
                 <p className="text-muted-foreground text-xs">
@@ -881,17 +933,19 @@ export function ProfileEditModal({
 
               {/* Username (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="text-white/90">
+                  Username
+                </Label>
                 <div className="relative">
-                  <AtSign className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <AtSign className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="username"
                     value={user.username}
                     disabled
-                    className="bg-muted cursor-not-allowed pl-10 opacity-60"
+                    className="cursor-not-allowed border-white/10 bg-white/5 pl-10 text-white/60 opacity-60"
                   />
                 </div>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-xs text-white/60">
                   Username is permanent and cannot be changed
                 </p>
               </div>
@@ -903,9 +957,19 @@ export function ProfileEditModal({
             <div className="space-y-6">
               {/* Sub-tabs for Avatar Selection */}
               <Tabs defaultValue="generated" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="generated">Generated Avatars</TabsTrigger>
-                  <TabsTrigger value="badges">Badge Avatars</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 border border-white/10 bg-white/5 backdrop-blur-sm">
+                  <TabsTrigger
+                    value="generated"
+                    className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                  >
+                    Generated Avatars
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="badges"
+                    className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                  >
+                    Badge Avatars
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="generated" className="mt-4">
@@ -942,30 +1006,32 @@ export function ProfileEditModal({
               className="space-y-6"
             >
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Change Password</h3>
-                <p className="text-muted-foreground text-sm">
+                <h3 className="text-lg font-semibold text-white">
+                  Change Password
+                </h3>
+                <p className="text-sm text-white/60">
                   Ensure your account stays secure by using a strong password
                 </p>
               </div>
 
               {/* Current Password */}
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">
-                  Current Password <span className="text-red-500">*</span>
+                <Label htmlFor="currentPassword" className="text-white/90">
+                  Current Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="currentPassword"
                     type={showCurrentPassword ? 'text' : 'password'}
                     {...registerPassword('currentPassword')}
-                    className="pr-10 pl-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Enter current password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showCurrentPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -975,7 +1041,7 @@ export function ProfileEditModal({
                   </button>
                 </div>
                 {passwordErrors.currentPassword && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-400">
                     {passwordErrors.currentPassword.message}
                   </p>
                 )}
@@ -983,22 +1049,22 @@ export function ProfileEditModal({
 
               {/* New Password */}
               <div className="space-y-2">
-                <Label htmlFor="newPassword">
-                  New Password <span className="text-red-500">*</span>
+                <Label htmlFor="newPassword" className="text-white/90">
+                  New Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     {...registerPassword('newPassword')}
-                    className="pr-10 pl-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Enter new password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showNewPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -1008,7 +1074,7 @@ export function ProfileEditModal({
                   </button>
                 </div>
                 {passwordErrors.newPassword && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-400">
                     {passwordErrors.newPassword.message}
                   </p>
                 )}
@@ -1020,22 +1086,22 @@ export function ProfileEditModal({
 
               {/* Confirm New Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmNewPassword">
-                  Confirm New Password <span className="text-red-500">*</span>
+                <Label htmlFor="confirmNewPassword" className="text-white/90">
+                  Confirm New Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="confirmNewPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     {...registerPassword('confirmNewPassword')}
-                    className="pr-10 pl-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Confirm new password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -1045,7 +1111,7 @@ export function ProfileEditModal({
                   </button>
                 </div>
                 {passwordErrors.confirmNewPassword && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-400">
                     {passwordErrors.confirmNewPassword.message}
                   </p>
                 )}
@@ -1060,13 +1126,14 @@ export function ProfileEditModal({
                     resetPasswordForm();
                     setActiveTab('personal');
                   }}
+                  className="border-white/20 bg-white/5 text-white/90 backdrop-blur-sm hover:border-white/30 hover:bg-white/10"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isPasswordSubmitting}
-                  className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                  className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white shadow-lg shadow-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/70 active:scale-[0.98]"
                 >
                   {isPasswordSubmitting ? (
                     <>

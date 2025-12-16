@@ -51,6 +51,8 @@ import {
   type StakingStreakResponse,
 } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
+import { announcementsApi } from '@/services/announcementsApi';
+import type { Announcement } from '@/types/announcement';
 
 // Query Keys (for cache management)
 export const queryKeys = {
@@ -136,6 +138,10 @@ export const queryKeys = {
   todayProfit: ['daily-profit', 'today'] as const,
   profitHistory: (limit?: number, offset?: number) =>
     ['daily-profit', 'history', limit, offset] as const,
+
+  // Announcements
+  announcements: ['announcements'] as const,
+  activeAnnouncements: ['announcements', 'active'] as const,
 };
 
 // Backend response format (from COMPLETE_FINANCIAL_SYSTEM_DOCUMENTATION.md)
@@ -1917,5 +1923,27 @@ export function useProfitHistory(limit: number = 30, offset: number = 0) {
     },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+/**
+ * Hook to fetch active announcements for the information marquee
+ * Auto-refetches every 2 minutes to show latest announcements
+ * Public endpoint - no authentication required
+ * Gracefully handles 404 (returns empty array if endpoint doesn't exist yet)
+ */
+export function useActiveAnnouncements() {
+  return useQuery({
+    queryKey: queryKeys.activeAnnouncements,
+    queryFn: async (): Promise<Announcement[]> => {
+      // The API service handles all errors and returns empty array
+      // No need for additional error handling here
+      return await announcementsApi.getActiveAnnouncements();
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes - announcements can change frequently
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes to catch new announcements
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    retry: false, // Don't retry - API service handles 404 gracefully
+    retryOnMount: false, // Don't retry on mount if it failed
   });
 }

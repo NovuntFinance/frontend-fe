@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
-import { BiometricButton } from '@/components/auth/BiometricButton';
 import Loading from '@/components/ui/loading';
 
 /**
@@ -33,7 +32,6 @@ import Loading from '@/components/ui/loading';
  * Features:
  * - Email/password authentication
  * - MFA support
- * - Biometric login (future)
  * - Error handling
  * - Loading states
  */
@@ -152,17 +150,6 @@ function LoginPageContent() {
     }
     return undefined;
   }, [isAuthenticated, hasRedirected, router, searchParams]);
-
-  // Handle biometric login success
-  const handleBiometricSuccess = (credentials: {
-    email: string;
-    password: string;
-  }) => {
-    setValue('email', credentials.email);
-    setValue('password', credentials.password);
-    // Auto-submit
-    handleSubmit(onSubmit)();
-  };
 
   // Handle login submission
   const onSubmit = async (data: LoginFormData) => {
@@ -739,12 +726,6 @@ function LoginPageContent() {
               )}
               Sign In
             </Button>
-
-            {/* Biometric Login */}
-            <BiometricButton
-              onSuccess={handleBiometricSuccess}
-              disabled={isSubmitting || loginMutation.isPending}
-            />
           </CardFooter>
         </form>
       </Card>

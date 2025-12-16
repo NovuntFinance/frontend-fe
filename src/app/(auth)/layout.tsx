@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Disable static generation
 export const dynamic = 'force-dynamic';
@@ -26,13 +29,14 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-950 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-950 text-white dark:from-slate-950 dark:via-indigo-950 dark:to-slate-950">
       {/* Animated Background */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <GradientBlob className="top-[-20%] left-[-10%] h-[80vh] w-[80vw] animate-pulse bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500" />
@@ -57,6 +61,17 @@ export default function AuthLayout({
           />
         </Link>
         <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white/80 hover:bg-white/10 hover:text-white"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label="Toggle theme"
+          >
+            <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+            <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+          </Button>
           <Link
             href="/login"
             className="text-sm font-medium text-white/80 transition-colors hover:text-white"

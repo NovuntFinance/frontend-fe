@@ -127,14 +127,23 @@ export async function getUnreadCount(): Promise<number> {
         !error?.response; // No response means network error
 
       if (isNetworkError) {
-        // Log once, not repeatedly
-        console.warn(
-          '[notificationApi.getUnreadCount] Network error (backend may be unavailable):',
-          error?.message || 'Network Error'
-        );
+        // Log once per session, not repeatedly
+        const logKey = 'notification_api_network_error_logged';
+        if (typeof window !== 'undefined' && !sessionStorage.getItem(logKey)) {
+          console.debug(
+            '[notificationApi.getUnreadCount] Network error (backend may be unavailable)'
+          );
+          sessionStorage.setItem(logKey, 'true');
+        }
       } else {
-        // Log actual API errors (4xx, 5xx)
-        console.error('[notificationApi.getUnreadCount] API error:', error);
+        // Log actual API errors (4xx, 5xx) only if they have meaningful content
+        if (error && (error as any).response) {
+          console.error('[notificationApi.getUnreadCount] API error:', error);
+        } else if (process.env.NODE_ENV === 'development') {
+          console.debug(
+            '[notificationApi.getUnreadCount] Network error (suppressed)'
+          );
+        }
       }
     }
 

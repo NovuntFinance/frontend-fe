@@ -20,25 +20,41 @@ import { cn } from '@/lib/utils';
 
 interface NotificationCenterProps {
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
 }
 
-export function NotificationCenter({ className }: NotificationCenterProps) {
-  const [open, setOpen] = useState(false);
+export function NotificationCenter({
+  className,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  trigger,
+}: NotificationCenterProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'system'>('all');
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn('relative', className)}
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <NotificationBadge />
-        </Button>
-      </DropdownMenuTrigger>
+      {trigger ? (
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      ) : (
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn('relative', className)}
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" />
+            <NotificationBadge />
+          </Button>
+        </DropdownMenuTrigger>
+      )}
 
       <DropdownMenuContent
         align="end"

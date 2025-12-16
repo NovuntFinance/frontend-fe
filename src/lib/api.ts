@@ -734,10 +734,24 @@ apiClient.interceptors.response.use(
         const suppressVerboseLogging =
           endpoint.includes('/trading-signals/') ||
           endpoint.includes('/notifications/counts') ||
-          endpoint.includes('/notifications/');
+          endpoint.includes('/notifications/') ||
+          endpoint.includes('/wallets/') ||
+          endpoint.includes('/referral-info') ||
+          endpoint.includes('/referral/my-tree') ||
+          endpoint.includes('/referral/stats') ||
+          endpoint.includes('/users/profile') ||
+          endpoint.includes('/staking/dashboard') ||
+          endpoint.includes('/dashboard/overview');
 
         // Only log detailed errors in development and for non-suppressed endpoints
-        if (process.env.NODE_ENV === 'development' && !suppressVerboseLogging) {
+        // Skip logging if error object is empty or just network errors
+        const shouldLogDetailed =
+          process.env.NODE_ENV === 'development' &&
+          !suppressVerboseLogging &&
+          error.message &&
+          error.message !== 'Network Error';
+
+        if (shouldLogDetailed) {
           const networkErrorDetails = {
             requestURL: String(requestURL),
             baseURL: String(API_BASE_URL),
@@ -770,10 +784,16 @@ apiClient.interceptors.response.use(
           process.env.NODE_ENV === 'development' &&
           suppressVerboseLogging
         ) {
-          // Minimal logging for suppressed endpoints
-          console.debug(
-            `[API] Network error for ${endpoint} (backend may be unavailable)`
-          );
+          // Minimal logging for suppressed endpoints - only log once per session
+          const logKey = `network_error_${endpoint}`;
+          if (!sessionStorage.getItem(logKey)) {
+            console.debug(
+              `[API] Network error for ${endpoint} (backend may be unavailable)`
+            );
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem(logKey, 'true');
+            }
+          }
         }
 
         // Try to diagnose the issue

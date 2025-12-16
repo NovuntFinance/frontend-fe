@@ -11,10 +11,10 @@ import {
   X,
   Search,
   Filter,
-  RefreshCw,
   Calendar,
   DollarSign,
-  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Card,
@@ -35,7 +35,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
-import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
 type MarketType = 'forex' | 'crypto' | 'metals' | 'commodities' | 'all';
@@ -263,32 +262,33 @@ export default function TradingSignalsHistoryPage() {
   };
 
   return (
-    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="mb-4 flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-          <h1 className="text-foreground mb-2 text-3xl font-bold">
-            Trading Signals History
-          </h1>
-          <p className="text-muted-foreground">
-            100 days of verified trading signals with real market data
-          </p>
-        </motion.div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+          {/* Animated Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-indigo-500/10 to-transparent" />
 
-        {/* Statistics Cards with Tabs */}
-        <div className="mb-6">
+          <CardHeader className="relative p-3 sm:p-6">
+            <CardTitle className="text-foreground mb-1.5 text-xl font-bold sm:mb-2 sm:text-2xl md:text-3xl">
+              Trading Signals History
+            </CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              100 days of verified trading signals with real market data
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </motion.div>
+
+      {/* Statistics Cards with Tabs */}
+      <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
           <Tabs
             value={activeTab}
             onValueChange={(value) => setActiveTab(value as '24h' | '7d')}
@@ -305,61 +305,61 @@ export default function TradingSignalsHistoryPage() {
             </TabsList>
 
             {/* 24-Hour Stats Tab */}
-            <TabsContent value="24h" className="space-y-4">
+            <TabsContent value="24h" className="space-y-3 sm:space-y-4">
               {currentStats?.description && (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   {currentStats.description}
                 </p>
               )}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-muted-foreground text-sm font-medium">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
+                <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                  <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                    <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                       Total Signals
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
+                  <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="text-lg font-bold sm:text-2xl">
                       {currentStats?.total.toLocaleString() || 0}
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                  <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                    <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                       Profitable
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="text-lg font-bold text-emerald-600 sm:text-2xl dark:text-emerald-400">
                       {currentStats?.profitable.toLocaleString() || 0}
                     </div>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                       {currentStats?.winRate.toFixed(1) || '0.0'}% win rate
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                  <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                    <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                       Day Trades
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
+                  <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="text-lg font-bold sm:text-2xl">
                       {currentStats?.dayTrades.toLocaleString() || 0}
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-muted-foreground text-sm font-medium">
+                <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                  <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                    <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                       Net Profit
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
                     <div
-                      className={`text-2xl font-bold ${
+                      className={`text-lg font-bold sm:text-2xl ${
                         (currentStats?.totalProfit ?? 0) >= 0
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-red-600 dark:text-red-400'
@@ -368,7 +368,7 @@ export default function TradingSignalsHistoryPage() {
                       {(currentStats?.totalProfit ?? 0) >= 0 ? '+' : ''}$
                       {(currentStats?.totalProfit ?? 0).toLocaleString()}
                     </div>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                       Includes losses
                     </p>
                   </CardContent>
@@ -377,62 +377,62 @@ export default function TradingSignalsHistoryPage() {
             </TabsContent>
 
             {/* 7-Day Stats Tab */}
-            <TabsContent value="7d" className="space-y-4">
+            <TabsContent value="7d" className="space-y-3 sm:space-y-4">
               {stats7d?.description && (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   {stats7d.description}
                 </p>
               )}
               {stats7d ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
+                  <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                    <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                      <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                         Total Signals
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                      <div className="text-lg font-bold sm:text-2xl">
                         {stats7d.total.toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                  <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                    <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                      <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                         Profitable
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                      <div className="text-lg font-bold text-emerald-600 sm:text-2xl dark:text-emerald-400">
                         {stats7d.profitable.toLocaleString()}
                       </div>
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                         {stats7d.winRate.toFixed(1)}% win rate
                       </p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                  <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                    <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                      <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                         Day Trades
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                      <div className="text-lg font-bold sm:text-2xl">
                         {stats7d.dayTrades.toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-muted-foreground text-sm font-medium">
+                  <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
+                    <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+                      <CardTitle className="text-muted-foreground text-xs font-medium sm:text-sm">
                         Net Profit
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
                       <div
-                        className={`text-2xl font-bold ${
+                        className={`text-lg font-bold sm:text-2xl ${
                           stats7d.totalProfit >= 0
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-red-600 dark:text-red-400'
@@ -441,14 +441,14 @@ export default function TradingSignalsHistoryPage() {
                         {stats7d.totalProfit >= 0 ? '+' : ''}$
                         {stats7d.totalProfit.toLocaleString()}
                       </div>
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                         Includes losses
                       </p>
                     </CardContent>
                   </Card>
                 </div>
               ) : (
-                <Card>
+                <Card className="bg-card/50 border-0 shadow-md backdrop-blur-sm">
                   <CardContent className="py-8 text-center">
                     <p className="text-muted-foreground">
                       7-day statistics are not available
@@ -458,157 +458,159 @@ export default function TradingSignalsHistoryPage() {
               )}
             </TabsContent>
           </Tabs>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Filter className="h-5 w-5" />
-                Filters
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear All
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
-                <Input
-                  placeholder="Search symbols, pairs..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Market Type */}
-              <Select
-                value={filters.marketType}
-                onValueChange={(value) =>
-                  handleFilterChange('marketType', value as MarketType)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Market Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Markets</SelectItem>
-                  <SelectItem value="forex">Forex</SelectItem>
-                  <SelectItem value="crypto">Crypto</SelectItem>
-                  <SelectItem value="metals">Metals</SelectItem>
-                  <SelectItem value="commodities">Commodities</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Symbol Filter */}
+      {/* Filters */}
+      <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm">
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-1.5 text-sm sm:gap-2 sm:text-lg">
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+              Filters
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              className="h-7 text-xs sm:h-9 sm:text-sm"
+            >
+              Clear All
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 pt-0 sm:p-6">
+          <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
               <Input
-                placeholder="Filter by symbol (e.g., EUR/USD)"
-                value={filters.symbol}
-                onChange={(e) => handleFilterChange('symbol', e.target.value)}
+                placeholder="Search symbols, pairs..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-9"
               />
-
-              {/* Toggle Filters */}
-              <div className="flex gap-2">
-                <Button
-                  variant={filters.profitableOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() =>
-                    handleFilterChange(
-                      'profitableOnly',
-                      !filters.profitableOnly
-                    )
-                  }
-                  className="flex-1"
-                >
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Profits Only
-                </Button>
-                <Button
-                  variant={filters.dayTradesOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() =>
-                    handleFilterChange('dayTradesOnly', !filters.dayTradesOnly)
-                  }
-                  className="flex-1"
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Day Trades
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Trading Signals List */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Trading Signals</CardTitle>
-                <CardDescription>
-                  Showing {filteredSignals.length} of {totalCount} signals
-                </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+            {/* Market Type */}
+            <Select
+              value={filters.marketType}
+              onValueChange={(value) =>
+                handleFilterChange('marketType', value as MarketType)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Market Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Markets</SelectItem>
+                <SelectItem value="forex">Forex</SelectItem>
+                <SelectItem value="crypto">Crypto</SelectItem>
+                <SelectItem value="metals">Metals</SelectItem>
+                <SelectItem value="commodities">Commodities</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Symbol Filter */}
+            <Input
+              placeholder="Filter by symbol (e.g., EUR/USD)"
+              value={filters.symbol}
+              onChange={(e) => handleFilterChange('symbol', e.target.value)}
+            />
+
+            {/* Toggle Filters */}
+            <div className="flex gap-2">
+              <Button
+                variant={filters.profitableOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() =>
+                  handleFilterChange('profitableOnly', !filters.profitableOnly)
+                }
+                className="flex-1"
+              >
+                <DollarSign className="mr-2 h-4 w-4" />
+                Profits Only
+              </Button>
+              <Button
+                variant={filters.dayTradesOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() =>
+                  handleFilterChange('dayTradesOnly', !filters.dayTradesOnly)
+                }
+                className="flex-1"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Day Trades
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="py-12 text-center">
-                <RefreshCw className="text-muted-foreground mx-auto mb-2 h-8 w-8 animate-spin" />
-                <p className="text-muted-foreground">
-                  Loading trading signals...
-                </p>
-              </div>
-            ) : error ? (
-              <div className="py-12 text-center">
-                <p className="text-destructive mb-2">
-                  Failed to load trading signals
-                </p>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {error instanceof Error
-                    ? error.message
-                    : 'Unable to connect to the trading signals service'}
-                </p>
-                <Button onClick={() => refetch()}>Try Again</Button>
-              </div>
-            ) : filteredSignals.length === 0 ? (
-              <div className="py-12 text-center">
-                <TrendingUp className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                <p className="text-muted-foreground mb-2">
-                  No trading signals found
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  Try adjusting your filters or check back later
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {filteredSignals.map((signal) => (
-                    <motion.div
-                      key={signal.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`rounded-xl border p-4 transition-all hover:shadow-md ${
-                        signal.isProfitable
-                          ? 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40'
-                          : 'border-red-500/20 bg-red-500/5 hover:border-red-500/40'
-                      } `}
-                    >
-                      <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-12">
-                        {/* Symbol & Type */}
-                        <div className="flex items-center gap-3 lg:col-span-3">
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Trading Signals List */}
+      <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm">
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center sm:gap-0">
+            <div>
+              <CardTitle className="text-base sm:text-lg">
+                Trading Signals
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Showing {filteredSignals.length} of {totalCount} signals
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 pt-0 sm:p-6">
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <div className="text-muted-foreground border-primary mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+              <p className="text-muted-foreground">
+                Loading trading signals...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <p className="text-destructive mb-2">
+                Failed to load trading signals
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {error instanceof Error
+                  ? error.message
+                  : 'Unable to connect to the trading signals service'}
+              </p>
+            </div>
+          ) : filteredSignals.length === 0 ? (
+            <div className="py-12 text-center">
+              <TrendingUp className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+              <p className="text-muted-foreground mb-2">
+                No trading signals found
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Try adjusting your filters or check back later
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2 sm:space-y-3">
+                {filteredSignals.map((signal) => (
+                  <motion.div
+                    key={signal.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-lg border-0 p-2.5 backdrop-blur-sm transition-all hover:shadow-lg sm:rounded-xl sm:p-4 ${
+                      signal.isProfitable
+                        ? 'bg-emerald-500/10 hover:bg-emerald-500/15 dark:bg-emerald-500/5 dark:hover:bg-emerald-500/10'
+                        : 'bg-red-500/10 hover:bg-red-500/15 dark:bg-red-500/5 dark:hover:bg-red-500/10'
+                    } `}
+                  >
+                    {/* Mobile Layout - Stacked */}
+                    <div className="flex flex-col gap-2 sm:hidden">
+                      {/* Top Row: Symbol, Direction, Status */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
                           <div
-                            className={`flex-shrink-0 rounded-lg p-2 ${
+                            className={`flex-shrink-0 rounded-md p-1.5 ${
                               signal.direction === 'LONG'
                                 ? 'bg-emerald-500/20'
                                 : 'bg-blue-500/20'
@@ -616,7 +618,7 @@ export default function TradingSignalsHistoryPage() {
                           >
                             {signal.direction === 'LONG' ? (
                               <TrendingUp
-                                className={`h-5 w-5 ${
+                                className={`h-3.5 w-3.5 ${
                                   signal.isProfitable
                                     ? 'text-emerald-600 dark:text-emerald-400'
                                     : 'text-red-600 dark:text-red-400'
@@ -624,7 +626,7 @@ export default function TradingSignalsHistoryPage() {
                               />
                             ) : (
                               <TrendingDown
-                                className={`h-5 w-5 ${
+                                className={`h-3.5 w-3.5 ${
                                   signal.isProfitable
                                     ? 'text-emerald-600 dark:text-emerald-400'
                                     : 'text-red-600 dark:text-red-400'
@@ -633,37 +635,57 @@ export default function TradingSignalsHistoryPage() {
                             )}
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-lg font-bold">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-bold">
                                 {signal.symbol}
                               </p>
                               <Badge
                                 variant="outline"
-                                className={
+                                className={`px-1.5 py-0 text-[10px] ${
                                   getMarketTypeBadge(signal.marketType)
                                     .className
-                                }
+                                }`}
                               >
                                 {getMarketTypeBadge(signal.marketType).label}
                               </Badge>
                             </div>
-                            <p className="text-muted-foreground text-xs font-semibold uppercase">
+                            <p className="text-muted-foreground text-[10px] font-semibold uppercase">
                               {signal.direction}
                             </p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          {signal.isProfitable ? (
+                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          )}
+                          <p
+                            className={`text-base font-black ${
+                              signal.isProfitable
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}
+                          >
+                            {signal.isProfitable ? '+' : ''}
+                            {signal.profitUSD >= 0 ? '$' : '-$'}
+                            {Math.abs(signal.profitUSD).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Entry */}
-                        <div className="lg:col-span-2">
-                          <p className="text-muted-foreground mb-1 text-xs">
+                      {/* Middle Row: Entry & Exit */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-muted-foreground mb-0.5 text-[10px]">
                             Entry
                           </p>
-                          <p className="font-bold">
+                          <p className="text-xs font-bold">
                             {signal.entryPrice.toFixed(
                               signal.symbol.includes('JPY') ? 3 : 5
                             )}
                           </p>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-muted-foreground text-[10px]">
                             {new Date(signal.entryTime).toLocaleString(
                               'en-US',
                               {
@@ -676,18 +698,16 @@ export default function TradingSignalsHistoryPage() {
                             )}
                           </p>
                         </div>
-
-                        {/* Exit */}
-                        <div className="lg:col-span-2">
-                          <p className="text-muted-foreground mb-1 text-xs">
+                        <div>
+                          <p className="text-muted-foreground mb-0.5 text-[10px]">
                             Exit
                           </p>
-                          <p className="font-bold">
+                          <p className="text-xs font-bold">
                             {signal.exitPrice.toFixed(
                               signal.symbol.includes('JPY') ? 3 : 5
                             )}
                           </p>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-muted-foreground text-[10px]">
                             {new Date(signal.exitTime).toLocaleString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -697,102 +717,217 @@ export default function TradingSignalsHistoryPage() {
                             })}
                           </p>
                         </div>
+                      </div>
 
-                        {/* Pips/Points */}
-                        <div className="lg:col-span-2">
-                          <p className="text-muted-foreground mb-1 text-xs">
-                            Pips/Points
-                          </p>
-                          <p
-                            className={`font-bold ${
-                              signal.isProfitable
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }`}
-                          >
-                            {signal.isProfitable ? '+' : ''}
-                            {signal.pipsPoints.toFixed(1)}{' '}
-                            {signal.marketType === 'forex' ? 'pips' : 'pts'}
+                      {/* Bottom Row: Pips & Time */}
+                      <div className="flex items-center justify-between">
+                        <p
+                          className={`text-xs font-bold ${
+                            signal.isProfitable
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {signal.isProfitable ? '+' : ''}
+                          {signal.pipsPoints.toFixed(1)}{' '}
+                          {signal.marketType === 'forex' ? 'pips' : 'pts'}
+                        </p>
+                        <div className="text-muted-foreground flex items-center gap-1 text-[10px]">
+                          <Clock className="h-2.5 w-2.5" />
+                          <span>{getTimeAgo(new Date(signal.exitTime))}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop Layout - Grid */}
+                    <div className="hidden grid-cols-1 items-center gap-4 sm:grid lg:grid-cols-12">
+                      {/* Symbol & Type */}
+                      <div className="flex items-center gap-3 lg:col-span-3">
+                        <div
+                          className={`flex-shrink-0 rounded-lg p-2 ${
+                            signal.direction === 'LONG'
+                              ? 'bg-emerald-500/20'
+                              : 'bg-blue-500/20'
+                          }`}
+                        >
+                          {signal.direction === 'LONG' ? (
+                            <TrendingUp
+                              className={`h-5 w-5 ${
+                                signal.isProfitable
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}
+                            />
+                          ) : (
+                            <TrendingDown
+                              className={`h-5 w-5 ${
+                                signal.isProfitable
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-base font-bold sm:text-lg">
+                              {signal.symbol}
+                            </p>
+                            <Badge
+                              variant="outline"
+                              className={
+                                getMarketTypeBadge(signal.marketType).className
+                              }
+                            >
+                              {getMarketTypeBadge(signal.marketType).label}
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground text-xs font-semibold uppercase">
+                            {signal.direction}
                           </p>
                         </div>
+                      </div>
 
-                        {/* Profit */}
-                        <div className="lg:col-span-2">
-                          <p className="text-muted-foreground mb-1 text-xs">
-                            Profit
-                          </p>
-                          <p
-                            className={`text-lg font-black ${
-                              signal.isProfitable
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }`}
-                          >
-                            {signal.isProfitable ? '+' : ''}
-                            {signal.profitUSD >= 0 ? '$' : '-$'}
-                            {Math.abs(signal.profitUSD).toLocaleString()}
-                          </p>
-                        </div>
+                      {/* Entry */}
+                      <div className="lg:col-span-2">
+                        <p className="text-muted-foreground mb-1 text-xs">
+                          Entry
+                        </p>
+                        <p className="text-sm font-bold sm:text-base">
+                          {signal.entryPrice.toFixed(
+                            signal.symbol.includes('JPY') ? 3 : 5
+                          )}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {new Date(signal.entryTime).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                        </p>
+                      </div>
 
-                        {/* Status & Time */}
-                        <div className="flex items-center justify-between gap-2 lg:col-span-1 lg:justify-end">
-                          <div className="flex flex-col items-end">
-                            {signal.isProfitable ? (
-                              <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                            ) : (
-                              <X className="h-5 w-5 text-red-600 dark:text-red-400" />
-                            )}
-                            <div className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
-                              <Clock className="h-3 w-3" />
-                              <span>
-                                {getTimeAgo(new Date(signal.exitTime))}
-                              </span>
-                            </div>
+                      {/* Exit */}
+                      <div className="lg:col-span-2">
+                        <p className="text-muted-foreground mb-1 text-xs">
+                          Exit
+                        </p>
+                        <p className="text-sm font-bold sm:text-base">
+                          {signal.exitPrice.toFixed(
+                            signal.symbol.includes('JPY') ? 3 : 5
+                          )}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {new Date(signal.exitTime).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                        </p>
+                      </div>
+
+                      {/* Pips/Points */}
+                      <div className="lg:col-span-2">
+                        <p className="text-muted-foreground mb-1 text-xs">
+                          Pips/Points
+                        </p>
+                        <p
+                          className={`text-sm font-bold sm:text-base ${
+                            signal.isProfitable
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {signal.isProfitable ? '+' : ''}
+                          {signal.pipsPoints.toFixed(1)}{' '}
+                          {signal.marketType === 'forex' ? 'pips' : 'pts'}
+                        </p>
+                      </div>
+
+                      {/* Profit */}
+                      <div className="lg:col-span-2">
+                        <p className="text-muted-foreground mb-1 text-xs">
+                          Profit
+                        </p>
+                        <p
+                          className={`text-base font-black sm:text-lg ${
+                            signal.isProfitable
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {signal.isProfitable ? '+' : ''}
+                          {signal.profitUSD >= 0 ? '$' : '-$'}
+                          {Math.abs(signal.profitUSD).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {/* Status & Time */}
+                      <div className="flex items-center justify-between gap-2 lg:col-span-1 lg:justify-end">
+                        <div className="flex flex-col items-end">
+                          {signal.isProfitable ? (
+                            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          )}
+                          <div className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
+                            <Clock className="h-3 w-3" />
+                            <span>{getTimeAgo(new Date(signal.exitTime))}</span>
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-6 flex items-center justify-between border-t pt-6">
-                    <p className="text-muted-foreground text-sm">
-                      Page {data?.page || page} of {totalPages}
-                      {data?.count !== undefined && (
-                        <span className="ml-2">
-                          ({data.count.toLocaleString()} total signals)
-                        </span>
-                      )}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setPage((p) => Math.min(totalPages, p + 1))
-                        }
-                        disabled={page >= totalPages || data?.hasMore === false}
-                      >
-                        Next
-                      </Button>
                     </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Pagination - Wallet Style */}
+              {totalPages > 1 && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-muted-foreground text-xs sm:text-sm">
+                    Showing {(page - 1) * itemsPerPage + 1} to{' '}
+                    {Math.min(page * itemsPerPage, totalCount)} of {totalCount}{' '}
+                    signals
+                  </p>
+                  <div className="flex items-center justify-between gap-2 sm:justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                    >
+                      <ChevronLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                      <span className="sm:hidden">Prev</span>
+                    </Button>
+                    <span className="bg-muted flex items-center rounded-md px-2 text-xs sm:px-4 sm:text-sm">
+                      Page {page} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={page >= totalPages || data?.hasMore === false}
+                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <span className="sm:hidden">Next</span>
+                      <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
                   </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

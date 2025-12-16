@@ -16,7 +16,7 @@ import {
   EyeOff,
   Send,
   DollarSign,
-  Wallet,
+  Wallet as WalletIcon,
 } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import {
@@ -319,7 +319,7 @@ export function WalletDashboard() {
                   whileHover={{ scale: 1.1, rotate: -10 }}
                   className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                 >
-                  <Wallet className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
+                  <WalletIcon className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
                 </motion.div>
                 <div className="min-w-0 flex-1">
                   <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
@@ -394,13 +394,25 @@ export function WalletDashboard() {
         </Card>
       </motion.div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - 2x2 Grid Matching Dashboard */}
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 20 }}
         animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 md:gap-6"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4"
       >
+        <StatCard
+          label="Total Earned"
+          value={statistics.totalEarned}
+          icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
+          colorTheme="emerald"
+        />
+        <StatCard
+          label="Total Staked"
+          value={statistics.totalStaked}
+          icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
+          colorTheme="orange"
+        />
         <StatCard
           label="Total Deposited"
           value={statistics.totalDeposited}
@@ -412,18 +424,6 @@ export function WalletDashboard() {
           value={statistics.totalWithdrawn}
           icon={<ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6" />}
           colorTheme="blue"
-        />
-        <StatCard
-          label="Total Staked"
-          value={statistics.totalStaked}
-          icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="orange"
-        />
-        <StatCard
-          label="Total Earned"
-          value={statistics.totalEarned}
-          icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="emerald"
         />
       </motion.div>
 

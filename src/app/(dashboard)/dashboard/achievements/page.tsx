@@ -5,12 +5,18 @@
 
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Award, RefreshCw, XCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
-import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { NXPCard } from '@/components/achievements/NXPCard';
 import { BadgeCard } from '@/components/achievements/BadgeCard';
 import { BadgeGrid } from '@/components/achievements/BadgeGrid';
@@ -23,6 +29,7 @@ import {
   useToggleBadgeDisplay,
 } from '@/lib/queries/achievementQueries';
 import { toast } from '@/lib/toast';
+import { prefersReducedMotion } from '@/lib/accessibility';
 
 export default function AchievementsPage() {
   const {
@@ -55,11 +62,10 @@ export default function AchievementsPage() {
 
   // State for "View More" functionality
   const [showAllBadges, setShowAllBadges] = useState(false);
-  const [showAllCatalog, setShowAllCatalog] = useState(false);
 
   const isLoading =
     badgesLoading || progressLoading || catalogLoading || nxpLoading;
-  const hasError = badgesError || progressError || catalogError || nxpError;
+  const reducedMotion = prefersReducedMotion();
 
   const earnedBadges = earnedBadgesData?.data?.badges || [];
   const badgeProgress = badgeProgressData?.data || [];
@@ -69,7 +75,6 @@ export default function AchievementsPage() {
 
   // Limit initial display
   const INITIAL_BADGE_LIMIT = 8;
-  const INITIAL_CATALOG_LIMIT = 12;
 
   const displayedBadges = showAllBadges
     ? earnedBadges
@@ -80,7 +85,7 @@ export default function AchievementsPage() {
     try {
       await toggleBadgeMutation.mutateAsync(badgeId);
       toast.success('Badge display updated');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update badge display');
     }
   };
@@ -93,231 +98,377 @@ export default function AchievementsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <ShimmerCard className="h-10 w-64" />
-        <div className="grid gap-6 md:grid-cols-2">
-          <ShimmerCard className="h-96" />
+      <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
+        <div className="space-y-4 sm:space-y-6">
+          <ShimmerCard className="h-20 w-full" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
+            <ShimmerCard className="h-96" />
+            <ShimmerCard className="h-96" />
+          </div>
           <ShimmerCard className="h-96" />
         </div>
-        <ShimmerCard className="h-96" />
       </div>
     );
   }
 
   // Show partial data even if some queries fail
   const hasCriticalError =
-    badgesError && progressError && catalogError && nxpError;
+    !!badgesError && !!progressError && !!catalogError && !!nxpError;
 
   if (hasCriticalError) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <XCircle className="text-destructive mx-auto mb-4 h-12 w-12" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Failed to Load Achievements
-          </h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            {badgesError?.message ||
-              progressError?.message ||
-              catalogError?.message ||
-              nxpError?.message ||
-              'Unable to fetch achievement data'}
-          </p>
-          <Button onClick={handleRefresh}>Try Again</Button>
+      <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="text-center">
+            <XCircle className="text-destructive mx-auto mb-4 h-10 w-10 sm:h-12 sm:w-12" />
+            <h3 className="mb-2 text-base leading-tight font-semibold sm:text-lg">
+              Failed to Load Achievements
+            </h3>
+            <p className="text-muted-foreground mb-4 text-sm leading-relaxed sm:text-base">
+              {badgesError?.message ||
+                progressError?.message ||
+                catalogError?.message ||
+                nxpError?.message ||
+                'Unable to fetch achievement data'}
+            </p>
+            <Button onClick={handleRefresh}>Try Again</Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Achievements & Progress
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Track your accomplishments and earn experience points
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          className="gap-2"
+    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Page Header - Staking Streak Template */}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: -20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
         >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
-      </motion.div>
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
 
-      {/* Error Banner (if some queries failed but not all) */}
-      {(badgesError || progressError || catalogError || nxpError) &&
-        !hasCriticalError && (
+            {/* Animated Floating Blob */}
+            {!reducedMotion && (
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-purple-500/30 blur-2xl"
+              />
+            )}
+
+            <CardHeader className="relative p-4 sm:p-6">
+              <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
+                  >
+                    <Award className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
+                      Achievements & Progress
+                    </CardTitle>
+                    <CardDescription className="text-xs leading-relaxed sm:text-sm">
+                      Track your accomplishments and earn experience points
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="h-9 gap-1.5 text-xs sm:h-10 sm:gap-2 sm:text-sm"
+                >
+                  <RefreshCw className="h-4 w-4 sm:h-4 sm:w-4" />
+                  <span className="xs:inline hidden">Refresh</span>
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+        </motion.div>
+
+        {/* Error Banner (if some queries failed but not all) */}
+        {(badgesError || progressError || catalogError || nxpError) &&
+          !hasCriticalError && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: -10 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 sm:p-4"
+            >
+              <p className="text-sm leading-relaxed text-yellow-700 sm:text-base dark:text-yellow-300">
+                ⚠️ Some data couldn&apos;t be loaded. Showing available
+                information.
+              </p>
+            </motion.div>
+          )}
+
+        {/* NXP Card - Show backend data */}
+        {nxp ? (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4"
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
           >
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              ⚠️ Some data couldn&apos;t be loaded. Showing available
-              information.
-            </p>
+            <NXPCard nxp={nxp} />
+          </motion.div>
+        ) : (
+          nxpError && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+                {/* Animated Gradient Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
+
+                {/* Animated Floating Blob */}
+                {!reducedMotion && (
+                  <motion.div
+                    animate={{
+                      x: [0, -15, 0],
+                      y: [0, 10, 0],
+                      scale: [1, 1.15, 1],
+                    }}
+                    transition={{
+                      duration: 6,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-purple-500/30 blur-2xl"
+                  />
+                )}
+
+                <CardHeader className="relative p-4 sm:p-6">
+                  <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: -10 }}
+                      className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
+                    >
+                      <Award className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
+                    </motion.div>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
+                        NXP Information
+                      </CardTitle>
+                      <CardDescription className="text-xs leading-relaxed sm:text-sm">
+                        Novunt Experience Points
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative py-6 text-center sm:py-8">
+                  {(() => {
+                    const isUnderDevelopment =
+                      (nxpError as any)?.message
+                        ?.toLowerCase()
+                        .includes('under development') ||
+                      (nxpError as any)?.message
+                        ?.toLowerCase()
+                        .includes('not implemented') ||
+                      (nxpError as any)?.statusCode === 501;
+
+                    return isUnderDevelopment ? (
+                      <>
+                        <Award className="text-muted-foreground mx-auto mb-3 h-10 w-10 opacity-50 sm:h-12 sm:w-12" />
+                        <h3 className="mb-2 text-base leading-tight font-semibold sm:text-lg">
+                          Coming Soon
+                        </h3>
+                        <p className="text-muted-foreground mb-4 text-sm leading-relaxed sm:text-base">
+                          The NXP system will be available soon.
+                        </p>
+                        <p className="text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                          Earn experience points by unlocking badges, upgrading
+                          ranks, and reaching milestones!
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Award className="text-muted-foreground mx-auto mb-3 h-10 w-10 opacity-50 sm:h-12 sm:w-12" />
+                        <p className="text-muted-foreground mb-4 text-sm leading-relaxed sm:text-base">
+                          NXP data is currently unavailable.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => refetchNXP()}
+                          className="text-sm sm:text-base"
+                        >
+                          Retry
+                        </Button>
+                      </>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        )}
+
+        {/* Earned Badges Section */}
+        {earnedBadges.length > 0 && (
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+              {/* Animated Gradient Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-transparent" />
+
+              {/* Animated Floating Blob */}
+              {!reducedMotion && (
+                <motion.div
+                  animate={{
+                    x: [0, -15, 0],
+                    y: [0, 10, 0],
+                    scale: [1, 1.15, 1],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
+                />
+              )}
+
+              <CardHeader className="relative p-4 sm:p-6">
+                <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
+                  >
+                    <Award className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
+                      Your Badges
+                    </CardTitle>
+                    <CardDescription className="text-xs leading-relaxed sm:text-sm">
+                      {earnedBadges.length} badge
+                      {earnedBadges.length !== 1 ? 's' : ''} earned
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                  {displayedBadges.map((badge) => (
+                    <BadgeCard
+                      key={badge.badgeType}
+                      badge={badge}
+                      earned={true}
+                      onToggleDisplay={handleToggleDisplay}
+                    />
+                  ))}
+                </div>
+                {hasMoreBadges && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAllBadges(!showAllBadges)}
+                      size="sm"
+                      className="gap-1.5 text-sm sm:gap-2 sm:text-base"
+                    >
+                      {showAllBadges ? (
+                        <>
+                          Show Less
+                          <ChevronDown className="h-4 w-4 rotate-180 sm:h-4 sm:w-4" />
+                        </>
+                      ) : (
+                        <>
+                          View More ({earnedBadges.length - INITIAL_BADGE_LIMIT}{' '}
+                          more)
+                          <ChevronDown className="h-4 w-4 sm:h-4 sm:w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 
-      {/* NXP Card - Show backend data */}
-      {nxp ? (
+        {/* Badge Catalog */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
-          <NXPCard nxp={nxp} />
-        </motion.div>
-      ) : (
-        nxpError && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <NovuntPremiumCard
-              title="NXP Information"
-              subtitle="Novunt Experience Points"
-              icon={Award}
-              colorTheme="purple"
-            >
-              <div className="py-8 text-center">
-                {(() => {
-                  const isUnderDevelopment =
-                    (nxpError as any)?.message
-                      ?.toLowerCase()
-                      .includes('under development') ||
-                    (nxpError as any)?.message
-                      ?.toLowerCase()
-                      .includes('not implemented') ||
-                    (nxpError as any)?.statusCode === 501;
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
 
-                  return isUnderDevelopment ? (
-                    <>
-                      <Award className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
-                      <h3 className="mb-2 text-lg font-semibold">
-                        Coming Soon
-                      </h3>
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        The NXP system will be available soon.
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        Earn experience points by unlocking badges, upgrading
-                        ranks, and reaching milestones!
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <Award className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        NXP data is currently unavailable.
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => refetchNXP()}
-                      >
-                        Retry
-                      </Button>
-                    </>
-                  );
-                })()}
+            {/* Animated Floating Blob */}
+            {!reducedMotion && (
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+              />
+            )}
+
+            <CardHeader className="relative p-4 sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
+                >
+                  <Award className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                </motion.div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
+                    Badge Catalog
+                  </CardTitle>
+                  <CardDescription className="text-xs leading-relaxed sm:text-sm">
+                    Explore all available badges and track your progress
+                  </CardDescription>
+                </div>
               </div>
-            </NovuntPremiumCard>
-          </motion.div>
-        )
-      )}
-
-      {/* Earned Badges Section */}
-      {earnedBadges.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Your Badges</h2>
-              <p className="text-muted-foreground text-sm">
-                {earnedBadges.length} badge
-                {earnedBadges.length !== 1 ? 's' : ''} earned
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {displayedBadges.map((badge) => (
-              <BadgeCard
-                key={badge.badgeType}
-                badge={badge}
-                earned={true}
+            </CardHeader>
+            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+              <BadgeGrid
+                earnedBadges={earnedBadges}
+                badgeCatalog={badgeCatalog}
+                badgeProgress={badgeProgress}
                 onToggleDisplay={handleToggleDisplay}
               />
-            ))}
-          </div>
-          {hasMoreBadges && (
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => setShowAllBadges(!showAllBadges)}
-                className="gap-2"
-              >
-                {showAllBadges ? (
-                  <>
-                    Show Less
-                    <ChevronDown className="h-4 w-4 rotate-180" />
-                  </>
-                ) : (
-                  <>
-                    View More ({earnedBadges.length - INITIAL_BADGE_LIMIT} more)
-                    <ChevronDown className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </motion.div>
-      )}
 
-      {/* Badge Catalog */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold">Badge Catalog</h2>
-          <p className="text-muted-foreground text-sm">
-            Explore all available badges and track your progress
-          </p>
-        </div>
-        <BadgeGrid
-          earnedBadges={earnedBadges}
-          badgeCatalog={badgeCatalog}
-          badgeProgress={badgeProgress}
-          onToggleDisplay={handleToggleDisplay}
-        />
-      </motion.div>
-
-      {/* NXP History */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <NXPHistory />
-      </motion.div>
+        {/* NXP History */}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <NXPHistory />
+        </motion.div>
+      </div>
     </div>
   );
 }
