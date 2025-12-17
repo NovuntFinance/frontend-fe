@@ -36,6 +36,13 @@ import {
 import { WithdrawalRequest } from '@/types/withdrawal';
 import { useAuthStore } from '@/store/authStore';
 import type { BackendUser } from '@/types/auth';
+import type {
+  DeclareProfitRequest,
+  DeclareBulkProfitRequest,
+  UpdateProfitRequest,
+  DeleteProfitRequest,
+  TestDistributionRequest,
+} from '@/types/dailyProfit';
 
 // ============================================
 // AUTH MUTATIONS - BetterAuth Implementation
@@ -1134,6 +1141,292 @@ export function useTerminateSession() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
       toast.success('Session terminated');
+    },
+  });
+}
+
+// ============================================
+// ADMIN MUTATIONS
+// ============================================
+
+/**
+ * Create a new user (Admin only)
+ * POST /api/v1/admin/users
+ */
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userData: {
+      email: string;
+      username: string;
+      password: string;
+      fname: string;
+      lname: string;
+      phoneNumber?: string;
+      countryCode?: string;
+      referralCode?: string;
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.createUser(userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('User created successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to create user';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Create a new admin (Super Admin only)
+ * POST /api/v1/admin/admins
+ */
+export function useCreateAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (adminData: {
+      email: string;
+      username: string;
+      password: string;
+      fname: string;
+      lname: string;
+      role: 'admin' | 'superAdmin';
+      phoneNumber?: string;
+      permissions?: string[]; // Optional array of permission keys
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.createAdmin(adminData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('Admin created successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to create admin';
+      const details = error?.response?.data?.error?.details;
+      if (details?.permissions) {
+        toast.error(`Invalid permissions: ${details.permissions}`);
+      } else {
+        toast.error(message);
+      }
+    },
+  });
+}
+
+/**
+ * Update user status (suspend/activate)
+ * PATCH /api/v1/admin/users/:userId/status
+ */
+export function useUpdateUserStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      status,
+    }: {
+      userId: string;
+      status: 'active' | 'suspended' | 'inactive';
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.updateUserStatus(userId, status);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success(
+        `User ${variables.status === 'active' ? 'activated' : 'suspended'} successfully`
+      );
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to update user status';
+      toast.error(message);
+    },
+  });
+}
+
+// ============================================
+// DAILY PROFIT MUTATIONS
+// ============================================
+
+/**
+ * Declare profit for a single day
+ * POST /api/v1/admin/daily-profit/declare
+ */
+export function useDeclareDailyProfit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeclareProfitRequest) => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      return dailyProfitService.declareProfit(data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.declaredDailyProfits(),
+      });
+      toast.success('Daily profit declared successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to declare daily profit';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Declare profits for multiple days (bulk)
+ * POST /api/v1/admin/daily-profit/declare-bulk
+ */
+export function useDeclareBulkDailyProfit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeclareBulkProfitRequest) => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      return dailyProfitService.declareBulkProfit(data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.declaredDailyProfits(),
+      });
+      const count =
+        (data as any)?.declared?.length ||
+        (data as any)?.data?.declared?.length ||
+        0;
+      toast.success(`Declared ${count} daily profit(s) successfully`);
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to declare bulk profits';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Update a future profit declaration
+ * PATCH /api/v1/admin/daily-profit/:date
+ */
+export function useUpdateDailyProfit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      date,
+      data,
+    }: {
+      date: string;
+      data: UpdateProfitRequest;
+    }) => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      return dailyProfitService.updateProfit(date, data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.declaredDailyProfits(),
+      });
+      toast.success('Daily profit updated successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to update daily profit';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Delete a future profit declaration
+ * DELETE /api/v1/admin/daily-profit/:date
+ */
+export function useDeleteDailyProfit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      date,
+      data,
+    }: {
+      date: string;
+      data: DeleteProfitRequest;
+    }) => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      return dailyProfitService.deleteProfit(date, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.declaredDailyProfits(),
+      });
+      toast.success('Daily profit deleted successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to delete daily profit';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Test distribution for a specific date (manual trigger)
+ * POST /api/v1/admin/daily-profit/test-distribute
+ */
+export function useTestDistributeDailyProfit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: TestDistributionRequest) => {
+      const { dailyProfitService } = await import(
+        '@/services/dailyProfitService'
+      );
+      return dailyProfitService.testDistribute(data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.declaredDailyProfits(),
+      });
+      const result = data?.data || data;
+      toast.success(
+        `Distribution completed: ${result.totalDistributed} USDT to ${result.processedStakes} stakes`
+      );
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to distribute profits';
+      toast.error(message);
     },
   });
 }

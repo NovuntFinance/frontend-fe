@@ -87,7 +87,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         stack.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
       ) {
         event.preventDefault();
-        return false;
+        return;
       }
     };
 
@@ -103,7 +103,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         stack.includes('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn')
       ) {
         event.preventDefault();
-        return false;
+        return;
       }
     };
 

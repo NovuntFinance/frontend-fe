@@ -3,9 +3,19 @@
  */
 
 export type UserRole = 'user' | 'admin' | 'superAdmin';
-export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending_verification';
+export type UserStatus =
+  | 'active'
+  | 'inactive'
+  | 'suspended'
+  | 'pending_verification';
 export type KYCStatus = 'not_submitted' | 'pending' | 'approved' | 'rejected';
-export type Rank = 'Stakeholder' | 'Investor' | 'Wealth Builder' | 'Finance Pro' | 'Money Master' | 'Finance Titan';
+export type Rank =
+  | 'Stakeholder'
+  | 'Investor'
+  | 'Wealth Builder'
+  | 'Finance Pro'
+  | 'Money Master'
+  | 'Finance Titan';
 
 export interface User {
   _id: string;
@@ -28,7 +38,6 @@ export interface User {
   phoneVerified?: boolean;
   twoFAEnabled?: boolean; // API uses twoFAEnabled
   twoFactorEnabled?: boolean; // Computed property for compatibility
-  biometricEnabled?: boolean;
   referralCode: string;
   referredBy?: string;
   totalInvested?: number;

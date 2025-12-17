@@ -20,7 +20,6 @@ import {
   DollarSign,
   Wallet,
   CreditCard,
-  Settings,
   Search,
   Calendar,
   Download,
@@ -29,7 +28,13 @@ import {
 } from 'lucide-react';
 import { useTransactionHistory } from '@/hooks/useWallet';
 import { useUser } from '@/hooks/useUser';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -50,87 +55,12 @@ import {
   formatAmountWithDirection,
   formatTransactionDate,
 } from '@/lib/utils/wallet';
+import { prefersReducedMotion } from '@/lib/accessibility';
 import type {
   TransactionHistoryParams,
   Transaction,
   CategoryBreakdown,
 } from '@/types/enhanced-transaction';
-
-// Category configuration with icons and colors
-const CATEGORY_CONFIG: Record<
-  string,
-  {
-    label: string;
-    icon: React.ReactNode;
-    bgColor: string;
-    textColor: string;
-    borderColor: string;
-  }
-> = {
-  deposit: {
-    label: 'Deposits',
-    icon: <ArrowDownRight className="h-5 w-5" />,
-    bgColor: 'bg-emerald-500/10',
-    textColor: 'text-emerald-500',
-    borderColor: 'border-emerald-500/30',
-  },
-  withdrawal: {
-    label: 'Withdrawals',
-    icon: <ArrowUpRight className="h-5 w-5" />,
-    bgColor: 'bg-red-500/10',
-    textColor: 'text-red-500',
-    borderColor: 'border-red-500/30',
-  },
-  staking: {
-    label: 'Stakes',
-    icon: <TrendingUp className="h-5 w-5" />,
-    bgColor: 'bg-blue-500/10',
-    textColor: 'text-blue-500',
-    borderColor: 'border-blue-500/30',
-  },
-  earnings: {
-    label: 'Earnings',
-    icon: <DollarSign className="h-5 w-5" />,
-    bgColor: 'bg-amber-500/10',
-    textColor: 'text-amber-500',
-    borderColor: 'border-amber-500/30',
-  },
-  transfer: {
-    label: 'Transfers',
-    icon: <RefreshCw className="h-5 w-5" />,
-    bgColor: 'bg-purple-500/10',
-    textColor: 'text-purple-500',
-    borderColor: 'border-purple-500/30',
-  },
-  bonus: {
-    label: 'Bonuses',
-    icon: <Gift className="h-5 w-5" />,
-    bgColor: 'bg-pink-500/10',
-    textColor: 'text-pink-500',
-    borderColor: 'border-pink-500/30',
-  },
-  fee: {
-    label: 'Fees',
-    icon: <CreditCard className="h-5 w-5" />,
-    bgColor: 'bg-orange-500/10',
-    textColor: 'text-orange-500',
-    borderColor: 'border-orange-500/30',
-  },
-  system: {
-    label: 'System',
-    icon: <Settings className="h-5 w-5" />,
-    bgColor: 'bg-slate-500/10',
-    textColor: 'text-slate-500',
-    borderColor: 'border-slate-500/30',
-  },
-  other: {
-    label: 'Other',
-    icon: <Settings className="h-5 w-5" />,
-    bgColor: 'bg-slate-500/10',
-    textColor: 'text-slate-500',
-    borderColor: 'border-slate-500/30',
-  },
-};
 
 /**
  * Transaction History Component
@@ -206,6 +136,8 @@ export function TransactionHistory() {
   // Shared categorization function - used by both breakdown computation and filtering
   // This ensures consistency between the breakdown counts and filtered results
   // Based on backend API documentation: transactions have proper category field
+  // IMPORTANT: Only registration_bonus should be categorized as "bonus"
+  // All other earnings (referral_bonus, ros_payout, pool payouts) should be "earnings"
   const categorizeTransaction = useCallback((tx: Transaction): string => {
     const typeLower = (tx.type || '').toLowerCase();
     const descLower = (tx.description || '').toLowerCase();
@@ -214,6 +146,8 @@ export function TransactionHistory() {
     // PRIORITY 1: Use backend category if it's valid (backend properly categorizes transactions)
     // Backend now correctly returns category: "earnings" for referral_bonus transactions
     // Backend sets category correctly: "staking" for stake/stake_completion, "earnings" for payouts
+    // IMPORTANT: Override backend category for referral_bonus if it's incorrectly set as "bonus"
+    // Only registration_bonus should be categorized as "bonus"
     if (
       tx.category &&
       tx.category !== 'system' &&
@@ -227,7 +161,25 @@ export function TransactionHistory() {
         'fee',
       ].includes(tx.category.toLowerCase())
     ) {
-      const backendCategory = tx.category.toLowerCase();
+      let backendCategory = tx.category.toLowerCase();
+
+      // CRITICAL FIX: referral_bonus should ALWAYS be "earnings", not "bonus"
+      // Override backend category if it's incorrectly set
+      if (typeLower === 'referral_bonus' && backendCategory === 'bonus') {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[TransactionHistory] ⚠️ Overriding backend category for referral_bonus:',
+            {
+              id: tx._id,
+              type: tx.type,
+              backendCategory: 'bonus',
+              correctedCategory: 'earnings',
+            }
+          );
+        }
+        backendCategory = 'earnings';
+      }
+
       if (
         process.env.NODE_ENV === 'development' &&
         (typeLower.includes('stake') || backendCategory === 'staking')
@@ -593,7 +545,6 @@ export function TransactionHistory() {
     user?.username,
     categorizeTransaction,
     data?.summary,
-    categorizeTransaction,
   ]);
 
   const handleFilterChange = (
@@ -606,17 +557,6 @@ export function TransactionHistory() {
       [key]: value === 'all' || value === '' ? undefined : value,
       page: 1, // Reset to first page when filters change
     }));
-  };
-
-  const handleCategoryClick = (category: string) => {
-    console.log('[TransactionHistory] 📂 Category clicked:', category);
-    const currentCategory = filters.category;
-    if (currentCategory === category) {
-      // If clicking the same category, clear the filter
-      handleFilterChange('category', 'all');
-    } else {
-      handleFilterChange('category', category);
-    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -968,6 +908,8 @@ export function TransactionHistory() {
     filters,
     getTransactionCategory,
     categorizeTransaction,
+    user?._id,
+    user?.username,
   ]);
 
   // Debug logging for filters
@@ -1075,331 +1017,232 @@ export function TransactionHistory() {
     );
   }
 
+  const reducedMotion = prefersReducedMotion();
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Transaction History</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            View all your deposits, withdrawals, and transfers
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-          />
-          Refresh
-        </Button>
-      </div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Staking Streak Template */}
+      <motion.div
+        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+          {/* Animated Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
 
-      {/* Category Breakdown */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between text-lg">
-            <span>Category Breakdown</span>
-            {filters.category && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleFilterChange('category', 'all')}
-              >
-                <X className="mr-1 h-4 w-4" />
-                Clear Filter
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {(() => {
-            // Debug logging
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[TransactionHistory] Category Breakdown Debug:', {
-                computedBreakdown: computedCategoryBreakdown,
-                breakdownKeys: Object.keys(computedCategoryBreakdown),
-                hasWithdrawal: 'withdrawal' in computedCategoryBreakdown,
-                hasEarnings: 'earnings' in computedCategoryBreakdown,
-                summary: data?.summary,
-                categoryBreakdown: data?.categoryBreakdown,
-              });
-            }
+          {/* Animated Floating Blob */}
+          {!reducedMotion && (
+            <motion.div
+              animate={{
+                x: [0, -15, 0],
+                y: [0, 10, 0],
+                scale: [1, 1.15, 1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+            />
+          )}
 
-            // Filter out categories with 0 count and 0 total, but always show main categories
-            const mainCategories = [
-              'deposit',
-              'withdrawal',
-              'earnings',
-              'staking',
-              'transfer',
-            ];
-            const categories = Object.entries(computedCategoryBreakdown)
-              .filter(([category, breakdown]) => {
-                const isMainCategory = mainCategories.includes(
-                  category.toLowerCase()
-                );
-                // Always show main categories, or show others if they have data
-                return (
-                  isMainCategory ||
-                  breakdown.count > 0 ||
-                  breakdown.totalAmount > 0
-                );
-              })
-              .sort(([catA, a], [catB, b]) => {
-                // Sort main categories first, then by amount
-                const aIsMain = mainCategories.includes(catA.toLowerCase());
-                const bIsMain = mainCategories.includes(catB.toLowerCase());
-                if (aIsMain && !bIsMain) return -1;
-                if (!aIsMain && bIsMain) return 1;
-                return b.totalAmount - a.totalAmount;
-              });
-
-            if (categories.length > 0) {
-              return (
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
-                  {categories.map(([category, breakdown]) => {
-                    const normalizedCategory = category.toLowerCase();
-                    const config =
-                      CATEGORY_CONFIG[normalizedCategory] ||
-                      CATEGORY_CONFIG.system;
-                    const isSelected = filters.category === normalizedCategory;
-
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log(
-                        `[TransactionHistory] Rendering category: ${category}`,
-                        {
-                          normalizedCategory,
-                          hasConfig: !!config,
-                          breakdown,
-                          isSelected,
-                        }
-                      );
-                    }
-
-                    return (
-                      <motion.div
-                        key={category}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all ${config.bgColor} ${config.borderColor} ${isSelected ? 'ring-primary ring-offset-background ring-2 ring-offset-2' : ''} hover:shadow-lg`}
-                        onClick={() => handleCategoryClick(normalizedCategory)}
-                      >
-                        <div className="flex flex-col items-center text-center">
-                          <div
-                            className={`rounded-lg p-2 ${config.bgColor} ${config.textColor} mb-2`}
-                          >
-                            {config.icon}
-                          </div>
-                          <p
-                            className={`text-xs font-medium ${config.textColor} mb-1 capitalize`}
-                          >
-                            {config.label}
-                          </p>
-                          <p
-                            className={`text-2xl font-bold ${config.textColor}`}
-                          >
-                            {breakdown.count}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            transactions
-                          </p>
-                          <p
-                            className={`mt-1 text-sm font-semibold ${config.textColor}`}
-                          >
-                            {formatCurrency(breakdown.totalAmount, {
-                              showCurrency: false,
-                            })}
-                          </p>
-                        </div>
-                        {isSelected && (
-                          <div className="absolute top-2 right-2">
-                            <Badge
-                              variant="default"
-                              className="px-1.5 py-0.5 text-xs"
-                            >
-                              Active
-                            </Badge>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              );
-            } else {
-              return (
-                <div className="text-muted-foreground py-8 text-center">
-                  <Wallet className="mx-auto mb-3 h-12 w-12 opacity-30" />
-                  <p>No category data available yet</p>
-                  <p className="mt-1 text-sm">
-                    Make some transactions to see breakdown
-                  </p>
-                  {process.env.NODE_ENV === 'development' && (
-                    <details className="mt-4 text-left">
-                      <summary className="cursor-pointer text-sm">
-                        Debug Info
-                      </summary>
-                      <pre className="bg-muted mt-2 max-h-64 overflow-auto rounded p-4 text-xs">
-                        {JSON.stringify(
-                          {
-                            hasData: !!data,
-                            hasTransactions: !!data?.transactions,
-                            transactionsCount: data?.transactions?.length,
-                            hasSummary: !!data?.summary,
-                            hasCategoryBreakdown: !!data?.categoryBreakdown,
-                            summary: data?.summary,
-                            categoryBreakdown: data?.categoryBreakdown,
-                          },
-                          null,
-                          2
-                        )}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              );
-            }
-          })()}
-        </CardContent>
-      </Card>
-
-      {/* Search and Date Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {/* Search Input */}
-              <div className="md:col-span-1">
-                <div className="relative">
-                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    placeholder="Search by amount, username, wallet address, TX ID, description..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`pr-9 pl-9 ${searchQuery ? 'border-primary' : ''}`}
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setDebouncedSearch('');
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Date From */}
-              <div className="md:col-span-1">
-                <div className="relative">
-                  <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    type="date"
-                    placeholder="Date from"
-                    value={filters.dateFrom || ''}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        'dateFrom',
-                        e.target.value || undefined
-                      )
-                    }
-                    className={`pl-9 ${filters.dateFrom ? 'border-primary' : ''}`}
-                  />
-                </div>
-              </div>
-
-              {/* Date To */}
-              <div className="md:col-span-1">
-                <div className="relative">
-                  <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    type="date"
-                    placeholder="Date to"
-                    value={filters.dateTo || ''}
-                    onChange={(e) =>
-                      handleFilterChange('dateTo', e.target.value || undefined)
-                    }
-                    className={`pl-9 ${filters.dateTo ? 'border-primary' : ''}`}
-                    min={filters.dateFrom || undefined}
-                  />
+          <CardHeader className="relative p-4 sm:p-6">
+            <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+                >
+                  <FileText className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                </motion.div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                    Transaction History
+                  </CardTitle>
+                  <CardDescription className="text-[10px] sm:text-xs">
+                    View all your deposits, withdrawals, and transfers
+                  </CardDescription>
                 </div>
               </div>
             </div>
+          </CardHeader>
 
-            {/* Active Filters Badge and Clear Button */}
-            {hasActiveFilters && (
-              <div className="flex items-center justify-between border-t pt-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {
-                      [
+          {/* Search and Date Filters */}
+          <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {/* Search Input */}
+                <div className="md:col-span-1">
+                  <div className="relative">
+                    <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      placeholder="Search by amount, username, wallet address, TX ID, description..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={`pr-9 pl-9 ${searchQuery ? 'border-primary' : ''}`}
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setDebouncedSearch('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Date From */}
+                <div className="md:col-span-1">
+                  <div className="relative">
+                    <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      type="date"
+                      placeholder="Date from"
+                      value={filters.dateFrom || ''}
+                      onChange={(e) =>
+                        handleFilterChange(
+                          'dateFrom',
+                          e.target.value || undefined
+                        )
+                      }
+                      className={`pl-9 ${filters.dateFrom ? 'border-primary' : ''}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Date To */}
+                <div className="md:col-span-1">
+                  <div className="relative">
+                    <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      type="date"
+                      placeholder="Date to"
+                      value={filters.dateTo || ''}
+                      onChange={(e) =>
+                        handleFilterChange(
+                          'dateTo',
+                          e.target.value || undefined
+                        )
+                      }
+                      className={`pl-9 ${filters.dateTo ? 'border-primary' : ''}`}
+                      min={filters.dateFrom || undefined}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Filters Badge and Clear Button */}
+              {hasActiveFilters && (
+                <div className="flex items-center justify-between border-t pt-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {
+                        [
+                          filters.category && 'Category',
+                          filters.search && 'Search',
+                          filters.dateFrom && 'Date From',
+                          filters.dateTo && 'Date To',
+                        ].filter(Boolean).length
+                      }{' '}
+                      filter
+                      {[
                         filters.category && 'Category',
                         filters.search && 'Search',
                         filters.dateFrom && 'Date From',
                         filters.dateTo && 'Date To',
-                      ].filter(Boolean).length
-                    }{' '}
-                    filter
-                    {[
-                      filters.category && 'Category',
-                      filters.search && 'Search',
-                      filters.dateFrom && 'Date From',
-                      filters.dateTo && 'Date To',
-                    ].filter(Boolean).length !== 1
-                      ? 's'
-                      : ''}{' '}
-                    active
-                  </Badge>
+                      ].filter(Boolean).length !== 1
+                        ? 's'
+                        : ''}{' '}
+                      active
+                    </Badge>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <X className="mr-2 h-4 w-4" />
+                    Clear All Filters
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      {/* Transaction List */}
+      {/* Transaction List - Staking Streak Template */}
       {isLoading ? (
-        <div className="space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-3"
+        >
           {[1, 2, 3, 4, 5].map((i) => (
             <ShimmerCard key={i} />
           ))}
-        </div>
+        </motion.div>
       ) : filteredTransactions.length > 0 ? (
-        <>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <span>Transactions</span>
-                <div className="flex items-center gap-2">
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="text-xs">
-                      {filteredTransactions.length} of{' '}
-                      {data?.transactions?.length || 0}
-                    </Badge>
-                  )}
-                  <Badge variant="outline">
-                    {data?.pagination?.totalItems ||
-                      filteredTransactions.length}{' '}
-                    total
-                  </Badge>
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-transparent" />
+
+            {/* Animated Floating Blob */}
+            {!reducedMotion && (
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
+              />
+            )}
+
+            <CardHeader className="relative p-4 sm:p-6">
+              <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -10 }}
+                    className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+                  >
+                    <FileText className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                      Transactions
+                    </CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
+                      {hasActiveFilters
+                        ? `${filteredTransactions.length} of ${data?.transactions?.length || 0} filtered`
+                        : `${data?.pagination?.totalItems || filteredTransactions.length} total transactions`}
+                    </CardDescription>
+                  </div>
                 </div>
-              </CardTitle>
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="text-xs">
+                    Filtered
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
+            <CardContent className="relative p-0 pt-0 sm:pt-0">
+              <div className="divide-border/50 divide-y">
                 {filteredTransactions.map((transaction, index) => (
                   <TransactionItem
                     key={transaction._id}
@@ -1411,12 +1254,12 @@ export function TransactionHistory() {
             </CardContent>
           </Card>
 
-          {/* Pagination */}
+          {/* Pagination - Mobile First */}
           {data.pagination &&
             data.pagination.totalPages > 1 &&
             !hasActiveFilters && (
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground text-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   Showing{' '}
                   {(data.pagination.currentPage - 1) *
                     data.pagination.itemsPerPage +
@@ -1428,7 +1271,7 @@ export function TransactionHistory() {
                   )}{' '}
                   of {data.pagination.totalItems} transactions
                 </p>
-                <div className="flex gap-2">
+                <div className="flex items-center justify-between gap-2 sm:justify-end">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1436,11 +1279,13 @@ export function TransactionHistory() {
                       handlePageChange(data.pagination.currentPage - 1)
                     }
                     disabled={!data.pagination.hasPrev}
+                    className="h-8 text-xs sm:h-9 sm:text-sm"
                   >
-                    <ChevronLeft className="mr-1 h-4 w-4" />
-                    Previous
+                    <ChevronLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
                   </Button>
-                  <span className="bg-muted flex items-center rounded-md px-4 text-sm">
+                  <span className="bg-muted flex items-center rounded-md px-2 text-xs sm:px-4 sm:text-sm">
                     Page {data.pagination.currentPage} of{' '}
                     {data.pagination.totalPages}
                   </span>
@@ -1451,59 +1296,62 @@ export function TransactionHistory() {
                       handlePageChange(data.pagination.currentPage + 1)
                     }
                     disabled={!data.pagination.hasNext}
+                    className="h-8 text-xs sm:h-9 sm:text-sm"
                   >
-                    Next
-                    <ChevronRight className="ml-1 h-4 w-4" />
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
+                    <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
             )}
-        </>
+        </motion.div>
       ) : (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Wallet className="text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-30" />
-            <p className="text-muted-foreground mb-2 text-lg font-medium">
-              No transactions found
-            </p>
-            <p className="text-muted-foreground mb-4 text-sm">
-              {hasActiveFilters
-                ? 'Try adjusting your filters to see more results'
-                : 'Your transaction history will appear here'}
-            </p>
-            {hasActiveFilters && (
-              <Button variant="outline" onClick={clearFilters}>
-                <X className="mr-2 h-4 w-4" />
-                Clear Filters
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-gray-500/10 to-transparent" />
 
-      {/* Debug Panel (Development Only) */}
-      {process.env.NODE_ENV === 'development' && (
-        <details className="mt-4">
-          <summary className="text-muted-foreground bg-muted cursor-pointer rounded p-2 text-sm">
-            🔧 Debug Panel
-          </summary>
-          <pre className="bg-muted mt-2 max-h-96 overflow-auto rounded p-4 text-xs">
-            {JSON.stringify(
-              {
-                filters,
-                hasData: !!data,
-                transactionsCount: data?.transactions?.length,
-                pagination: data?.pagination,
-                summary: data?.summary,
-                categoryBreakdown: data?.categoryBreakdown,
-                computedBreakdown: computedCategoryBreakdown,
-                availableFilters: data?.availableFilters,
-              },
-              null,
-              2
+            {/* Animated Floating Blob */}
+            {!reducedMotion && (
+              <motion.div
+                animate={{
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-slate-500/30 blur-2xl"
+              />
             )}
-          </pre>
-        </details>
+
+            <CardContent className="relative p-12 text-center">
+              <Wallet className="text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-30" />
+              <p className="text-muted-foreground mb-2 text-lg font-medium">
+                No transactions found
+              </p>
+              <p className="text-muted-foreground mb-4 text-sm">
+                {hasActiveFilters
+                  ? 'Try adjusting your filters to see more results'
+                  : 'Your transaction history will appear here'}
+              </p>
+              {hasActiveFilters && (
+                <Button variant="outline" onClick={clearFilters}>
+                  <X className="mr-2 h-4 w-4" />
+                  Clear Filters
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
     </div>
   );
@@ -1530,14 +1378,14 @@ function TransactionItem({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: index * 0.03 }}
-      className="hover:bg-muted/50 group p-4 transition-colors"
+      className="hover:bg-muted/50 group p-3 transition-colors sm:p-4"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2 sm:items-center sm:gap-4">
         {/* Left: Icon & Details */}
-        <div className="flex min-w-0 flex-1 items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-4">
           {/* Icon */}
           <div
-            className={`shrink-0 rounded-xl p-3 ${
+            className={`shrink-0 rounded-lg p-2 sm:rounded-xl sm:p-3 ${
               isPositive
                 ? 'bg-emerald-500/10'
                 : isNeutral
@@ -1545,31 +1393,30 @@ function TransactionItem({
                   : 'bg-red-500/10'
             }`}
           >
-            {typeIcon}
+            <div className="h-4 w-4 sm:h-5 sm:w-5">{typeIcon}</div>
           </div>
 
           {/* Details */}
           <div className="min-w-0 flex-1">
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <p className="text-foreground font-semibold">
-                {transaction.typeLabel ||
-                  formatTransactionType(transaction.type)}
+            <div className="mb-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <p className="text-foreground text-sm font-semibold sm:text-base">
+                {formatTransactionType(transaction.type, transaction.typeLabel)}
               </p>
               <Badge
-                className={`${statusInfo.bgColor} ${statusInfo.color} text-xs`}
+                className={`${statusInfo.bgColor} ${statusInfo.color} text-[10px] sm:text-xs`}
               >
                 {statusInfo.label}
               </Badge>
               {transaction.requiresAdminApproval && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[10px] sm:text-xs">
                   Pending Approval
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground mb-1 line-clamp-1 text-sm">
+            <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
               {transaction.description}
             </p>
-            <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs">
               <span>{formatTransactionDate(transaction.timestamp)}</span>
               {transaction.reference && (
                 <span className="font-mono">
@@ -1673,10 +1520,10 @@ function TransactionItem({
         </div>
 
         {/* Right: Amount & Actions */}
-        <div className="ml-4 flex shrink-0 items-center gap-3">
+        <div className="ml-2 flex shrink-0 items-center gap-2 sm:ml-4 sm:gap-3">
           <div className="text-right">
             <p
-              className={`text-lg font-bold ${
+              className={`text-sm font-bold sm:text-lg ${
                 isPositive
                   ? 'text-emerald-500'
                   : isNeutral
@@ -1750,7 +1597,7 @@ function getTransactionIcon(
   type: string,
   direction: 'in' | 'out' | 'neutral'
 ): React.ReactNode {
-  const iconClass = 'h-5 w-5';
+  const iconClass = 'h-full w-full';
 
   // Map by type first
   switch (type) {
@@ -1967,10 +1814,10 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
             <div className="space-y-2">
               <DetailRow
                 label="Type"
-                value={
-                  transaction.typeLabel ||
-                  formatTransactionType(transaction.type)
-                }
+                value={formatTransactionType(
+                  transaction.type,
+                  transaction.typeLabel
+                )}
               />
               <DetailRow
                 label="Status"

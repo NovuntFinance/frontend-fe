@@ -150,13 +150,6 @@ const AdminTopBar = () => {
               Users
             </Link>
             <Link
-              href="/admin/kyc"
-              className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              KYC
-            </Link>
-            <Link
               href="/admin/transactions"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -171,12 +164,13 @@ const AdminTopBar = () => {
               Analytics
             </Link>
             <Link
-              href="/admin/ros"
+              href="/admin/daily-profit"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              ROS Management
+              Daily Profit
             </Link>
+            {/* ROS Management (OLD - DEPRECATED) - Removed from mobile menu */}
             <Link
               href="/admin/settings"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"

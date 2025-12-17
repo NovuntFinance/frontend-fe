@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Search,
   Filter,
-  Bug,
+  AlertCircle,
 } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { ReferralTreeNode, TreeNode } from './ReferralTreeNode';
@@ -645,7 +645,7 @@ export function ReferralTreeVisualization({
               onClick={() => setShowDebug(!showDebug)}
               className="text-xs"
             >
-              <Bug className="mr-1 h-3 w-3" />
+              <AlertCircle className="mr-1 h-3 w-3" />
               {showDebug ? 'Hide' : 'Show'} Debug
             </Button>
           )}
@@ -656,7 +656,7 @@ export function ReferralTreeVisualization({
           <Card className="border-yellow-500/20 bg-yellow-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Bug className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 Downline Audit Tool
               </CardTitle>
             </CardHeader>

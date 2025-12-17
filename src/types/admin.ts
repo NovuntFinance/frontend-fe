@@ -150,12 +150,29 @@ export interface AdminUser {
   role: string;
   status: string;
   rank: string;
-  kycStatus: string;
+  rankInfo?: {
+    currentRank: string;
+    qualifiedRank: string;
+    performancePoolQualified: boolean; // Blue Tick
+    premiumPoolQualified: boolean; // Green Tick
+    nxp?: {
+      totalNXP: number;
+      nxpLevel: number;
+      totalNxpEarned: number;
+    };
+    requirements?: {
+      personalStake: number;
+      teamStake: number;
+      directDownlines: number;
+      rankBonusPercent: number;
+    };
+  };
+  // kycStatus removed - backend no longer returns this field
   totalInvested: number;
   totalEarned: number;
   activeStakes: number;
   totalReferrals: number;
-  lastLogin?: string;
+  lastLogin?: string | null; // Can be null according to backend
   createdAt: string;
 }
 
@@ -163,7 +180,7 @@ export interface UserFilters {
   search?: string;
   status?: string;
   role?: string;
-  kycStatus?: string;
+  // kycStatus removed - backend no longer supports this filter
   rank?: string;
   hasActiveStakes?: boolean;
   registrationDateFrom?: string;
@@ -197,7 +214,13 @@ export interface UserDetailAdmin extends AdminUser {
 }
 
 export interface UserAction {
-  action: 'suspend' | 'activate' | 'verify_kyc' | 'reject_kyc' | 'modify_balance' | 'reset_password';
+  action:
+    | 'suspend'
+    | 'activate'
+    | 'verify_kyc'
+    | 'reject_kyc'
+    | 'modify_balance'
+    | 'reset_password';
   userId: string;
   reason?: string;
   metadata?: Record<string, unknown>;
@@ -259,7 +282,12 @@ export interface AnalyticsData {
   };
   referralAnalytics: {
     referralsByLevel: Record<string, number>;
-    topReferrers: Array<{ userId: string; name: string; count: number; earned: number }>;
+    topReferrers: Array<{
+      userId: string;
+      name: string;
+      count: number;
+      earned: number;
+    }>;
     conversionRate: number;
   };
 }
@@ -286,7 +314,12 @@ export type AdminTransactionType =
   | 'bonus'
   | 'fee';
 
-export type AdminTransactionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type AdminTransactionStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
 export interface AdminTransaction {
   id: string;

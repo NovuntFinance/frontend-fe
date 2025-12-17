@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
-import { BiometricButton } from '@/components/auth/BiometricButton';
 import Loading from '@/components/ui/loading';
 
 /**
@@ -33,7 +32,6 @@ import Loading from '@/components/ui/loading';
  * Features:
  * - Email/password authentication
  * - MFA support
- * - Biometric login (future)
  * - Error handling
  * - Loading states
  */
@@ -152,17 +150,6 @@ function LoginPageContent() {
     }
     return undefined;
   }, [isAuthenticated, hasRedirected, router, searchParams]);
-
-  // Handle biometric login success
-  const handleBiometricSuccess = (credentials: {
-    email: string;
-    password: string;
-  }) => {
-    setValue('email', credentials.email);
-    setValue('password', credentials.password);
-    // Auto-submit
-    handleSubmit(onSubmit)();
-  };
 
   // Handle login submission
   const onSubmit = async (data: LoginFormData) => {
@@ -478,13 +465,13 @@ function LoginPageContent() {
     return (
       <div className="space-y-6">
         <div className="space-y-2 text-center">
-          <div className="bg-primary/10 mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full">
-            <Lock className="text-primary h-8 w-8" />
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20 backdrop-blur-sm">
+            <Lock className="h-8 w-8 text-indigo-400" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             Multi-Factor Authentication
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-white/70">
             Enter the 6-digit code from your authenticator app
             {loginData?.email ? ` for ${loginData.email}` : ''}
           </p>
@@ -515,18 +502,20 @@ function LoginPageContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-8 space-y-2 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Welcome back
+        </h1>
+        <p className="text-white/70">
           Sign in to your account to continue your staking journey
         </p>
       </div>
 
       {/* Backend Status Alert */}
       {backendStatus && !backendStatus.healthy && (
-        <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950">
-          <AlertCircle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800 dark:text-orange-200">
+        <Alert className="border-orange-500/50 bg-orange-500/10 backdrop-blur-sm">
+          <AlertCircle className="h-4 w-4 text-orange-400" />
+          <AlertDescription className="text-orange-200">
             <strong>Backend Connection Issue:</strong> {backendStatus.message}
             <br />
             <span className="mt-1 block text-sm">
@@ -539,9 +528,9 @@ function LoginPageContent() {
 
       {/* Success message (if redirected from email verification) */}
       {searchParams?.get('verified') === 'true' && (
-        <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-          <AlertCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-600">
+        <Alert className="border-green-500/50 bg-green-500/10 backdrop-blur-sm">
+          <AlertCircle className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-green-200">
             Email verified successfully! You can now login.
           </AlertDescription>
         </Alert>
@@ -623,13 +612,15 @@ function LoginPageContent() {
       )}
 
       {/* Login Form */}
-      <Card className="border-border/50 relative overflow-hidden shadow-2xl">
+      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
         {/* Gradient Background */}
-        <div className="from-primary/5 to-accent/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
 
         <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">
+            Sign In
+          </CardTitle>
+          <CardDescription className="text-white/70">
             Enter your email and password to access your account
           </CardDescription>
         </CardHeader>
@@ -638,14 +629,16 @@ function LoginPageContent() {
           <CardContent className="relative z-10 space-y-4">
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-white/90">
+                Email
+              </Label>
               <div className="relative">
                 <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
-                  className="pl-10"
+                  className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                   autoComplete="email"
                   autoFocus
                   {...register('email')}
@@ -662,10 +655,12 @@ function LoginPageContent() {
             {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-white/90">
+                  Password
+                </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-primary text-sm hover:underline"
+                  className="text-sm text-indigo-400 hover:text-indigo-300 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -676,7 +671,7 @@ function LoginPageContent() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
-                  className="pr-10 pl-10"
+                  className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                   autoComplete="current-password"
                   {...register('password')}
                   aria-invalid={errors.password ? 'true' : 'false'}
@@ -711,7 +706,7 @@ function LoginPageContent() {
               />
               <Label
                 htmlFor="rememberMe"
-                className="cursor-pointer text-sm font-normal"
+                className="cursor-pointer text-sm font-normal text-white/90"
               >
                 Remember me for 30 days
               </Label>
@@ -722,7 +717,7 @@ function LoginPageContent() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="from-primary to-primary/90 hover:from-primary/90 hover:to-primary w-full bg-gradient-to-r shadow-lg transition-all duration-300 hover:shadow-xl"
+              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
               size="lg"
               disabled={isSubmitting || loginMutation.isPending}
             >
@@ -731,24 +726,16 @@ function LoginPageContent() {
               )}
               Sign In
             </Button>
-
-            {/* Biometric Login */}
-            <BiometricButton
-              onSuccess={handleBiometricSuccess}
-              disabled={isSubmitting || loginMutation.isPending}
-            />
           </CardFooter>
         </form>
       </Card>
 
       {/* Sign Up Link */}
-      <div className="bg-muted/50 border-border/50 rounded-xl border p-6 text-center text-sm">
-        <span className="text-muted-foreground">
-          Don&apos;t have an account?{' '}
-        </span>
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm backdrop-blur-sm">
+        <span className="text-white/70">Don&apos;t have an account? </span>
         <Link
           href="/signup"
-          className="text-primary group inline-flex items-center gap-1 font-semibold hover:underline"
+          className="group inline-flex items-center gap-1 font-semibold text-indigo-400 hover:text-indigo-300 hover:underline"
         >
           Sign up for free
           <svg

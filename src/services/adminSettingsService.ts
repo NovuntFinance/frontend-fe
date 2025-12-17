@@ -1,13 +1,12 @@
-import axios from 'axios';
+import { createAdminApi } from './adminService';
+import { adminService } from './adminService';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-
-const getAuthHeader = () => {
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+// Note: adminSettingsService now uses adminService's createAdminApi() for consistency
+// This provides:
+// - Automatic 2FA code handling (query params for GET, body for POST/PUT/PATCH)
+// - 2FA code caching (85 seconds) - shared with adminService
+// - Consistent error handling
+// - Admin token management
 
 export interface AdminTooltip {
   title: string;
@@ -57,13 +56,27 @@ class AdminSettingsService {
   /**
    * Get all settings (grouped by category)
    * Tooltips are included by default
+   * Requires 2FA code for admin endpoints (handled automatically by adminService)
    */
   async getAllSettings(
-    includeTooltips: boolean = true
+    includeTooltips: boolean = true,
+    twoFACode?: string // Optional - if provided, will be used; otherwise adminService's getter will be used
   ): Promise<AdminSettingsResponse> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/settings`, {
-        headers: getAuthHeader(),
+      // Use adminService's 2FA getter (shared cache and context)
+      // If twoFACode is provided, use it; otherwise use adminService's getter
+      const get2FACode = async () => {
+        if (twoFACode) return twoFACode;
+        // Use adminService's 2FA getter (shared with other admin operations)
+        const admin2FAGetter = adminService.get2FACodeGetter();
+        if (admin2FAGetter) {
+          return await admin2FAGetter();
+        }
+        return null;
+      };
+
+      const api = createAdminApi(get2FACode);
+      const response = await api.get('/admin/settings', {
         params: {
           includeTooltips: includeTooltips ? 'true' : 'false',
         },
@@ -77,21 +90,29 @@ class AdminSettingsService {
 
   /**
    * Get settings by category
+   * Requires 2FA code for admin endpoints (handled automatically by adminService)
    */
   async getSettingsByCategory(
     category: string,
-    includeTooltips: boolean = true
+    includeTooltips: boolean = true,
+    twoFACode?: string
   ): Promise<AdminSetting[]> {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/settings/category/${category}`,
-        {
-          headers: getAuthHeader(),
-          params: {
-            includeTooltips: includeTooltips ? 'true' : 'false',
-          },
+      const get2FACode = async () => {
+        if (twoFACode) return twoFACode;
+        const admin2FAGetter = adminService.get2FACodeGetter();
+        if (admin2FAGetter) {
+          return await admin2FAGetter();
         }
-      );
+        return null;
+      };
+
+      const api = createAdminApi(get2FACode);
+      const response = await api.get(`/admin/settings/category/${category}`, {
+        params: {
+          includeTooltips: includeTooltips ? 'true' : 'false',
+        },
+      });
       return response.data.data;
     } catch (error) {
       console.error(
@@ -104,14 +125,25 @@ class AdminSettingsService {
 
   /**
    * Get single setting
+   * Requires 2FA code for admin endpoints (handled automatically by adminService)
    */
   async getSetting(
     key: string,
-    includeTooltip: boolean = true
+    includeTooltip: boolean = true,
+    twoFACode?: string
   ): Promise<AdminSetting> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/settings/${key}`, {
-        headers: getAuthHeader(),
+      const get2FACode = async () => {
+        if (twoFACode) return twoFACode;
+        const admin2FAGetter = adminService.get2FACodeGetter();
+        if (admin2FAGetter) {
+          return await admin2FAGetter();
+        }
+        return null;
+      };
+
+      const api = createAdminApi(get2FACode);
+      const response = await api.get(`/admin/settings/${key}`, {
         params: {
           includeTooltip: includeTooltip ? 'true' : 'false',
         },
@@ -125,27 +157,33 @@ class AdminSettingsService {
 
   /**
    * Update a single setting
+   * Requires 2FA code for admin endpoints (handled automatically by adminService)
    */
   async updateSetting(
     key: string,
     value: any,
-    reason?: string
+    reason?: string,
+    twoFACode?: string
   ): Promise<{
     status: string;
     message: string;
     data: { key: string; value: any };
   }> {
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/settings/${key}`,
-        {
-          value,
-          reason: reason || `Updated ${key} via admin panel`,
-        },
-        {
-          headers: getAuthHeader(),
+      const get2FACode = async () => {
+        if (twoFACode) return twoFACode;
+        const admin2FAGetter = adminService.get2FACodeGetter();
+        if (admin2FAGetter) {
+          return await admin2FAGetter();
         }
-      );
+        return null;
+      };
+
+      const api = createAdminApi(get2FACode);
+      const response = await api.put(`/admin/settings/${key}`, {
+        value,
+        reason: reason || `Updated ${key} via admin panel`,
+      });
 
       // Clear public config cache since setting changed
       const { configService } = await import('./configService');
@@ -160,22 +198,28 @@ class AdminSettingsService {
 
   /**
    * Update multiple settings at once
+   * Requires 2FA code for admin endpoints (handled automatically by adminService)
    */
   async updateMultipleSettings(
     settings: Record<string, any>,
-    reason?: string
+    reason?: string,
+    twoFACode?: string
   ): Promise<{ status: string; message: string; results: any[] }> {
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/settings`,
-        {
-          settings,
-          reason: reason || 'Bulk update via admin panel',
-        },
-        {
-          headers: getAuthHeader(),
+      const get2FACode = async () => {
+        if (twoFACode) return twoFACode;
+        const admin2FAGetter = adminService.get2FACodeGetter();
+        if (admin2FAGetter) {
+          return await admin2FAGetter();
         }
-      );
+        return null;
+      };
+
+      const api = createAdminApi(get2FACode);
+      const response = await api.put('/admin/settings', {
+        settings,
+        reason: reason || 'Bulk update via admin panel',
+      });
 
       // Clear public config cache
       const { configService } = await import('./configService');

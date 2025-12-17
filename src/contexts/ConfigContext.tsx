@@ -55,15 +55,50 @@ export function ConfigProvider({
         setConfigs(DEFAULT_CONFIG_VALUES as Record<string, any>);
       }
     } catch (err) {
-      console.error('Failed to fetch configs:', err);
+      const error = err as any;
+      const statusCode = error?.response?.status;
+      const is404 = statusCode === 404;
+      const isNetworkError =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message?.includes('Network Error') ||
+        error?.message?.includes('Failed to fetch');
+
+      // Log error details for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to fetch configs:', {
+          statusCode,
+          is404,
+          isNetworkError,
+          message: error?.message,
+        });
+      }
+
       setError(
         err instanceof Error ? err : new Error('Failed to fetch configs')
       );
+
       // Use fallbacks on error
       setConfigs(DEFAULT_CONFIG_VALUES as Record<string, any>);
-      // Show user-friendly error (only once, not on every poll)
-      if (!configs) {
-        toast.error('Failed to load configuration. Using default values.');
+
+      // Only show toast for non-404 errors (404 means endpoint doesn't exist, which is fine)
+      // And only show once on initial load, not on every retry
+      if (!configs && !is404) {
+        // For network errors, use a less intrusive warning
+        if (isNetworkError) {
+          console.warn(
+            'Configuration endpoint unavailable. Using default values.'
+          );
+        } else {
+          // Only show toast in development for debugging
+          if (process.env.NODE_ENV === 'development') {
+            toast.warning(
+              'Failed to load configuration. Using default values.',
+              {
+                description: `Status: ${statusCode || 'Unknown'}`,
+              }
+            );
+          }
+        }
       }
     } finally {
       setLoading(false);

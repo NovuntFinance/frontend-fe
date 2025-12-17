@@ -1,68 +1,92 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Wallet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { WalletDashboard, TransactionHistory } from '@/components/wallet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUIStore } from '@/store/uiStore';
+import { prefersReducedMotion } from '@/lib/accessibility';
 
 /**
  * Modern Wallet Dashboard Page
+ * Merged overview and transactions in a single scrollable page
  * Premium finance platform design with Novunt branding
- * Based on Backend TRD: FRONTEND_WALLET_IMPLEMENTATION_PHASE1.md
  */
 export default function WalletPage() {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams?.get('tab');
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions'>(
-    (tabParam === 'transactions' ? 'transactions' : 'overview') as
-      | 'overview'
-      | 'transactions'
-  );
-
-  useEffect(() => {
-    if (tabParam === 'transactions') {
-      setActiveTab('transactions');
-    }
-  }, [tabParam]);
+  const { openModal } = useUIStore();
+  const reducedMotion = prefersReducedMotion();
 
   return (
-    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-foreground mb-2 text-3xl font-bold">Wallet</h1>
-          <p className="text-muted-foreground">
-            Manage your funds, deposits, and withdrawals
-          </p>
-        </motion.div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page Header - Staking Streak Template */}
+      <motion.div
+        initial={reducedMotion ? false : { opacity: 0, y: -20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+          {/* Animated Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-indigo-500/10 to-transparent" />
 
-        {/* Main Content */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab(value as 'overview' | 'transactions')
-          }
-          className="space-y-6"
-        >
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="transactions">Transaction History</TabsTrigger>
-          </TabsList>
+          {/* Animated Floating Blob */}
+          {!reducedMotion && (
+            <motion.div
+              animate={{
+                x: [0, -15, 0],
+                y: [0, 10, 0],
+                scale: [1, 1.15, 1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+            />
+          )}
 
-          <TabsContent value="overview" className="space-y-6">
-            <WalletDashboard />
-          </TabsContent>
+          <CardHeader className="relative p-4 sm:p-6">
+            <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+                >
+                  <Wallet className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                </motion.div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                    Wallet
+                  </CardTitle>
+                  <CardDescription className="text-[10px] sm:text-xs">
+                    Manage your funds, deposits, and withdrawals
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      </motion.div>
 
-          <TabsContent value="transactions" className="space-y-6">
-            <TransactionHistory />
-          </TabsContent>
-        </Tabs>
-      </div>
+      {/* Main Content - Merged Overview and Transactions */}
+      <WalletDashboard />
+
+      {/* Transaction History Section */}
+      <motion.div
+        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <TransactionHistory />
+      </motion.div>
     </div>
   );
 }

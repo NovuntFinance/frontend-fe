@@ -4,8 +4,17 @@ import { adminAuthService } from './adminAuthService';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
+// 2FA Code Cache (valid for 85 seconds to match backend's ±2 time steps ~90-second window)
+interface Cached2FA {
+  code: string;
+  expiresAt: number;
+}
+
+let cached2FA: Cached2FA | null = null;
+
 // Create axios instance with interceptors
-const createAdminApi = (
+// Exported so other services (like adminSettingsService) can use it
+export const createAdminApi = (
   get2FACode: () => Promise<string | null>
 ): AxiosInstance => {
   const api = axios.create({
@@ -19,17 +28,114 @@ const createAdminApi = (
       const token = adminAuthService.getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('[AdminService] Added admin token to Authorization header');
+      } else {
+        console.warn('[AdminService] No admin token found!');
       }
 
       // For admin endpoints (except login), add 2FA code
+      // BUT ONLY if 2FA is actually enabled for the admin user
       if (config.url?.includes('/admin/') && !config.url.includes('/login')) {
-        const twoFACode = await get2FACode();
-        if (twoFACode) {
-          config.headers['X-2FA-Code'] = twoFACode;
-          // Also add to body if it's a POST/PATCH/PUT
-          if (config.data && typeof config.data === 'object') {
-            config.data.twoFACode = twoFACode;
+        // Check if 2FA is enabled for the current admin
+        const admin = adminAuthService.getCurrentAdmin();
+        const is2FAEnabled = admin?.twoFAEnabled === true;
+
+        if (!is2FAEnabled) {
+          // 2FA is not enabled - clear any cached code and skip 2FA requirement
+          cached2FA = null;
+          console.log(
+            '[AdminService] 2FA is not enabled, skipping 2FA requirement'
+          );
+          return config;
+        }
+
+        // 2FA is enabled - proceed with 2FA code handling
+        // Check cache first
+        let twoFACode: string | null = null;
+
+        if (cached2FA && Date.now() < cached2FA.expiresAt) {
+          twoFACode = cached2FA.code;
+          console.log(
+            '[AdminService] Using cached 2FA code:',
+            twoFACode.substring(0, 2) + '****'
+          );
+        } else {
+          // Get fresh 2FA code
+          console.log('[AdminService] Requesting fresh 2FA code...');
+          try {
+            twoFACode = await get2FACode();
+            if (twoFACode && twoFACode.trim().length > 0) {
+              // Cache for 85 seconds (matches backend's ±2 time steps ~90-second window)
+              // Backend accepts codes within ±2 time steps, so we cache for most of that window
+              cached2FA = {
+                code: twoFACode.trim(),
+                expiresAt: Date.now() + 85 * 1000,
+              };
+              console.log(
+                '[AdminService] Cached new 2FA code (valid for 85 seconds)'
+              );
+            } else {
+              console.warn(
+                '[AdminService] No 2FA code provided by user (user cancelled or empty code)'
+              );
+              // Don't throw error here - let the request proceed and backend will return 403
+            }
+          } catch (error) {
+            console.error('[AdminService] Error getting 2FA code:', error);
+            // Don't throw - let the request proceed and backend will return 403
           }
+        }
+
+        if (twoFACode) {
+          const method = config.method?.toUpperCase();
+
+          if (method === 'GET') {
+            // For GET requests, add to query parameters
+            config.params = config.params || {};
+            config.params.twoFACode = twoFACode;
+            const fullUrl = `${config.baseURL}${config.url}?${new URLSearchParams(config.params as Record<string, string>).toString()}`;
+            console.log(
+              '[AdminService] GET request with 2FA code in query params:',
+              {
+                url: config.url,
+                hasToken: !!token,
+                has2FACode: true,
+                fullUrl: fullUrl.substring(0, 100) + '...',
+              }
+            );
+          } else if (['POST', 'PUT', 'PATCH'].includes(method || '')) {
+            // For POST/PUT/PATCH, add to request body
+            if (config.data && typeof config.data === 'object') {
+              config.data.twoFACode = twoFACode;
+              console.log(
+                '[AdminService] Added 2FA code to request body for',
+                method,
+                {
+                  url: config.url,
+                  hasToken: !!token,
+                  has2FACode: true,
+                }
+              );
+            } else {
+              // If no body, create one
+              config.data = { twoFACode };
+              console.log(
+                '[AdminService] Created request body with 2FA code for',
+                method
+              );
+            }
+          }
+        } else {
+          // 2FA is required but code is not available
+          // This will cause the request to fail with 403, which is handled by the response interceptor
+          console.warn(
+            '[AdminService] ⚠️ 2FA code required but not available for:',
+            config.url
+          );
+          console.warn(
+            '[AdminService] The request will proceed, but backend will return 403 if 2FA is required'
+          );
+          // Don't block the request - let it proceed and backend will return appropriate error
         }
       }
 
@@ -40,27 +146,74 @@ const createAdminApi = (
 
   // Response interceptor: Handle 2FA errors
   api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Keep cache on successful response (code was valid)
+      if (cached2FA) {
+        console.log('[AdminService] ✅ Request successful, 2FA code was valid');
+      }
+      return response;
+    },
     async (error: AxiosError) => {
-      if (error.response?.status === 403) {
-        const errorData = error.response.data as any;
-        const errorCode = errorData?.error?.code;
+      const status = error.response?.status;
+      const errorData = error.response?.data as any;
+      const errorCode = errorData?.error?.code;
+      const errorMessage = errorData?.error?.message || errorData?.message;
 
+      console.error('[AdminService] ❌ Request failed:', {
+        status,
+        url: error.config?.url,
+        errorCode,
+        errorMessage,
+        hasToken: !!adminAuthService.getToken(),
+        hasCached2FA: !!cached2FA,
+      });
+
+      if (status === 403) {
         if (
           errorCode === '2FA_MANDATORY' ||
           errorCode === '2FA_SETUP_INCOMPLETE'
         ) {
-          // Redirect to 2FA setup
+          // Clear cache and redirect to 2FA setup
+          console.log('[AdminService] 2FA not enabled, redirecting to setup');
+          cached2FA = null;
           if (typeof window !== 'undefined') {
             window.location.href = '/admin/setup-2fa';
           }
-        } else if (
-          errorCode === '2FA_CODE_REQUIRED' ||
-          errorCode === '2FA_CODE_INVALID'
-        ) {
-          // Show 2FA input modal (handled by context)
+        } else if (errorCode === '2FA_CODE_INVALID') {
+          // Clear cache on invalid code - user needs to enter new code
+          console.error(
+            '[AdminService] ❌ 2FA code invalid, clearing cache. Please enter a fresh code.'
+          );
+          cached2FA = null;
           // The error will be thrown and handled by the component
+        } else if (errorCode === '2FA_CODE_REQUIRED') {
+          // Clear cache and let component handle retry
+          console.error(
+            '[AdminService] ❌ 2FA code required but not provided, clearing cache'
+          );
+          console.error(
+            '[AdminService] This usually means the 2FA modal was cancelled or not shown'
+          );
+          console.error(
+            '[AdminService] The request will need to be retried manually by the user'
+          );
+          cached2FA = null;
+          // Note: We can't automatically retry here because we don't have access to get2FACode
+          // The component should handle retry by calling the mutation again
+        } else {
+          // Other 403 errors
+          console.error('[AdminService] ❌ 403 Forbidden:', {
+            errorCode,
+            errorMessage,
+            url: error.config?.url,
+          });
         }
+      } else if (status === 401) {
+        // Unauthorized - clear cache
+        console.error(
+          '[AdminService] ❌ 401 Unauthorized - admin token may be invalid or expired'
+        );
+        cached2FA = null;
       }
 
       return Promise.reject(error);
@@ -88,6 +241,30 @@ class AdminService {
    */
   set2FACodeGetter(getter: () => Promise<string | null>): void {
     this.get2FACode = getter;
+  }
+
+  /**
+   * Get the current 2FA code getter (for use by other services)
+   */
+  get2FACodeGetter(): (() => Promise<string | null>) | undefined {
+    return this.get2FACode;
+  }
+
+  /**
+   * Clear cached 2FA code (useful for logout or when code is invalid)
+   */
+  clearCached2FA(): void {
+    cached2FA = null;
+    console.log('[AdminService] Cleared cached 2FA code');
+  }
+
+  /**
+   * Check if 2FA is enabled for current admin
+   * This is used to conditionally require 2FA codes
+   */
+  is2FAEnabled(): boolean {
+    const admin = adminAuthService.getCurrentAdmin();
+    return admin?.twoFAEnabled === true;
   }
 
   /**
@@ -142,6 +319,87 @@ class AdminService {
   }
 
   /**
+   * Get paginated list of users with filters
+   * GET /api/v1/admin/users
+   */
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    rank?: string;
+    hasActiveStakes?: boolean;
+  }) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  }
+
+  /**
+   * Create a new user
+   * POST /api/v1/admin/users
+   */
+  async createUser(userData: {
+    email: string;
+    username: string;
+    password: string;
+    fname: string;
+    lname: string;
+    phoneNumber?: string;
+    countryCode?: string;
+    referralCode?: string;
+  }) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post('/admin/users', userData);
+    return response.data;
+  }
+
+  /**
+   * Create a new admin (super admin only)
+   * POST /api/v1/admin/admins
+   */
+  async createAdmin(adminData: {
+    email: string;
+    username: string;
+    password: string;
+    fname: string;
+    lname: string;
+    role: 'admin' | 'superAdmin';
+    phoneNumber?: string;
+    permissions?: string[]; // Optional array of permission keys
+  }) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post('/admin/admins', adminData);
+    return response.data;
+  }
+
+  /**
+   * Update user status (suspend/activate)
+   * PATCH /api/v1/admin/users/:userId/status
+   */
+  async updateUserStatus(
+    userId: string,
+    status: 'active' | 'suspended' | 'inactive'
+  ) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.patch(`/admin/users/${userId}/status`, {
+      status,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get user by ID
+   * GET /api/v1/admin/users/:userId
+   */
+  async getUserById(userId: string) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  }
+
+  /**
    * Approve withdrawal
    * PATCH /api/v1/admin/withdrawal/:transactionId
    */
@@ -166,6 +424,24 @@ class AdminService {
     const api = createAdminApi(this.get2FACode);
     const response = await api.get('/admin/transactions', {
       params: { page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * Get admin dashboard metrics
+   * GET /api/v1/admin/ui/dashboard
+   * Requires 2FA code
+   *
+   * Backend Fix: Endpoint is now implemented and returns correct structure
+   * Response includes: metrics, charts, recentActivity, timeframe, lastUpdated
+   */
+  async getDashboardMetrics(timeframe: string = '30d') {
+    const api = createAdminApi(this.get2FACode);
+
+    // Backend has fixed the endpoint - use /admin/ui/dashboard directly
+    const response = await api.get('/admin/ui/dashboard', {
+      params: { timeframe },
     });
     return response.data;
   }

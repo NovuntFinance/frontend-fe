@@ -46,13 +46,6 @@ export type ConfigKey =
   | 'pwa_notification_vibration'
   | 'email_only_for_auth'
 
-  // Biometric
-  | 'biometric_auth_enabled'
-  | 'biometric_device_registration_required'
-  | 'biometric_backup_pin_required'
-  | 'biometric_max_failed_attempts'
-  | 'biometric_session_timeout_minutes'
-
   // Activity
   | 'activity_feed_simulation_enabled'
   | 'platform_activity_mock_percentage'
@@ -133,13 +126,6 @@ export interface ConfigValues {
   pwa_notification_vibration: boolean;
   email_only_for_auth: boolean;
 
-  // Biometric
-  biometric_auth_enabled: boolean;
-  biometric_device_registration_required: boolean;
-  biometric_backup_pin_required: boolean;
-  biometric_max_failed_attempts: number;
-  biometric_session_timeout_minutes: number;
-
   // Activity
   activity_feed_simulation_enabled: boolean;
   platform_activity_mock_percentage: number;
@@ -217,9 +203,6 @@ export const DEFAULT_CONFIG_VALUES: Partial<ConfigValues> = {
   notification_push_enabled: true,
   notification_email_enabled: true,
 
-  // Biometric
-  biometric_auth_enabled: true,
-
   // Rank System
   rank_system_enabled: true,
 
@@ -249,10 +232,6 @@ export function getConfigCategory(key: ConfigKey): string {
 
   if (key.startsWith('notification') || key.startsWith('pwa_')) {
     return 'notification';
-  }
-
-  if (key.startsWith('biometric')) {
-    return 'biometric';
   }
 
   if (

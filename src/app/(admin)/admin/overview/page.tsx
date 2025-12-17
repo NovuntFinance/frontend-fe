@@ -173,23 +173,6 @@ export default function AdminOverviewPage() {
           />
         ),
       },
-      {
-        id: 'kyc-pending',
-        content: (
-          <AdminMetricCard
-            title="KYC Pending"
-            value={(metrics.kyc?.pending ?? 0).toLocaleString()}
-            secondaryValue={
-              metrics.kyc?.highPriority
-                ? `${metrics.kyc.highPriority} high priority`
-                : undefined
-            }
-            icon="shield"
-            trend="neutral"
-            alert={(metrics.kyc?.highPriority ?? 0) > 0}
-          />
-        ),
-      },
     ];
   }, [charts, metrics]);
 

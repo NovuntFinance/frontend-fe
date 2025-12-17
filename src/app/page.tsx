@@ -4,17 +4,20 @@ import React, { useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import {
+  TrendingUp,
+  Shield,
+  CheckCircle2,
+  ArrowRight,
+  Star,
+  Lock,
+  Target,
+  Award,
+} from 'lucide-react';
 
-// Dynamically import components to avoid SSR issues
+// Dynamically import Typing component to avoid SSR issues
 const Typing = dynamic(() => import('@/components/ui/typing'), { ssr: false });
-const ProgressDeposit = dynamic(
-  () => import('@/components/ui/progress-deposit'),
-  { ssr: false }
-);
-const ChatWidget = dynamic(() => import('@/components/ui/chat-widget'), {
-  ssr: false,
-});
 
 function GradientBlob({ className = '' }: { className?: string }) {
   return (
@@ -24,410 +27,563 @@ function GradientBlob({ className = '' }: { className?: string }) {
   );
 }
 
-export default function LandingPage() {
-  console.log('[LandingPage] Rendering');
-  const [mounted, setMounted] = useState(false);
-  const imgRef = useRef<HTMLDivElement | null>(null);
+function AnimatedNumber({
+  value,
+  suffix = '',
+  prefix = '',
+  duration = 2000,
+}: {
+  value: number;
+  suffix?: string;
+  prefix?: string;
+  duration?: number;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    console.log('[LandingPage] Mounted');
+    let startTime: number;
+    const endValue = value;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setDisplayValue(Math.floor(easeOutQuart * endValue));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setDisplayValue(endValue);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+
+  return (
+    <span>
+      {prefix}
+      {displayValue.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
+
+export default function LandingPage() {
+  const [mounted, setMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
+
+  useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    let raf = 0;
-    const onScroll = () => {
-      const offset = window.scrollY || 0;
-      if (imgRef.current) {
-        imgRef.current.style.transform = `translateY(${offset * 0.12}px) scale(1.02)`;
-      }
-    };
-    const handler = () => {
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(onScroll);
-    };
-    window.addEventListener('scroll', handler, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handler);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
+  const features = [
+    {
+      icon: TrendingUp,
+      title: 'Up to 200% ROS',
+      description: 'Maximize returns with industry-leading staking rewards',
+      gradient: 'from-emerald-500/20 to-green-500/10',
+      border: 'border-emerald-500/30',
+      iconColor: 'text-emerald-400',
+    },
+    {
+      icon: Shield,
+      title: 'Bank-Level Security',
+      description: 'Your funds protected with enterprise-grade encryption',
+      gradient: 'from-blue-500/20 to-cyan-500/10',
+      border: 'border-blue-500/30',
+      iconColor: 'text-blue-400',
+    },
+    {
+      icon: Target,
+      title: 'Goal-Based Staking',
+      description: 'Set targets and track progress toward your financial goals',
+      gradient: 'from-purple-500/20 to-pink-500/10',
+      border: 'border-purple-500/30',
+      iconColor: 'text-purple-400',
+    },
+    {
+      icon: Award,
+      title: 'Premium Rewards',
+      description: 'Access exclusive pools and bonus opportunities',
+      gradient: 'from-amber-500/20 to-orange-500/10',
+      border: 'border-amber-500/30',
+      iconColor: 'text-amber-400',
+    },
+  ];
 
   return (
-    <main className="from-primary/80 to-background relative min-h-screen overflow-hidden bg-gradient-to-b text-white">
-      <div className="pointer-events-none absolute inset-0 -z-30">
-        {/* Background image layer: drop your image into public/vault-bg.jpg */}
-        <div className="pointer-events-none absolute inset-0 -z-30">
-          {/* Background image layer with subtle parallax */}
-          <div
-            ref={imgRef as React.RefObject<HTMLDivElement>}
-            className="relative h-full w-full will-change-transform"
-          >
-            <Image
-              src="/vault-bg.jpg"
-              alt="Vault background"
-              fill
-              className="object-cover"
-              priority
-              quality={75}
-            />
-            <div className="vault-overlay pointer-events-none absolute inset-0 -z-10" />
-          </div>
-        </div>
-
-        {/* subtle gradient blobs on top of the image */}
-        <div className="absolute inset-0 -z-20">
-          <GradientBlob className="top-[-15%] left-[-10%] h-[60vmax] w-[60vmax] bg-gradient-to-tr from-indigo-400 via-purple-500 to-pink-400" />
-          <GradientBlob className="top-[10%] left-[60%] h-[40vmax] w-[40vmax] bg-gradient-to-tr from-cyan-300 via-sky-400" />
-        </div>
+    <main
+      ref={containerRef}
+      className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-950 text-white"
+    >
+      {/* Animated Background */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <GradientBlob className="top-[-20%] left-[-10%] h-[80vh] w-[80vw] animate-pulse bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500" />
+        <GradientBlob className="top-[40%] right-[-10%] h-[60vh] w-[60vw] bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-500" />
+        <GradientBlob className="bottom-[-10%] left-[20%] h-[50vh] w-[50vw] bg-gradient-to-tr from-emerald-400 via-teal-500 to-cyan-500" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12 lg:px-8 lg:py-20">
-        <nav className="mb-4 flex items-center justify-between sm:mb-0">
-          <Link href="/" className="group">
-            <Image
-              src="/icons/novunt.png"
-              alt="Novunt - No limits to value, net worth, and growth"
-              width={180}
-              height={48}
-              className="h-8 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105 sm:h-10 md:h-12"
-              priority
-            />
+      {/* Navigation */}
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="relative z-50 mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6"
+      >
+        <Link href="/" className="group">
+          <Image
+            src="/icons/novunt.png"
+            alt="Novunt"
+            width={140}
+            height={40}
+            className="h-8 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105 sm:h-10"
+            priority
+          />
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+          >
+            Sign In
           </Link>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <a
-              href="#learn"
-              className="text-xs text-indigo-100 transition-colors hover:text-white sm:text-sm"
-            >
-              Learn More
-            </a>
-            <Link
-              href="/login"
-              className="hidden text-xs text-indigo-100 transition-colors hover:text-white sm:inline sm:text-sm"
-            >
-              Sign In
-            </Link>
+          <Link
+            href="/signup"
+            className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/50 active:scale-95"
+          >
+            Get Started
+          </Link>
+        </div>
+      </motion.nav>
+
+      {/* Hero Section */}
+      <motion.section
+        style={{ opacity, y }}
+        className="relative z-10 mx-auto max-w-7xl px-4 pt-8 pb-12 sm:px-6 sm:pt-16 lg:pt-24"
+      >
+        <div className="mx-auto max-w-4xl text-center">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 backdrop-blur-sm"
+          >
+            <Star className="h-4 w-4 text-emerald-400" />
+            <span className="text-sm font-medium text-emerald-300">
+              Limited Time: 10% Bonus on First Stake
+            </span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mb-6 text-4xl leading-tight font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+          >
+            <div className="flex min-h-[3rem] flex-col items-center justify-center gap-2 sm:min-h-[4rem] md:min-h-[5rem] lg:min-h-[8rem]">
+              <span className="block bg-gradient-to-r from-white via-indigo-100 to-purple-100 bg-clip-text text-transparent">
+                Build Wealth
+              </span>
+              {mounted && (
+                <div className="flex min-h-[2.5rem] items-center justify-center sm:min-h-[3rem] md:min-h-[4rem]">
+                  <Typing
+                    phrases={[
+                      'Without Limits',
+                      'With Confidence',
+                      'For Your Future',
+                      'For Success',
+                    ]}
+                    typingSpeed={50}
+                    deleteSpeed={35}
+                    pause={1500}
+                    className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                    cursor="▌"
+                    emoji=""
+                  />
+                </div>
+              )}
+            </div>
+          </motion.h1>
+
+          {/* Subheadline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mb-8 text-lg leading-relaxed text-white/80 sm:text-xl md:text-2xl"
+          >
+            Stake USDT and earn up to{' '}
+            <span className="font-bold text-emerald-400">200% ROS</span>. Join
+            thousands earning weekly returns with{' '}
+            <span className="font-semibold">Novunt</span>.
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          >
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium transition-all hover:bg-white/20 sm:px-4 sm:py-2 sm:text-sm"
+              className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-4 text-base font-bold text-white shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 active:scale-95 sm:w-auto"
             >
-              Get Started
+              <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-white/0 via-white/20 to-white/0 transition-transform duration-1000 group-hover:translate-x-[100%]" />
+              <span className="relative z-10 flex items-center gap-2">
+                Start Earning Now
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </span>
             </Link>
-          </div>
-        </nav>
-
-        <section className="mt-8 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
-          <div className="order-2 text-center lg:order-1 lg:col-span-7 lg:text-left">
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-2xl leading-tight font-extrabold sm:text-3xl md:text-5xl lg:text-6xl"
+            <Link
+              href="#features"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/10 active:scale-95 sm:w-auto"
             >
-              <div className="mt-0 flex min-h-[2.5rem] justify-center sm:mt-1 sm:min-h-[3.5rem] md:min-h-[5rem] lg:min-h-[8rem] lg:justify-start">
-                {/* {mounted && <Typing
-                  phrases={["Build Wealth.", "Protect your future.", "Stake smart.", "Earn reliably."]}
-                  typingSpeed={50}
-                  deleteSpeed={35}
-                  pause={1500}
-                  className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300"
-                  cursor="▌"
-                  emoji=""
-                />} */}
-                <span className="bg-gradient-to-r from-indigo-300 to-pink-300 bg-clip-text text-transparent">
-                  Build Wealth.
-                </span>
+              Learn More
+            </Link>
+          </motion.div>
+
+          {/* Trust Indicators */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+          >
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-1 text-2xl font-bold text-white sm:text-3xl">
+                <AnimatedNumber value={5000} suffix="+" />
               </div>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-indigo-100 sm:mt-4 sm:text-base lg:mx-0 lg:text-lg"
-            >
-              Stake USDT and grow with Novunt. Earn up to 200% ROS, tap into
-              Performance and Premium Pool rewards, and secure NLP tokens ahead
-              of the blockchain launch.
-            </motion.p>
-
-            <div className="mt-4 flex flex-col flex-wrap justify-center gap-3 sm:mt-6 sm:flex-row lg:justify-start">
-              <Link
-                href="/signup"
-                className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-700 active:scale-95 sm:px-6 sm:py-3 sm:text-base"
-              >
-                {/* Animated shine effect */}
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
-
-                {/* 10% Bonus Badge */}
-                <span className="absolute -top-2 -right-2 animate-pulse rounded-full bg-gradient-to-r from-green-500 to-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg ring-2 ring-white/30 sm:text-xs">
-                  10% BONUS
-                </span>
-
-                <span className="relative z-10">Get Started Free</span>
-                <svg
-                  className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1 sm:h-5 sm:w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </Link>
-              <a
-                href="#learn"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm text-indigo-100 transition-all hover:bg-white/20 sm:px-5 sm:py-3 sm:text-base"
-              >
-                Learn more
-              </a>
+              <div className="text-xs text-white/60 sm:text-sm">
+                Active Users
+              </div>
             </div>
-
-            {/* Stats grid removed as requested */}
-          </div>
-
-          <div className="order-1 lg:order-2 lg:col-span-5">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className="relative rounded-xl bg-white/5 p-4 shadow-2xl backdrop-blur-sm sm:rounded-2xl sm:p-6"
-            >
-              {/* {mounted && <ProgressDeposit startAmount={1000} multiplier={2} duration={6000} />} */}
-              <div className="p-4 text-center text-white">
-                Interactive Demo Placeholder
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-1 text-2xl font-bold text-emerald-400 sm:text-3xl">
+                <AnimatedNumber value={200} suffix="%" />
               </div>
-            </motion.div>
-          </div>
-        </section>
+              <div className="text-xs text-white/60 sm:text-sm">
+                Max Returns
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-1 text-2xl font-bold text-white sm:text-3xl">
+                $<AnimatedNumber value={1000000} suffix="+" />
+              </div>
+              <div className="text-xs text-white/60 sm:text-sm">
+                Total Staked
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-1 text-2xl font-bold text-blue-400 sm:text-3xl">
+                <AnimatedNumber value={99} suffix=".9%" />
+              </div>
+              <div className="text-xs text-white/60 sm:text-sm">Uptime</div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.section>
 
-        <section id="learn" className="mt-12 scroll-mt-20 sm:mt-16 lg:mt-20">
-          <h2 className="mb-3 text-center text-xl font-bold sm:text-2xl lg:text-left lg:text-3xl">
-            Why Choose Novunt?
+      {/* Features Section */}
+      <section
+        id="features"
+        className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl md:text-5xl">
+            Why Choose{' '}
+            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              Novunt
+            </span>
+            ?
           </h2>
-          <p className="mb-6 max-w-2xl text-center text-sm text-indigo-200/80 sm:mb-8 sm:text-base lg:text-left">
+          <p className="mx-auto max-w-2xl text-lg text-white/70">
             Everything you need to grow your wealth with confidence
           </p>
+        </motion.div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:gap-6 md:grid-cols-2">
-            {/* 1. MOST IMPORTANT: Registration Bonus - Immediate value */}
-            <div className="group relative overflow-hidden rounded-xl border border-green-400/30 bg-gradient-to-br from-green-500/20 to-emerald-500/10 p-5 backdrop-blur-sm transition-all hover:from-green-500/30 hover:to-emerald-500/20 sm:p-6">
-              <div className="absolute top-2 right-2 animate-pulse rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                LIMITED OFFER
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">🎁</div>
-                <div className="flex-1">
-                  <div className="mb-2 text-lg font-semibold text-white sm:text-xl">
-                    Earn Up to 100,000 USDT Bonus
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group relative overflow-hidden rounded-3xl border backdrop-blur-xl transition-all hover:scale-105 hover:shadow-2xl"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  borderColor: feature.border.includes('emerald')
+                    ? 'rgba(16, 185, 129, 0.3)'
+                    : feature.border.includes('blue')
+                      ? 'rgba(59, 130, 246, 0.3)'
+                      : feature.border.includes('purple')
+                        ? 'rgba(168, 85, 247, 0.3)'
+                        : 'rgba(245, 158, 11, 0.3)',
+                }}
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-50 transition-opacity group-hover:opacity-70`}
+                />
+                <div className="relative p-6 sm:p-8">
+                  <div
+                    className={`mb-4 inline-flex rounded-2xl bg-white/10 p-3 backdrop-blur-sm ${feature.iconColor}`}
+                  >
+                    <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
-                  <p className="text-xs leading-relaxed text-white/90 sm:text-sm">
-                    Get an instant 10% bonus on your first stake, with potential
-                    rewards up to 100,000 USDT. Start earning from day one with
-                    Novunt&apos;s welcome offer.
+                  <h3 className="mb-2 text-xl font-bold text-white sm:text-2xl">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-white/70 sm:text-base">
+                    {feature.description}
                   </p>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
 
-            {/* 2. Core Feature: Goal-Based Staking */}
-            <div className="group rounded-xl border border-white/5 bg-white/10 p-5 backdrop-blur-sm transition-all hover:bg-white/15 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">🎯</div>
-                <div className="flex-1">
-                  <div className="mb-2 text-lg font-semibold text-white sm:text-xl">
-                    Goal-Based Staking
-                  </div>
-                  <p className="text-xs leading-relaxed text-white/80 sm:text-sm">
-                    Set clear financial goals with progress tracking toward 200%
-                    returns. Stake multiple times and collect weekly ROS
-                    directly to your Earning Wallet.
-                  </p>
-                </div>
-              </div>
+      {/* Premium Benefits Section */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Bonus Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 to-green-500/10 p-8 backdrop-blur-xl"
+          >
+            <div className="absolute top-4 right-4 animate-pulse rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
+              LIMITED OFFER
             </div>
-
-            {/* 3. Additional Earnings: Performance & Premium Pools */}
-            <div className="group rounded-xl border border-white/5 bg-white/10 p-5 backdrop-blur-sm transition-all hover:bg-white/15 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">💎</div>
-                <div className="flex-1">
-                  <div className="mb-2 text-lg font-semibold text-white sm:text-xl">
-                    Performance & Premium Pools
-                  </div>
-                  <p className="text-xs leading-relaxed text-white/80 sm:text-sm">
-                    Maximize earnings by participating in Performance and
-                    Premium pools. Earn additional profit shares from
-                    Novunt&apos;s success beyond your base stake returns.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Future Value: NXP to NLP Conversion */}
-            <div className="group rounded-xl border border-white/5 bg-white/10 p-5 backdrop-blur-sm transition-all hover:bg-white/15 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">🚀</div>
-                <div className="flex-1">
-                  <div className="mb-2 text-lg font-semibold text-white sm:text-xl">
-                    NXP to NLP Conversion
-                  </div>
-                  <p className="text-xs leading-relaxed text-white/80 sm:text-sm">
-                    Earn Novunt Experience Points (NXP) through platform
-                    activity and engagement. Convert NXP to Novunt Legacy Points
-                    (NLP) when our blockchain launches—secure your early adopter
-                    advantage.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="contact"
-          className="mt-12 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 p-5 shadow-xl sm:mt-16 sm:rounded-2xl sm:p-6 lg:mt-20 lg:p-8"
-        >
-          <div className="flex flex-col items-center justify-between gap-4 sm:gap-6 md:flex-row">
-            <div className="text-center md:text-left">
-              <div className="text-base font-semibold sm:text-lg lg:text-xl">
-                Ready to start earning?
-              </div>
-              <div className="mt-1 text-xs text-indigo-100 sm:mt-2 sm:text-sm">
-                Join Novunt today and start staking with up to 10% bonus
-                rewards.
-              </div>
-            </div>
-            <div className="flex w-full flex-col items-center gap-3 sm:flex-row md:w-auto">
+            <div className="relative">
+              <div className="mb-4 text-5xl">🎁</div>
+              <h3 className="mb-3 text-2xl font-bold text-white sm:text-3xl">
+                Earn Up to 100,000 USDT Bonus
+              </h3>
+              <p className="mb-6 text-white/80">
+                Get an instant 10% bonus on your first stake, with potential
+                rewards up to 100,000 USDT. Start earning from day one with
+                Novunt&apos;s welcome offer.
+              </p>
               <Link
                 href="/signup"
-                className="w-full rounded-full bg-white px-5 py-2.5 text-center text-sm font-semibold whitespace-nowrap text-indigo-800 transition-all hover:bg-indigo-50 active:scale-95 sm:w-auto sm:py-3 sm:text-base"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-emerald-700 active:scale-95"
+              >
+                Claim Bonus Now
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Benefits List */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            {[
+              {
+                icon: TrendingUp,
+                title: 'Weekly ROS Payouts',
+                description:
+                  'Receive returns directly to your Earning Wallet every week',
+              },
+              {
+                icon: Target,
+                title: 'Goal-Based Staking',
+                description:
+                  'Set clear financial goals with progress tracking toward 200% returns',
+              },
+              {
+                icon: Award,
+                title: 'Performance & Premium Pools',
+                description:
+                  'Maximize earnings by participating in exclusive reward pools',
+              },
+              {
+                icon: TrendingUp,
+                title: 'NXP to NLP Conversion',
+                description:
+                  'Earn experience points and convert to legacy tokens for blockchain launch',
+              },
+            ].map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <motion.div
+                  key={benefit.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:bg-white/10"
+                >
+                  <div className="flex-shrink-0">
+                    <div className="rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-3">
+                      <Icon className="h-6 w-6 text-indigo-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="mb-1 text-lg font-semibold text-white">
+                      {benefit.title}
+                    </h4>
+                    <p className="text-sm text-white/70">
+                      {benefit.description}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Security & Trust Section */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl sm:p-12"
+        >
+          <div className="mb-8 text-center">
+            <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
+              Your Security is Our Priority
+            </h2>
+            <p className="text-lg text-white/70">
+              Bank-level encryption and enterprise-grade security
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {[
+              {
+                icon: Lock,
+                title: 'End-to-End Encryption',
+                desc: 'All transactions secured',
+              },
+              {
+                icon: Shield,
+                title: 'Multi-Layer Security',
+                desc: 'Advanced threat protection',
+              },
+              {
+                icon: CheckCircle2,
+                title: 'Regulated & Compliant',
+                desc: 'Industry standards followed',
+              },
+            ].map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="mb-4 inline-flex rounded-2xl bg-blue-500/20 p-4">
+                    <Icon className="h-8 w-8 text-blue-400" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-white">
+                    {item.title}
+                  </h3>
+                  <p className="text-white/60">{item.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-12 text-center shadow-2xl"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
+          <div className="relative z-10">
+            <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+              Ready to Start Earning?
+            </h2>
+            <p className="mb-8 text-lg text-white/90 sm:text-xl">
+              Join Novunt today and start staking with up to 10% bonus rewards.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link
+                href="/signup"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-8 py-4 text-lg font-bold text-indigo-600 transition-all hover:scale-105 hover:shadow-2xl active:scale-95 sm:w-auto"
               >
                 Create Free Account
+                <ArrowRight className="h-5 w-5" />
               </Link>
               <a
                 href="https://t.me/NovuntAssistantBot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-white/90 transition-colors hover:text-white sm:text-base"
+                className="inline-flex items-center text-lg font-semibold text-white transition-colors hover:text-white/80"
               >
                 Contact Support
               </a>
             </div>
           </div>
+        </motion.div>
+      </section>
 
-          {/* Social Media Links */}
-          <div className="mt-5 border-t border-white/20 pt-5 sm:mt-6 sm:pt-6">
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="transition-colors hover:scale-110 hover:text-white/80 active:scale-95"
-                title="Follow us on Facebook"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  className="sm:h-6 sm:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/10 bg-black/20 py-8 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <p className="text-center text-sm text-white/60 sm:text-left">
+              © {new Date().getFullYear()} Novunt — No limits to value, net
+              worth and growth.
+            </p>
+            <div className="flex gap-4">
+              {[
+                { href: 'https://facebook.com', label: 'Facebook' },
+                { href: 'https://instagram.com', label: 'Instagram' },
+                { href: 'https://t.me', label: 'Telegram' },
+                { href: 'https://youtube.com', label: 'YouTube' },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 transition-colors hover:text-white"
+                  aria-label={social.label}
                 >
-                  <path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0" />
-                </svg>
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="transition-colors hover:scale-110 hover:text-white/80 active:scale-95"
-                title="Follow us on Instagram"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  className="sm:h-6 sm:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.241 1.308 3.608.058 1.266.069 1.646.069 4.85s-.011 3.584-.069 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.241 1.246-3.608 1.308-1.266.058-1.646.069-4.85.069s-3.584-.011-4.85-.069c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.241-1.308-3.608C2.175 15.647 2.163 15.267 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608.974-.974 2.241-1.246 3.608-1.308C8.416 2.175 8.796 2.163 12 2.163zm0-2.163C8.741 0 8.332.013 7.052.072 5.775.131 4.602.425 3.635 1.392 2.668 2.359 2.374 3.532 2.315 4.809 2.256 6.089 2.243 6.498 2.243 12c0 5.502.013 5.911.072 7.191.059 1.277.353 2.45 1.32 3.417.967.967 2.14 1.261 3.417 1.32C8.332 23.987 8.741 24 12 24s3.668-.013 4.948-.072c1.277-.059 2.45-.353 3.417-1.32.967-.967 1.261-2.14 1.32-3.417.059-1.28.072-1.689.072-7.191 0-5.502-.013-5.911-.072-7.191-.059-1.277-.353-2.45-1.32-3.417C19.398.425 18.225.131 16.948.072 15.668.013 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
-                </svg>
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-                className="transition-colors hover:scale-110 hover:text-white/80 active:scale-95"
-                title="Follow us on TikTok"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  className="sm:h-6 sm:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M12.004 2c2.21 0 4.01 1.79 4.01 4.01v7.98c0 2.21-1.8 4.01-4.01 4.01-2.21 0-4.01-1.8-4.01-4.01V6.01C7.994 3.8 9.794 2 12.004 2zm0-2C8.13 0 5 3.13 5 7.01v7.98C5 20.87 8.13 24 12.004 24c3.87 0 7.01-3.13 7.01-7.01V7.01C19.014 3.13 15.874 0 12.004 0zm0 4.01c1.1 0 2 .9 2 2v7.98c0 1.1-.9 2-2 2s-2-.9-2-2V6.01c0-1.1.9-2 2-2z" />
-                </svg>
-              </a>
-              <a
-                href="https://t.me"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram"
-                className="transition-colors hover:scale-110 hover:text-white/80 active:scale-95"
-                title="Join us on Telegram"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  className="sm:h-6 sm:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M12 0C5.372 0 0 5.373 0 12c0 6.627 5.372 12 12 12s12-5.373 12-12c0-6.627-5.372-12-12-12zm5.707 8.293l-1.414 8.485c-.104.624-.51.78-1.032.485l-2.857-2.107-1.378 1.327c-.152.152-.28.28-.573.28l.205-2.902 5.29-4.78c.23-.205-.05-.32-.357-.115l-6.545 4.12-2.82-.882c-.613-.19-.624-.613.128-.907l11.025-4.253c.512-.19.96.115.797.902z" />
-                </svg>
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-                className="transition-colors hover:scale-110 hover:text-white/80 active:scale-95"
-                title="Subscribe on YouTube"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  className="sm:h-6 sm:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M23.498 6.186a2.994 2.994 0 0 0-2.112-2.112C19.454 3.5 12 3.5 12 3.5s-7.454 0-9.386.574A2.994 2.994 0 0 0 .502 6.186C0 8.12 0 12 0 12s0 3.88.502 5.814a2.994 2.994 0 0 0 2.112 2.112C4.546 20.5 12 20.5 12 20.5s7.454 0 9.386-.574a2.994 2.994 0 0 0 2.112-2.112C24 15.88 24 12 24 12s0-3.88-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-              </a>
+                  <span className="sr-only">{social.label}</span>
+                  <div className="h-5 w-5 rounded-full border border-white/20" />
+                </a>
+              ))}
             </div>
           </div>
-        </section>
-
-        <footer className="mt-12 py-6 text-center text-xs text-indigo-200 sm:mt-16 sm:text-sm">
-          © {new Date().getFullYear()} Novunt — No limits to value, net worth
-          and growth.
-        </footer>
-      </div>
-      {/* {mounted && <ChatWidget />} */}
+        </div>
+      </footer>
     </main>
   );
 }

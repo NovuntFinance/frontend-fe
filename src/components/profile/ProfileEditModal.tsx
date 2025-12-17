@@ -37,9 +37,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { AvatarSelector } from '@/components/profile/AvatarSelector';
+import { BadgeAvatarSelector } from '@/components/achievements/BadgeAvatarSelector';
 import { passwordSchema } from '@/lib/validation';
 
 // Profile edit schema
@@ -48,15 +55,19 @@ const profileEditSchema = z.object({
     .string()
     .min(2, 'First name must be at least 2 characters')
     .max(50, 'First name must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'First name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
   lastName: z
     .string()
     .min(2, 'Last name must be at least 2 characters')
     .max(50, 'Last name must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
-  phoneNumber: z
-    .string()
-    .min(1, 'Phone number is required'),
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'Last name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
+  phoneNumber: z.string().min(1, 'Phone number is required'),
   dateOfBirth: z
     .string()
     .min(1, 'Date of birth is required')
@@ -67,7 +78,8 @@ const profileEditSchema = z.object({
       const age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
       const dayDiff = today.getDate() - birthDate.getDate();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+      const actualAge =
+        monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
       return actualAge >= 18;
     }, 'You must be at least 18 years old'),
   gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say'], {
@@ -93,9 +105,7 @@ const profileEditSchema = z.object({
     .string()
     .min(2, 'Postal/ZIP code is required')
     .max(20, 'Postal/ZIP code must not exceed 20 characters'),
-  profilePhoto: z
-    .string()
-    .optional(),
+  profilePhoto: z.string().optional(),
 });
 
 // Change password schema
@@ -118,7 +128,10 @@ interface ProfileEditModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) {
+export function ProfileEditModal({
+  open,
+  onOpenChange,
+}: ProfileEditModalProps) {
   const { user } = useAuth();
   const { updateUser } = useAuthStore();
   const { data: profileData, refetch: refetchProfile } = useProfile();
@@ -127,7 +140,9 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(undefined);
+  const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(
+    undefined
+  );
 
   // Profile edit form
   const {
@@ -146,26 +161,32 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       phoneNumber: (() => {
         // Format phone number to E.164 if missing + prefix
         // Check both user object and profileData for phone number
-        let phone = user?.phoneNumber || (profileData as any)?.phoneNumber || '';
-        
+        let phone =
+          user?.phoneNumber || (profileData as any)?.phoneNumber || '';
+
         // If still empty, check nested profile structure
         if (!phone && profileData) {
           const profile = (profileData as any)?.profile;
           phone = profile?.phone || profile?.phoneNumber || '';
         }
-        
+
         // If phone number exists but doesn't start with +, add country code
         if (phone && !phone.startsWith('+')) {
-          const countryCode = user?.countryCode || (profileData as any)?.countryCode || '+1';
+          const countryCode =
+            user?.countryCode || (profileData as any)?.countryCode || '+1';
           phone = `${countryCode}${phone}`;
         }
-        
+
         // If phone is still empty but we have country code, set default format
-        if (!phone && (user?.countryCode || (profileData as any)?.countryCode)) {
-          const countryCode = user?.countryCode || (profileData as any)?.countryCode || '+1';
+        if (
+          !phone &&
+          (user?.countryCode || (profileData as any)?.countryCode)
+        ) {
+          const countryCode =
+            user?.countryCode || (profileData as any)?.countryCode || '+1';
           phone = countryCode; // Just country code as placeholder
         }
-        
+
         return phone;
       })(),
       dateOfBirth: (() => {
@@ -178,13 +199,26 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
         }
         return '';
       })(),
-      gender: ((profileData as any)?.profile?.gender || (profileData as any)?.gender || 'prefer_not_to_say') as 'male' | 'female' | 'other' | 'prefer_not_to_say',
-      addressStreet: ((profileData as any)?.profile?.address?.street || '') as string,
-      addressCity: ((profileData as any)?.profile?.address?.city || '') as string,
-      addressState: ((profileData as any)?.profile?.address?.state || '') as string,
-      addressCountry: ((profileData as any)?.profile?.address?.country || '') as string,
-      addressPostalCode: ((profileData as any)?.profile?.address?.zipCode || '') as string,
-      profilePhoto: ((profileData as any)?.profile?.profilePhoto || profileData?.avatar || '') as string,
+      gender: ((profileData as any)?.profile?.gender ||
+        (profileData as any)?.gender ||
+        'prefer_not_to_say') as
+        | 'male'
+        | 'female'
+        | 'other'
+        | 'prefer_not_to_say',
+      addressStreet: ((profileData as any)?.profile?.address?.street ||
+        '') as string,
+      addressCity: ((profileData as any)?.profile?.address?.city ||
+        '') as string,
+      addressState: ((profileData as any)?.profile?.address?.state ||
+        '') as string,
+      addressCountry: ((profileData as any)?.profile?.address?.country ||
+        '') as string,
+      addressPostalCode: ((profileData as any)?.profile?.address?.zipCode ||
+        '') as string,
+      profilePhoto: ((profileData as any)?.profile?.profilePhoto ||
+        profileData?.avatar ||
+        '') as string,
     },
   });
 
@@ -203,27 +237,33 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
     if (user && profileData) {
       // Format phone number to E.164 if it's missing the + prefix
       // Check both user object and profileData for phone number
-      let formattedPhone = user.phoneNumber || (profileData as any)?.phoneNumber || '';
-      
+      let formattedPhone =
+        user.phoneNumber || (profileData as any)?.phoneNumber || '';
+
       // If still empty, check nested profile structure
       if (!formattedPhone) {
         const profile = (profileData as any)?.profile;
         formattedPhone = profile?.phone || profile?.phoneNumber || '';
       }
-      
+
       // If phone number exists but doesn't start with +, add country code
       if (formattedPhone && !formattedPhone.startsWith('+')) {
         // Try to construct E.164 format with country code
-        const countryCode = user.countryCode || (profileData as any)?.countryCode || '+1'; // Default to US
+        const countryCode =
+          user.countryCode || (profileData as any)?.countryCode || '+1'; // Default to US
         formattedPhone = `${countryCode}${formattedPhone}`;
       }
-      
+
       // If phone is still empty but we have country code, set default format
-      if (!formattedPhone && (user.countryCode || (profileData as any)?.countryCode)) {
-        const countryCode = user.countryCode || (profileData as any)?.countryCode || '+1';
+      if (
+        !formattedPhone &&
+        (user.countryCode || (profileData as any)?.countryCode)
+      ) {
+        const countryCode =
+          user.countryCode || (profileData as any)?.countryCode || '+1';
         formattedPhone = countryCode; // Just country code as placeholder
       }
-      
+
       // Format date of birth
       let formattedDateOfBirth = '';
       const profile = (profileData as any)?.profile || profileData;
@@ -231,19 +271,32 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
         const date = new Date(profile.dateOfBirth);
         formattedDateOfBirth = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       }
-      
+
       reset({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phoneNumber: formattedPhone,
         dateOfBirth: formattedDateOfBirth,
-        gender: ((profileData as any)?.profile?.gender || (profileData as any)?.gender || 'prefer_not_to_say') as 'male' | 'female' | 'other' | 'prefer_not_to_say',
-        addressStreet: ((profileData as any)?.profile?.address?.street || '') as string,
-        addressCity: ((profileData as any)?.profile?.address?.city || '') as string,
-        addressState: ((profileData as any)?.profile?.address?.state || '') as string,
-        addressCountry: ((profileData as any)?.profile?.address?.country || '') as string,
-        addressPostalCode: ((profileData as any)?.profile?.address?.zipCode || '') as string,
-        profilePhoto: ((profileData as any)?.profile?.profilePhoto || profileData?.avatar || '') as string,
+        gender: ((profileData as any)?.profile?.gender ||
+          (profileData as any)?.gender ||
+          'prefer_not_to_say') as
+          | 'male'
+          | 'female'
+          | 'other'
+          | 'prefer_not_to_say',
+        addressStreet: ((profileData as any)?.profile?.address?.street ||
+          '') as string,
+        addressCity: ((profileData as any)?.profile?.address?.city ||
+          '') as string,
+        addressState: ((profileData as any)?.profile?.address?.state ||
+          '') as string,
+        addressCountry: ((profileData as any)?.profile?.address?.country ||
+          '') as string,
+        addressPostalCode: ((profileData as any)?.profile?.address?.zipCode ||
+          '') as string,
+        profilePhoto: ((profileData as any)?.profile?.profilePhoto ||
+          profileData?.avatar ||
+          '') as string,
       });
     }
   }, [user, profileData, reset]);
@@ -309,7 +362,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       } catch (error: any) {
         console.error('Failed to parse phone number:', error);
         console.error('Phone number value:', phoneNumber);
-        
+
         // If parsing fails, try to handle gracefully
         if (phoneNumber.startsWith('+')) {
           // Try to extract country code manually
@@ -318,7 +371,9 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
             countryCode = `+${match[1]}`;
             phoneNumber = match[2];
           } else {
-            toast.error('Please enter a valid phone number with country code (e.g., +1234567890)');
+            toast.error(
+              'Please enter a valid phone number with country code (e.g., +1234567890)'
+            );
             setError('phoneNumber', {
               type: 'manual',
               message: 'Invalid phone number format',
@@ -326,7 +381,9 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
             return;
           }
         } else {
-          toast.error('Please enter a valid phone number with country code (e.g., +1234567890)');
+          toast.error(
+            'Please enter a valid phone number with country code (e.g., +1234567890)'
+          );
           setError('phoneNumber', {
             type: 'manual',
             message: 'Phone number must include country code',
@@ -338,7 +395,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       // Prepare payload according to backend API: PUT /api/v1/user/profile
       // Build fullName from firstName and lastName
       const fullName = `${data.firstName} ${data.lastName}`.trim();
-      
+
       // Build address object according to schema
       // Note: Backend automatically geocodes using city/country and populates coordinates
       // Geocoding is non-blocking - profile updates even if geocoding fails
@@ -354,8 +411,11 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       };
 
       // Build phone number in E.164 format (with country code)
-      const fullPhoneNumber = countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : data.phoneNumber;
-      
+      const fullPhoneNumber =
+        countryCode && phoneNumber
+          ? `${countryCode}${phoneNumber}`
+          : data.phoneNumber;
+
       const payload = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -369,7 +429,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
         address: addressObject, // Address object with nested fields
         profilePhoto: data.profilePhoto || undefined, // Profile photo URL
       };
-      
+
       console.log('[ProfileEditModal] Phone number details:', {
         original: data.phoneNumber,
         parsed: { phoneNumber, countryCode },
@@ -379,10 +439,14 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       // Add user ID to payload if available (for fallback endpoint)
       const payloadWithUserId = {
         ...payload,
-        userId: user?._id || user?.id || profileData?._id || (profileData as any)?.id,
+        userId:
+          user?._id || user?.id || profileData?._id || (profileData as any)?.id,
       };
-      
-      console.log('[ProfileEditModal] Submitting profile update:', payloadWithUserId);
+
+      console.log(
+        '[ProfileEditModal] Submitting profile update:',
+        payloadWithUserId
+      );
       console.log('[ProfileEditModal] User ID:', payloadWithUserId.userId);
       await updateProfileMutation.mutateAsync(payloadWithUserId);
       // Toast is shown by the mutation itself - no need for duplicate
@@ -393,57 +457,82 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
         message: error instanceof Error ? error.message : String(error),
         code: error?.code,
         statusCode: error?.statusCode,
-        response: error?.response ? {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
-        } : undefined,
-        request: error?.request ? {
-          url: error.request.responseURL,
-          method: error?.config?.method,
-        } : undefined,
+        response: error?.response
+          ? {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+            }
+          : undefined,
+        request: error?.request
+          ? {
+              url: error.request.responseURL,
+              method: error?.config?.method,
+            }
+          : undefined,
       };
-      
+
       console.error('Profile update error:', errorDetails);
       console.error('Full error object:', error);
-      
+
       // Extract error message
-      const errorMessage = error?.response?.data?.message || error?.message || errorDetails.message || 'Failed to update profile';
-      
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        errorDetails.message ||
+        'Failed to update profile';
+
       // Handle username uniqueness error (username is not in form, show as root error)
-      if (errorMessage.toLowerCase().includes('username') && 
-          (errorMessage.toLowerCase().includes('taken') || errorMessage.toLowerCase().includes('exists') || errorMessage.toLowerCase().includes('already'))) {
+      if (
+        errorMessage.toLowerCase().includes('username') &&
+        (errorMessage.toLowerCase().includes('taken') ||
+          errorMessage.toLowerCase().includes('exists') ||
+          errorMessage.toLowerCase().includes('already'))
+      ) {
         setError('root', {
           type: 'manual',
-          message: 'This username is already taken. Please choose a different one.',
+          message:
+            'This username is already taken. Please choose a different one.',
         });
         toast.error('Username already taken', {
-          description: 'This username is already in use. Please choose another.',
+          description:
+            'This username is already in use. Please choose another.',
         });
         return;
       }
-      
+
       // Handle phone number uniqueness error
-      if ((errorMessage.toLowerCase().includes('phone') || errorMessage.toLowerCase().includes('phoneNumber')) && 
-          (errorMessage.toLowerCase().includes('taken') || errorMessage.toLowerCase().includes('exists') || errorMessage.toLowerCase().includes('already'))) {
+      if (
+        (errorMessage.toLowerCase().includes('phone') ||
+          errorMessage.toLowerCase().includes('phoneNumber')) &&
+        (errorMessage.toLowerCase().includes('taken') ||
+          errorMessage.toLowerCase().includes('exists') ||
+          errorMessage.toLowerCase().includes('already'))
+      ) {
         setError('phoneNumber', {
           type: 'manual',
-          message: 'This phone number is already registered. Please use a different number.',
+          message:
+            'This phone number is already registered. Please use a different number.',
         });
         toast.error('Phone number already registered', {
-          description: 'This phone number is already in use. Please use a different number.',
+          description:
+            'This phone number is already in use. Please use a different number.',
         });
         return;
       }
-      
+
       // Handle "under development" error
-      if (errorMessage.toLowerCase().includes('under development') || errorMessage.toLowerCase().includes('not implemented')) {
+      if (
+        errorMessage.toLowerCase().includes('under development') ||
+        errorMessage.toLowerCase().includes('not implemented')
+      ) {
         toast.error('Feature not available', {
-          description: 'This feature is currently under development. Please try again later.',
+          description:
+            'This feature is currently under development. Please try again later.',
         });
         return;
       }
-      
+
       // Generic error
       toast.error('Failed to update profile', {
         description: errorMessage,
@@ -454,7 +543,10 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
   const onSubmitPassword = async (data: ChangePasswordFormData) => {
     try {
       // TODO: Implement password change API call
-      console.log('Change password:', { currentPassword: data.currentPassword, newPassword: data.newPassword });
+      console.log('Change password:', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
       toast.success('Password changed successfully!');
       resetPasswordForm();
       setActiveTab('personal');
@@ -468,73 +560,101 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-h-[85vh] max-w-[95vw] overflow-y-auto border border-white/10 bg-gradient-to-br from-slate-900/95 via-indigo-950/95 to-slate-900/95 p-4 shadow-2xl backdrop-blur-xl sm:max-h-[90vh] sm:max-w-xl sm:p-6 md:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold">Edit Profile</DialogTitle>
-          <DialogDescription className="text-sm sm:text-base">
+          <DialogTitle className="text-xl font-bold text-white sm:text-2xl">
+            Edit Profile
+          </DialogTitle>
+          <DialogDescription className="text-sm text-white/70 sm:text-base">
             Update your personal information and account settings
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="personal">Personal Info</TabsTrigger>
-            <TabsTrigger value="avatar">Avatar</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 border border-white/10 bg-white/5 backdrop-blur-sm">
+            <TabsTrigger
+              value="personal"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Personal Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="avatar"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Avatar
+            </TabsTrigger>
+            <TabsTrigger
+              value="security"
+              className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Security
+            </TabsTrigger>
           </TabsList>
 
           {/* Personal Information Tab */}
-          <TabsContent value="personal" className="space-y-6 mt-6">
+          <TabsContent value="personal" className="mt-6 space-y-6">
             {/* Editable Fields Form */}
-            <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-6">
+            <form
+              onSubmit={handleSubmit(onSubmitProfile)}
+              className="space-y-6"
+            >
               {/* Name Section */}
-              <div className="p-4 rounded-lg border border-border bg-card/50">
-                <h3 className="text-sm font-semibold mb-4">Full Name</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Full Name
+                </h3>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">
-                      First Name <span className="text-red-500">*</span>
+                    <Label htmlFor="firstName" className="text-white/90">
+                      First Name <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="firstName"
                         {...register('firstName')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="John"
                       />
                     </div>
                     {errors.firstName && (
-                      <p className="text-sm text-red-500">{errors.firstName.message}</p>
+                      <p className="text-sm text-red-400">
+                        {errors.firstName.message}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">
-                      Last Name <span className="text-red-500">*</span>
+                    <Label htmlFor="lastName" className="text-white/90">
+                      Last Name <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="lastName"
                         {...register('lastName')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="Doe"
                       />
                     </div>
                     {errors.lastName && (
-                      <p className="text-sm text-red-500">{errors.lastName.message}</p>
+                      <p className="text-sm text-red-400">
+                        {errors.lastName.message}
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Phone Number Section */}
-              <div className="p-4 rounded-lg border border-border bg-card/50">
-                <h3 className="text-sm font-semibold mb-4">Phone Number</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Phone Number
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">
-                    Phone Number <span className="text-red-500">*</span>
+                  <Label htmlFor="phoneNumber" className="text-white/90">
+                    Phone Number <span className="text-red-400">*</span>
                   </Label>
                   <Controller
                     name="phoneNumber"
@@ -551,157 +671,213 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                     )}
                   />
                   {errors.phoneNumber && (
-                    <p className="text-sm text-red-500">{errors.phoneNumber.message}</p>
+                    <p className="text-sm text-red-400">
+                      {errors.phoneNumber.message}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     Include country code (e.g., +1 for USA)
                   </p>
                 </div>
               </div>
 
               {/* Date of Birth Section */}
-              <div className="p-4 rounded-lg border border-border bg-card/50">
-                <h3 className="text-sm font-semibold mb-4">Date of Birth</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Date of Birth
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">
-                    Date of Birth <span className="text-red-500">*</span>
+                  <Label htmlFor="dateOfBirth" className="text-white/90">
+                    Date of Birth <span className="text-red-400">*</span>
                   </Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Calendar className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                     <Input
                       id="dateOfBirth"
                       type="date"
                       {...register('dateOfBirth')}
-                      className="pl-10"
+                      className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                       max={(() => {
                         // Set max date to 18 years ago
                         const today = new Date();
-                        const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                        const maxDate = new Date(
+                          today.getFullYear() - 18,
+                          today.getMonth(),
+                          today.getDate()
+                        );
                         return maxDate.toISOString().split('T')[0];
                       })()}
                     />
                   </div>
                   {errors.dateOfBirth && (
-                    <p className="text-sm text-red-500">{errors.dateOfBirth.message}</p>
+                    <p className="text-sm text-red-400">
+                      {errors.dateOfBirth.message}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     You must be at least 18 years old
                   </p>
                 </div>
               </div>
 
               {/* Gender Section */}
-              <div className="p-4 rounded-lg border border-border bg-card/50">
-                <h3 className="text-sm font-semibold mb-4">Gender</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Gender
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">
-                    Gender <span className="text-red-500">*</span>
+                  <Label htmlFor="gender" className="text-white/90">
+                    Gender <span className="text-red-400">*</span>
                   </Label>
                   <Controller
                     name="gender"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="w-full">
-                          <UserIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15">
+                          <UserIcon className="mr-2 h-4 w-4 text-white/50" />
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                        <SelectContent className="border-white/10 bg-slate-900/95 text-white backdrop-blur-xl">
+                          <SelectItem
+                            value="prefer_not_to_say"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Prefer not to say
+                          </SelectItem>
+                          <SelectItem
+                            value="male"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Male
+                          </SelectItem>
+                          <SelectItem
+                            value="female"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Female
+                          </SelectItem>
+                          <SelectItem
+                            value="other"
+                            className="text-white focus:bg-white/10"
+                          >
+                            Other
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     )}
                   />
                   {errors.gender && (
-                    <p className="text-sm text-red-500">{errors.gender.message}</p>
+                    <p className="text-sm text-red-400">
+                      {errors.gender.message}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Address Section */}
-              <div className="p-4 rounded-lg border border-border bg-card/50">
-                <h3 className="text-sm font-semibold mb-4">Address</h3>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Address
+                </h3>
                 <div className="space-y-4">
                   {/* Street Address */}
                   <div className="space-y-2">
-                    <Label htmlFor="addressStreet">
-                      Street Address <span className="text-red-500">*</span>
+                    <Label htmlFor="addressStreet" className="text-white/90">
+                      Street Address <span className="text-red-400">*</span>
                     </Label>
                     <div className="relative">
-                      <MapPinIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <MapPinIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                       <Input
                         id="addressStreet"
                         {...register('addressStreet')}
-                        className="pl-10"
+                        className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="123 Main Street"
                       />
                     </div>
                     {errors.addressStreet && (
-                      <p className="text-sm text-red-500">{errors.addressStreet.message}</p>
+                      <p className="text-sm text-red-400">
+                        {errors.addressStreet.message}
+                      </p>
                     )}
                   </div>
 
                   {/* City and State */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="addressCity">
-                        City <span className="text-red-500">*</span>
+                      <Label htmlFor="addressCity" className="text-white/90">
+                        City <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressCity"
                         {...register('addressCity')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="City"
                       />
                       {errors.addressCity && (
-                        <p className="text-sm text-red-500">{errors.addressCity.message}</p>
+                        <p className="text-sm text-red-400">
+                          {errors.addressCity.message}
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="addressState">
-                        State/Province <span className="text-red-500">*</span>
+                      <Label htmlFor="addressState" className="text-white/90">
+                        State/Province <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressState"
                         {...register('addressState')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="State/Province"
                       />
                       {errors.addressState && (
-                        <p className="text-sm text-red-500">{errors.addressState.message}</p>
+                        <p className="text-sm text-red-400">
+                          {errors.addressState.message}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* Country and Postal Code */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="addressCountry">
-                        Country <span className="text-red-500">*</span>
+                      <Label htmlFor="addressCountry" className="text-white/90">
+                        Country <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressCountry"
                         {...register('addressCountry')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="Country"
                       />
                       {errors.addressCountry && (
-                        <p className="text-sm text-red-500">{errors.addressCountry.message}</p>
+                        <p className="text-sm text-red-400">
+                          {errors.addressCountry.message}
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="addressPostalCode">
-                        Postal/ZIP Code <span className="text-red-500">*</span>
+                      <Label
+                        htmlFor="addressPostalCode"
+                        className="text-white/90"
+                      >
+                        Postal/ZIP Code <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="addressPostalCode"
                         {...register('addressPostalCode')}
+                        className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                         placeholder="12345"
                       />
                       {errors.addressPostalCode && (
-                        <p className="text-sm text-red-500">{errors.addressPostalCode.message}</p>
+                        <p className="text-sm text-red-400">
+                          {errors.addressPostalCode.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -713,7 +889,7 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                 <Button
                   type="submit"
                   disabled={!isDirty || isSubmitting}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
                 >
                   {isSubmitting ? (
                     <>
@@ -731,39 +907,45 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
             </form>
 
             {/* Read-only Fields */}
-            <div className="space-y-4 pt-6 border-t">
-              <h3 className="text-sm font-semibold text-muted-foreground">Account Information (Cannot be changed)</h3>
-              
+            <div className="space-y-4 border-t border-white/10 pt-6">
+              <h3 className="text-sm font-semibold text-white/70">
+                Account Information (Cannot be changed)
+              </h3>
+
               {/* Email (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-white/90">
+                  Email
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="email"
                     value={user.email}
                     disabled
-                    className="pl-10 bg-muted cursor-not-allowed opacity-60"
+                    className="cursor-not-allowed border-white/10 bg-white/5 pl-10 text-white/60 opacity-60"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Email is your login credential and cannot be changed
                 </p>
               </div>
 
               {/* Username (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="text-white/90">
+                  Username
+                </Label>
                 <div className="relative">
-                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <AtSign className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="username"
                     value={user.username}
                     disabled
-                    className="pl-10 bg-muted cursor-not-allowed opacity-60"
+                    className="cursor-not-allowed border-white/10 bg-white/5 pl-10 text-white/60 opacity-60"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                   Username is permanent and cannot be changed
                 </p>
               </div>
@@ -772,42 +954,84 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
 
           {/* Avatar Tab */}
           <TabsContent value="avatar" className="mt-6">
-            <AvatarSelector
-              currentAvatar={currentAvatar || user?.avatar}
-              userId={user.id || user._id || ''}
-              userName={user.username || user.email || 'User'}
-              onAvatarSelected={handleAvatarUploadComplete}
-            />
+            <div className="space-y-6">
+              {/* Sub-tabs for Avatar Selection */}
+              <Tabs defaultValue="generated" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 border border-white/10 bg-white/5 backdrop-blur-sm">
+                  <TabsTrigger
+                    value="generated"
+                    className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                  >
+                    Generated Avatars
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="badges"
+                    className="text-white/70 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                  >
+                    Badge Avatars
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="generated" className="mt-4">
+                  <AvatarSelector
+                    currentAvatar={currentAvatar || user?.avatar}
+                    userId={user.id || user._id || ''}
+                    userName={user.username || user.email || 'User'}
+                    onAvatarSelected={handleAvatarUploadComplete}
+                  />
+                </TabsContent>
+
+                <TabsContent value="badges" className="mt-4">
+                  <BadgeAvatarSelector
+                    user={user}
+                    currentAvatar={currentAvatar || user?.avatar}
+                    onClose={() => {
+                      // Refresh user data after badge selection
+                      if (handleAvatarUploadComplete) {
+                        handleAvatarUploadComplete(
+                          currentAvatar || user?.avatar || ''
+                        );
+                      }
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
           </TabsContent>
 
           {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6 mt-6">
-            <form onSubmit={handlePasswordSubmit(onSubmitPassword)} className="space-y-6">
+          <TabsContent value="security" className="mt-6 space-y-6">
+            <form
+              onSubmit={handlePasswordSubmit(onSubmitPassword)}
+              className="space-y-6"
+            >
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Change Password</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-lg font-semibold text-white">
+                  Change Password
+                </h3>
+                <p className="text-sm text-white/60">
                   Ensure your account stays secure by using a strong password
                 </p>
               </div>
 
               {/* Current Password */}
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">
-                  Current Password <span className="text-red-500">*</span>
+                <Label htmlFor="currentPassword" className="text-white/90">
+                  Current Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="currentPassword"
                     type={showCurrentPassword ? 'text' : 'password'}
                     {...registerPassword('currentPassword')}
-                    className="pl-10 pr-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Enter current password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showCurrentPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -817,28 +1041,30 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                   </button>
                 </div>
                 {passwordErrors.currentPassword && (
-                  <p className="text-sm text-red-500">{passwordErrors.currentPassword.message}</p>
+                  <p className="text-sm text-red-400">
+                    {passwordErrors.currentPassword.message}
+                  </p>
                 )}
               </div>
 
               {/* New Password */}
               <div className="space-y-2">
-                <Label htmlFor="newPassword">
-                  New Password <span className="text-red-500">*</span>
+                <Label htmlFor="newPassword" className="text-white/90">
+                  New Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     {...registerPassword('newPassword')}
-                    className="pl-10 pr-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Enter new password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showNewPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -848,31 +1074,34 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                   </button>
                 </div>
                 {passwordErrors.newPassword && (
-                  <p className="text-sm text-red-500">{passwordErrors.newPassword.message}</p>
+                  <p className="text-sm text-red-400">
+                    {passwordErrors.newPassword.message}
+                  </p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Must be at least 8 characters with uppercase, lowercase, number, and special character (@_$!%*?&)
+                <p className="text-muted-foreground text-xs">
+                  Must be at least 8 characters with uppercase, lowercase,
+                  number, and special character (@_$!%*?&)
                 </p>
               </div>
 
               {/* Confirm New Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmNewPassword">
-                  Confirm New Password <span className="text-red-500">*</span>
+                <Label htmlFor="confirmNewPassword" className="text-white/90">
+                  Confirm New Password <span className="text-red-400">*</span>
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <Input
                     id="confirmNewPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     {...registerPassword('confirmNewPassword')}
-                    className="pl-10 pr-10"
+                    className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                     placeholder="Confirm new password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-white/50 hover:text-white/80"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -882,7 +1111,9 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                   </button>
                 </div>
                 {passwordErrors.confirmNewPassword && (
-                  <p className="text-sm text-red-500">{passwordErrors.confirmNewPassword.message}</p>
+                  <p className="text-sm text-red-400">
+                    {passwordErrors.confirmNewPassword.message}
+                  </p>
                 )}
               </div>
 
@@ -895,13 +1126,14 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                     resetPasswordForm();
                     setActiveTab('personal');
                   }}
+                  className="border-white/20 bg-white/5 text-white/90 backdrop-blur-sm hover:border-white/30 hover:bg-white/10"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isPasswordSubmitting}
-                  className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                  className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white shadow-lg shadow-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/70 active:scale-[0.98]"
                 >
                   {isPasswordSubmitting ? (
                     <>
@@ -923,4 +1155,3 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
     </Dialog>
   );
 }
-

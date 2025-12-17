@@ -6,13 +6,27 @@ import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Mail, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Send } from 'lucide-react';
+import {
+  Mail,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  Send,
+} from 'lucide-react';
 import { z } from 'zod';
 import { useRequestPasswordReset } from '@/lib/mutations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const forgotPasswordSchema = z.object({
@@ -58,7 +72,10 @@ function ForgotPasswordContent() {
       setSubmittedEmail(data.email);
     } catch (error: unknown) {
       const message =
-        error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string'
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof (error as { message?: string }).message === 'string'
           ? (error as { message: string }).message
           : 'Failed to send reset email';
       setError('root', {
@@ -72,65 +89,71 @@ function ForgotPasswordContent() {
     return (
       <div className="space-y-6">
         {/* Success Icon */}
-        <div className="text-center space-y-4">
+        <div className="space-y-4 text-center">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', duration: 0.5 }}
-            className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 backdrop-blur-sm"
           >
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="h-8 w-8 text-green-400" />
           </motion.div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Check your email</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              Check your email
+            </h1>
+            <p className="text-white/70">
               We&apos;ve sent password reset instructions to
               <br />
-              <span className="font-medium text-foreground">{submittedEmail}</span>
+              <span className="font-medium text-white">{submittedEmail}</span>
             </p>
           </div>
         </div>
 
         {/* Instructions Card */}
-        <Card>
+        <Card className="border border-white/10 bg-white/5 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>What&apos;s next?</CardTitle>
+            <CardTitle className="text-white">What&apos;s next?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-medium">
                 1
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/70">
                 Check your email inbox for a message from Novunt
               </p>
             </div>
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-medium">
                 2
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/70">
                 Click the reset link in the email (valid for 1 hour)
               </p>
             </div>
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-medium">
                 3
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/70">
                 Create a new strong password for your account
               </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-3">
-            <Button asChild className="w-full" size="lg">
+            <Button
+              asChild
+              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70"
+              size="lg"
+            >
               <Link href="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Sign In
               </Link>
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-muted-foreground text-center text-xs">
               Didn&apos;t receive the email? Check your spam folder or try again
             </p>
           </CardFooter>
@@ -156,43 +179,52 @@ function ForgotPasswordContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Mail className="h-8 w-8 text-primary" />
+      <div className="mb-8 space-y-2 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20 backdrop-blur-sm">
+          <Mail className="h-8 w-8 text-indigo-400" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Forgot your password?</h1>
-        <p className="text-muted-foreground">
-          No worries! Enter your email and we&apos;ll send you reset instructions
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Forgot your password?
+        </h1>
+        <p className="text-white/70">
+          No worries! Enter your email and we&apos;ll send you reset
+          instructions
         </p>
       </div>
 
       {/* Error Alert */}
       {errors.root && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errors.root.message}</AlertDescription>
+        <Alert className="mb-6 border-red-500/50 bg-red-500/10 backdrop-blur-sm">
+          <AlertCircle className="h-4 w-4 text-red-400" />
+          <AlertDescription className="text-red-200">
+            {errors.root.message}
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Form Card */}
-      <Card className="shadow-2xl border-border/50 relative overflow-hidden">
+      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
         {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-        
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
+
         <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">
+            Reset Password
+          </CardTitle>
+          <CardDescription className="text-white/70">
             Enter the email address associated with your account
           </CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 relative z-10">
+          <CardContent className="relative z-10 space-y-4">
             {/* Email Input */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="text-white/90">
+                Email Address
+              </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
                 <Input
                   id="email"
                   type="email"
@@ -205,16 +237,18 @@ function ForgotPasswordContent() {
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.email.message}
+                </p>
               )}
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-3 relative z-10 pt-8">
+          <CardFooter className="relative z-10 flex flex-col space-y-3 pt-8">
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+              className="from-primary to-primary/90 hover:from-primary/90 hover:to-primary w-full bg-gradient-to-r shadow-lg transition-all duration-300 hover:shadow-xl"
               size="lg"
               disabled={isSubmitting || forgotPasswordMutation.isPending}
             >
@@ -237,9 +271,13 @@ function ForgotPasswordContent() {
       </Card>
 
       {/* Help Text */}
-      <div className="text-center text-sm text-muted-foreground">
-        <p>Remember your password?{' '}
-          <Link href="/login" className="text-primary font-semibold hover:underline">
+      <div className="text-muted-foreground text-center text-sm">
+        <p>
+          Remember your password?{' '}
+          <Link
+            href="/login"
+            className="text-primary font-semibold hover:underline"
+          >
             Sign in
           </Link>
         </p>
@@ -254,11 +292,13 @@ function ForgotPasswordContent() {
  */
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
       <ForgotPasswordContent />
     </Suspense>
   );

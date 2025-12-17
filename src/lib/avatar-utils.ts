@@ -56,6 +56,35 @@ export const generateDefaultAvatar = (
 };
 
 /**
+ * Check if avatar is a badge icon (emoji)
+ * @param avatar - Avatar string
+ * @returns True if avatar is an emoji/badge icon
+ */
+export const isBadgeIcon = (avatar: string | null | undefined): boolean => {
+  if (!avatar) return false;
+
+  // Check if it's a single emoji or badge icon (not a URL)
+  // Emojis are typically 1-2 characters, but some can be longer
+  // URLs contain http:// or https:// or data: or / (path)
+  const isUrl = /^(https?:\/\/|data:|\.|\/)/.test(avatar.trim());
+
+  // If it's not a URL and is short (likely emoji), treat as badge icon
+  return !isUrl && avatar.trim().length <= 10;
+};
+
+/**
+ * Get badge icon from avatar string
+ * @param avatar - Avatar string that contains badge icon
+ * @returns Badge icon emoji or null
+ */
+export const getBadgeIcon = (
+  avatar: string | null | undefined
+): string | null => {
+  if (!avatar || !isBadgeIcon(avatar)) return null;
+  return avatar.trim();
+};
+
+/**
  * Get user avatar URL
  * Returns user's custom avatar if set, otherwise generates a random avatar
  * @param user - User object
@@ -68,6 +97,10 @@ export const getUserAvatarUrl = (user: Partial<User> | null): string | null => {
 
   // Return user's custom avatar if they have one
   if (user.avatar) {
+    // If it's a badge icon, return it as-is (will be handled by display component)
+    if (isBadgeIcon(user.avatar)) {
+      return user.avatar;
+    }
     return user.avatar;
   }
 

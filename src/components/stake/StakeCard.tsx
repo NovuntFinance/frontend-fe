@@ -5,6 +5,16 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
 import { Stake } from '@/lib/queries/stakingQueries';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { prefersReducedMotion } from '@/lib/accessibility';
 
 interface StakeCardProps {
   stake: Stake;
@@ -13,6 +23,21 @@ interface StakeCardProps {
 
 export function StakeCard({ stake, onClick }: StakeCardProps) {
   const stakingConfig = useStakingConfig();
+
+  // 🔍 DEBUG: Log stake data being rendered
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[StakeCard] 🔍 Rendering stake:', {
+      _id: stake._id,
+      amount: stake.amount,
+      totalEarned: stake.totalEarned,
+      progressToTarget: stake.progressToTarget,
+      remainingToTarget: stake.remainingToTarget,
+      targetReturn: stake.targetReturn,
+      status: stake.status,
+      updatedAt: stake.updatedAt,
+    });
+  }
+
   const progress = stake.progressToTarget
     ? parseFloat(stake.progressToTarget.replace('%', ''))
     : 0;
@@ -30,159 +55,194 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
   // Get next payout
   const nextPayout = stake.weeklyPayouts?.find((p) => p.status === 'pending');
 
+  const reducedMotion = prefersReducedMotion();
+  const gradientColors = isCompleted
+    ? {
+        gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
+        blob: 'bg-emerald-500/30',
+        iconBg: 'from-emerald-500/30 to-green-500/20',
+        textGradient: 'from-emerald-600 to-green-600',
+        iconColor: 'text-emerald-500',
+      }
+    : {
+        gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
+        blob: 'bg-purple-500/30',
+        iconBg: 'from-purple-500/30 to-indigo-500/20',
+        textGradient: 'from-purple-600 to-indigo-600',
+        iconColor: 'text-purple-500',
+      };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+      animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+      whileHover={reducedMotion ? {} : { scale: 1.02 }}
       onClick={onClick}
-      className={`cursor-pointer rounded-xl border-2 bg-white p-6 transition-all dark:bg-gray-800 ${
-        isCompleted
-          ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/10'
-          : 'border-gray-200 hover:border-emerald-300 dark:border-gray-700 dark:hover:border-emerald-700'
-      }`}
+      className="cursor-pointer"
     >
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className={`rounded-xl p-3 ${
-              isCompleted
-                ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                : 'bg-gradient-to-br from-emerald-500 to-teal-600'
-            }`}
-          >
-            <TrendingUp
-              className={`h-5 w-5 ${
-                isCompleted
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-white'
-              }`}
-            />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              ${stake.amount.toFixed(2)} USDT
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {formatDate(stake.createdAt)}
-            </p>
-          </div>
-        </div>
+      <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+        {/* Animated Gradient Background */}
         <div
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            isCompleted
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-              : stake.status === 'active'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-          }`}
-        >
-          {stake.status
-            ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
-            : 'Unknown'}
-        </div>
-      </div>
+          className={`absolute inset-0 bg-gradient-to-br ${gradientColors.gradient}`}
+        />
 
-      {/* Progress Section */}
-      <div className="mb-4 space-y-3">
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
-              Progress to {stakingConfig.goalTargetPercentage}% ROS
-            </span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {stake.progressToTarget || '0%'}
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600"
-            />
-          </div>
-        </div>
+        {/* Animated Floating Blob */}
+        {!reducedMotion && (
+          <motion.div
+            animate={{
+              x: [0, -15, 0],
+              y: [0, 10, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className={`absolute -bottom-8 -left-12 h-24 w-24 rounded-full ${gradientColors.blob} blur-2xl`}
+          />
+        )}
 
-        {/* Stats Grid */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {/* Total Earned */}
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20">
-            <div className="mb-1 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                Total Earned
+        <CardHeader className="relative p-4 sm:p-6">
+          <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: -10 }}
+                className={`rounded-xl bg-gradient-to-br ${gradientColors.iconBg} p-2 shadow-lg backdrop-blur-sm sm:p-3`}
+              >
+                <TrendingUp
+                  className={`h-5 w-5 ${gradientColors.iconColor} sm:h-6 sm:w-6`}
+                />
+              </motion.div>
+              <div className="min-w-0 flex-1">
+                <CardTitle
+                  className={`bg-gradient-to-r ${gradientColors.textGradient} bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg`}
+                >
+                  ${stake.amount.toFixed(2)} USDT
+                </CardTitle>
+                <CardDescription className="text-[10px] sm:text-xs">
+                  {formatDate(stake.createdAt)}
+                </CardDescription>
+              </div>
+            </div>
+            <Badge
+              className={`text-[10px] sm:text-xs ${
+                isCompleted
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : stake.status === 'active'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+              }`}
+            >
+              {stake.status
+                ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
+                : 'Unknown'}
+            </Badge>
+          </div>
+        </CardHeader>
+
+        <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
+          {/* Progress Section */}
+          <div className="mb-4 space-y-3">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs sm:text-sm">
+                <span className="text-muted-foreground">
+                  Progress to {stakingConfig.goalTargetPercentage}% ROS
+                </span>
+                <span className="font-semibold">
+                  {stake.progressToTarget || '0%'}
+                </span>
+              </div>
+              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                <motion.div
+                  initial={reducedMotion ? false : { width: 0 }}
+                  animate={reducedMotion ? false : { width: `${progress}%` }}
+                  transition={{ duration: 1, delay: 0.2 }}
+                  className={`h-full rounded-full bg-gradient-to-r ${gradientColors.textGradient}`}
+                />
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
+              {/* Total Earned */}
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-2 sm:p-3 dark:border-emerald-800 dark:bg-emerald-900/20">
+                <div className="mb-1 flex items-center gap-1.5 sm:gap-2">
+                  <DollarSign className="h-3 w-3 text-emerald-600 sm:h-4 sm:w-4 dark:text-emerald-400" />
+                  <span className="text-[10px] font-medium text-emerald-700 sm:text-xs dark:text-emerald-300">
+                    Total Earned
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-emerald-900 sm:text-lg dark:text-emerald-100">
+                  ${(stake.totalEarned || 0).toFixed(2)}
+                </p>
+              </div>
+
+              {/* Target Return */}
+              <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 sm:p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                <div className="mb-1 flex items-center gap-1.5 sm:gap-2">
+                  <Target className="h-3 w-3 text-blue-600 sm:h-4 sm:w-4 dark:text-blue-400" />
+                  <span className="text-[10px] font-medium text-blue-700 sm:text-xs dark:text-blue-300">
+                    Target
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-blue-900 sm:text-lg dark:text-blue-100">
+                  ${(stake.targetReturn || 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Next Payout */}
+          {!isCompleted && nextPayout && (
+            <div className="border-muted bg-muted/50 mb-3 rounded-lg border p-2 sm:p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Calendar className="text-muted-foreground h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-muted-foreground text-xs sm:text-sm">
+                    Next Payout
+                  </span>
+                </div>
+                <span className="text-xs font-medium sm:text-sm">
+                  Week {nextPayout.week}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Remaining to Target */}
+          {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
+            <div className="mb-3 flex items-center justify-between text-xs sm:text-sm">
+              <span className="text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                Remaining
+              </span>
+              <span className="font-semibold">
+                ${(stake.remainingToTarget || 0).toFixed(2)}
               </span>
             </div>
-            <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-              ${(stake.totalEarned || 0).toFixed(2)}
-            </p>
-          </div>
+          )}
 
-          {/* Target Return */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
-            <div className="mb-1 flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                Target
-              </span>
+          {/* Goal Badge */}
+          {stake.goal && (
+            <div className="mb-3 rounded-lg border border-purple-200 bg-purple-50/50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+              <p className="text-center text-[10px] font-medium text-purple-900 sm:text-xs dark:text-purple-100">
+                🎯 Goal: {stake.goal}
+              </p>
             </div>
-            <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-              ${(stake.targetReturn || 0).toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </div>
+          )}
 
-      {/* Next Payout */}
-      {!isCompleted && nextPayout && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Next Payout
-              </span>
+          {/* Completed Badge */}
+          {isCompleted && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-100/50 p-2 sm:p-3 dark:border-emerald-800 dark:bg-emerald-900/30">
+              <p className="text-center text-xs font-medium text-emerald-900 sm:text-sm dark:text-emerald-100">
+                🎉 {stakingConfig.goalTargetPercentage}% ROS Target Achieved!
+              </p>
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              Week {nextPayout.week}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Remaining to Target */}
-      {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
-        <div className="mt-3 flex items-center justify-between text-sm">
-          <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-            <Clock className="h-4 w-4" />
-            Remaining
-          </span>
-          <span className="font-semibold text-gray-900 dark:text-white">
-            ${(stake.remainingToTarget || 0).toFixed(2)}
-          </span>
-        </div>
-      )}
-
-      {/* Goal Badge */}
-      {stake.goal && (
-        <div className="mt-3 rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
-          <p className="text-center text-xs font-medium text-purple-900 dark:text-purple-100">
-            🎯 Goal: {stake.goal}
-          </p>
-        </div>
-      )}
-
-      {/* Completed Badge */}
-      {isCompleted && (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-100 p-3 dark:border-emerald-800 dark:bg-emerald-900/30">
-          <p className="text-center text-sm font-medium text-emerald-900 dark:text-emerald-100">
-            🎉 {stakingConfig.goalTargetPercentage}% ROS Target Achieved!
-          </p>
-        </div>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }

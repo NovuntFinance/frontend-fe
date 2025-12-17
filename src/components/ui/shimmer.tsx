@@ -15,10 +15,14 @@ interface ShimmerProps {
   height?: string | number;
 }
 
-export function Shimmer({ className, width = '100%', height = '100%' }: ShimmerProps) {
+export function Shimmer({
+  className,
+  width = '100%',
+  height = '100%',
+}: ShimmerProps) {
   return (
     <div
-      className={cn('relative overflow-hidden rounded-lg bg-muted', className)}
+      className={cn('bg-muted relative overflow-hidden rounded-lg', className)}
       style={{ width, height }}
     >
       <motion.div
@@ -40,7 +44,13 @@ export function Shimmer({ className, width = '100%', height = '100%' }: ShimmerP
 /**
  * Shimmer Text Component
  */
-export function ShimmerText({ className, lines = 1 }: { className?: string; lines?: number }) {
+export function ShimmerText({
+  className,
+  lines = 1,
+}: {
+  className?: string;
+  lines?: number;
+}) {
   return (
     <div className={cn('space-y-2', className)}>
       {Array.from({ length: lines }).map((_, i) => (
@@ -61,9 +71,18 @@ export function ShimmerText({ className, lines = 1 }: { className?: string; line
 /**
  * Shimmer Card Component
  */
-export function ShimmerCard({ className }: { className?: string }) {
+export function ShimmerCard({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
-    <div className={cn('rounded-2xl border border-border bg-card p-6', className)}>
+    <div
+      className={cn('border-border bg-card rounded-2xl border p-6', className)}
+      style={style}
+    >
       <div className="space-y-4">
         <Shimmer width="60%" height="1.5rem" />
         <ShimmerText lines={2} />
@@ -75,4 +94,3 @@ export function ShimmerCard({ className }: { className?: string }) {
     </div>
   );
 }
-

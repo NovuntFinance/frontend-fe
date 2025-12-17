@@ -48,14 +48,6 @@ const nextConfig: NextConfig = {
       'recharts',
     ],
   },
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
   // Disable standalone output on Windows to avoid path issues
   // Re-enable for production deployments if needed
   output: process.platform === 'win32' ? undefined : 'standalone',

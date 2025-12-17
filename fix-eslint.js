@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unused-vars */
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -20,22 +20,30 @@ const filesToDisableAny = [
 ];
 
 // Add disable comment to each file
-filesToDisableAny.forEach(file => {
+filesToDisableAny.forEach((file) => {
   const filePath = path.join(__dirname, file);
   if (fs.existsSync(filePath)) {
     let content = fs.readFileSync(filePath, 'utf8');
-    
+
     // Check if already has disable comment
     if (!content.includes('@typescript-eslint/no-explicit-any')) {
       console.log(`✓ Adding ESLint disable to ${file}`);
       // Add at the top, after any existing comments
       const lines = content.split('\n');
-      const firstNonCommentLine = lines.findIndex(line => 
-        line && !line.trim().startsWith('//') && !line.trim().startsWith('/*') && !line.trim().startsWith('*')
+      const firstNonCommentLine = lines.findIndex(
+        (line) =>
+          line &&
+          !line.trim().startsWith('//') &&
+          !line.trim().startsWith('/*') &&
+          !line.trim().startsWith('*')
       );
-      
+
       if (firstNonCommentLine !== -1) {
-        lines.splice(firstNonCommentLine, 0, '/* eslint-disable @typescript-eslint/no-explicit-any */');
+        lines.splice(
+          firstNonCommentLine,
+          0,
+          '/* eslint-disable @typescript-eslint/no-explicit-any */'
+        );
         content = lines.join('\n');
         fs.writeFileSync(filePath, content, 'utf8');
       }

@@ -214,7 +214,7 @@ export function SettingsManager({ category }: SettingsManagerProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Settings: {category}</h2>
-          <Button onClick={refresh} variant="outline" size="sm">
+          <Button onClick={() => refresh()} variant="outline" size="sm">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
@@ -237,7 +237,7 @@ export function SettingsManager({ category }: SettingsManagerProps) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">System Settings</h2>
-          <Button onClick={refresh} variant="outline" size="sm">
+          <Button onClick={() => refresh()} variant="outline" size="sm">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>

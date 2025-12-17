@@ -11,7 +11,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useTodayRos } from '@/hooks/useTodayRos';
+import { useTodayProfit } from '@/lib/queries';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import {
   Tooltip,
@@ -21,27 +21,54 @@ import {
 } from '@/components/ui/tooltip';
 
 export function TodayROSCard() {
-  const { data, loading, error, refetch } = useTodayRos(true);
+  const { data, isLoading: loading, error, refetch } = useTodayProfit();
 
   if (loading) {
     return <ShimmerCard className="h-full" />;
   }
 
   if (error) {
+    const isNotFound =
+      error instanceof Error &&
+      error.message === 'No profit declared for today';
+
+    if (isNotFound) {
+      return (
+        <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-500/20 via-slate-500/10 to-transparent" />
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-lg font-bold">
+              Today&apos;s Profit
+            </CardTitle>
+            <CardDescription className="text-xs">
+              No profit declared
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="relative">
+            <p className="text-muted-foreground text-sm">
+              No profit has been declared for today. Please check back later.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 via-rose-500/10 to-transparent" />
         <CardHeader className="relative pb-2">
           <CardTitle className="text-lg font-bold text-red-600">
-            Error Loading ROS
+            Error Loading Profit
           </CardTitle>
           <CardDescription className="text-xs">
-            {error.message || 'Failed to fetch today&apos;s ROS'}
+            {error instanceof Error
+              ? error.message
+              : 'Failed to fetch today&apos;s profit'}
           </CardDescription>
         </CardHeader>
         <CardContent className="relative">
           <button
-            onClick={refetch}
+            onClick={() => refetch()}
             className="text-muted-foreground hover:text-foreground text-sm underline"
           >
             Try again
@@ -56,43 +83,39 @@ export function TodayROSCard() {
       <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-500/20 via-slate-500/10 to-transparent" />
         <CardHeader className="relative pb-2">
-          <CardTitle className="text-lg font-bold">Today&apos;s ROS</CardTitle>
+          <CardTitle className="text-lg font-bold">
+            Today&apos;s Profit
+          </CardTitle>
           <CardDescription className="text-xs">
-            No active calendar
+            No profit declared
           </CardDescription>
         </CardHeader>
         <CardContent className="relative">
           <p className="text-muted-foreground text-sm">
-            No ROS calendar is currently active. Please check back later.
+            No profit has been declared for today. Please check back later.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const {
-    percentage,
-    dayName,
-    date,
-    weekNumber,
-    year,
-    weeklyTotalPercentage,
-    message,
-    timing,
-  } = data;
+  const { profitPercentage, date, isDistributed } = data;
 
   // Format date for display
   const displayDate = new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 
-  // Determine if showing previous day's ROS
-  const isPreviousDay = timing.displayRule.toLowerCase().includes('previous');
+  // Get day name from date
+  const dayName = new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+  });
 
   // Format percentage with 2 decimal places
-  const formattedPercentage = percentage.toFixed(2);
+  const formattedPercentage = profitPercentage.toFixed(2);
 
   return (
     <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
@@ -125,23 +148,26 @@ export function TodayROSCard() {
             </motion.div>
             <div>
               <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-lg font-bold text-transparent">
-                Today&apos;s ROS
+                Today&apos;s Profit
               </CardTitle>
               <CardDescription className="flex items-center gap-1 text-xs">
                 <Calendar className="h-3 w-3" />
-                {dayName}, {displayDate}
+                {displayDate}
               </CardDescription>
             </div>
           </div>
 
-          <Badge variant="secondary" className="text-xs">
-            Week {weekNumber}
+          <Badge
+            variant={isDistributed ? 'default' : 'secondary'}
+            className="text-xs"
+          >
+            {isDistributed ? 'Distributed' : 'Pending'}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="relative space-y-4">
-        {/* Main ROS Percentage */}
+        {/* Main Profit Percentage */}
         <div className="flex items-baseline gap-2">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -151,63 +177,27 @@ export function TodayROSCard() {
           >
             {formattedPercentage}%
           </motion.div>
-          {isPreviousDay && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-xs">
-                    <Clock className="mr-1 h-3 w-3" />
-                    Previous Day
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">{timing.displayRule}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
         </div>
 
-        {/* Timing Information */}
-        {timing.displayRule && (
-          <div className="text-muted-foreground flex items-start gap-2 text-xs">
-            <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
-            <p>{timing.displayRule}</p>
-          </div>
-        )}
+        {/* Distribution Status */}
+        <div className="text-muted-foreground flex items-start gap-2 text-xs">
+          <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
+          <p>
+            {isDistributed
+              ? 'Profit has been distributed to all active stakes'
+              : 'Profit will be distributed at the end of the day'}
+          </p>
+        </div>
 
-        {/* Week's Total (End of Week) */}
-        {timing.isEndOfWeek && weeklyTotalPercentage !== undefined && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 backdrop-blur-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">
-                  Week&apos;s Total Profit
-                </p>
-                {message && (
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {message}
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {weeklyTotalPercentage.toFixed(2)}%
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Week Info */}
+        {/* Date Info */}
         <div className="border-border/50 border-t pt-2">
           <p className="text-muted-foreground text-xs">
-            Week {weekNumber}, {year}
+            Daily profit percentage for{' '}
+            {new Date(date).toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
           </p>
         </div>
       </CardContent>

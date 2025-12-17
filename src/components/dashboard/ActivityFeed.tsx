@@ -13,6 +13,7 @@ import {
   XCircle,
   DollarSign,
   Wallet,
+  ChevronRight,
 } from 'lucide-react';
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
@@ -104,11 +105,42 @@ const getTransactionDate = (tx: TransactionUnion): Date => {
 };
 
 // Helper to get transaction type label
+// IMPORTANT: Only registration_bonus should show as "Bonus"
+// All other earnings (referral_bonus, ros_payout, pool payouts) should show as "Earning" or descriptive labels
 const getTransactionTypeLabel = (tx: TransactionUnion): string => {
-  if (isEnhancedTransaction(tx)) {
-    return tx.typeLabel || tx.type.replace('_', ' ');
+  // Always use "Daily ROS Payout" for ros_payout type
+  if (tx.type === 'ros_payout') {
+    return 'Daily ROS Payout';
   }
-  return tx.type.replace('_', ' ');
+
+  // Referral bonuses are earnings, not bonuses - display as "Earning"
+  if (tx.type === 'referral_bonus') {
+    return 'Earning';
+  }
+
+  if (isEnhancedTransaction(tx)) {
+    // Use typeLabel if provided, but clean it up for consistency
+    let label = tx.typeLabel || tx.type.replace('_', ' ');
+
+    // Replace "Weekly ROS Payout" with "Daily ROS Payout"
+    label = label.replace(/Weekly ROS Payout/gi, 'Daily ROS Payout');
+
+    // Replace "Referral Bonus" with "Earning"
+    label = label.replace(/Referral Bonus/gi, 'Earning');
+
+    // Replace "REF: BONUS" or similar patterns with "Earning"
+    label = label.replace(/REF:\s*BONUS/gi, 'Earning');
+    label = label.replace(/REF\s*BONUS/gi, 'Earning');
+
+    return label;
+  }
+
+  // For legacy transactions, format the type
+  const type = tx.type.replace('_', ' ');
+  if (type.toLowerCase() === 'referral bonus') {
+    return 'Earning';
+  }
+  return type;
 };
 
 // Helper to check if transaction is outgoing
@@ -133,12 +165,52 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest transactions</CardDescription>
+      <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
+        <motion.div
+          animate={{
+            x: [0, -15, 0],
+            y: [0, 10, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+        />
+        <CardHeader className="relative p-4 sm:p-6">
+          {/* Arrow Icon - Top Right */}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+          >
+            <a href="/dashboard/wallets?tab=transactions">
+              <ChevronRight className="h-5 w-5" />
+            </a>
+          </Button>
+
+          <div className="mb-2 flex items-center gap-2 sm:gap-3">
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: -10 }}
+              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+            >
+              <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+            </motion.div>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+                Recent Activity
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs">
+                Your latest transactions
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <ShimmerCard key={i} className="h-20" />
@@ -150,26 +222,56 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   }
 
   return (
-    <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 rounded-lg p-2">
-              <TrendingUp className="text-primary h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription className="text-xs">
-                Your latest transactions
-              </CardDescription>
-            </div>
+    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
+
+      {/* Animated Floating Blob */}
+      <motion.div
+        animate={{
+          x: [0, -15, 0],
+          y: [0, 10, 0],
+          scale: [1, 1.15, 1],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
+      />
+
+      <CardHeader className="relative p-4 sm:p-6">
+        {/* Arrow Icon - Top Right */}
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+        >
+          <a href="/dashboard/wallets?tab=transactions">
+            <ChevronRight className="h-5 w-5" />
+          </a>
+        </Button>
+
+        <div className="mb-2 flex items-center gap-2 sm:gap-3">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -10 }}
+            className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+          >
+            <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
+              Recent Activity
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs">
+              Your latest transactions
+            </CardDescription>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/dashboard/wallets?tab=transactions">View All</a>
-          </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
         {safeTransactions.length === 0 ? (
           <div className="py-12 text-center">
             <div className="bg-muted mb-4 inline-flex rounded-full p-4">

@@ -118,13 +118,13 @@ export interface WeeklySummaryData {
   startDate: string;
   endDate: string;
   totalEarnings: number;
-  averageRos: number;
+  weeklyRos: number; // SUM of all daily ROS percentages (not average)
   status: 'pending' | 'completed';
   dailyBreakdown: {
     date: string;
     dayOfWeek: string;
-    ros: number;
-    earnings: number;
+    ros: number; // Daily ROS percentage declared by admin (determined at close of day)
+    earnings: number; // Daily earnings from stake only: (Total Active Stake) × (Daily ROS %) / 100
   }[];
 }
 
@@ -247,7 +247,7 @@ export const rosApi = {
           startDate: weekStart.toISOString(),
           endDate: weekEnd.toISOString(),
           totalEarnings: 0,
-          averageRos: 0,
+          weeklyRos: 0, // SUM of daily ROS percentages (not average)
           status: 'pending' as const,
           dailyBreakdown: [],
         };

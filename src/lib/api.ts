@@ -453,10 +453,17 @@ apiClient.interceptors.response.use(
     }
 
     // Handle other errors
-    // Log raw error for debugging (skip 404s as they're normal for new users)
+    // Skip logging for network errors (CORS, backend down, etc.) to avoid console spam
+    const isNetworkError =
+      error.code === 'ERR_NETWORK' ||
+      error.message?.toLowerCase().includes('network error') ||
+      !error.response; // No response means network error
+
+    // Log raw error for debugging (skip 404s and network errors)
     if (
       process.env.NODE_ENV === 'development' &&
-      error.response?.status !== 404
+      error.response?.status !== 404 &&
+      !isNetworkError
     ) {
       // Better error serialization with proper JSON stringification
       const errorInfo: Record<string, unknown> = {
@@ -720,46 +727,74 @@ apiClient.interceptors.response.use(
           ? `${API_BASE_URL}${originalRequest.url}`
           : 'Unknown URL';
 
-        // Serialize network error details properly
-        const networkErrorDetails = {
-          requestURL: String(requestURL),
-          baseURL: String(API_BASE_URL),
-          endpoint: String(originalRequest.url || 'UNKNOWN'),
-          envVar: String(process.env.NEXT_PUBLIC_API_URL || 'NOT SET'),
-          errorMessage: String(error.message || 'Unknown network error'),
-          errorCode: String(error.code || 'UNKNOWN'),
-          method: String(originalRequest.method || 'UNKNOWN'),
-          errorType: error.constructor?.name || 'Unknown',
-          errorStack: error.stack
-            ? error.stack.substring(0, 200)
-            : 'No stack trace',
-        };
+        const endpoint = originalRequest.url || 'UNKNOWN';
 
-        try {
-          const errorDetailsStr = JSON.stringify(networkErrorDetails, null, 2);
-          console.error(
-            '[API] ❌ Network/CORS Error Details:',
-            errorDetailsStr
-          );
-        } catch (e) {
-          // Fallback logging
-          console.error(
-            '[API] ❌ Network/CORS Error Details:',
-            networkErrorDetails
-          );
+        // Suppress verbose logging for endpoints that commonly have network issues
+        // These are expected to fail when backend is unavailable
+        const suppressVerboseLogging =
+          endpoint.includes('/trading-signals/') ||
+          endpoint.includes('/notifications/counts') ||
+          endpoint.includes('/notifications/') ||
+          endpoint.includes('/wallets/') ||
+          endpoint.includes('/referral-info') ||
+          endpoint.includes('/referral/my-tree') ||
+          endpoint.includes('/referral/stats') ||
+          endpoint.includes('/users/profile') ||
+          endpoint.includes('/staking/dashboard') ||
+          endpoint.includes('/dashboard/overview');
+
+        // Only log detailed errors in development and for non-suppressed endpoints
+        // Skip logging if error object is empty or just network errors
+        const shouldLogDetailed =
+          process.env.NODE_ENV === 'development' &&
+          !suppressVerboseLogging &&
+          error.message &&
+          error.message !== 'Network Error';
+
+        if (shouldLogDetailed) {
+          const networkErrorDetails = {
+            requestURL: String(requestURL),
+            baseURL: String(API_BASE_URL),
+            endpoint: String(endpoint),
+            envVar: String(process.env.NEXT_PUBLIC_API_URL || 'NOT SET'),
+            errorMessage: String(error.message || 'Unknown network error'),
+            errorCode: String(error.code || 'UNKNOWN'),
+            method: String(originalRequest.method || 'UNKNOWN'),
+            errorType: error.constructor?.name || 'Unknown',
+          };
+
+          try {
+            const errorDetailsStr = JSON.stringify(
+              networkErrorDetails,
+              null,
+              2
+            );
+            console.error(
+              '[API] ❌ Network/CORS Error Details:',
+              errorDetailsStr
+            );
+          } catch (e) {
+            // Fallback logging
+            console.error(
+              '[API] ❌ Network/CORS Error Details:',
+              networkErrorDetails
+            );
+          }
+        } else if (
+          process.env.NODE_ENV === 'development' &&
+          suppressVerboseLogging
+        ) {
+          // Minimal logging for suppressed endpoints - only log once per session
+          const logKey = `network_error_${endpoint}`;
+          if (!sessionStorage.getItem(logKey)) {
+            console.debug(
+              `[API] Network error for ${endpoint} (backend may be unavailable)`
+            );
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem(logKey, 'true');
+            }
+          }
         }
-
-        // Log diagnostic information
-        console.error('🔍 [API] CORS/Network Error Diagnostic:');
-        console.error('🔍 Base URL:', API_BASE_URL);
-        console.error('🔍 Endpoint:', originalRequest.url);
-        console.error('🔍 Full URL:', requestURL);
-        console.error(
-          '🔍 Environment Variable:',
-          process.env.NEXT_PUBLIC_API_URL || 'NOT SET'
-        );
-        console.error('🔍 Error Code:', error.code);
-        console.error('🔍 Error Message:', error.message);
 
         // Try to diagnose the issue
         let diagnosticMessage = `Unable to connect to the server at ${requestURL}.`;
