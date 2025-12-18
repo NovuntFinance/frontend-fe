@@ -58,17 +58,62 @@ export function SupportEscalationForm({
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call to backend
-      // Backend endpoint: POST /api/assistant/support/escalate
-      // Backend is ready and waiting for frontend integration
+      const token = useAuthStore.getState().token;
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'Please log in to submit a support request.',
+        });
+        return;
+      }
 
-      // TEMPORARY: Simulate API call for development
-      // Remove this once backend is connected
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const apiBaseURL = getAPIBaseURL();
+      const response = await fetch(`${apiBaseURL}/assistant/support/escalate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          subject: formData.subject,
+          description: formData.description,
+          priority: formData.priority,
+          category: formData.category,
+          conversationId: conversationId || undefined, // Link to conversation if available
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error?.message ||
+          errorData.message ||
+          'Failed to submit support request';
+        const errorCode = errorData.error?.code || 'UNKNOWN_ERROR';
+
+        // Handle validation errors
+        if (response.status === 400 && errorCode === 'VALIDATION_ERROR') {
+          const details = errorData.error?.details || {};
+          const fieldErrors = Object.entries(details)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join(', ');
+          throw new Error(fieldErrors || errorMessage);
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || 'Failed to submit support request');
+      }
+
+      const ticketData = data.data;
+      setTicketId(ticketData.ticketId);
 
       setIsSubmitted(true);
       toast.success('Support request submitted successfully!', {
-        description: 'Our team will respond within 24 hours.',
+        description: `Ticket ID: ${ticketData.ticketId}. Our team will respond within 24 hours.`,
       });
 
       // Reset form after 3 seconds

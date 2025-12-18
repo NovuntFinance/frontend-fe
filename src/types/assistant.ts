@@ -34,7 +34,13 @@ export interface SupportEscalationRequest {
 
 export interface AssistantResponse {
   message: string;
-  suggestions?: string[];
+  conversationId: string;
+  suggestions: string[]; // Always present (4 suggestions)
   requiresEscalation?: boolean;
   escalationReason?: string;
+  metadata?: {
+    responseTime?: number;
+    model?: string;
+    tokensUsed?: number;
+  };
 }

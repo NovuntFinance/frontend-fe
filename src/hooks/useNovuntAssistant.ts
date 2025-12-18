@@ -7,11 +7,24 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useUser } from './useUser';
+import { useAuthStore } from '@/store/authStore';
 import type {
   ChatMessage,
   AssistantContext,
   AssistantResponse,
 } from '@/types/assistant';
+
+// Get API base URL helper
+function getAPIBaseURL(): string {
+  const envURL = process.env.NEXT_PUBLIC_API_URL;
+  if (envURL) {
+    return envURL.trim();
+  }
+  // Fallback for development
+  return process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api/v1'
+    : 'https://novunt-backend-uw3z.onrender.com/api/v1';
+}
 
 const INITIAL_GREETINGS = [
   "Hello! I'm your Novunt Assistant. How can I help you today?",
@@ -19,12 +32,26 @@ const INITIAL_GREETINGS = [
   "Greetings! I'm here to help you succeed on Novunt. What questions do you have?",
 ];
 
+const CONVERSATION_ID_KEY = 'novunt_assistant_conversation_id';
+
 export function useNovuntAssistant() {
   const { user } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load conversation ID from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(CONVERSATION_ID_KEY);
+      if (stored) {
+        setConversationId(stored);
+      }
+    }
+  }, []);
 
   // Build context from user data
   const getContext = useCallback((): AssistantContext => {
@@ -278,6 +305,11 @@ export function useNovuntAssistant() {
   // Clear chat history
   const clearChat = useCallback(() => {
     setMessages([]);
+    setConversationId(null);
+    setSuggestions([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CONVERSATION_ID_KEY);
+    }
   }, []);
 
   // Toggle assistant
@@ -298,5 +330,7 @@ export function useNovuntAssistant() {
     toggleAssistant,
     closeAssistant,
     messagesEndRef,
+    suggestions, // Expose suggestions for UI
+    conversationId, // Expose conversationId for debugging
   };
 }

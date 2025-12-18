@@ -31,7 +31,7 @@ interface NovuntAssistantProps {
 }
 
 export function NovuntAssistant({ isOpen, onClose }: NovuntAssistantProps) {
-  const { messages, isLoading, sendMessage, messagesEndRef } =
+  const { messages, isLoading, sendMessage, messagesEndRef, suggestions } =
     useNovuntAssistant();
   const [inputValue, setInputValue] = useState('');
   const [showEscalationForm, setShowEscalationForm] = useState(false);
