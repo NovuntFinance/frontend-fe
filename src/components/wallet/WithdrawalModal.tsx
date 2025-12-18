@@ -15,6 +15,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { slideUp } from '@/design-system/animations';
 import {
   X,
   AlertCircle,
@@ -59,7 +60,7 @@ import {
   generateTestWalletAddress,
   validateWalletAddress,
 } from '@/lib/utils/wallet';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -421,9 +422,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
               // Address Setup Step
               <motion.div
                 key="setup-address"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                {...slideUp()}
                 className="space-y-6"
               >
                 <Alert>
@@ -719,9 +718,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
             ) : step === 'form' ? (
               <motion.form
                 key="form"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                {...slideUp()}
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-6"
               >

@@ -1,31 +1,33 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import withPWA from 'next-pwa';
+// Temporarily disable PWA to debug build issue - will re-enable after fixing
+// import withPWA from 'next-pwa';
 import type { NextConfig } from 'next';
 
-const withPWAConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  buildExcludes: [
-    /middleware-manifest\.json$/,
-    /app-build-manifest\.json$/,
-    /_buildManifest\.js$/,
-    /_middlewareManifest\.js$/,
-  ],
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-});
+// Temporarily disabled PWA config
+// const withPWAConfig = withPWA({
+//   dest: 'public',
+//   register: true,
+//   skipWaiting: true,
+//   disable: process.env.NODE_ENV === 'development',
+//   buildExcludes: [
+//     /middleware-manifest\.json$/,
+//     /app-build-manifest\.json$/,
+//     /_buildManifest\.js$/,
+//     /_middlewareManifest\.js$/,
+//   ],
+//   runtimeCaching: [
+//     {
+//       urlPattern: /^https?.*/,
+//       handler: 'NetworkFirst',
+//       options: {
+//         cacheName: 'offlineCache',
+//         expiration: {
+//           maxEntries: 200,
+//         },
+//       },
+//     },
+//   ],
+// });
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -51,6 +53,9 @@ const nextConfig: NextConfig = {
   // Disable standalone output on Windows to avoid path issues
   // Re-enable for production deployments if needed
   output: process.platform === 'win32' ? undefined : 'standalone',
+  // Turbopack configuration (Next.js 16 default)
+  turbopack: {},
+  // Keep webpack config for compatibility, but Turbopack will be used
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
@@ -92,15 +97,14 @@ const nextConfig: NextConfig = {
   compress: true,
 };
 
-export default withSentryConfig(withPWAConfig(nextConfig), {
-  org: 'novunt',
-  project: 'javascript-nextjs',
-  // Silent mode suppresses warnings when auth token is missing
-  silent: true,
-  widenClientFileUpload: true,
-  disableLogger: true,
-  automaticVercelMonitors: true,
-  // Note: To enable source map uploads and releases, add SENTRY_AUTH_TOKEN
-  // to Vercel environment variables. Without it, Sentry will work but
-  // won't upload source maps or create releases (warnings are suppressed).
-});
+// Temporarily export config without Sentry/PWA wrappers to debug build
+// Re-enable after fixing the build issue
+export default nextConfig;
+// export default withSentryConfig(withPWAConfig(nextConfig), {
+//   org: 'novunt',
+//   project: 'javascript-nextjs',
+//   silent: true,
+//   widenClientFileUpload: true,
+//   disableLogger: true,
+//   automaticVercelMonitors: true,
+// });

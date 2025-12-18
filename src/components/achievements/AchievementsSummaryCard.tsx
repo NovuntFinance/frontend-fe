@@ -19,6 +19,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { hoverAnimation } from '@/design-system/animations';
 import {
   useNXPBalance,
   useEarnedBadges,
@@ -73,7 +75,7 @@ export function AchievementsSummaryCard() {
         <CardHeader className="relative p-4 sm:p-6">
           <div className="mb-2 flex items-center gap-2 sm:gap-3">
             <motion.div
-              whileHover={{ scale: 1.1, rotate: -10 }}
+              {...hoverAnimation()}
               className="rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
             >
               <Award className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
@@ -89,10 +91,7 @@ export function AchievementsSummaryCard() {
           </div>
         </CardHeader>
         <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="space-y-3">
-            <ShimmerCard className="h-16" />
-            <ShimmerCard className="h-20" />
-          </div>
+          <LoadingStates.List lines={2} className="space-y-3" />
         </CardContent>
       </Card>
     );

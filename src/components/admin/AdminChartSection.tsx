@@ -7,7 +7,7 @@ import {
   AdminDashboardTimeframe,
   ChartDataPoint,
 } from '@/types/admin';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
 
 type ChartTab = 'revenue' | 'users' | 'stakes';
 
@@ -173,7 +173,7 @@ const AdminChartSection = ({
         <div className="relative h-64">
           {showSkeleton ? (
             <div className="absolute inset-0">
-              <ShimmerCard className="h-full w-full" />
+              <LoadingStates.Card height="h-full" className="w-full" />
             </div>
           ) : (
             <>

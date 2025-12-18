@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { hoverAnimation } from '@/design-system/animations';
 import {
   Target,
   TrendingUp,
@@ -31,7 +32,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -52,7 +54,7 @@ import { getPremiumPoolDownlineRequirement } from '@/lib/utils/premiumPoolUtils'
  */
 export function RankProgressCard() {
   // Use lightweight endpoint for dashboard (fast loading < 100ms)
-  const { data, isLoading, error } = useRankProgressLightweight();
+  const { data, isLoading, error, refetch } = useRankProgressLightweight();
 
   // Hybrid approach: Fetch detailed endpoint separately for Premium Pool progress
   // This keeps dashboard fast while still showing Premium Pool progress
@@ -123,7 +125,13 @@ export function RankProgressCard() {
   }
 
   if (error) {
-    return <RankProgressError error={error.message} />;
+    return (
+      <UserFriendlyError
+        error={error instanceof Error ? error : new Error(String(error))}
+        onRetry={() => refetch()}
+        variant="card"
+      />
+    );
   }
 
   if (!data) {
@@ -255,7 +263,7 @@ export function RankProgressCard() {
 
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
+            {...hoverAnimation()}
             className="rounded-xl bg-gradient-to-br from-blue-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
           >
             <Target className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
@@ -881,7 +889,7 @@ function PoolBadge({
  * Loading Skeleton
  */
 function RankProgressSkeleton() {
-  return <ShimmerCard className="h-full" />;
+  return <LoadingStates.Card height="h-full" />;
 }
 
 /**

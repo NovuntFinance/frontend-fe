@@ -43,7 +43,7 @@ import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
 import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
@@ -51,6 +51,7 @@ import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
 import { InfoMarquee } from '@/components/ui/info-marquee';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
+import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
 
 /**
  * Dashboard Layout
@@ -381,8 +382,15 @@ export default function DashboardLayout({
           </DropdownMenu>
         </header>
 
+        {/* Breadcrumbs */}
+        <div className="border-b border-white/10 bg-white/5 px-4 py-3 dark:border-white/5 dark:bg-white/2">
+          <Breadcrumbs />
+        </div>
+
         {/* Page content */}
-        <main className="p-4 pb-20 sm:p-6 lg:p-8">{children}</main>
+        <main id="main-content" className="p-4 pb-20 sm:p-6 lg:p-8">
+          {children}
+        </main>
 
         {/* Horizontal Navigation - Fixed at bottom */}
         <HorizontalNav />

@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTestDistributeDailyProfit } from '@/lib/mutations';
 import { use2FA } from '@/contexts/TwoFAContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { format, startOfToday } from 'date-fns';
 
 export function DistributionStatus() {

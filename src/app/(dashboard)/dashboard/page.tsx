@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { slideUp } from '@/design-system/animations';
 import {
   Wallet,
   TrendingUp,
@@ -34,6 +35,8 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
@@ -46,6 +49,7 @@ import { AchievementsSummaryCard } from '@/components/achievements/AchievementsS
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
+import { useResponsive } from '@/hooks/useResponsive';
 import type { PlatformActivity } from '@/types/platformActivity';
 
 /**
@@ -61,6 +65,7 @@ export default function DashboardPage() {
     email: string;
   } | null>(null);
   const { user } = useUser();
+  const { isMobile, isDesktop, breakpoint } = useResponsive();
 
   // Fetch staking streak data
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
@@ -655,7 +660,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
                     {isLoading ? (
-                      <ShimmerCard className="h-16 sm:h-20" />
+                      <LoadingStates.Text lines={1} className="h-16 sm:h-20" />
                     ) : (
                       <div className="mb-2 flex w-full min-w-0 items-baseline gap-2 sm:mb-4 sm:gap-3">
                         <motion.span
@@ -684,47 +689,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Daily ROS Performance - MOVED UP (Critical for showing earning potential) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <motion.div {...slideUp(0.3)}>
           <DailyROSPerformance />
         </motion.div>
 
         {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div {...slideUp(0.4)}>
           <QuickActions />
         </motion.div>
 
         {/* Rank Progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-        >
+        <motion.div {...slideUp(0.45)}>
           <RankProgressCard />
         </motion.div>
 
         {/* Achievements Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.47 }}
-        >
+        <motion.div {...slideUp(0.47)}>
           <AchievementsSummaryCard />
         </motion.div>
 
         {/* Recent Activity */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        <motion.div {...slideUp(0.5)}>
           <ActivityFeed
             transactions={transactions || []}
             isLoading={transactionsLoading}

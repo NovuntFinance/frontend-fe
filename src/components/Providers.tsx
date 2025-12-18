@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger';
 import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
+import { CommandPalette } from '@/components/search/CommandPalette';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Debug logging at app initialization
@@ -141,6 +142,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <GlobalModalsProvider>
                 {children}
                 <Toaster position="top-right" richColors />
+
+                {/* Command Palette - Global Search (Cmd+K / Ctrl+K) */}
+                <CommandPalette />
 
                 {/* Viral Growth Features: Share Modal + Live Activity Feed */}
                 <ShareAndSocialProofProvider />

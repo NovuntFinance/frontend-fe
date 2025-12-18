@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { hoverAnimation } from '@/design-system/animations';
 import {
   Download,
   Upload,
@@ -27,7 +28,8 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -211,11 +213,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
           </div>
         </CardHeader>
         <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <ShimmerCard key={i} className="h-20" />
-            ))}
-          </div>
+          <LoadingStates.List lines={5} className="space-y-3" />
         </CardContent>
       </Card>
     );
@@ -256,7 +254,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
 
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
+            {...hoverAnimation()}
             className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
           >
             <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
@@ -273,17 +271,12 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
       </CardHeader>
       <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
         {safeTransactions.length === 0 ? (
-          <div className="py-12 text-center">
-            <div className="bg-muted mb-4 inline-flex rounded-full p-4">
-              <Clock className="text-muted-foreground h-8 w-8" />
-            </div>
-            <p className="text-muted-foreground mb-4 text-sm">
-              No transactions yet
-            </p>
-            <Button variant="outline" asChild>
-              <a href="/dashboard/wallets">Make Your First Deposit</a>
-            </Button>
-          </div>
+          <EmptyStates.EmptyTransactions
+            action={{
+              label: 'Make Your First Deposit',
+              onClick: () => window.location.href = '/dashboard/wallets',
+            }}
+          />
         ) : (
           <div className="space-y-2">
             {safeTransactions.slice(0, 5).map((transaction, index) => {

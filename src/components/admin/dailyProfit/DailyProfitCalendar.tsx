@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDeclaredDailyProfits } from '@/lib/queries';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
 import { DeclareProfitModal } from './DeclareProfitModal';
 import { BulkDeclareModal } from './BulkDeclareModal';
 import type { DailyProfit } from '@/types/dailyProfit';
@@ -152,7 +153,7 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
           {isLoading ? (
             <div className="grid grid-cols-7 gap-2">
               {Array.from({ length: 35 }).map((_, i) => (
-                <ShimmerCard key={i} className="h-24" />
+                <LoadingStates.Card key={i} height="h-24" />
               ))}
             </div>
           ) : (

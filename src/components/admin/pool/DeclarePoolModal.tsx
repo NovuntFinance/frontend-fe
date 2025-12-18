@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { formatCurrency } from '@/lib/utils';
 
 const declarePoolSchema = z.object({

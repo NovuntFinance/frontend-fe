@@ -14,7 +14,8 @@ import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { ReferralTreeNode, TreeNode } from './ReferralTreeNode';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
 import { formatCurrency } from '@/lib/utils';
 import type { ReferralTreeEntry } from '@/types/referral';
 import { useReferralRates } from '@/hooks/useReferralRates';
@@ -513,11 +514,7 @@ export function ReferralTreeVisualization({
         icon={Users}
         colorTheme="purple"
       >
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <ShimmerCard key={i} className="h-32" />
-          ))}
-        </div>
+        <LoadingStates.List lines={3} className="space-y-4" />
       </NovuntPremiumCard>
     );
   }
@@ -531,15 +528,7 @@ export function ReferralTreeVisualization({
         colorTheme="purple"
         tooltip="Your referral tree will appear here once you have referrals"
       >
-        <div className="py-12 text-center">
-          <Users className="text-muted-foreground/30 mx-auto mb-4 h-16 w-16" />
-          <p className="text-muted-foreground mb-2 text-lg font-medium">
-            No referrals yet
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Share your referral link to start building your network
-          </p>
-        </div>
+        <EmptyStates.EmptyReferrals />
       </NovuntPremiumCard>
     );
   }

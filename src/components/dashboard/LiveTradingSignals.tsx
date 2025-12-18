@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { slideUp, hoverAnimation } from '@/design-system/animations';
 import {
   TrendingUp,
   TrendingDown,
@@ -202,7 +203,7 @@ export function LiveTradingSignals() {
 
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
+            {...hoverAnimation()}
             className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
           >
             <ActivityIcon className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
@@ -254,10 +255,8 @@ export function LiveTradingSignals() {
             {trades.map((trade, index) => (
               <motion.div
                 key={trade.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                {...slideUp(0.1 + index * 0.05)}
                 exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
                 className={`rounded-xl border p-3 transition-all sm:p-4 ${
                   trade.isProfitable
                     ? 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40 hover:shadow-md'

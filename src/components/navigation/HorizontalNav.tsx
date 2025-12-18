@@ -186,6 +186,7 @@ export function HorizontalNav() {
       className="fixed bottom-2 left-1/2 z-50 mx-1 flex max-w-[calc(100vw-0.5rem)] -translate-x-1/2 items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-t from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl sm:mx-2 dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2"
       role="navigation"
       aria-label="Main navigation"
+      aria-orientation="horizontal"
     >
       <div className="flex h-16 w-full items-center justify-evenly overflow-hidden px-3 sm:h-20 sm:px-6 md:px-8 lg:px-10">
         {/* Left Navigation Items: Achievements, Wallets, Stakes */}

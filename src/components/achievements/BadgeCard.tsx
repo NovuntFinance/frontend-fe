@@ -8,6 +8,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Lock } from 'lucide-react';
+import { slideUp, hoverAnimation } from '@/design-system/animations';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -84,9 +85,8 @@ export function BadgeCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -2 }}
+      {...slideUp()}
+      {...hoverAnimation()}
       className={cn(
         'relative overflow-hidden rounded-xl border-2 p-3 transition-all duration-300 sm:p-5',
         earned

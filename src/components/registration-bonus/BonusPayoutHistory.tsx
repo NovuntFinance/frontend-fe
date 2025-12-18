@@ -21,6 +21,7 @@ import { useBonusPayoutHistory } from '@/lib/queries';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyStates } from '@/components/EmptyStates';
 
 interface BonusPayoutHistoryProps {
   /** Initial page number */
@@ -100,13 +101,11 @@ export function BonusPayoutHistory({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <DollarSign className="h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-600">No payouts yet</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Payouts will appear here when you earn ROS from your stakes
-            </p>
-          </div>
+          <EmptyStates.EmptyState
+            icon={<DollarSign className="h-12 w-12" />}
+            title="No payouts yet"
+            description="Payouts will appear here when you earn ROS from your stakes"
+          />
         </CardContent>
       </Card>
     );

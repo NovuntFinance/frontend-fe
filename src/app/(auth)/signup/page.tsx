@@ -43,7 +43,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 
 // Disable static generation
 export const dynamic = 'force-dynamic';

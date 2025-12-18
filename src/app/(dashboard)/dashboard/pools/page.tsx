@@ -36,7 +36,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { Progress } from '@/components/ui/progress';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import {
@@ -146,13 +147,9 @@ export default function PoolsPage() {
     return (
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="space-y-4 sm:space-y-6">
-          <ShimmerCard className="h-20 w-full" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6">
-            <ShimmerCard className="h-40" />
-            <ShimmerCard className="h-40" />
-            <ShimmerCard className="h-40" />
-          </div>
-          <ShimmerCard className="h-96" />
+          <LoadingStates.Card height="h-20" className="w-full" />
+          <LoadingStates.Grid items={3} columns={3} className="gap-3 sm:gap-4 md:gap-6" />
+          <LoadingStates.Card height="h-96" />
         </div>
       </div>
     );

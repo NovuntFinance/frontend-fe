@@ -9,7 +9,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Award, RefreshCw, XCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import {
   Card,
   CardContent,
@@ -28,7 +29,7 @@ import {
   useNXPBalance,
   useToggleBadgeDisplay,
 } from '@/lib/queries/achievementQueries';
-import { toast } from '@/lib/toast';
+import { toast } from '@/components/ui/enhanced-toast';
 import { prefersReducedMotion } from '@/lib/accessibility';
 
 export default function AchievementsPage() {
@@ -100,12 +101,9 @@ export default function AchievementsPage() {
     return (
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="space-y-4 sm:space-y-6">
-          <ShimmerCard className="h-20 w-full" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
-            <ShimmerCard className="h-96" />
-            <ShimmerCard className="h-96" />
-          </div>
-          <ShimmerCard className="h-96" />
+          <LoadingStates.Card height="h-20" className="w-full" />
+          <LoadingStates.Grid items={2} columns={2} className="gap-3 sm:gap-4 md:gap-6" />
+          <LoadingStates.Card height="h-96" />
         </div>
       </div>
     );
@@ -118,21 +116,13 @@ export default function AchievementsPage() {
   if (hasCriticalError) {
     return (
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-        <div className="flex min-h-[400px] items-center justify-center">
-          <div className="text-center">
-            <XCircle className="text-destructive mx-auto mb-4 h-10 w-10 sm:h-12 sm:w-12" />
-            <h3 className="mb-2 text-base leading-tight font-semibold sm:text-lg">
-              Failed to Load Achievements
-            </h3>
-            <p className="text-muted-foreground mb-4 text-sm leading-relaxed sm:text-base">
-              {badgesError?.message ||
-                progressError?.message ||
-                catalogError?.message ||
-                nxpError?.message ||
-                'Unable to fetch achievement data'}
-            </p>
-            <Button onClick={handleRefresh}>Try Again</Button>
-          </div>
+        <div className="flex min-h-[400px] items-center justify-center p-4">
+          <UserFriendlyError
+            error={badgesError || progressError || catalogError || nxpError || new Error('Unable to fetch achievement data')}
+            onRetry={handleRefresh}
+            variant="card"
+            className="max-w-md"
+          />
         </div>
       </div>
     );

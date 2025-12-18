@@ -7,7 +7,10 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import {
   format,
   isToday,
@@ -21,6 +24,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 import type {
   NotificationFilters,
   Notification,
@@ -201,15 +205,18 @@ export function DateFilteredNotificationList({
   if (loading && (!notifications || notifications.length === 0)) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+        <LoadingStates.Inline />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="py-8 text-center">
-        <p className="text-destructive text-sm">Error: {error}</p>
+      <div className="py-8">
+        <UserFriendlyError
+          error={new Error(error)}
+          variant="inline"
+        />
       </div>
     );
   }
@@ -249,12 +256,10 @@ export function DateFilteredNotificationList({
     };
 
     return (
-      <div className="py-12 text-center">
-        <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-40" />
-        <p className="text-muted-foreground mx-auto max-w-xs text-sm">
-          {getEmptyStateMessage()}
-        </p>
-      </div>
+      <EmptyStates.EmptyState
+        icon={<Calendar className="h-12 w-12" />}
+        title={getEmptyStateMessage()}
+      />
     );
   }
 

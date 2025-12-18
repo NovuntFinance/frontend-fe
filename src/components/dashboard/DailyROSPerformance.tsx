@@ -13,7 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useProfitHistory } from '@/lib/queries';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
+import { hoverAnimation } from '@/design-system/animations';
 
 type TimeRange = '7D' | '30D' | '100D';
 
@@ -96,7 +98,7 @@ export function DailyROSPerformance() {
       <CardHeader className="relative p-4 sm:p-6">
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
+            {...hoverAnimation()}
             className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
           >
             <TrendingUp className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
@@ -118,7 +120,7 @@ export function DailyROSPerformance() {
           <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               {isLoading ? (
-                <ShimmerCard className="h-7 w-24 sm:h-8 sm:w-32" />
+                <LoadingStates.Text lines={1} className="h-7 w-24 sm:h-8 sm:w-32" />
               ) : (
                 <>
                   <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
@@ -153,20 +155,13 @@ export function DailyROSPerformance() {
           {/* Chart Area */}
           <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
             {isLoading ? (
-              <div className="flex h-full items-end justify-between gap-2">
-                {Array.from({ length: Math.min(limit, 7) }).map((_, i) => (
-                  <ShimmerCard
-                    key={i}
-                    className="w-full rounded-t"
-                    style={{ height: `${Math.random() * 50 + 20}%` }}
-                  />
-                ))}
-              </div>
+              <LoadingStates.Grid items={Math.min(limit, 7)} columns={Math.min(limit, 7)} className="h-full items-end" />
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center">
-                <p className="text-muted-foreground text-sm">
-                  No data available for {selectedRange}
-                </p>
+                <EmptyStates.EmptyState
+                  title={`No data available for ${selectedRange}`}
+                  description="ROS performance data will appear here once profits are declared"
+                />
               </div>
             ) : (
               <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
