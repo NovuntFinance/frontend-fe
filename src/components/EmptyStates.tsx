@@ -128,12 +128,23 @@ export function EmptyReferrals() {
     );
 }
 
-export function EmptyTransactions() {
+export function EmptyTransactions({ action }: { action?: { label: string; onClick: () => void } }) {
     return (
         <EmptyState
             icon={<FileText className="h-8 w-8" />}
             title="No transactions"
             description="Your transaction history will appear here once you start making deposits or withdrawals"
+            action={action}
+        />
+    );
+}
+
+export function EmptyNotifications({ description }: { description?: string }) {
+    return (
+        <EmptyState
+            icon={<Inbox className="h-8 w-8" />}
+            title="No notifications yet"
+            description={description || "You'll see notifications about your account activity here"}
         />
     );
 }
@@ -197,3 +208,19 @@ export function SuccessState({
         />
     );
 }
+
+/**
+ * Export as namespace for easier imports
+ */
+export const EmptyStates = {
+    EmptyState,
+    EmptyWallet,
+    EmptyStakes,
+    EmptyReferrals,
+    EmptyTransactions,
+    EmptyNotifications,
+    EmptySearch,
+    ErrorState,
+    PendingState,
+    SuccessState,
+};

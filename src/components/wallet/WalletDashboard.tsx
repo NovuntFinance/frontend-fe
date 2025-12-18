@@ -33,8 +33,10 @@ import { WalletBreakdown } from './WalletBreakdown';
 import { useUIStore } from '@/store/uiStore';
 import { StatCard } from './StatCard';
 import { WalletDashboardSkeleton } from './WalletDashboardSkeleton';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { walletLogger } from '@/lib/logger';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { slideUp, hoverAnimation } from '@/design-system/animations';
 
 /**
  * Quick Actions Component
@@ -256,16 +258,11 @@ export function WalletDashboard() {
   if (error) {
     walletLogger.error('Failed to load wallet', error);
     return (
-      <Card className="border-destructive/50">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-destructive mb-4">Failed to load wallet</p>
-            <Button onClick={() => refetch()} variant="outline">
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <UserFriendlyError
+        error={error}
+        onRetry={() => refetch()}
+        variant="card"
+      />
     );
   }
 
@@ -286,11 +283,7 @@ export function WalletDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Main Balance Card - Staking Streak Template */}
-      <motion.div
-        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-      >
+      <motion.div {...slideUp(0.1)}>
         <Card className="bg-card/50 group relative overflow-visible border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
           {/* Animated Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
@@ -316,7 +309,7 @@ export function WalletDashboard() {
             <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  {...hoverAnimation()}
                   className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                 >
                   <WalletIcon className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />

@@ -44,7 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { AvatarSelector } from '@/components/profile/AvatarSelector';
 import { BadgeAvatarSelector } from '@/components/achievements/BadgeAvatarSelector';
 import { passwordSchema } from '@/lib/validation';

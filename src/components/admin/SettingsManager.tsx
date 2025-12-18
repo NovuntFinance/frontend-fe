@@ -18,6 +18,9 @@ import {
 
 import { Info, RefreshCw } from 'lucide-react';
 import { SettingTooltip } from './SettingTooltip';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
+import { EmptyStates } from '@/components/EmptyStates';
 
 interface SettingInputProps {
   setting: AdminSetting;
@@ -189,18 +192,16 @@ export function SettingsManager({ category }: SettingsManagerProps) {
     useAdminSettings(category);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-muted-foreground">Loading settings...</div>
-      </div>
-    );
+    return <LoadingStates.Page />;
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-destructive">Error: {error.message}</div>
-      </div>
+      <UserFriendlyError
+        error={error}
+        onRetry={() => refresh()}
+        className="min-h-[60vh]"
+      />
     );
   }
 
@@ -263,5 +264,10 @@ export function SettingsManager({ category }: SettingsManagerProps) {
     );
   }
 
-  return <div>No settings found</div>;
+  return (
+    <EmptyStates.EmptyState
+      title="No settings found"
+      description="Settings will appear here once they are configured"
+    />
+  );
 }

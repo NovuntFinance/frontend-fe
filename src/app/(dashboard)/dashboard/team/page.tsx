@@ -28,9 +28,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShimmerCard } from '@/components/ui/shimmer';
-import { toast } from 'sonner';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
+import { toast } from '@/components/ui/enhanced-toast';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { slideUp, fadeIn, hoverAnimation } from '@/design-system/animations';
 
 /**
  * Team Page (Merged: Referrals + Team)
@@ -193,13 +195,9 @@ export default function TeamPage() {
     return (
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="space-y-4 sm:space-y-6">
-          <ShimmerCard className="h-20 w-full" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6">
-            <ShimmerCard className="h-40" />
-            <ShimmerCard className="h-40" />
-            <ShimmerCard className="h-40" />
-          </div>
-          <ShimmerCard className="h-96" />
+          <LoadingStates.Card height="h-20" className="w-full" />
+          <LoadingStates.Grid items={3} columns={3} className="gap-3 sm:gap-4 md:gap-6" />
+          <LoadingStates.Card height="h-96" />
         </div>
       </div>
     );
@@ -209,11 +207,7 @@ export default function TeamPage() {
     <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
       <div className="space-y-4 sm:space-y-6">
         {/* Page Header - Staking Streak Template */}
-        <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: -20 }}
-          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <motion.div {...slideUp(0.1)}>
           <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
@@ -238,7 +232,7 @@ export default function TeamPage() {
             <CardHeader className="relative p-4 sm:p-6">
               <div className="mb-2 flex items-center gap-2 sm:gap-3">
                 <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  {...hoverAnimation()}
                   className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                 >
                   <Users className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
@@ -260,9 +254,7 @@ export default function TeamPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6">
           {/* Total Referrals Card */}
           <motion.div
-            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            {...slideUp(0.2)}
             whileHover={{ y: -4, scale: 1.01 }}
           >
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
@@ -484,7 +476,7 @@ export default function TeamPage() {
             <CardHeader className="relative p-4 sm:p-6">
               <div className="mb-2 flex items-center gap-2 sm:gap-3">
                 <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
+                  {...hoverAnimation()}
                   className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                 >
                   <Share className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
@@ -506,7 +498,7 @@ export default function TeamPage() {
                   Referral Link
                 </label>
                 {infoLoading ? (
-                  <ShimmerCard className="h-10 w-full" />
+                  <LoadingStates.Text lines={1} className="h-10 w-full" />
                 ) : referralLink ? (
                   <div className="flex gap-2">
                     <Input
@@ -548,7 +540,7 @@ export default function TeamPage() {
                   Referral Code
                 </label>
                 {infoLoading ? (
-                  <ShimmerCard className="h-10 w-full" />
+                  <LoadingStates.Text lines={1} className="h-10 w-full" />
                 ) : referralCode ? (
                   <div className="flex gap-2">
                     <Input

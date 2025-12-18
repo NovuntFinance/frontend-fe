@@ -14,7 +14,7 @@ import {
   DEFAULT_CONFIG_VALUES,
   getConfigValue,
 } from '@/types/configKeys';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 
 interface ConfigContextType {
   configs: Record<string, any> | null;

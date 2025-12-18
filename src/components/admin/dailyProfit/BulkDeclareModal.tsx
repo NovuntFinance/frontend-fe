@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { format, addDays, startOfToday } from 'date-fns';
 
 const bulkDeclareSchema = z.object({

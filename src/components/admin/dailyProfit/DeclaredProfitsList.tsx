@@ -36,7 +36,8 @@ import {
 import { useDeclaredDailyProfits } from '@/lib/queries';
 import { useDeleteDailyProfit } from '@/lib/mutations';
 import { use2FA } from '@/contexts/TwoFAContext';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
 import { DeclareProfitModal } from './DeclareProfitModal';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -132,16 +133,13 @@ export function DeclaredProfitsList() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <ShimmerCard key={i} className="h-16" />
-              ))}
-            </div>
+            <LoadingStates.List lines={5} />
           ) : declaredProfits.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">
-              <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
-              <p>No profits declared yet</p>
-            </div>
+            <EmptyStates.EmptyState
+              icon={<Calendar className="h-12 w-12" />}
+              title="No profits declared yet"
+              description="Declared profits will appear here once they are added"
+            />
           ) : (
             <Table>
               <TableHeader>

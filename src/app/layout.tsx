@@ -4,6 +4,7 @@ import './globals.css';
 import '@/styles/glassmorphism.css';
 import { Providers } from '@/components/Providers';
 import { PWARegister } from '@/components/pwa-register';
+import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -112,8 +113,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning={true} className="antialiased">
+        {/* Skip to main content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[1600] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Skip to main content
+        </a>
         <Providers>{children}</Providers>
         <PWARegister />
+        <PWAInstallPrompt />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { hoverAnimation } from '@/design-system/animations';
 import { Download, Upload, Send, TrendingUp, ArrowRight, ArrowDownLeft, ArrowUpRight, ArrowRightLeft } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
@@ -78,8 +79,7 @@ export function QuickActions() {
       {actions.map((action) => (
         <motion.button
           key={action.id}
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.98 }}
+          {...hoverAnimation()}
           onClick={() => handleAction(action.id)}
           className={`
             flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200

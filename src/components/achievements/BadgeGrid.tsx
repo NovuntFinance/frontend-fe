@@ -9,6 +9,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { BadgeCard } from './BadgeCard';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
+import { EmptyStates } from '@/components/EmptyStates';
 import { cn } from '@/lib/utils';
 import type {
   Badge,
@@ -184,9 +185,10 @@ export function BadgeGrid({
           )}
         </>
       ) : (
-        <div className="text-muted-foreground py-12 text-center">
-          <p>No badges in this category</p>
-        </div>
+        <EmptyStates.EmptyState
+          title="No badges in this category"
+          description={`You haven't earned any ${activeCategory === 'all' ? '' : categoryLabels[activeCategory].toLowerCase()} badges yet`}
+        />
       )}
     </div>
   );

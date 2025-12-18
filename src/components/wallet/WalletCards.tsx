@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWalletBalance } from '@/lib/queries';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
 import {
   Tooltip,
   TooltipContent,
@@ -185,10 +185,7 @@ export function WalletCards() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <ShimmerCard className="h-48" />
-        <ShimmerCard className="h-48" />
-      </div>
+      <LoadingStates.Grid items={2} columns={2} className="gap-6" />
     );
   }
 

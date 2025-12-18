@@ -18,6 +18,9 @@ import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
+import { EmptyStates } from '@/components/EmptyStates';
 import { useTodayProfit } from '@/lib/queries';
 import {
   Card,
@@ -27,11 +30,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function StakesPage() {
   const { openModal } = useUIStore();
   const { data: stakingData, isLoading, error } = useStakeDashboard();
   const { data: todayProfitData } = useTodayProfit();
+  const { isMobile, breakpoint } = useResponsive();
 
   if (isLoading) {
     return (
@@ -48,19 +53,13 @@ export default function StakesPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="max-w-md text-center">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-            Failed to Load Stakes
-          </h3>
-          <p className="mb-4 text-gray-600 dark:text-gray-400">
-            {error instanceof Error ? error.message : 'Please try again later'}
-          </p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Try Again
-          </Button>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center p-4">
+        <UserFriendlyError
+          error={error}
+          onRetry={() => window.location.reload()}
+          variant="card"
+          className="max-w-md"
+        />
       </div>
     );
   }

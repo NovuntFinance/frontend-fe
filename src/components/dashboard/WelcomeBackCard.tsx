@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { hoverAnimation } from '@/design-system/animations';
 import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { openShareModal } from '@/store/shareModalStore';
@@ -115,7 +116,7 @@ export function WelcomeBackCard({
       <CardHeader className="relative p-4 sm:p-6">
         <div className="mb-2 flex items-center gap-2 sm:gap-3">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
+            {...hoverAnimation()}
             className="rounded-xl bg-gradient-to-br from-orange-500/30 to-amber-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
           >
             <Target className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />

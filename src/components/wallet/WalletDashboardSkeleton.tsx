@@ -6,7 +6,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
 
 /**
  * Loading Skeleton for Wallet Dashboard
@@ -15,13 +15,8 @@ import { ShimmerCard } from '@/components/ui/shimmer';
 export const WalletDashboardSkeleton = memo(function WalletDashboardSkeleton() {
     return (
         <div className="space-y-6">
-            <ShimmerCard className="h-64" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ShimmerCard />
-                <ShimmerCard />
-                <ShimmerCard />
-                <ShimmerCard />
-            </div>
+            <LoadingStates.Card height="h-64" />
+            <LoadingStates.Grid items={4} columns={4} className="gap-4" />
         </div>
     );
 });

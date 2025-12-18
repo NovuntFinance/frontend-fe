@@ -14,6 +14,7 @@ import {
 import { WalletDashboard, TransactionHistory } from '@/components/wallet';
 import { useUIStore } from '@/store/uiStore';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { useResponsive } from '@/hooks/useResponsive';
 
 /**
  * Modern Wallet Dashboard Page
@@ -23,6 +24,7 @@ import { prefersReducedMotion } from '@/lib/accessibility';
 export default function WalletPage() {
   const { openModal } = useUIStore();
   const reducedMotion = prefersReducedMotion();
+  const { isMobile, breakpoint } = useResponsive();
 
   return (
     <div className="space-y-4 sm:space-y-6">

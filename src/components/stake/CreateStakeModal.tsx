@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { slideUp, fadeIn } from '@/design-system/animations';
 import {
   X,
   CheckCircle2,
@@ -14,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateStake } from '@/lib/mutations/stakingMutations';
 import { useWalletBalance } from '@/lib/queries';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 

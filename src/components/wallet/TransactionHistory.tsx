@@ -38,7 +38,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
+import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
+import { EmptyStates } from '@/components/EmptyStates';
 import {
   Dialog,
   DialogContent,
@@ -975,45 +977,13 @@ export function TransactionHistory() {
   ]);
 
   if (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    const errorStatus =
-      (error as any)?.response?.status || (error as any)?.statusCode;
-
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-destructive mb-2 font-semibold">
-              Failed to load transactions
-            </p>
-            <p className="text-muted-foreground mb-4 text-sm">
-              {errorStatus && `Error ${errorStatus}: `}
-              {errorMessage}
-            </p>
-            <div className="flex justify-center gap-2">
-              <Button onClick={handleRefresh} variant="default">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
-              </Button>
-            </div>
-            {process.env.NODE_ENV === 'development' && (
-              <details className="mt-4 text-left">
-                <summary className="text-muted-foreground cursor-pointer text-sm">
-                  Debug Info
-                </summary>
-                <pre className="bg-muted mt-2 max-h-64 overflow-auto rounded p-4 text-xs">
-                  {JSON.stringify(
-                    { error, filters, errorMessage, errorStatus },
-                    null,
-                    2
-                  )}
-                </pre>
-              </details>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <UserFriendlyError
+        error={error}
+        onRetry={handleRefresh}
+        variant="card"
+        className="max-w-2xl mx-auto"
+      />
     );
   }
 
@@ -1177,16 +1147,7 @@ export function TransactionHistory() {
 
       {/* Transaction List - Staking Streak Template */}
       {isLoading ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-3"
-        >
-          {[1, 2, 3, 4, 5].map((i) => (
-            <ShimmerCard key={i} />
-          ))}
-        </motion.div>
+        <LoadingStates.List lines={5} className="space-y-3" />
       ) : filteredTransactions.length > 0 ? (
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
@@ -1333,22 +1294,17 @@ export function TransactionHistory() {
               />
             )}
 
-            <CardContent className="relative p-12 text-center">
-              <Wallet className="text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-30" />
-              <p className="text-muted-foreground mb-2 text-lg font-medium">
-                No transactions found
-              </p>
-              <p className="text-muted-foreground mb-4 text-sm">
-                {hasActiveFilters
-                  ? 'Try adjusting your filters to see more results'
-                  : 'Your transaction history will appear here'}
-              </p>
-              {hasActiveFilters && (
-                <Button variant="outline" onClick={clearFilters}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
+            <CardContent className="relative p-0">
+              <EmptyStates.EmptyTransactions
+                action={
+                  hasActiveFilters
+                    ? {
+                        label: 'Clear Filters',
+                        onClick: clearFilters,
+                      }
+                    : undefined
+                }
+              />
             </CardContent>
           </Card>
         </motion.div>
