@@ -34,9 +34,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShimmerCard } from '@/components/ui/shimmer';
 import { LoadingStates } from '@/components/ui/loading-states';
-import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
@@ -65,7 +63,7 @@ export default function DashboardPage() {
     email: string;
   } | null>(null);
   const { user } = useUser();
-  const { isMobile, isDesktop, breakpoint } = useResponsive();
+  const {} = useResponsive();
 
   // Fetch staking streak data
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
@@ -721,10 +719,10 @@ export default function DashboardPage() {
           {streakLoading ? (
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
               <CardHeader className="relative">
-                <ShimmerCard className="h-20" />
+                <LoadingStates.Card height="h-20" />
               </CardHeader>
               <CardContent className="relative">
-                <ShimmerCard className="h-32" />
+                <LoadingStates.Card height="h-32" />
               </CardContent>
             </Card>
           ) : (
@@ -1006,7 +1004,7 @@ export default function DashboardPage() {
                 {activityLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3, 4].map((i) => (
-                      <ShimmerCard key={i} className="h-20" />
+                      <LoadingStates.Card key={i} height="h-20" />
                     ))}
                   </div>
                 ) : displayActivities.length === 0 ? (
