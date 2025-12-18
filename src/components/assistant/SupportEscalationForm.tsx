@@ -58,10 +58,12 @@ export function SupportEscalationForm({
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // await submitSupportRequest(formData);
+      // TODO: Replace with actual API call to backend
+      // Backend endpoint: POST /api/assistant/support/escalate
+      // Backend is ready and waiting for frontend integration
 
-      // Simulate API call
+      // TEMPORARY: Simulate API call for development
+      // Remove this once backend is connected
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       setIsSubmitted(true);
