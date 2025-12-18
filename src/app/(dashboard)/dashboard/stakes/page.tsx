@@ -17,7 +17,6 @@ import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
-import { ShimmerCard } from '@/components/ui/shimmer';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
@@ -41,12 +40,12 @@ export default function StakesPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <ShimmerCard className="h-64" />
+        <LoadingStates.Card height="h-64" />
         <div className="grid gap-4 md:grid-cols-2">
-          <ShimmerCard className="h-48" />
-          <ShimmerCard className="h-48" />
+          <LoadingStates.Card height="h-48" />
+          <LoadingStates.Card height="h-48" />
         </div>
-        <ShimmerCard className="h-96" />
+        <LoadingStates.Card height="h-96" />
       </div>
     );
   }

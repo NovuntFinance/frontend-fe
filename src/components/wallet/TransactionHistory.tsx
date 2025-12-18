@@ -982,7 +982,7 @@ export function TransactionHistory() {
         error={error}
         onRetry={handleRefresh}
         variant="card"
-        className="max-w-2xl mx-auto"
+        className="mx-auto max-w-2xl"
       />
     );
   }
@@ -1331,9 +1331,7 @@ function TransactionItem({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: index * 0.03 }}
+      {...listItemAnimation(index)}
       className="hover:bg-muted/50 group p-3 transition-colors sm:p-4"
     >
       <div className="flex items-start justify-between gap-2 sm:items-center sm:gap-4">

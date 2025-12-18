@@ -717,12 +717,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Staking Streak - MOVED UP (Critical for habit building and retention) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="mb-8 sm:mb-10"
-        >
+        <motion.div {...slideUp(0.55)} className="mb-8 sm:mb-10">
           {streakLoading ? (
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
               <CardHeader className="relative">

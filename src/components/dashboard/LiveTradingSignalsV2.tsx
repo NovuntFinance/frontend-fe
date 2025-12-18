@@ -2,16 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Clock,
   Check,
   X,
   TrendingUp as ActivityIcon,
   Star as ZapIcon,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 // Trading instrument types
@@ -37,108 +43,110 @@ interface TradingSignal {
 // These reflect ACTUAL price movements that happened and can be verified
 const REAL_MARKET_DATA = {
   forex: [
-    { 
-      symbol: 'EUR/USD', 
-      decimals: 5, 
-      pipValue: 50, 
-      todayHigh: 1.08725, 
+    {
+      symbol: 'EUR/USD',
+      decimals: 5,
+      pipValue: 50,
+      todayHigh: 1.08725,
       todayLow: 1.08445,
-      currentPrice: 1.08590 
+      currentPrice: 1.0859,
     },
-    { 
-      symbol: 'GBP/USD', 
-      decimals: 5, 
-      pipValue: 50, 
-      todayHigh: 1.26680, 
-      todayLow: 1.26320,
-      currentPrice: 1.26510 
+    {
+      symbol: 'GBP/USD',
+      decimals: 5,
+      pipValue: 50,
+      todayHigh: 1.2668,
+      todayLow: 1.2632,
+      currentPrice: 1.2651,
     },
-    { 
-      symbol: 'USD/JPY', 
-      decimals: 3, 
-      pipValue: 45, 
-      todayHigh: 149.85, 
-      todayLow: 149.20,
-      currentPrice: 149.54 
+    {
+      symbol: 'USD/JPY',
+      decimals: 3,
+      pipValue: 45,
+      todayHigh: 149.85,
+      todayLow: 149.2,
+      currentPrice: 149.54,
     },
-    { 
-      symbol: 'NZD/USD', 
-      decimals: 5, 
-      pipValue: 50, 
-      todayHigh: 0.57794, 
-      todayLow: 0.57690,
-      currentPrice: 0.57740 
+    {
+      symbol: 'NZD/USD',
+      decimals: 5,
+      pipValue: 50,
+      todayHigh: 0.57794,
+      todayLow: 0.5769,
+      currentPrice: 0.5774,
     },
-    { 
-      symbol: 'AUD/USD', 
-      decimals: 5, 
-      pipValue: 50, 
-      todayHigh: 0.65920, 
+    {
+      symbol: 'AUD/USD',
+      decimals: 5,
+      pipValue: 50,
+      todayHigh: 0.6592,
       todayLow: 0.65685,
-      currentPrice: 0.65820 
+      currentPrice: 0.6582,
     },
-    { 
-      symbol: 'GBP/JPY', 
-      decimals: 3, 
-      pipValue: 48, 
-      todayHigh: 189.45, 
-      todayLow: 188.80,
-      currentPrice: 189.15 
+    {
+      symbol: 'GBP/JPY',
+      decimals: 3,
+      pipValue: 48,
+      todayHigh: 189.45,
+      todayLow: 188.8,
+      currentPrice: 189.15,
     },
   ],
   crypto: [
-    { 
-      symbol: 'BTC/USD', 
-      decimals: 2, 
-      pipValue: 40, 
-      todayHigh: 67850, 
+    {
+      symbol: 'BTC/USD',
+      decimals: 2,
+      pipValue: 40,
+      todayHigh: 67850,
       todayLow: 67320,
-      currentPrice: 67650 
+      currentPrice: 67650,
     },
-    { 
-      symbol: 'ETH/USD', 
-      decimals: 2, 
-      pipValue: 35, 
-      todayHigh: 3425, 
+    {
+      symbol: 'ETH/USD',
+      decimals: 2,
+      pipValue: 35,
+      todayHigh: 3425,
       todayLow: 3398,
-      currentPrice: 3410 
+      currentPrice: 3410,
     },
-    { 
-      symbol: 'XRP/USD', 
-      decimals: 4, 
-      pipValue: 45, 
-      todayHigh: 0.5485, 
-      todayLow: 0.5420,
-      currentPrice: 0.5455 
+    {
+      symbol: 'XRP/USD',
+      decimals: 4,
+      pipValue: 45,
+      todayHigh: 0.5485,
+      todayLow: 0.542,
+      currentPrice: 0.5455,
     },
   ],
   metals: [
-    { 
-      symbol: 'XAU/USD', 
-      decimals: 2, 
-      pipValue: 400, 
-      todayHigh: 2738.50, 
-      todayLow: 2725.80,
-      currentPrice: 2732.40,
-      name: 'Gold' 
+    {
+      symbol: 'XAU/USD',
+      decimals: 2,
+      pipValue: 400,
+      todayHigh: 2738.5,
+      todayLow: 2725.8,
+      currentPrice: 2732.4,
+      name: 'Gold',
     },
-    { 
-      symbol: 'XAG/USD', 
-      decimals: 3, 
-      pipValue: 250, 
-      todayHigh: 32.845, 
-      todayLow: 32.620,
-      currentPrice: 32.730,
-      name: 'Silver' 
+    {
+      symbol: 'XAG/USD',
+      decimals: 3,
+      pipValue: 250,
+      todayHigh: 32.845,
+      todayLow: 32.62,
+      currentPrice: 32.73,
+      name: 'Silver',
     },
   ],
 };
 
 // Get all instruments
 const getAllInstruments = () => {
-  const all: Array<typeof REAL_MARKET_DATA.forex[0] & { marketType: MarketType }> = [];
+  const all: Array<
+    (typeof REAL_MARKET_DATA.forex)[0] & { marketType: MarketType }
+  > = [];
   Object.entries(REAL_MARKET_DATA).forEach(([type, instruments]) => {
-    instruments.forEach(instrument => {
+    instruments.forEach((instrument) => {
       all.push({ ...instrument, marketType: type as MarketType });
     });
   });
@@ -148,80 +156,86 @@ const getAllInstruments = () => {
 // Generate trade based on REAL price movements that happened today
 const generateRealTrade = (): TradingSignal => {
   const allInstruments = getAllInstruments();
-  const instrument = allInstruments[Math.floor(Math.random() * allInstruments.length)];
-  
+  const instrument =
+    allInstruments[Math.floor(Math.random() * allInstruments.length)];
+
   // Random direction
   const direction: TradeDirection = Math.random() > 0.5 ? 'LONG' : 'SHORT';
-  
+
   // Use REAL price range from today's trading
   const priceRange = instrument.todayHigh - instrument.todayLow;
-  
+
   // 85% chance of profit
   const isProfit = Math.random() > 0.15;
-  
+
   let entryPrice: number;
   let exitPrice: number;
-  
+
   if (direction === 'LONG') {
     // Entry somewhere in lower 60% of today's range
-    entryPrice = instrument.todayLow + (priceRange * (Math.random() * 0.6));
-    
+    entryPrice = instrument.todayLow + priceRange * (Math.random() * 0.6);
+
     if (isProfit) {
       // Exit higher - somewhere between entry and today's high
       const remainingRange = instrument.todayHigh - entryPrice;
-      exitPrice = entryPrice + (remainingRange * (Math.random() * 0.5 + 0.3)); // 30-80% of remaining range
+      exitPrice = entryPrice + remainingRange * (Math.random() * 0.5 + 0.3); // 30-80% of remaining range
     } else {
       // Small loss - exit slightly lower
-      exitPrice = entryPrice - (priceRange * (Math.random() * 0.15 + 0.05)); // 5-20% loss
+      exitPrice = entryPrice - priceRange * (Math.random() * 0.15 + 0.05); // 5-20% loss
     }
   } else {
     // SHORT: Entry somewhere in upper 60% of today's range
-    entryPrice = instrument.todayHigh - (priceRange * (Math.random() * 0.6));
-    
+    entryPrice = instrument.todayHigh - priceRange * (Math.random() * 0.6);
+
     if (isProfit) {
       // Exit lower - somewhere between today's low and entry
       const remainingRange = entryPrice - instrument.todayLow;
-      exitPrice = entryPrice - (remainingRange * (Math.random() * 0.5 + 0.3)); // 30-80% of remaining range
+      exitPrice = entryPrice - remainingRange * (Math.random() * 0.5 + 0.3); // 30-80% of remaining range
     } else {
       // Small loss - exit slightly higher
-      exitPrice = entryPrice + (priceRange * (Math.random() * 0.15 + 0.05)); // 5-20% loss
+      exitPrice = entryPrice + priceRange * (Math.random() * 0.15 + 0.05); // 5-20% loss
     }
   }
-  
+
   // Round to appropriate decimals
   entryPrice = parseFloat(entryPrice.toFixed(instrument.decimals));
   exitPrice = parseFloat(exitPrice.toFixed(instrument.decimals));
-  
+
   // Ensure exit price is within today's range (realistic)
-  exitPrice = Math.max(instrument.todayLow, Math.min(instrument.todayHigh, exitPrice));
+  exitPrice = Math.max(
+    instrument.todayLow,
+    Math.min(instrument.todayHigh, exitPrice)
+  );
   exitPrice = parseFloat(exitPrice.toFixed(instrument.decimals));
-  
+
   // Calculate pips/points (REAL calculation)
   const priceDiff = Math.abs(exitPrice - entryPrice);
   const pipMultiplier = Math.pow(10, instrument.decimals);
   const pipsPoints = parseFloat((priceDiff * pipMultiplier).toFixed(1));
-  
+
   // Calculate profit
-  const profit = Math.round(pipsPoints * instrument.pipValue * (isProfit ? 1 : -1));
-  
+  const profit = Math.round(
+    pipsPoints * instrument.pipValue * (isProfit ? 1 : -1)
+  );
+
   // Generate realistic timestamps (from today's trading session)
   const now = new Date();
   const minutesAgo = Math.floor(Math.random() * 360) + 10; // 10 mins to 6 hours ago
   const exitTimeAgo = minutesAgo;
   const tradeDuration = Math.floor(Math.random() * 90) + 20; // 20-110 minutes duration
   const entryTimeAgo = exitTimeAgo + tradeDuration;
-  
+
   const exitTime = new Date(now.getTime() - exitTimeAgo * 60000);
   const entryTime = new Date(now.getTime() - entryTimeAgo * 60000);
-  
+
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
     });
   };
-  
+
   return {
     id: `${instrument.symbol}-${Date.now()}-${Math.random()}`,
     instrument: instrument.symbol,
@@ -254,11 +268,31 @@ const getTimeAgo = (minutes: number): string => {
 // Get market type badge color
 const getMarketTypeBadge = (type: MarketType) => {
   const badges = {
-    forex: { label: 'Forex', className: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30' },
-    crypto: { label: 'Crypto', className: 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30' },
-    metals: { label: 'Metals', className: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30' },
-    indices: { label: 'Indices', className: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30' },
-    commodities: { label: 'Commodities', className: 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30' },
+    forex: {
+      label: 'Forex',
+      className:
+        'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30',
+    },
+    crypto: {
+      label: 'Crypto',
+      className:
+        'bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30',
+    },
+    metals: {
+      label: 'Metals',
+      className:
+        'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
+    },
+    indices: {
+      label: 'Indices',
+      className:
+        'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30',
+    },
+    commodities: {
+      label: 'Commodities',
+      className:
+        'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30',
+    },
   };
   return badges[type];
 };
@@ -271,21 +305,24 @@ export function LiveTradingSignals() {
 
   // Update trades every 50-70 seconds with new REAL price-based trades
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTrades(prevTrades => {
-        const newTrade = generateRealTrade();
-        return [newTrade, ...prevTrades.slice(0, 3)];
-      });
-    }, Math.random() * 20000 + 50000); // 50-70 seconds
+    const interval = setInterval(
+      () => {
+        setTrades((prevTrades) => {
+          const newTrade = generateRealTrade();
+          return [newTrade, ...prevTrades.slice(0, 3)];
+        });
+      },
+      Math.random() * 20000 + 50000
+    ); // 50-70 seconds
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm">
+    <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-blue-500/5 to-transparent" />
-      
+
       {/* Floating Blob */}
       <motion.div
         animate={{
@@ -298,20 +335,20 @@ export function LiveTradingSignals() {
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl"
+        className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-emerald-500/20 blur-2xl"
       />
-      
+
       <CardHeader className="relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 backdrop-blur-sm"
+              className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 p-3 backdrop-blur-sm"
             >
               <ActivityIcon className="h-6 w-6 text-emerald-500" />
             </motion.div>
             <div>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold">
                 Live Trading Signals
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
@@ -325,54 +362,61 @@ export function LiveTradingSignals() {
               </CardDescription>
             </div>
           </div>
-          <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">
-            <ZapIcon className="h-3 w-3 mr-1" />
+          <Badge className="border-emerald-500/30 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+            <ZapIcon className="mr-1 h-3 w-3" />
             Live
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="relative space-y-3 max-h-[450px] overflow-y-auto custom-scrollbar">
+      <CardContent className="custom-scrollbar relative max-h-[450px] space-y-3 overflow-y-auto">
         <AnimatePresence mode="popLayout">
           {trades.map((trade, index) => (
             <motion.div
               key={trade.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              {...listItemAnimation(index)}
               exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`
-                p-4 rounded-xl border transition-all
-                ${trade.isProfit 
-                  ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-md' 
-                  : 'bg-red-500/5 border-red-500/20 hover:border-red-500/40 hover:shadow-md'
-                }
-              `}
+              className={`rounded-xl border p-4 transition-all ${
+                trade.isProfit
+                  ? 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40 hover:shadow-md'
+                  : 'border-red-500/20 bg-red-500/5 hover:border-red-500/40 hover:shadow-md'
+              } `}
             >
               {/* Header: Instrument & Direction */}
-              <div className="flex items-start justify-between mb-3">
+              <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <div className={`
-                    p-2 rounded-lg
-                    ${trade.direction === 'LONG' 
-                      ? 'bg-emerald-500/20' 
-                      : 'bg-blue-500/20'
-                    }
-                  `}>
+                  <div
+                    className={`rounded-lg p-2 ${
+                      trade.direction === 'LONG'
+                        ? 'bg-emerald-500/20'
+                        : 'bg-blue-500/20'
+                    } `}
+                  >
                     {trade.direction === 'LONG' ? (
-                      <TrendingUp className={`h-4 w-4 ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`} />
+                      <TrendingUp
+                        className={`h-4 w-4 ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                      />
                     ) : (
-                      <TrendingDown className={`h-4 w-4 ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`} />
+                      <TrendingDown
+                        className={`h-4 w-4 ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                      />
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-foreground">{trade.instrument}</p>
-                      <Badge variant="outline" className={getMarketTypeBadge(trade.marketType).className}>
+                      <p className="text-foreground font-bold">
+                        {trade.instrument}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={
+                          getMarketTypeBadge(trade.marketType).className
+                        }
+                      >
                         {getMarketTypeBadge(trade.marketType).label}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground font-semibold uppercase">
+                    <p className="text-muted-foreground text-xs font-semibold uppercase">
                       {trade.direction}
                     </p>
                   </div>
@@ -385,43 +429,55 @@ export function LiveTradingSignals() {
               </div>
 
               {/* Trade Details */}
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="mb-3 grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-semibold">
+                  <p className="text-muted-foreground text-xs font-semibold">
                     Entry
                   </p>
-                  <p className="text-sm font-bold text-foreground">
-                    {trade.entryPrice.toFixed(trade.instrument.includes('JPY') ? 3 : 5)}
+                  <p className="text-foreground text-sm font-bold">
+                    {trade.entryPrice.toFixed(
+                      trade.instrument.includes('JPY') ? 3 : 5
+                    )}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     @ {trade.entryTime}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-semibold">
+                  <p className="text-muted-foreground text-xs font-semibold">
                     Exit
                   </p>
-                  <p className="text-sm font-bold text-foreground">
-                    {trade.exitPrice.toFixed(trade.instrument.includes('JPY') ? 3 : 5)}
+                  <p className="text-foreground text-sm font-bold">
+                    {trade.exitPrice.toFixed(
+                      trade.instrument.includes('JPY') ? 3 : 5
+                    )}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     @ {trade.exitTime}
                   </p>
                 </div>
               </div>
 
               {/* Profit Display */}
-              <div className="flex items-center justify-between pt-3 border-t border-border/50">
+              <div className="border-border/50 flex items-center justify-between border-t pt-3">
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm font-bold ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {trade.isProfit ? '+' : ''}{trade.pipsPoints.toFixed(1)} {trade.marketType === 'forex' ? 'pips' : 'pts'}
+                  <span
+                    className={`text-sm font-bold ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                  >
+                    {trade.isProfit ? '+' : ''}
+                    {trade.pipsPoints.toFixed(1)}{' '}
+                    {trade.marketType === 'forex' ? 'pips' : 'pts'}
                   </span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className={`text-base font-black ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {trade.isProfit ? '+' : ''}{trade.profit >= 0 ? '$' : '-$'}{Math.abs(trade.profit).toLocaleString()}
+                  <span className="text-muted-foreground text-xs">•</span>
+                  <span
+                    className={`text-base font-black ${trade.isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                  >
+                    {trade.isProfit ? '+' : ''}
+                    {trade.profit >= 0 ? '$' : '-$'}
+                    {Math.abs(trade.profit).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-1 text-xs">
                   <Clock className="h-3 w-3" />
                   {getTimeAgo(trade.minutesAgo)}
                 </div>
@@ -431,10 +487,11 @@ export function LiveTradingSignals() {
         </AnimatePresence>
 
         {/* Info Footer */}
-        <div className="pt-3 border-t border-border/50">
-          <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+        <div className="border-border/50 border-t pt-3">
+          <p className="text-muted-foreground flex items-center justify-center gap-1 text-center text-xs">
             <Check className="h-3 w-3 text-emerald-500" />
-            <strong>Real market data</strong> • Verifiable on TradingView, MT4, or any forex/crypto chart
+            <strong>Real market data</strong> • Verifiable on TradingView, MT4,
+            or any forex/crypto chart
           </p>
         </div>
       </CardContent>
@@ -458,4 +515,3 @@ export function LiveTradingSignals() {
     </Card>
   );
 }
-
