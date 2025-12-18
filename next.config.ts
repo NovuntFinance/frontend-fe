@@ -53,6 +53,9 @@ const nextConfig: NextConfig = {
   // Disable standalone output on Windows to avoid path issues
   // Re-enable for production deployments if needed
   output: process.platform === 'win32' ? undefined : 'standalone',
+  // Turbopack configuration (Next.js 16 default)
+  turbopack: {},
+  // Keep webpack config for compatibility, but Turbopack will be used
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
