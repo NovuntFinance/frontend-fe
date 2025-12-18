@@ -41,16 +41,18 @@ export function getAnimationConfig(
     };
   }
 
-  // Map CSS easing strings to framer-motion compatible values
+  // Map CSS easing strings to framer-motion compatible array format
+  // framer-motion expects [x1, y1, x2, y2] arrays instead of CSS cubic-bezier strings
   const easingMap: Record<string, string | number[]> = {
-    ease: [0.25, 0.1, 0.25, 1],
-    easeIn: [0.42, 0, 1, 1],
-    easeOut: [0, 0, 0.58, 1],
-    easeInOut: [0.42, 0, 0.58, 1],
+    'cubic-bezier(0.4, 0, 0.2, 1)': [0.4, 0, 0.2, 1], // ease
+    'cubic-bezier(0.4, 0, 1, 1)': [0.4, 0, 1, 1], // easeIn
+    'cubic-bezier(0, 0, 0.2, 1)': [0, 0, 0.2, 1], // easeOut
+    'cubic-bezier(0.4, 0, 0.2, 1)': [0.4, 0, 0.2, 1], // easeInOut (same as ease)
     linear: 'linear',
   };
 
-  const easeValue = easingMap[animations.easing[easing]] || [0, 0, 0.58, 1]; // Default to easeOut
+  const cssEasing = animations.easing[easing];
+  const easeValue = easingMap[cssEasing] || [0, 0, 0.2, 1]; // Default to easeOut
 
   return {
     duration: parseFloat(animations.duration[duration]) / 1000, // Convert ms to seconds
