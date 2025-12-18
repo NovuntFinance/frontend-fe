@@ -52,6 +52,7 @@ import { TransferModal } from '@/components/wallet/modals/TransferModal';
 import { InfoMarquee } from '@/components/ui/info-marquee';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { NovuntAssistantWrapper } from '@/components/assistant/NovuntAssistantWrapper';
 
 /**
  * Dashboard Layout
@@ -436,6 +437,9 @@ export default function DashboardLayout({
           isOpen={isModalOpen('transfer')}
           onClose={() => closeModal('transfer')}
         />
+
+        {/* Novunt Assistant */}
+        <NovuntAssistantWrapper />
       </div>
     </DashboardGuard>
   );
