@@ -41,9 +41,20 @@ export function getAnimationConfig(
     };
   }
 
+  // Map CSS easing strings to framer-motion compatible values
+  const easingMap: Record<string, string | number[]> = {
+    ease: [0.25, 0.1, 0.25, 1],
+    easeIn: [0.42, 0, 1, 1],
+    easeOut: [0, 0, 0.58, 1],
+    easeInOut: [0.42, 0, 0.58, 1],
+    linear: 'linear',
+  };
+
+  const easeValue = easingMap[animations.easing[easing]] || [0, 0, 0.58, 1]; // Default to easeOut
+
   return {
     duration: parseFloat(animations.duration[duration]) / 1000, // Convert ms to seconds
-    ease: animations.easing[easing],
+    ease: easeValue,
   };
 }
 
@@ -195,4 +206,3 @@ export function pulseAnimation() {
     },
   };
 }
-
