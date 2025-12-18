@@ -169,8 +169,8 @@ export function HorizontalNav() {
   const handleClick = (e: React.MouseEvent, href: string, name: string) => {
     if (name === 'NovuntAI Chat') {
       e.preventDefault();
-      // Trigger chat widget/modal - you can customize this
-      const chatEvent = new CustomEvent('openChat');
+      // Trigger Novunt Assistant
+      const chatEvent = new CustomEvent('openNovuntAssistant');
       window.dispatchEvent(chatEvent);
       return;
     }
