@@ -183,7 +183,7 @@ export function HorizontalNav() {
 
   return (
     <nav
-      className="fixed bottom-2 left-1/2 z-50 mx-1 flex max-w-[calc(100vw-0.5rem)] -translate-x-1/2 items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-t from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl sm:mx-2 dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2"
+      className="fixed right-0 bottom-0 left-0 z-50 flex w-full items-center justify-center overflow-hidden border-t border-white/20 bg-gradient-to-t from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2"
       role="navigation"
       aria-label="Main navigation"
       aria-orientation="horizontal"
