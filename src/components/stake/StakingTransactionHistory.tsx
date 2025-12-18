@@ -35,7 +35,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShimmerCard } from '@/components/ui/shimmer';
+import { LoadingStates } from '@/components/ui/loading-states';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import {
   formatCurrency,
@@ -235,15 +235,7 @@ export function StakingTransactionHistory() {
 
         <TabsContent value={activeTab} className="space-y-4">
           {isLoading ? (
-            <motion.div
-              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-              className="space-y-3"
-            >
-              {[1, 2, 3, 4, 5].map((i) => (
-                <ShimmerCard key={i} />
-              ))}
-            </motion.div>
+            <LoadingStates.List items={5} />
           ) : transactions.length > 0 ? (
             <motion.div
               initial={reducedMotion ? false : { opacity: 0, y: 20 }}
