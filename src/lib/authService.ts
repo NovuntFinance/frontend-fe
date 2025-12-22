@@ -429,8 +429,28 @@ export const extractErrorMessage = (
   fallback = 'An unexpected error occurred'
 ): string => {
   if (!error) return fallback;
-  if (typeof error === 'string') return error;
-  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') {
+    // Clean up string errors - remove technical codes
+    const cleaned = error
+      .replace(/^\d+\s*/, '')
+      .replace(/error\s*/i, '')
+      .trim();
+    if (cleaned && cleaned !== error) {
+      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+    return error;
+  }
+  if (error instanceof Error) {
+    // Clean up Error messages - remove technical codes
+    const message = error.message
+      .replace(/^\d+\s*/, '')
+      .replace(/error\s*/i, '')
+      .trim();
+    if (message && message !== error.message) {
+      return message.charAt(0).toUpperCase() + message.slice(1);
+    }
+    return error.message;
+  }
 
   if (typeof error === 'object') {
     const err = error as Record<string, unknown>;
@@ -473,27 +493,42 @@ export const extractErrorMessage = (
           lowerMessage.includes('user not found') ||
           lowerMessage.includes('no account found') ||
           lowerMessage.includes('email does not exist') ||
-          lowerMessage.includes('invalid email')
+          lowerMessage.includes('invalid email') ||
+          lowerMessage.includes('email not registered')
         ) {
           return 'No account found with this email address. Please check your email or sign up.';
         }
 
-        // Password-related errors
+        // Password-related errors - be more specific
         if (
           lowerMessage.includes('incorrect password') ||
           lowerMessage.includes('wrong password') ||
           lowerMessage.includes('invalid password') ||
           lowerMessage.includes('password mismatch') ||
-          lowerMessage.includes('password is incorrect')
+          lowerMessage.includes('password is incorrect') ||
+          lowerMessage.includes('password does not match')
         ) {
-          return 'Incorrect password. Please check your password and try again.';
+          return 'The password you entered is incorrect. Please check your password and try again.';
         }
 
-        // Use the backend message if it's clear
+        // Generic authentication errors - provide helpful guidance
+        if (
+          lowerMessage.includes('invalid credentials') ||
+          lowerMessage.includes('authentication failed') ||
+          lowerMessage.includes('login failed') ||
+          lowerMessage.includes('unauthorized')
+        ) {
+          // For generic errors, provide helpful guidance
+          return 'The email or password you entered is incorrect. Please check both and try again.';
+        }
+
+        // Use the backend message if it's clear and user-friendly
         if (
           errorMessage &&
           errorMessage !== 'Invalid credentials' &&
-          errorMessage !== 'Authentication failed'
+          errorMessage !== 'Authentication failed' &&
+          !errorMessage.match(/^\d+\s*error/i) && // Don't show "401 error" type messages
+          !errorMessage.toLowerCase().includes('status code')
         ) {
           return errorMessage;
         }
@@ -538,12 +573,12 @@ export const extractErrorMessage = (
       return err.message;
     }
 
-    // Status code based messages
+    // Status code based messages - provide user-friendly messages
     if (typeof err.statusCode === 'number') {
       const statusMessages: Record<number, string> = {
-        400: 'Invalid request. Please check your input',
-        401: 'Invalid email or password. Please check your credentials and try again.',
-        403: 'Access denied',
+        400: 'Please check your input and try again',
+        401: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+        403: 'Access denied. Please contact support if you believe this is an error.',
         404: 'Resource not found',
         500: 'Server error. Please try again later',
         501: 'This feature is currently under development',

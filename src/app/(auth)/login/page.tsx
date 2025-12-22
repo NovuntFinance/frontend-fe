@@ -273,7 +273,8 @@ function LoginPageContent() {
       console.error('[Login Page] Error details:', errorDetails);
 
       // Extract detailed error information
-      let backendMessage = 'Invalid email or password';
+      let backendMessage =
+        'The email or password you entered is incorrect. Please check your credentials and try again.';
       let statusCode = 401;
       let errorCode: string | undefined;
       let passwordResetRequired = false;
@@ -288,27 +289,55 @@ function LoginPageContent() {
         if (
           err.message &&
           typeof err.message === 'string' &&
-          !err.message.includes('status code')
+          !err.message.includes('status code') &&
+          !err.message.match(/^\d+\s*error/i) // Don't use "401 error" type messages
         ) {
           backendMessage = err.message;
         } else if (err.response?.data) {
           const responseData = err.response.data;
           if (typeof responseData === 'string') {
-            backendMessage = responseData;
+            // Clean up string responses - remove technical codes
+            backendMessage = responseData
+              .replace(/^\d+\s*/, '')
+              .replace(/error\s*/i, '')
+              .trim();
+            if (!backendMessage) {
+              backendMessage =
+                'The email or password you entered is incorrect. Please check your credentials and try again.';
+            }
           } else if (
             typeof responseData === 'object' &&
             responseData !== null
           ) {
-            backendMessage =
-              (responseData as any).message ||
-              (responseData as any).error ||
-              backendMessage;
+            const rawMessage =
+              (responseData as any).message || (responseData as any).error;
+            if (rawMessage && typeof rawMessage === 'string') {
+              // Clean up the message - remove technical codes
+              backendMessage = rawMessage
+                .replace(/^\d+\s*/, '')
+                .replace(/error\s*/i, '')
+                .trim();
+              if (!backendMessage || backendMessage.match(/^\d+/)) {
+                backendMessage =
+                  'The email or password you entered is incorrect. Please check your credentials and try again.';
+              }
+            }
             errorCode = (responseData as any).code;
             passwordResetRequired =
               (responseData as any).passwordResetRequired === true;
           }
         } else if (err.responseData?.message) {
-          backendMessage = err.responseData.message;
+          const rawMessage = err.responseData.message;
+          if (typeof rawMessage === 'string') {
+            backendMessage = rawMessage
+              .replace(/^\d+\s*/, '')
+              .replace(/error\s*/i, '')
+              .trim();
+            if (!backendMessage || backendMessage.match(/^\d+/)) {
+              backendMessage =
+                'The email or password you entered is incorrect. Please check your credentials and try again.';
+            }
+          }
           errorCode = err.responseData.code;
           passwordResetRequired =
             err.responseData.passwordResetRequired === true;
@@ -323,24 +352,37 @@ function LoginPageContent() {
             responseData.passwordResetRequired === true;
         }
 
-        // Improve error message specificity
+        // Improve error message specificity - provide actionable feedback
         const lowerMessage = backendMessage.toLowerCase();
         if (
           lowerMessage.includes('email not found') ||
           lowerMessage.includes('user not found') ||
           lowerMessage.includes('no account found') ||
-          lowerMessage.includes('email does not exist')
+          lowerMessage.includes('email does not exist') ||
+          lowerMessage.includes('email not registered')
         ) {
           backendMessage =
-            'No account found with this email address. Please check your email or sign up.';
+            'No account found with this email address. Please check your email or sign up for a new account.';
         } else if (
           lowerMessage.includes('incorrect password') ||
           lowerMessage.includes('wrong password') ||
           lowerMessage.includes('invalid password') ||
-          lowerMessage.includes('password mismatch')
+          lowerMessage.includes('password mismatch') ||
+          lowerMessage.includes('password does not match')
         ) {
           backendMessage =
-            'Incorrect password. Please check your password and try again.';
+            'The password you entered is incorrect. Please check your password and try again. If you forgot your password, you can reset it.';
+        } else if (
+          lowerMessage.includes('invalid credentials') ||
+          lowerMessage.includes('authentication failed') ||
+          lowerMessage.includes('login failed') ||
+          lowerMessage.includes('unauthorized') ||
+          lowerMessage.match(/^\d+\s*error/i) ||
+          lowerMessage.includes('status code')
+        ) {
+          // For generic authentication errors, provide helpful guidance
+          backendMessage =
+            'The email or password you entered is incorrect. Please check both and try again.';
         }
 
         console.error('[Login Page] Parsed error details:', {
@@ -570,7 +612,31 @@ function LoginPageContent() {
                   : ''
             }
           >
-            {errors.root.message}
+            <div className="space-y-2">
+              <p className="font-medium">{errors.root.message}</p>
+
+              {/* Helpful tips for login errors */}
+              {!requiresEmailVerification && !requiresPasswordReset && (
+                <div className="mt-2 text-sm opacity-90">
+                  <p className="mb-1 font-semibold">Tips:</p>
+                  <ul className="list-inside list-disc space-y-1">
+                    <li>Check that your email address is spelled correctly</li>
+                    <li>
+                      Make sure Caps Lock is off when entering your password
+                    </li>
+                    <li>
+                      If you forgot your password, you can{' '}
+                      <Link
+                        href={`/forgot-password${emailValue ? `?email=${encodeURIComponent(emailValue)}` : ''}`}
+                        className="font-medium underline hover:no-underline"
+                      >
+                        reset it here
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
 
             {/* Email Verification Actions */}
             {requiresEmailVerification && unverifiedEmail && (
