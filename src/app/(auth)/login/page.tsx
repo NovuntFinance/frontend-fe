@@ -94,6 +94,8 @@ function LoginPageContent() {
     useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
+  // Persistent error message that doesn't clear when user types
+  const [persistentError, setPersistentError] = useState<string | null>(null);
 
   const {
     register,
@@ -102,6 +104,7 @@ function LoginPageContent() {
     watch,
     formState: { errors, isSubmitting },
     setError,
+    clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -109,6 +112,9 @@ function LoginPageContent() {
       password: '',
       rememberMe: false,
     },
+    // Don't clear errors automatically when user types - let them read the error first
+    shouldFocusError: true,
+    shouldUnregister: false,
   });
 
   const emailValue = watch('email');
@@ -154,6 +160,8 @@ function LoginPageContent() {
   // Handle login submission
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
+    // Clear persistent error when user tries to login again
+    setPersistentError(null);
     try {
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
@@ -193,9 +201,12 @@ function LoginPageContent() {
             '[Login Page] 2FA required but userID not found in response:',
             result
           );
+          const errorMsg =
+            '2FA required but user ID missing from server response';
           setError('root', {
-            message: '2FA required but user ID missing from server response',
+            message: errorMsg,
           });
+          setPersistentError(errorMsg);
           return;
         }
         setLoginData(data);
@@ -445,10 +456,12 @@ function LoginPageContent() {
         setRequiresPasswordReset(true);
         setRequiresEmailVerification(false);
         setUnverifiedEmail(null);
+        const errorMsg =
+          'For security reasons, please reset your password to continue.';
         setError('root', {
-          message:
-            'For security reasons, please reset your password to continue.',
+          message: errorMsg,
         });
+        setPersistentError(errorMsg);
       }
       // Priority 2: Check if error is EMAIL_NOT_VERIFIED
       // Backend returns 403 status with emailNotVerified: true flag
@@ -467,9 +480,11 @@ function LoginPageContent() {
         setUnverifiedEmail(emailValue || '');
         setRequiresEmailVerification(true);
         setRequiresPasswordReset(false);
+        const errorMsg = 'Please verify your email address before logging in.';
         setError('root', {
-          message: 'Please verify your email address before logging in.',
+          message: errorMsg,
         });
+        setPersistentError(errorMsg);
       } else {
         // Generic error
         setRequiresEmailVerification(false);
@@ -496,9 +511,11 @@ function LoginPageContent() {
       const redirectTo = searchParams?.get('redirect') || '/dashboard';
       router.push(redirectTo);
     } catch (error: unknown) {
+      const errorMsg = getErrorMessage(error, 'Invalid verification code');
       setError('root', {
-        message: getErrorMessage(error, 'Invalid verification code'),
+        message: errorMsg,
       });
+      setPersistentError(errorMsg);
     }
   };
 
@@ -578,8 +595,8 @@ function LoginPageContent() {
         </Alert>
       )}
 
-      {/* Error Alert */}
-      {errors.root && (
+      {/* Error Alert - Show persistent error or form error */}
+      {(persistentError || errors.root) && (
         <Alert
           variant={
             requiresEmailVerification || requiresPasswordReset
@@ -613,7 +630,9 @@ function LoginPageContent() {
             }
           >
             <div className="space-y-2">
-              <p className="font-medium">{errors.root.message}</p>
+              <p className="font-medium">
+                {persistentError || errors.root?.message}
+              </p>
 
               {/* Helpful tips for login errors */}
               {!requiresEmailVerification && !requiresPasswordReset && (
@@ -707,7 +726,16 @@ function LoginPageContent() {
                   className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                   autoComplete="email"
                   autoFocus
-                  {...register('email')}
+                  {...register('email', {
+                    // Don't clear root errors when user types in email field
+                    onChange: () => {
+                      // Only clear email-specific errors, not root errors
+                      if (errors.email) {
+                        clearErrors('email');
+                      }
+                      // Keep persistent error visible - don't clear it
+                    },
+                  })}
                   aria-invalid={errors.email ? 'true' : 'false'}
                 />
               </div>
@@ -739,7 +767,16 @@ function LoginPageContent() {
                   placeholder="Enter your password"
                   className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
                   autoComplete="current-password"
-                  {...register('password')}
+                  {...register('password', {
+                    // Don't clear root errors when user types in password field
+                    onChange: () => {
+                      // Only clear password-specific errors, not root errors
+                      if (errors.password) {
+                        clearErrors('password');
+                      }
+                      // Keep persistent error visible - don't clear it
+                    },
+                  })}
                   aria-invalid={errors.password ? 'true' : 'false'}
                 />
                 <button

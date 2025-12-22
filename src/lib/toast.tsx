@@ -4,7 +4,13 @@
  */
 
 import { toast as sonnerToast, ExternalToast } from 'sonner';
-import { CheckCircle2, XCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Info,
+  Loader2,
+} from 'lucide-react';
 
 // Custom toast options with banking-grade styling
 const defaultOptions: ExternalToast = {
@@ -30,7 +36,7 @@ export const success = (
   return sonnerToast.success(message, {
     ...defaultOptions,
     description,
-    icon: <CheckCircle2 className="h-5 w-5 text-success" />,
+    icon: <CheckCircle2 className="text-success h-5 w-5" />,
     ...options,
   });
 };
@@ -46,8 +52,9 @@ export const error = (
   return sonnerToast.error(message, {
     ...defaultOptions,
     description,
-    icon: <XCircle className="h-5 w-5 text-error" />,
-    duration: 5000, // Errors stay longer
+    icon: <XCircle className="text-error h-5 w-5" />,
+    // Error messages stay visible longer - 15 seconds or until manually dismissed
+    duration: options?.duration || 15000,
     ...options,
   });
 };
@@ -63,7 +70,7 @@ export const warning = (
   return sonnerToast.warning(message, {
     ...defaultOptions,
     description,
-    icon: <AlertCircle className="h-5 w-5 text-warning" />,
+    icon: <AlertCircle className="text-warning h-5 w-5" />,
     ...options,
   });
 };
@@ -79,7 +86,7 @@ export const info = (
   return sonnerToast.info(message, {
     ...defaultOptions,
     description,
-    icon: <Info className="h-5 w-5 text-info" />,
+    icon: <Info className="text-info h-5 w-5" />,
     ...options,
   });
 };
@@ -95,7 +102,7 @@ export const loading = (
   return sonnerToast.loading(message, {
     ...defaultOptions,
     description,
-    icon: <Loader2 className="h-5 w-5 animate-spin text-primary" />,
+    icon: <Loader2 className="text-primary h-5 w-5 animate-spin" />,
     duration: Infinity, // Loading toasts don't auto-dismiss
     ...options,
   });
@@ -125,10 +132,7 @@ export const promise = <T,>(
 /**
  * Custom toast with full control
  */
-export const custom = (
-  message: string,
-  options?: ExternalToast
-) => {
+export const custom = (message: string, options?: ExternalToast) => {
   return sonnerToast(message, {
     ...defaultOptions,
     ...options,
@@ -164,11 +168,11 @@ export const toast = {
 
 // Example usage in components:
 // import { toast } from '@/lib/toast';
-// 
+//
 // toast.success('Transaction completed', 'Your funds have been transferred');
 // toast.error('Failed to process', 'Please try again later');
 // toast.loading('Processing transaction...');
-// 
+//
 // const toastId = toast.loading('Saving...');
 // // Later...
 // toast.dismiss(toastId);

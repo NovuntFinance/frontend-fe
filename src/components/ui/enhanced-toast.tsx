@@ -55,7 +55,8 @@ export const toast = {
     return sonnerToast.error(message, {
       ...options,
       description: options?.description,
-      duration: options?.duration || 6000,
+      // Error messages stay visible longer - 15 seconds or until manually dismissed
+      duration: options?.duration || 15000,
       action: options?.action
         ? {
             label: options.action.label,
@@ -140,7 +141,10 @@ export const toast = {
     sonnerToast.dismiss(toastId);
   },
 
-  custom: (message: string, options?: EnhancedToastOptions & { type?: ToastType }) => {
+  custom: (
+    message: string,
+    options?: EnhancedToastOptions & { type?: ToastType }
+  ) => {
     const type = options?.type || 'info';
     const toastFn = toast[type];
     return toastFn(message, options);
@@ -176,7 +180,7 @@ export function showPromiseToast<T>(promise: Promise<T>) {
   return toast.promise(promise, {
     loading: 'Processing your request...',
     success: (data) => `Success! ${JSON.stringify(data)}`,
-    error: (err) => `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+    error: (err) =>
+      `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
   });
 }
-
