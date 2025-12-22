@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Download, Upload, Send, TrendingUp } from 'lucide-react';
 import { useWalletBalance } from '@/lib/queries';
+import { slideUp } from '@/design-system/animations';
 import { DepositModal } from './modals/DepositModal';
 import { WithdrawModal } from './modals/WithdrawModal';
 import { TransferModal } from './modals/TransferModal';
@@ -26,10 +27,14 @@ const QuickActionButton: React.FC<QuickActionProps> = ({
   variant = 'default',
 }) => {
   const variants = {
-    default: 'from-card to-card/50 hover:from-card/80 hover:to-card text-foreground',
-    primary: 'from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground',
-    secondary: 'from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary text-secondary-foreground',
-    success: 'from-success to-success/80 hover:from-success/90 hover:to-success text-white',
+    default:
+      'from-card to-card/50 hover:from-card/80 hover:to-card text-foreground',
+    primary:
+      'from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground',
+    secondary:
+      'from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary text-secondary-foreground',
+    success:
+      'from-success to-success/80 hover:from-success/90 hover:to-success text-white',
   };
 
   return (
@@ -38,38 +43,28 @@ const QuickActionButton: React.FC<QuickActionProps> = ({
       whileTap={{ scale: disabled ? 1 : 0.98 }}
       onClick={onClick}
       disabled={disabled}
-      className={`
-        relative overflow-hidden rounded-2xl p-6 
-        bg-gradient-to-br ${variants[variant]}
-        border border-border/50
-        shadow-lg hover:shadow-xl
-        transition-all duration-300
-        disabled:opacity-50 disabled:cursor-not-allowed
-        group
-      `}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-6 ${variants[variant]} border-border/50 group border shadow-lg transition-all duration-300 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50`}
     >
       {/* Animated Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center gap-3">
+      <div className="relative z-10 flex flex-col items-center gap-3 text-center">
         {/* Icon */}
-        <div className={`
-          p-3 rounded-xl
-          ${variant === 'default' ? 'bg-primary/10' : 'bg-white/20'}
-          group-hover:scale-110 transition-transform duration-300
-        `}>
+        <div
+          className={`rounded-xl p-3 ${variant === 'default' ? 'bg-primary/10' : 'bg-white/20'} transition-transform duration-300 group-hover:scale-110`}
+        >
           {icon}
         </div>
 
         {/* Text */}
         <div>
-          <h3 className="font-semibold text-lg mb-1">
-            {label}
-          </h3>
-          <p className={`text-sm ${
-            variant === 'default' ? 'text-muted-foreground' : 'opacity-80'
-          }`}>
+          <h3 className="mb-1 text-lg font-semibold">{label}</h3>
+          <p
+            className={`text-sm ${
+              variant === 'default' ? 'text-muted-foreground' : 'opacity-80'
+            }`}
+          >
             {description}
           </p>
         </div>
@@ -77,7 +72,7 @@ const QuickActionButton: React.FC<QuickActionProps> = ({
 
       {/* Shine Effect */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"
         style={{ width: '50%' }}
       />
     </motion.button>
@@ -130,18 +125,11 @@ export function QuickActions() {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        {...slideUp(0.1)}
+        className="grid grid-cols-2 gap-4 md:grid-cols-4"
       >
         {actions.map((action, index) => (
-          <motion.div
-            key={action.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + index * 0.05 }}
-          >
+          <motion.div key={action.label} {...slideUp(0.1 + index * 0.05)}>
             <QuickActionButton {...action} />
           </motion.div>
         ))}
@@ -163,4 +151,3 @@ export function QuickActions() {
     </>
   );
 }
-

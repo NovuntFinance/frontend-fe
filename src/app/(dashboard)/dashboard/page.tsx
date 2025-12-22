@@ -34,9 +34,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShimmerCard } from '@/components/ui/shimmer';
 import { LoadingStates } from '@/components/ui/loading-states';
-import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
@@ -46,6 +44,7 @@ import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
+import { RegistrationBonusBanner } from '@/components/registration-bonus';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
@@ -65,7 +64,7 @@ export default function DashboardPage() {
     email: string;
   } | null>(null);
   const { user } = useUser();
-  const { isMobile, isDesktop, breakpoint } = useResponsive();
+  const {} = useResponsive();
 
   // Fetch staking streak data
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
@@ -146,11 +145,6 @@ export default function DashboardPage() {
     totalEarned: 0,
     totalWithdrawn: 0,
   };
-
-  const totalDeposited = walletStats.totalDeposited ?? 0;
-  const totalStakedFromStats = walletStats.totalStaked ?? 0;
-  const totalEarned = walletStats.totalEarned ?? 0;
-  const totalWithdrawn = walletStats.totalWithdrawn ?? 0;
 
   // Platform ranks
   const ranks = React.useMemo(
@@ -275,48 +269,49 @@ export default function DashboardPage() {
 
       return `${maskName(firstName)} ${lastName[0]}.`;
     };
+    // Realistic amount ranges for a new/beginning platform
     const activityTypes = [
       {
         type: 'deposit',
         action: 'deposited',
         icon: ArrowDownRight,
         color: 'text-blue-600 dark:text-blue-400',
-        amountRange: [50, 25000],
+        amountRange: [20, 500], // Reduced from [50, 25000] - more realistic for new platform
       },
       {
         type: 'withdraw',
         action: 'withdrew',
         icon: ArrowUpRight,
         color: 'text-purple-600 dark:text-purple-400',
-        amountRange: [100, 15000],
+        amountRange: [30, 300], // Reduced from [100, 15000] - more realistic for new platform
       },
       {
         type: 'stake',
         action: 'staked',
         icon: TrendingUp,
         color: 'text-emerald-600 dark:text-emerald-400',
-        amountRange: [20, 50000],
+        amountRange: [25, 400], // Reduced from [20, 50000] - much more realistic for new platform
       },
       {
         type: 'referral',
         action: 'earned referral bonus',
         icon: Users,
         color: 'text-green-600 dark:text-green-400',
-        amountRange: [50, 2500],
+        amountRange: [10, 150], // Reduced from [50, 2500] - more realistic for new platform
       },
       {
         type: 'ros',
         action: 'earned ROS',
         icon: DollarSign,
         color: 'text-green-600 dark:text-green-400',
-        amountRange: [100, 5000],
+        amountRange: [5, 100], // Reduced from [100, 5000] - more realistic for new platform
       },
       {
         type: 'rank',
         action: 'earned rank bonus',
         icon: Gift,
         color: 'text-orange-600 dark:text-orange-400',
-        amountRange: [200, 10000],
+        amountRange: [15, 200], // Reduced from [200, 10000] - more realistic for new platform
       },
       {
         type: 'promotion',
@@ -330,7 +325,7 @@ export default function DashboardPage() {
         action: 'transferred',
         icon: Send,
         color: 'text-cyan-600 dark:text-cyan-400',
-        amountRange: [100, 10000],
+        amountRange: [20, 250], // Reduced from [100, 10000] - more realistic for new platform
       },
     ];
 
@@ -443,18 +438,54 @@ export default function DashboardPage() {
     return <AuthErrorFallback />;
   }
 
-  // Calculate totals with safe property access
+  // Calculate totals with safe property access and proper fallbacks
+  // Priority: overview API > calculated from activeStakes > walletStats > defaults
+
+  // Total Balance - prioritize overview, then sum wallet balances
   const totalBalance =
     overview?.wallets?.totalBalance ??
     (walletBalance?.funded?.balance || 0) +
       (walletBalance?.earnings?.balance || 0);
+
+  // Total Staked - prioritize overview, then calculate from activeStakes, then walletStats
+  // Handle different response formats from useActiveStakes
+  const activeStakesArray = Array.isArray(activeStakes)
+    ? activeStakes
+    : (activeStakes as any)?.data?.activeStakes ||
+      (activeStakes as any)?.activeStakes ||
+      [];
+
+  const totalStakedFromOverview = overview?.staking?.totalStaked;
+  const totalStakedFromActiveStakes =
+    activeStakesArray.length > 0
+      ? activeStakesArray.reduce((sum: number, stake: any) => {
+          const amount = Number(stake?.amount || stake?.stakeAmount || 0);
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0)
+      : 0;
   const totalStaked =
-    overview?.staking?.totalStaked ??
-    (Array.isArray(activeStakes)
-      ? activeStakes.reduce((sum, stake) => sum + stake.amount, 0)
-      : 0);
+    totalStakedFromOverview ??
+    totalStakedFromActiveStakes ??
+    walletStats.totalStaked ??
+    0;
+
+  // Total Earnings - prioritize overview, then wallet balance, then walletStats
+  const totalEarningsFromOverview = overview?.staking?.totalEarnings;
+  const totalEarningsFromBalance = walletBalance?.earnings?.balance ?? 0;
   const totalEarnings =
-    overview?.staking?.totalEarnings ?? walletBalance?.earnings?.balance ?? 0;
+    totalEarningsFromOverview ??
+    totalEarningsFromBalance ??
+    walletStats.totalEarned ??
+    0;
+
+  // Total Deposited - prioritize walletStats (most accurate source)
+  const totalDeposited = walletStats.totalDeposited ?? 0;
+
+  // Total Withdrawn - prioritize walletStats (most accurate source)
+  const totalWithdrawn = walletStats.totalWithdrawn ?? 0;
+
+  // Total Earned - use calculated totalEarnings (has best fallbacks)
+  const totalEarned = totalEarnings;
 
   // Calculate total portfolio value (combines all stakes and wallet balances)
   const totalPortfolioValue = totalBalance + totalStaked;
@@ -500,6 +531,15 @@ export default function DashboardPage() {
           />
         </motion.div>
 
+        {/* Registration Bonus Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <RegistrationBonusBanner />
+        </motion.div>
+
         {/* Stats Grid - Premium Cards (2x2 layout) */}
         {/* REORDERED: Total Earned FIRST (most motivating), then Total Staked, Total Deposited, Total Withdrawn */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
@@ -513,7 +553,7 @@ export default function DashboardPage() {
             },
             {
               title: 'Total Staked',
-              value: totalStakedFromStats,
+              value: totalStaked,
               tooltip: 'Total amount staked across all stakes.',
               icon: Wallet,
               colorTheme: 'orange' as const,
@@ -717,19 +757,14 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Staking Streak - MOVED UP (Critical for habit building and retention) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="mb-8 sm:mb-10"
-        >
+        <motion.div {...slideUp(0.55)} className="mb-8 sm:mb-10">
           {streakLoading ? (
             <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
               <CardHeader className="relative">
-                <ShimmerCard className="h-20" />
+                <LoadingStates.Card height="h-20" />
               </CardHeader>
               <CardContent className="relative">
-                <ShimmerCard className="h-32" />
+                <LoadingStates.Card height="h-32" />
               </CardContent>
             </Card>
           ) : (
@@ -1011,7 +1046,7 @@ export default function DashboardPage() {
                 {activityLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3, 4].map((i) => (
-                      <ShimmerCard key={i} className="h-20" />
+                      <LoadingStates.Card key={i} height="h-20" />
                     ))}
                   </div>
                 ) : displayActivities.length === 0 ? (

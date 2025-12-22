@@ -20,6 +20,9 @@
     "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "analyze": "cross-env ANALYZE=true next build",
     "analyze:bundle": "node scripts/analyze-bundle.js",
+    "validate": "node scripts/pre-push-validation.js",
+    "validate:pre-push": "node scripts/pre-push-validation.js",
+    "test:api": "bash scripts/test-api-endpoints.sh",
     "prepare": "husky install || true"
   },
   "dependencies": {

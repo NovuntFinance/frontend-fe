@@ -44,8 +44,13 @@ export interface StakingDashboard {
       totalActiveStakes: number;
       totalStakesSinceInception: number;
       totalEarnedFromROS: number;
+      totalEarnedAllTime?: number; // Alias for totalEarnedFromROS
       targetTotalReturns: number;
       progressToTarget: string;
+      totalActiveAmount?: number;
+      totalAllTimeStaked?: number;
+      todaysProfit: number; // ✅ NEW: Today's total profit from all active stakes
+      todaysROSPercentage: number; // ✅ NEW: Today's declared ROS percentage
       stakingModel: string;
       note: string;
     };

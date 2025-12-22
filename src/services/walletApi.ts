@@ -146,12 +146,27 @@ export interface WithdrawalLimits {
   };
 }
 
+export interface MoratoriumStatus {
+  active: boolean;
+  canChange: boolean;
+  hoursRemaining: number;
+  minutesRemaining: number;
+  canChangeAt: string | null;
+  canChangeAtFormatted: string | null;
+  moratoriumDurationHours: number;
+}
+
 export interface DefaultWithdrawalAddress {
   success: boolean;
   data: {
     address: string | null;
     hasDefaultAddress: boolean;
-    immutable?: boolean; // Address cannot be changed once set
+    canChange: boolean;
+    moratorium: MoratoriumStatus;
+    note?: string;
+    isFirstTime?: boolean;
+    // Legacy field for backward compatibility
+    immutable?: boolean;
   };
 }
 

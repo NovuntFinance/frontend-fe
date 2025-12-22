@@ -35,17 +35,40 @@ export function TwoFactorInput({
   length = 6,
   disabled = false,
 }: TwoFactorInputProps) {
-  const [internalCode, setInternalCode] = useState<string[]>(Array(length).fill(''));
+  const [internalCode, setInternalCode] = useState<string[]>(() => {
+    // Initialize from value prop if provided
+    if (value) {
+      return value.split('').concat(Array(length).fill('')).slice(0, length);
+    }
+    return Array(length).fill('');
+  });
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
-  // Support controlled mode
-  const code = value ? value.split('').concat(Array(length).fill('')).slice(0, length) : internalCode;
+  const lastSyncedValueRef = useRef<string | undefined>(value);
+
+  // Sync internal state with value prop when it changes (controlled mode)
+  // Use a ref to track the last synced value to avoid unnecessary updates
+  useEffect(() => {
+    if (value !== undefined && value !== lastSyncedValueRef.current) {
+      const newCode = value
+        .split('')
+        .concat(Array(length).fill(''))
+        .slice(0, length);
+      setInternalCode(newCode);
+      lastSyncedValueRef.current = value;
+    } else if (value === undefined) {
+      // If value becomes undefined, reset
+      lastSyncedValueRef.current = undefined;
+    }
+  }, [value, length]);
+
+  // Use internal code for rendering (source of truth)
+  const code = internalCode;
   const setCode = (newCode: string[]) => {
     const codeString = newCode.join('');
+    setInternalCode(newCode);
+    // Always call onChange if provided (controlled mode)
     if (onChange) {
       onChange(codeString);
-    } else {
-      setInternalCode(newCode);
     }
   };
 
@@ -69,13 +92,21 @@ export function TwoFactorInput({
     }
 
     // Auto-submit when complete
-    if (newCode.every((digit) => digit !== '') && !isLoading && !disabled && onComplete) {
+    if (
+      newCode.every((digit) => digit !== '') &&
+      !isLoading &&
+      !disabled &&
+      onComplete
+    ) {
       onComplete(newCode.join(''));
     }
   };
 
   // Handle keydown
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     // Backspace: move to previous input
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
@@ -94,12 +125,12 @@ export function TwoFactorInput({
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
-    
+
     if (!/^\d+$/.test(pastedData)) return; // Only numbers
 
     const digits = pastedData.slice(0, length).split('');
     const newCode = [...code];
-    
+
     digits.forEach((digit, index) => {
       if (index < length) {
         newCode[index] = digit;
@@ -113,7 +144,12 @@ export function TwoFactorInput({
     inputRefs.current[lastFilledIndex]?.focus();
 
     // Auto-submit if complete
-    if (newCode.every((digit) => digit !== '') && !isLoading && !disabled && onComplete) {
+    if (
+      newCode.every((digit) => digit !== '') &&
+      !isLoading &&
+      !disabled &&
+      onComplete
+    ) {
       onComplete(newCode.join(''));
     }
   };
@@ -127,7 +163,7 @@ export function TwoFactorInput({
   return (
     <div className="space-y-6">
       {/* Code Input */}
-      <div className="flex gap-2 sm:gap-3 justify-center">
+      <div className="flex justify-center gap-2 sm:gap-3">
         {code.map((digit, index) => (
           <motion.input
             key={index}
@@ -142,20 +178,11 @@ export function TwoFactorInput({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={handlePaste}
             disabled={isLoading}
-            className={`
-              w-12 h-14 sm:w-14 sm:h-16
-              text-center text-2xl font-bold
-              border-2 rounded-lg
-              transition-all duration-200
-              ${
-                digit
-                  ? 'border-primary bg-primary/5'
-                  : 'border-input bg-background'
-              }
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-              focus:border-primary focus:ring-2 focus:ring-primary/20
-              disabled:opacity-50 disabled:cursor-not-allowed
-            `}
+            className={`h-14 w-12 rounded-lg border-2 text-center text-2xl font-bold transition-all duration-200 sm:h-16 sm:w-14 ${
+              digit
+                ? 'border-primary bg-primary/5'
+                : 'border-input bg-background'
+            } ${isLoading ? 'cursor-not-allowed opacity-50' : ''} focus:border-primary focus:ring-primary/20 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50`}
             aria-label={`Digit ${index + 1}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,9 +224,9 @@ export function TwoFactorInput({
       )}
 
       {/* Help Text */}
-      <p className="text-sm text-center text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         Can&apos;t find your code?{' '}
-        <button className="text-primary hover:underline font-medium">
+        <button className="text-primary font-medium hover:underline">
           Need help?
         </button>
       </p>

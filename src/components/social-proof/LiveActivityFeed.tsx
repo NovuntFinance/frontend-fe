@@ -40,8 +40,11 @@ function generateMockActivity(): Activity {
     lastInitials[Math.floor(Math.random() * lastInitials.length)];
   const username = `${firstName} ${lastInitial}.`;
 
+  // Realistic amounts for a new/beginning platform
   const amount =
-    type !== 'signup' ? Math.floor(Math.random() * 5000) + 100 : undefined;
+    type !== 'signup'
+      ? Math.floor(Math.random() * 400) + 20 // Reduced from [100, 5100] to [20, 420] - more realistic
+      : undefined;
 
   const messages = {
     withdrawal: `just withdrew $${amount?.toLocaleString()}`,

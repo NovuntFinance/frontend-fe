@@ -1,7 +1,7 @@
 /**
  * Internationalization Hook
  * Provides translation and locale utilities
- * 
+ *
  * Note: This is a foundation for i18n. Full implementation would use
  * next-intl or similar library. This provides the structure.
  */
@@ -77,17 +77,19 @@ export function useI18n() {
     changeLocale,
     formatCurrency: (amount: number, currency = 'USD') => {
       // Import from config
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { formatCurrency } = require('@/i18n/config');
       return formatCurrency(amount, locale, currency);
     },
     formatDate: (date: Date | string, options?: Intl.DateTimeFormatOptions) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { formatDate } = require('@/i18n/config');
       return formatDate(date, locale, options);
     },
     formatNumber: (number: number, options?: Intl.NumberFormatOptions) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { formatNumber } = require('@/i18n/config');
       return formatNumber(number, locale, options);
     },
   };
 }
-

@@ -5,14 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import {
-  Wallet,
-  TrendingUp,
-  Users,
-  Gift,
-  Award,
-  HelpCircle,
-} from 'lucide-react';
+import { Wallet, TrendingUp, Users, Gift, Award, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -22,8 +15,9 @@ interface NavItem {
   iconColor?: string;
 }
 
-// Navigation items in order: Achievements, Wallets, Stakes, Team, Pools
+// Navigation items in order: Achievements, Wallets, Stakes, Team, Pools, Knowledge Base
 // Dashboard is in the center as logo
+// Distribution: Left (3) - Center (Logo) - Right (3)
 const navigation: NavItem[] = [
   {
     name: 'Achievements',
@@ -55,15 +49,15 @@ const navigation: NavItem[] = [
     icon: Gift,
     iconColor: 'from-amber-500 to-orange-600',
   },
+  {
+    name: 'Knowledge Base',
+    href: '/dashboard/knowledge-base',
+    icon: FileText,
+    iconColor: 'from-indigo-500 to-blue-600',
+  },
 ];
 
-// Chat item (separate, opens chat widget/modal)
-const chatItem: NavItem = {
-  name: 'NovuntAI Chat',
-  href: '#', // Will be handled by onClick
-  icon: HelpCircle,
-  iconColor: 'from-cyan-500 to-blue-600',
-};
+// Chat item removed - will be a floating button on the right side
 
 // Premium Icon Component with 3D/Glassmorphism effect
 function PremiumIcon({
@@ -105,50 +99,46 @@ function PremiumIcon({
         />
       )}
 
-      {/* Glassmorphism container with 3D effect */}
+      {/* Icon container - no border, icon fills container - mobile first */}
       <div
         className={cn(
-          'relative flex h-9 w-9 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl',
-          'border backdrop-blur-2xl transition-all duration-300',
-          'shadow-lg',
-          // Enhanced glassmorphism base - more transparent
-          isActive
-            ? 'border-white/25 bg-white/15 dark:border-white/15 dark:bg-white/8'
-            : 'border-white/15 bg-white/8 dark:border-white/8 dark:bg-white/4',
-          // Enhanced 3D depth effect with stronger glass
-          isActive
-            ? 'shadow-[0_8px_32px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(255,255,255,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(255,255,255,0.05)]'
-            : 'shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-1px_0_rgba(255,255,255,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-1px_0_rgba(255,255,255,0.03)]',
-          // Transform for 3D tilt effect
+          'relative flex items-center justify-center transition-all duration-300',
+          // Size matches icon size - mobile first
+          'h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10',
+          // Transform for 3D tilt effect when active
           isActive && 'rotate-[-2deg]'
         )}
       >
-        {/* Inner gradient overlay when active */}
+        {/* Outer glow effect - only when active */}
         {isActive && (
-          <div
+          <motion.div
             className={cn(
-              'absolute inset-0 rounded-xl opacity-20 sm:rounded-2xl',
+              'absolute inset-0 rounded-lg opacity-50 blur-xl sm:rounded-xl md:rounded-2xl',
               `bg-gradient-to-br ${iconColor}`
             )}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
           />
         )}
 
-        {/* Icon with gradient text - ensure visibility */}
+        {/* Icon - larger size, fills container - mobile first sizing */}
         <div className="relative z-10 flex items-center justify-center">
-          {isActive ? (
-            <Icon
-              className={cn(
-                'h-4 w-4 transition-all duration-300 sm:h-6 sm:w-6',
-                `bg-gradient-to-br bg-clip-text text-transparent ${iconColor} drop-shadow-lg`
-              )}
-              aria-hidden="true"
-            />
-          ) : (
-            <Icon
-              className="h-4 w-4 text-gray-700 transition-all duration-300 sm:h-6 sm:w-6 dark:text-white"
-              aria-hidden="true"
-            />
-          )}
+          <Icon
+            className={cn(
+              'h-full w-full transition-all duration-300',
+              isActive
+                ? 'text-indigo-500 drop-shadow-lg dark:text-indigo-400'
+                : 'text-gray-700 dark:text-white'
+            )}
+            aria-hidden="true"
+          />
         </div>
       </div>
     </div>
@@ -166,15 +156,7 @@ export function HorizontalNav() {
     return pathname.startsWith(href);
   };
 
-  const handleClick = (e: React.MouseEvent, href: string, name: string) => {
-    if (name === 'NovuntAI Chat') {
-      e.preventDefault();
-      // Trigger chat widget/modal - you can customize this
-      const chatEvent = new CustomEvent('openChat');
-      window.dispatchEvent(chatEvent);
-      return;
-    }
-
+  const handleClick = (e: React.MouseEvent, href: string) => {
     if (pathname === href) {
       e.preventDefault();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,21 +165,23 @@ export function HorizontalNav() {
 
   return (
     <nav
-      className="fixed bottom-2 left-1/2 z-50 mx-1 flex max-w-[calc(100vw-0.5rem)] -translate-x-1/2 items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-t from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl sm:mx-2 dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2"
+      className="fixed right-0 bottom-0 left-0 z-50 flex w-full items-center justify-center overflow-visible rounded-t-2xl border-t border-white/20 bg-gradient-to-t from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl sm:rounded-t-3xl dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2"
       role="navigation"
       aria-label="Main navigation"
       aria-orientation="horizontal"
     >
-      <div className="flex h-16 w-full items-center justify-evenly overflow-hidden px-3 sm:h-20 sm:px-6 md:px-8 lg:px-10">
-        {/* Left Navigation Items: Achievements, Wallets, Stakes */}
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-3 sm:gap-6 md:gap-8">
+      {/* Navigation container - mobile first sizing with evenly spaced items */}
+      <div className="relative flex h-16 w-full items-center overflow-visible px-1 sm:h-20 sm:px-2 md:h-24 md:px-4 lg:px-6">
+        {/* All navigation items in a single evenly-spaced container */}
+        <div className="flex w-full items-center justify-evenly">
+          {/* Left Navigation Items: Achievements, Wallets, Stakes (3 items) */}
           {navigation.slice(0, 3).map((item) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={(e) => handleClick(e, item.href, item.name)}
+                onClick={(e) => handleClick(e, item.href)}
                 className={cn(
                   'group relative flex shrink-0 items-center justify-center transition-all duration-300',
                   'focus-visible:ring-primary rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
@@ -213,76 +197,54 @@ export function HorizontalNav() {
               </Link>
             );
           })}
-        </div>
 
-        {/* Center Logo - Dashboard (Always Visible) */}
-        <div className="mx-2 flex-shrink-0 sm:mx-8">
-          <Link
-            href="/dashboard"
-            onClick={(e) => handleClick(e, '/dashboard', 'Dashboard')}
-            className={cn(
-              'group relative flex items-center justify-center transition-all duration-300',
-              'focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-none',
-              'hover:scale-105 active:scale-95'
-            )}
-            aria-label="Navigate to Dashboard"
-          >
-            {/* Glow effect */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 blur-xl dark:opacity-30"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0, 0.5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
+          {/* Center Logo - Dashboard (Large, Elevated Button) - Mobile First */}
+          <div className="absolute top-0 left-1/2 flex flex-shrink-0 -translate-x-1/2 -translate-y-1/2">
+            <Link
+              href="/dashboard"
+              onClick={(e) => handleClick(e, '/dashboard')}
+              className={cn(
+                'group relative flex items-center justify-center transition-all duration-300',
+                'focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+                'active:scale-95 sm:hover:scale-105'
+              )}
+              aria-label="Navigate to Dashboard"
+            >
+              {/* Outer glow effect - mobile optimized */}
+              <motion.div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-15 blur-xl sm:opacity-20 sm:blur-2xl dark:opacity-25 dark:sm:opacity-30"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.15, 0.3, 0.15],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              />
 
-            {/* Ring highlight */}
-            <motion.div
-              className="border-primary/50 absolute -inset-1 rounded-full border-2 dark:border-indigo-400/50"
-              animate={{
-                borderColor: [
-                  'rgba(129, 140, 248, 0.5)',
-                  'rgba(168, 85, 247, 0.5)',
-                  'rgba(236, 72, 153, 0.5)',
-                  'rgba(129, 140, 248, 0.5)',
-                ],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-
-            {/* Premium Logo Container with Enhanced Glassmorphism - Smaller on mobile */}
-            <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/25 bg-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(255,255,255,0.1)] backdrop-blur-2xl sm:h-20 sm:w-20 md:h-[6.5rem] md:w-[6.5rem] dark:border-white/15 dark:bg-white/6 dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(255,255,255,0.05)]">
-              <div className="relative h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16">
+              {/* Logo - No borders, just the icon, larger than menu items */}
+              <div className="relative z-10 h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20">
                 <Image
                   src="/icons/novunt_short.png"
                   alt="Novunt Logo"
                   fill
-                  className="object-contain brightness-0 dark:brightness-0 dark:invert"
+                  className="object-contain brightness-0 drop-shadow-lg dark:brightness-0 dark:invert"
                   priority
                 />
               </div>
-            </div>
-          </Link>
-        </div>
+            </Link>
+          </div>
 
-        {/* Right Navigation Items: Team, Pools, Chat */}
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-3 sm:gap-6 md:gap-8">
+          {/* Right Navigation Items: Team, Pools, Knowledge Base (3 items) */}
           {navigation.slice(3).map((item) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={(e) => handleClick(e, item.href, item.name)}
+                onClick={(e) => handleClick(e, item.href)}
                 className={cn(
                   'group relative flex shrink-0 items-center justify-center transition-all duration-300',
                   'focus-visible:ring-primary rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
@@ -298,24 +260,6 @@ export function HorizontalNav() {
               </Link>
             );
           })}
-
-          {/* Chat Icon - NovuntAI */}
-          <Link
-            href="#"
-            onClick={(e) => handleClick(e, '#', chatItem.name)}
-            className={cn(
-              'group relative flex shrink-0 items-center justify-center transition-all duration-300',
-              'focus-visible:ring-primary rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-              'hover:scale-105 active:scale-95'
-            )}
-            aria-label={chatItem.name}
-          >
-            <PremiumIcon
-              Icon={chatItem.icon}
-              isActive={false}
-              iconColor={chatItem.iconColor}
-            />
-          </Link>
         </div>
       </div>
     </nav>

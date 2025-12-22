@@ -52,6 +52,7 @@ import { TransferModal } from '@/components/wallet/modals/TransferModal';
 import { InfoMarquee } from '@/components/ui/info-marquee';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
 
 /**
  * Dashboard Layout
@@ -387,8 +388,11 @@ export default function DashboardLayout({
           <Breadcrumbs />
         </div>
 
-        {/* Page content */}
-        <main id="main-content" className="p-4 pb-20 sm:p-6 lg:p-8">
+        {/* Page content - Mobile first padding */}
+        <main
+          id="main-content"
+          className="p-3 pb-24 sm:p-4 sm:pb-28 md:p-6 md:pb-32 lg:p-8 lg:pb-36"
+        >
           {children}
         </main>
 
@@ -436,6 +440,9 @@ export default function DashboardLayout({
           isOpen={isModalOpen('transfer')}
           onClose={() => closeModal('transfer')}
         />
+
+        {/* Floating Assistant Button */}
+        <FloatingAssistantButton />
       </div>
     </DashboardGuard>
   );

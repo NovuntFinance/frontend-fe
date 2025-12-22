@@ -12,7 +12,7 @@ import { z } from 'zod';
 // Requirements:
 // - Minimum 8 characters
 // - At least one lowercase letter
-// - At least one uppercase letter  
+// - At least one uppercase letter
 // - At least one digit
 // - At least one special character (@_$!%*?&)
 
@@ -29,11 +29,17 @@ const passwordRequirements = {
 // Backend checks for "special character" but doesn't restrict which ones
 export const passwordSchema = z
   .string()
-  .min(passwordRequirements.minLength, `Password must be at least ${passwordRequirements.minLength} characters`)
+  .min(
+    passwordRequirements.minLength,
+    `Password must be at least ${passwordRequirements.minLength} characters`
+  )
   .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/\d/, 'Password must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+  .regex(
+    /[^A-Za-z0-9]/,
+    'Password must contain at least one special character'
+  );
 
 // ============================================
 // LOGIN SCHEMA
@@ -57,24 +63,36 @@ export const signupSchema = z
       .string()
       .min(2, 'First name must be at least 2 characters')
       .max(50, 'First name must not exceed 50 characters')
-      .regex(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+      .regex(
+        /^[a-zA-Z\s'-]+$/,
+        'First name can only contain letters, spaces, hyphens, and apostrophes'
+      ),
     lastName: z
       .string()
       .min(2, 'Last name must be at least 2 characters')
       .max(50, 'Last name must not exceed 50 characters')
-      .regex(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
+      .regex(
+        /^[a-zA-Z\s'-]+$/,
+        'Last name can only contain letters, spaces, hyphens, and apostrophes'
+      ),
     username: z
       .string()
       .min(3, 'Username must be at least 3 characters')
       .max(30, 'Username must not exceed 30 characters')
-      .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can include letters, numbers, dots, underscores, and hyphens'),
+      .regex(
+        /^[a-zA-Z0-9_.-]+$/,
+        'Username can include letters, numbers, dots, underscores, and hyphens'
+      ),
     email: z.string().email('Please enter a valid email address'),
     password: passwordSchema,
     confirmPassword: z.string(),
     phoneNumber: z
       .string()
       .min(1, 'Phone number is required')
-      .regex(/^\+[1-9]\d{1,14}$/, 'Please enter a valid international phone number with country code'),
+      .regex(
+        /^\+[1-9]\d{1,14}$/,
+        'Please enter a valid international phone number with country code'
+      ),
     referralCode: z
       .string()
       .min(6, 'Referral code must be at least 6 characters')
@@ -172,8 +190,13 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
 
   // Length
   if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  else suggestions.push('Use at least 12 characters for better security');
+  if (password.length >= 12) {
+    score++;
+  } else if (password.length >= 8) {
+    // Only suggest 12 characters if password already meets minimum (8 chars)
+    // This way it's clear it's a recommendation, not a conflicting requirement
+    suggestions.push('Consider using 12+ characters for enhanced security');
+  }
 
   // Character variety
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
