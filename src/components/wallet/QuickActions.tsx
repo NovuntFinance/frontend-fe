@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Download, Upload, Send, TrendingUp } from 'lucide-react';
 import { useWalletBalance } from '@/lib/queries';
+import { slideUp } from '@/design-system/animations';
 import { DepositModal } from './modals/DepositModal';
 import { WithdrawModal } from './modals/WithdrawModal';
 import { TransferModal } from './modals/TransferModal';

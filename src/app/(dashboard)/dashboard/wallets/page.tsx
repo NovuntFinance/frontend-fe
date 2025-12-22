@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { WalletDashboard, TransactionHistory } from '@/components/wallet';
+import { WithdrawalAddressManager } from '@/components/wallet/WithdrawalAddressManager';
 import { useUIStore } from '@/store/uiStore';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -76,6 +77,15 @@ export default function WalletPage() {
             </div>
           </CardHeader>
         </Card>
+      </motion.div>
+
+      {/* Withdrawal Address Manager */}
+      <motion.div
+        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <WithdrawalAddressManager />
       </motion.div>
 
       {/* Main Content - Merged Overview and Transactions */}

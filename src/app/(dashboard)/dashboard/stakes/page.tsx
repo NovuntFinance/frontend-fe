@@ -19,7 +19,8 @@ import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
-import { EmptyStates } from '@/components/EmptyStates';
+// ✅ Backend now provides todaysProfit and todaysROSPercentage in dashboard response
+// useTodayProfit is kept for backward compatibility fallback only
 import { useTodayProfit } from '@/lib/queries';
 import {
   Card,
@@ -29,13 +30,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { prefersReducedMotion } from '@/lib/accessibility';
-import { useResponsive } from '@/hooks/useResponsive';
 
 export default function StakesPage() {
   const { openModal } = useUIStore();
   const { data: stakingData, isLoading, error } = useStakeDashboard();
   const { data: todayProfitData } = useTodayProfit();
-  const { isMobile, breakpoint } = useResponsive();
 
   if (isLoading) {
     return (
@@ -91,11 +90,16 @@ export default function StakesPage() {
       totalActiveStakes?: number;
       totalStakesSinceInception?: number;
       totalEarnedFromROS?: number;
+      totalEarnedAllTime?: number;
       targetTotalReturns?: number;
       progressToTarget?: string;
+      totalActiveAmount?: number;
+      totalAllTimeStaked?: number;
+      todaysProfit?: number; // ✅ NEW: Today's total profit from all active stakes
+      todaysROSPercentage?: number; // ✅ NEW: Today's declared ROS percentage
       stakingModel?: string;
       note?: string;
-    },
+    } & { todaysProfit?: number; todaysROSPercentage?: number },
     wallets = {
       fundedWallet: 0,
       earningWallet: 0,
@@ -116,23 +120,63 @@ export default function StakesPage() {
   } = stakingData || {};
   const hasStakes = activeStakes && activeStakes.length > 0;
 
-  // Calculate Today's Profit
-  // Get today's profit amount from active stakes based on today's declared percentage
-  const todayProfitAmount = todayProfitData?.profitPercentage
-    ? activeStakes.reduce((total: number, stake: Stake) => {
-        // Calculate today's profit: (stake amount) × (today's ROS %) / 100
-        const stakeProfit =
-          (stake.amount * (todayProfitData.profitPercentage || 0)) / 100;
-        return total + stakeProfit;
-      }, 0)
-    : 0;
+  // Total Earned (ROS) - Backend now provides accurate lifetime earnings from ALL stakes
+  // ✅ Backend fixed: summary.totalEarnedFromROS includes active + completed stakes
+  const totalEarnedROS = Number(summary?.totalEarnedFromROS || 0);
+
+  // ✅ NEW: Use backend-provided today's profit (calculated from dailyReturnsHistory)
+  // Backend provides todaysProfit (number, defaults to 0 if no profit today)
+  // and todaysROSPercentage (number, defaults to 0 if no declaration today)
+  const summaryWithToday = summary as typeof summary & {
+    todaysProfit?: number;
+    todaysROSPercentage?: number;
+  };
+  const todaysProfit =
+    summaryWithToday?.todaysProfit !== undefined
+      ? Number(summaryWithToday.todaysProfit)
+      : null;
+  const todaysROSPercentage =
+    summaryWithToday?.todaysROSPercentage !== undefined
+      ? Number(summaryWithToday.todaysROSPercentage)
+      : null;
+
+  // Fallback: Only calculate manually if backend fields are not available (backward compatibility)
+  const todayProfitAmount =
+    todaysProfit !== null
+      ? todaysProfit
+      : todayProfitData?.profitPercentage
+        ? activeStakes.reduce((total: number, stake: Stake) => {
+            const stakeAmount = Number(stake?.amount || 0);
+            const stakeProfit =
+              (stakeAmount * (todayProfitData.profitPercentage || 0)) / 100;
+            return total + (isNaN(stakeProfit) ? 0 : stakeProfit);
+          }, 0)
+        : 0;
+
+  // Use backend ROS percentage if available, otherwise fall back to useTodayProfit
+  const displayROSPercentage =
+    todaysROSPercentage !== null
+      ? todaysROSPercentage
+      : todayProfitData?.profitPercentage || 0;
 
   console.log('[Stakes Page] Extracted data:', {
     activeStakesCount: activeStakes.length,
+    completedStakesCount: stakeHistory.length,
     hasWallets: !!wallets,
     hasSummary: !!summary,
+    todaysProfit:
+      todaysProfit !== null ? todaysProfit : 'not provided by backend',
+    todaysROSPercentage:
+      todaysROSPercentage !== null
+        ? todaysROSPercentage
+        : 'not provided by backend',
     todayProfitAmount,
-    todayProfitPercentage: todayProfitData?.profitPercentage,
+    displayROSPercentage,
+    usingBackendData: todaysProfit !== null,
+    fallbackUsed: todaysProfit === null,
+    totalEarnedROS,
+    summaryTotalEarnedFromROS: summary?.totalEarnedFromROS,
+    progressToTarget: summary?.progressToTarget,
   });
 
   const reducedMotion = prefersReducedMotion();
@@ -235,14 +279,14 @@ export default function StakesPage() {
                     Total Earned (ROS)
                   </CardTitle>
                   <CardDescription className="text-[10px] sm:text-xs">
-                    Total earnings from all sources
+                    Earnings from regular stakes only
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
-                ${summary?.totalEarnedFromROS?.toFixed(2) || '0.00'}
+                ${totalEarnedROS.toFixed(2)}
               </p>
             </CardContent>
           </Card>
@@ -293,10 +337,10 @@ export default function StakesPage() {
               <p className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
                 $
                 {activeStakes
-                  .reduce(
-                    (sum: number, stake: Stake) => sum + (stake.amount || 0),
-                    0
-                  )
+                  .reduce((sum: number, stake: Stake) => {
+                    const amount = Number(stake?.amount || 0);
+                    return sum + (isNaN(amount) ? 0 : amount);
+                  }, 0)
                   .toFixed(2)}
               </p>
             </CardContent>
@@ -348,9 +392,9 @@ export default function StakesPage() {
               <p className="bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
                 ${todayProfitAmount.toFixed(2)}
               </p>
-              {todayProfitData?.profitPercentage && (
+              {displayROSPercentage > 0 && (
                 <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                  {todayProfitData.profitPercentage.toFixed(2)}% ROS
+                  {displayROSPercentage.toFixed(2)}% ROS
                 </p>
               )}
             </CardContent>
@@ -402,6 +446,12 @@ export default function StakesPage() {
               <p className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
                 {summary?.progressToTarget || '0.00%'}
               </p>
+              {summary?.targetTotalReturns &&
+                summary.targetTotalReturns > 0 && (
+                  <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+                    Target: ${summary.targetTotalReturns.toFixed(2)}
+                  </p>
+                )}
             </CardContent>
           </Card>
         </motion.div>
@@ -456,7 +506,7 @@ export default function StakesPage() {
                     Deposit Wallet
                   </p>
                   <p className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${wallets.fundedWallet?.toFixed(2) || '0.00'}
+                    ${(Number(wallets.fundedWallet) || 0).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                     {wallets.description?.fundedWallet}
@@ -467,7 +517,7 @@ export default function StakesPage() {
                     Earnings Wallet
                   </p>
                   <p className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${wallets.earningWallet?.toFixed(2) || '0.00'}
+                    ${(Number(wallets.earningWallet) || 0).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                     {wallets.description?.earningWallet}
@@ -478,7 +528,7 @@ export default function StakesPage() {
                     Total Available
                   </p>
                   <p className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${wallets.totalAvailableBalance?.toFixed(2) || '0.00'}
+                    ${(Number(wallets.totalAvailableBalance) || 0).toFixed(2)}
                   </p>
                   <Button
                     onClick={() => openModal('create-stake')}

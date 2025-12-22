@@ -1,7 +1,7 @@
 /**
  * Example: Migrated Component Using All New Patterns
  * This demonstrates how to use all the new patterns together
- * 
+ *
  * Use this as a reference when migrating components
  */
 
@@ -47,25 +47,23 @@ export function MigratedComponentExample() {
   });
 
   // Data fetching
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['example-data'],
     queryFn: async () => {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return [{ id: 1, name: 'Item 1' }, { id: 2, name: 'Item 2' }];
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return [
+        { id: 1, name: 'Item 1' },
+        { id: 2, name: 'Item 2' },
+      ];
     },
   });
 
   const onSubmit = async (formData: ExampleFormData) => {
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Success toast with action
       toast.success('Form submitted successfully!', {
         description: 'Your data has been saved',
@@ -114,13 +112,13 @@ export function MigratedComponentExample() {
         <motion.h1 {...slideUp(0.1)} className="text-2xl font-bold">
           Example Component
         </motion.h1>
-        
+
         <Responsive breakpoint="mobile">
-          <p className="text-sm text-muted-foreground">Mobile view</p>
+          <p className="text-muted-foreground text-sm">Mobile view</p>
         </Responsive>
-        
+
         <DesktopOnly>
-          <p className="text-sm text-muted-foreground">Desktop view</p>
+          <p className="text-muted-foreground text-sm">Desktop view</p>
         </DesktopOnly>
       </div>
 
@@ -135,7 +133,7 @@ export function MigratedComponentExample() {
               required
               placeholder="Enter your name"
             />
-            
+
             <FormField
               name="email"
               label="Email"
@@ -144,11 +142,11 @@ export function MigratedComponentExample() {
               placeholder="Enter your email"
               description="We'll never share your email"
             />
-            
+
             <motion.button
-              {...hoverAnimation()}
+              {...(hoverAnimation() as any)}
               type="submit"
-              className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
+              className="bg-primary text-primary-foreground rounded-lg px-4 py-2"
             >
               Submit
             </motion.button>
@@ -194,4 +192,3 @@ export function MigratedComponentExample() {
     </motion.div>
   );
 }
-

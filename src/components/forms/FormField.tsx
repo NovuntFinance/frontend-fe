@@ -11,7 +11,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useId } from '@/hooks/useAccessibility';
 import { AlertCircle } from 'lucide-react';
@@ -19,7 +25,14 @@ import { AlertCircle } from 'lucide-react';
 interface FormFieldProps {
   name: string;
   label: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea' | 'select';
+  type?:
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'tel'
+    | 'textarea'
+    | 'select';
   placeholder?: string;
   description?: string;
   required?: boolean;
@@ -34,7 +47,10 @@ interface FormFieldProps {
  * Standardized Form Field Component
  * Integrates with react-hook-form and provides consistent validation UX
  */
-export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormFieldProps>(
+export const FormField = forwardRef<
+  HTMLInputElement | HTMLTextAreaElement,
+  FormFieldProps
+>(
   (
     {
       name,
@@ -63,24 +79,24 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
     const hasError = !!error;
 
     // Determine aria-describedby
-    const ariaDescribedBy = [
-      description ? descriptionId : null,
-      hasError ? errorId : null,
-    ]
-      .filter(Boolean)
-      .join(' ') || undefined;
+    const ariaDescribedBy =
+      [description ? descriptionId : null, hasError ? errorId : null]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div className={cn('space-y-2', className)}>
         <Label
           htmlFor={fieldId}
-          className={cn(required && "after:content-['*'] after:ml-1 after:text-destructive")}
+          className={cn(
+            required && "after:text-destructive after:ml-1 after:content-['*']"
+          )}
         >
           {label}
         </Label>
 
         {description && (
-          <p id={descriptionId} className="text-sm text-muted-foreground">
+          <p id={descriptionId} className="text-muted-foreground text-sm">
             {description}
           </p>
         )}
@@ -104,7 +120,10 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
                   aria-describedby={ariaDescribedBy}
                   aria-invalid={hasError}
                   aria-errormessage={hasError ? errorId : undefined}
-                  className={cn(hasError && 'border-destructive focus-visible:ring-destructive')}
+                  className={cn(
+                    hasError &&
+                      'border-destructive focus-visible:ring-destructive'
+                  )}
                   ref={ref as React.Ref<HTMLInputElement>}
                 />
               );
@@ -124,7 +143,10 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
                   aria-describedby={ariaDescribedBy}
                   aria-invalid={hasError}
                   aria-errormessage={hasError ? errorId : undefined}
-                  className={cn(hasError && 'border-destructive focus-visible:ring-destructive')}
+                  className={cn(
+                    hasError &&
+                      'border-destructive focus-visible:ring-destructive'
+                  )}
                   ref={ref as React.Ref<HTMLTextAreaElement>}
                 />
               );
@@ -145,9 +167,16 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
                     aria-describedby={ariaDescribedBy}
                     aria-invalid={hasError}
                     aria-errormessage={hasError ? errorId : undefined}
-                    className={cn(hasError && 'border-destructive focus-visible:ring-destructive')}
+                    className={cn(
+                      hasError &&
+                        'border-destructive focus-visible:ring-destructive'
+                    )}
                   >
-                    <SelectValue placeholder={placeholder || `Select ${label.toLowerCase()}`} />
+                    <SelectValue
+                      placeholder={
+                        placeholder || `Select ${label.toLowerCase()}`
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {options.map((option) => (
@@ -160,14 +189,15 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
               );
             }
 
-            return null;
+            // Fallback: return empty fragment if type not supported
+            return <></>;
           }}
         />
 
         {hasError && (
           <div
             id={errorId}
-            className="flex items-center gap-2 text-sm text-destructive"
+            className="text-destructive flex items-center gap-2 text-sm"
             role="alert"
             aria-live="polite"
           >
@@ -181,4 +211,3 @@ export const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Form
 );
 
 FormField.displayName = 'FormField';
-

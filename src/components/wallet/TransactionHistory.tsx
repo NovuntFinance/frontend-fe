@@ -58,6 +58,7 @@ import {
   formatTransactionDate,
 } from '@/lib/utils/wallet';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { listItemAnimation } from '@/design-system/animations';
 import type {
   TransactionHistoryParams,
   Transaction,

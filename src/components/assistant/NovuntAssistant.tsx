@@ -10,9 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Send,
-  Bot,
+  Circle,
   User,
-  Sparkles,
+  Star,
   AlertCircle,
   Loader2,
   HelpCircle,
@@ -111,7 +111,7 @@ export function NovuntAssistant({ isOpen, onClose }: NovuntAssistantProps) {
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20 blur-lg" />
                   <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-                    <Sparkles className="h-5 w-5 text-white" />
+                    <Star className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div>
@@ -159,7 +159,7 @@ export function NovuntAssistant({ isOpen, onClose }: NovuntAssistantProps) {
                   >
                     {message.role === 'assistant' && (
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-                        <Bot className="h-4 w-4 text-white" />
+                        <Circle className="h-4 w-4 fill-white text-white" />
                       </div>
                     )}
 
@@ -197,6 +197,31 @@ export function NovuntAssistant({ isOpen, onClose }: NovuntAssistantProps) {
                     )}
                   </motion.div>
                 ))}
+
+                {/* Suggestions */}
+                {suggestions.length > 0 && !isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-wrap gap-2 px-2"
+                  >
+                    {suggestions.map((suggestion, index) => (
+                      <motion.button
+                        key={index}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          sendMessage(suggestion);
+                        }}
+                        disabled={isLoading}
+                        className="rounded-full border border-indigo-300/50 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-2 text-xs font-medium text-indigo-700 transition-all hover:border-indigo-400/70 hover:from-indigo-100 hover:to-purple-100 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-500/30 dark:from-indigo-900/20 dark:to-purple-900/20 dark:text-indigo-300 dark:hover:border-indigo-500/50 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30"
+                      >
+                        {suggestion}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
             </div>

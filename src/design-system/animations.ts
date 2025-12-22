@@ -44,10 +44,9 @@ export function getAnimationConfig(
   // Map CSS easing strings to framer-motion compatible array format
   // framer-motion expects [x1, y1, x2, y2] arrays instead of CSS cubic-bezier strings
   const easingMap: Record<string, string | number[]> = {
-    'cubic-bezier(0.4, 0, 0.2, 1)': [0.4, 0, 0.2, 1], // ease
+    'cubic-bezier(0.4, 0, 0.2, 1)': [0.4, 0, 0.2, 1], // ease and easeInOut
     'cubic-bezier(0.4, 0, 1, 1)': [0.4, 0, 1, 1], // easeIn
     'cubic-bezier(0, 0, 0.2, 1)': [0, 0, 0.2, 1], // easeOut
-    'cubic-bezier(0.4, 0, 0.2, 1)': [0.4, 0, 0.2, 1], // easeInOut (same as ease)
     linear: 'linear',
   };
 
@@ -68,7 +67,7 @@ export function fadeIn(delay = 0) {
   return {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
-    transition: { ...config, delay },
+    transition: { ...config, delay } as any,
   };
 }
 
@@ -92,7 +91,7 @@ export function slideDown(delay = 0) {
   return {
     initial: { opacity: 0, y: -20 },
     animate: { opacity: 1, y: 0 },
-    transition: { ...config, delay },
+    transition: { ...config, delay } as any,
   };
 }
 
@@ -104,7 +103,7 @@ export function scale(delay = 0, from = 0.95) {
   return {
     initial: { opacity: 0, scale: from },
     animate: { opacity: 1, scale: 1 },
-    transition: { ...config, delay },
+    transition: { ...config, delay } as any,
   };
 }
 
@@ -134,7 +133,7 @@ export function pageTransition() {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
-    transition: config,
+    transition: config as any,
   };
 }
 
@@ -147,7 +146,7 @@ export function modalAnimation() {
     initial: { opacity: 0, scale: 0.95, y: 20 },
     animate: { opacity: 1, scale: 1, y: 0 },
     exit: { opacity: 0, scale: 0.95, y: 20 },
-    transition: config,
+    transition: config as any,
   };
 }
 
@@ -160,7 +159,7 @@ export function toastAnimation() {
     initial: { opacity: 0, y: -20, scale: 0.95 },
     animate: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, scale: 0.95 },
-    transition: config,
+    transition: config as any,
   };
 }
 
@@ -172,7 +171,7 @@ export function listItemAnimation(index: number) {
   return {
     initial: { opacity: 0, x: -20 },
     animate: { opacity: 1, x: 0 },
-    transition: { ...config, delay: index * 0.05 },
+    transition: { ...config, delay: index * 0.05 } as any,
   };
 }
 

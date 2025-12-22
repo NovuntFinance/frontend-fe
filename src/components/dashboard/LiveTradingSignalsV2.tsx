@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { listItemAnimation } from '@/design-system/animations';
 
 // Trading instrument types
 type MarketType = 'forex' | 'crypto' | 'metals' | 'indices' | 'commodities';

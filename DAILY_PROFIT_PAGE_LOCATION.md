@@ -112,6 +112,3 @@ If you were using the old ROS Management page:
 - 🎯 **Navigation:** "Daily Profit" in the sidebar
 
 **The Daily Profit system is the current, active system for managing daily profit declarations!**
-
-
-

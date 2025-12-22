@@ -4,7 +4,16 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { hoverAnimation } from '@/design-system/animations';
-import { Download, Upload, Send, TrendingUp, ArrowRight, ArrowDownLeft, ArrowUpRight, ArrowRightLeft } from 'lucide-react';
+import {
+  Download,
+  Upload,
+  Send,
+  TrendingUp,
+  ArrowRight,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowRightLeft,
+} from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
 interface QuickAction {
@@ -75,19 +84,18 @@ export function QuickActions() {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       {actions.map((action) => (
         <motion.button
           key={action.id}
-          {...hoverAnimation()}
+          {...(hoverAnimation() as any)}
           onClick={() => handleAction(action.id)}
-          className={`
-            flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200
-            ${action.bgColor} ${action.borderColor} hover:shadow-lg
-          `}
+          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-200 ${action.bgColor} ${action.borderColor} hover:shadow-lg`}
         >
-          <div className={`p-3 rounded-full bg-white dark:bg-gray-800 shadow-sm mb-3 ${action.color}`}>
-            <action.icon className="w-6 h-6" />
+          <div
+            className={`mb-3 rounded-full bg-white p-3 shadow-sm dark:bg-gray-800 ${action.color}`}
+          >
+            <action.icon className="h-6 w-6" />
           </div>
           <span className="font-semibold text-gray-900 dark:text-white">
             {action.label}

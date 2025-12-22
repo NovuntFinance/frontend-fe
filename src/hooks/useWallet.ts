@@ -256,6 +256,11 @@ export function useDefaultWithdrawalAddress() {
     queryFn: async () => {
       try {
         const response = await walletApi.getDefaultWithdrawalAddress();
+        console.log(
+          '[useDefaultWithdrawalAddress] 📥 Raw API response:',
+          response
+        );
+
         // Ensure we always return a value, never undefined
         if (!response || !response.data) {
           console.warn(
@@ -264,9 +269,31 @@ export function useDefaultWithdrawalAddress() {
           return {
             address: null,
             hasDefaultAddress: false,
+            canChange: true,
+            moratorium: {
+              active: false,
+              canChange: true,
+              hoursRemaining: 0,
+              minutesRemaining: 0,
+              canChangeAt: null,
+              canChangeAtFormatted: null,
+              moratoriumDurationHours: 48,
+            },
             immutable: false,
           };
         }
+
+        console.log(
+          '[useDefaultWithdrawalAddress] 📊 Response data:',
+          response.data
+        );
+        console.log('[useDefaultWithdrawalAddress] 🔍 Address field:', {
+          address: response.data.address,
+          hasDefaultAddress: response.data.hasDefaultAddress,
+          canChange: response.data.canChange,
+          moratorium: response.data.moratorium,
+        });
+
         return response.data;
       } catch (error: any) {
         // If 404, user doesn't have default address
@@ -274,6 +301,16 @@ export function useDefaultWithdrawalAddress() {
           return {
             address: null,
             hasDefaultAddress: false,
+            canChange: true,
+            moratorium: {
+              active: false,
+              canChange: true,
+              hoursRemaining: 0,
+              minutesRemaining: 0,
+              canChangeAt: null,
+              canChangeAtFormatted: null,
+              moratoriumDurationHours: 48,
+            },
             immutable: false,
           };
         }
@@ -286,6 +323,16 @@ export function useDefaultWithdrawalAddress() {
         return {
           address: null,
           hasDefaultAddress: false,
+          canChange: true,
+          moratorium: {
+            active: false,
+            canChange: true,
+            hoursRemaining: 0,
+            minutesRemaining: 0,
+            canChangeAt: null,
+            canChangeAtFormatted: null,
+            moratoriumDurationHours: 48,
+          },
           immutable: false,
         };
       }
@@ -326,10 +373,21 @@ export function useSetDefaultWithdrawalAddress() {
       await queryClient.refetchQueries({
         queryKey: ['withdrawal', 'default-address'],
       });
-      toast.success('Withdrawal address set', {
-        description:
-          'Your withdrawal address has been saved and cannot be changed',
-      });
+      // Check if this is first-time setting or a change
+      const isFirstTime = response?.data?.isFirstTime;
+      const moratorium = response?.data?.moratorium;
+
+      if (isFirstTime) {
+        toast.success('Withdrawal address set', {
+          description: 'Your withdrawal address has been saved successfully.',
+        });
+      } else {
+        toast.success('Withdrawal address updated', {
+          description: moratorium?.active
+            ? `Address updated. You can change it again after 48 hours.`
+            : 'Your withdrawal address has been updated successfully.',
+        });
+      }
     },
     onError: (error: any) => {
       const errorData = error?.response?.data;
@@ -337,24 +395,21 @@ export function useSetDefaultWithdrawalAddress() {
       const message =
         errorData?.message || error?.message || 'Failed to save address';
 
-      // Handle immutable address error
-      if (
-        code === 'ADDRESS_IMMUTABLE' ||
-        (error?.response?.status === 403 && code !== '2FA_CODE_INVALID')
-      ) {
-        const currentAddress = errorData?.currentAddress;
+      // Handle moratorium active error
+      if (code === 'ADDRESS_MORATORIUM_ACTIVE') {
+        const moratorium = errorData?.moratorium;
+        const hoursRemaining = moratorium?.hoursRemaining || 0;
+        const minutesRemaining = moratorium?.minutesRemaining || 0;
+        const canChangeAt = moratorium?.canChangeAtFormatted;
 
-        // If we get ADDRESS_IMMUTABLE, the address exists even if GET didn't return it
-        // Invalidate and refetch to update the UI
+        // Invalidate and refetch to update the UI with moratorium status
         queryClient.invalidateQueries({
           queryKey: ['withdrawal', 'default-address'],
         });
 
-        toast.error('Address cannot be changed', {
-          description: currentAddress
-            ? `Your withdrawal address (${currentAddress.slice(0, 10)}...${currentAddress.slice(-10)}) is permanently set and cannot be changed. Contact support if needed.`
-            : 'Your withdrawal address is permanently set and cannot be changed. Contact support if needed.',
-          duration: 5000,
+        toast.error('Address change locked', {
+          description: `Please wait ${hoursRemaining} hour(s) and ${minutesRemaining} minute(s). ${canChangeAt ? `Available at: ${canChangeAt}` : ''}`,
+          duration: 6000,
         });
       } else if (code === 'UNSUPPORTED_NETWORK') {
         toast.error('Network not supported', {

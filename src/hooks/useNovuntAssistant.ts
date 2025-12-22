@@ -7,24 +7,12 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useUser } from './useUser';
-import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/lib/toast';
 import type {
   ChatMessage,
   AssistantContext,
   AssistantResponse,
 } from '@/types/assistant';
-
-// Get API base URL helper
-function getAPIBaseURL(): string {
-  const envURL = process.env.NEXT_PUBLIC_API_URL;
-  if (envURL) {
-    return envURL.trim();
-  }
-  // Fallback for development
-  return process.env.NODE_ENV === 'development'
-    ? 'http://localhost:5000/api/v1'
-    : 'https://novunt-backend-uw3z.onrender.com/api/v1';
-}
 
 const INITIAL_GREETINGS = [
   "Hello! I'm your Novunt Assistant. How can I help you today?",
@@ -104,6 +92,7 @@ export function useNovuntAssistant() {
       // In production, this would call your AI/backend API
 
       const lowerMessage = userMessage.toLowerCase();
+      const currentConversationId = conversationId || `conv-${Date.now()}`;
 
       // Platform information queries
       if (lowerMessage.includes('how') && lowerMessage.includes('work')) {
@@ -115,6 +104,13 @@ export function useNovuntAssistant() {
             '3. **Team Building**: Refer others to earn additional rewards\n' +
             '4. **Pools**: Qualify for premium pools based on your rank and team performance\n\n' +
             'Would you like more details about any specific aspect?',
+          conversationId: currentConversationId,
+          suggestions: [
+            'What are the rank requirements?',
+            'How do pools work?',
+            'How do I start staking?',
+            'What are the benefits of team building?',
+          ],
         };
       }
 
@@ -135,10 +131,12 @@ export function useNovuntAssistant() {
             (context.userRank
               ? `You're currently at ${context.userRank} rank. Keep building!`
               : "I can help you understand your current progress if you'd like."),
+          conversationId: currentConversationId,
           suggestions: [
             'How do I check my rank progress?',
             'What are the rank requirements?',
             'How do pools work?',
+            'How do I build my team?',
           ],
         };
       }
@@ -158,10 +156,12 @@ export function useNovuntAssistant() {
             '• Visit **Stakes** to see your active investments\n' +
             '• Go to **Team** to view your referral network\n\n' +
             "Is there something specific about your account you'd like help with?",
+          conversationId: currentConversationId,
           suggestions: [
             'How do I deposit funds?',
             'How do I withdraw?',
             'How do I check my staking history?',
+            'How do I view my transactions?',
           ],
         };
       }
@@ -181,10 +181,12 @@ export function useNovuntAssistant() {
             '• Progress toward higher ranks\n' +
             '• Qualify for premium pools\n\n' +
             'Would you like to know more about stake amounts or returns?',
+          conversationId: currentConversationId,
           suggestions: [
             'What stake amounts are available?',
             'How are returns calculated?',
             'What is ROS?',
+            'How long do stakes last?',
           ],
         };
       }
@@ -207,10 +209,12 @@ export function useNovuntAssistant() {
             '• Qualify for premium pools\n' +
             '• Earn additional rewards\n\n' +
             'You can find your referral link and team stats on the Team page.',
+          conversationId: currentConversationId,
           suggestions: [
             'Where do I find my referral link?',
             'How do I track my team?',
             'What rewards do I get?',
+            'How do referrals help my rank?',
           ],
         };
       }
@@ -227,6 +231,7 @@ export function useNovuntAssistant() {
           '• General account information\n' +
           '• Platform features and benefits\n\n' +
           'Could you rephrase your question, or would you like me to help you with something specific?',
+        conversationId: currentConversationId,
         suggestions: [
           'How does Novunt work?',
           'How do I grow my account?',
@@ -237,13 +242,16 @@ export function useNovuntAssistant() {
         escalationReason: 'Complex query requiring human support',
       };
     },
-    []
+    [conversationId]
   );
 
   // Send a message
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || isLoading) return;
+
+      // Clear previous suggestions when user sends a new message
+      setSuggestions([]);
 
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
@@ -281,6 +289,11 @@ export function useNovuntAssistant() {
           };
           return [...withoutLoading, assistantMessage];
         });
+
+        // Update suggestions from response
+        if (response.suggestions && response.suggestions.length > 0) {
+          setSuggestions(response.suggestions);
+        }
       } catch (error) {
         // Remove loading message and add error
         setMessages((prev) => {
@@ -289,12 +302,24 @@ export function useNovuntAssistant() {
             id: `error-${Date.now()}`,
             role: 'assistant',
             content:
-              "I apologize, but I'm having trouble processing your request right now. Please try again, or consider escalating to human support.",
+              error instanceof Error
+                ? error.message
+                : "I apologize, but I'm having trouble processing your request right now. Please try again, or consider escalating to human support.",
             timestamp: new Date(),
             error: error instanceof Error ? error.message : 'Unknown error',
           };
           return [...withoutLoading, errorMessage];
         });
+
+        // Show toast for rate limit errors
+        if (
+          error instanceof Error &&
+          error.message.includes('Too many requests')
+        ) {
+          toast.error('Rate limit exceeded', {
+            description: 'Please wait a moment before sending another message.',
+          });
+        }
       } finally {
         setIsLoading(false);
       }

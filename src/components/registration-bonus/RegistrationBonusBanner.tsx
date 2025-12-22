@@ -18,7 +18,13 @@ import {
 } from 'lucide-react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
 import { RegistrationBonusStatus } from '@/types/registrationBonus';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { Progress } from '@/components/ui/progress';
@@ -262,7 +268,38 @@ export function RegistrationBonusBanner() {
 
   // Error state
   if (error) {
-    const status = (error as any)?.response?.status;
+    // ✅ Comprehensive error extraction - handle ApiError format from API client
+    const err = error as any;
+    const status =
+      err?.statusCode || // ApiError format (from API client interceptor)
+      err?.response?.status || // Axios error response
+      err?.status; // Direct status
+
+    // Try multiple paths for error message - ApiError format is prioritized
+    // The API client transforms errors into ApiError: { success: false, message: string, statusCode: number }
+    const errorMessage =
+      err?.message || // ✅ ApiError format (API client transformed) - CHECK FIRST
+      err?.response?.data?.message || // Axios error response (raw backend error)
+      err?.data?.message || // Direct data message
+      err?.response?.data?.error?.message || // Nested error object
+      err?.error?.message || // Error property
+      'Unable to load bonus status'; // Fallback
+
+    // Log error details for debugging (especially useful with backend's improved error messages)
+    console.error('[RegistrationBonusBanner] Error loading bonus status:', {
+      status,
+      extractedMessage: errorMessage,
+      errorStructure: {
+        hasMessage: !!err?.message,
+        hasStatusCode: !!err?.statusCode,
+        hasResponse: !!err?.response,
+        hasResponseData: !!err?.response?.data,
+        hasResponseDataMessage: !!err?.response?.data?.message,
+      },
+      errorObject: err,
+      responseData: err?.response?.data,
+      fullError: error,
+    });
 
     if (status === 404) {
       if (process.env.NODE_ENV === 'development') {
@@ -282,12 +319,7 @@ export function RegistrationBonusBanner() {
       return null;
     }
 
-    return (
-      <ErrorState
-        message="Unable to load bonus status"
-        onRetry={() => refetch()}
-      />
-    );
+    return <ErrorState message={errorMessage} onRetry={() => refetch()} />;
   }
 
   // No data
@@ -467,80 +499,73 @@ export function RegistrationBonusBanner() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="mb-6"
           >
-            <Card className="border-novunt-gold-500/30 from-novunt-gold-500/10 via-novunt-gold-500/5 to-background shadow-novunt-gold-500/10 relative overflow-hidden border-2 bg-gradient-to-br shadow-lg">
-              {/* Animated gold shimmer effect */}
+            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+              {/* Animated Gradient Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-transparent" />
+
+              {/* Animated Floating Blob */}
               <motion.div
-                className="via-novunt-gold-500/20 absolute inset-0 bg-gradient-to-r from-transparent to-transparent"
                 animate={{
-                  x: ['-100%', '200%'],
+                  x: [0, -15, 0],
+                  y: [0, 10, 0],
+                  scale: [1, 1.15, 1],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 6,
                   repeat: Infinity,
-                  repeatDelay: 2,
+                  ease: 'easeInOut',
                 }}
+                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-amber-500/30 blur-2xl"
               />
 
-              {/* Gold sparkle decorations */}
-              <div className="absolute top-4 right-4 opacity-30">
-                <Star className="text-novunt-gold-500 fill-novunt-gold-500/20 h-5 w-5 animate-pulse" />
-              </div>
-
-              <CardContent className="relative z-10 p-5 md:p-6">
-                {/* Header */}
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Gold gift icon */}
+              <CardHeader className="relative p-4 sm:p-6">
+                <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                     <motion.div
-                      className="from-novunt-gold-500/30 to-novunt-gold-600/20 border-novunt-gold-500/30 rounded-xl border bg-gradient-to-br p-2.5 backdrop-blur-sm"
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
+                      whileHover={{ scale: 1.1, rotate: -10 }}
+                      className="rounded-xl bg-gradient-to-br from-amber-500/30 to-yellow-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
                     >
-                      <Gift className="text-novunt-gold-600 dark:text-novunt-gold-500 h-6 w-6" />
+                      <Gift className="h-5 w-5 text-amber-500 sm:h-6 sm:w-6" />
                     </motion.div>
-
-                    {/* Title */}
-                    <div>
-                      <h2 className="text-foreground mb-0.5 text-xl font-bold md:text-2xl">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="truncate bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
                         Welcome Bonus: {bonusPercentage}% on First Stake!
-                      </h2>
-                      <p className="text-muted-foreground text-xs">
+                      </CardTitle>
+                      <CardDescription className="truncate text-[10px] sm:text-xs">
                         Complete all requirements to unlock your bonus
-                      </p>
+                      </CardDescription>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsExpanded(!isExpanded)}
                       className="h-8 gap-1 text-xs"
                     >
-                      {isExpanded ? 'Hide Details' : 'Show Details'}
+                      {isExpanded ? 'Hide' : 'Details'}
                       {isExpanded ? (
                         <ChevronUp className="h-3 w-3" />
                       ) : (
                         <ChevronDown className="h-3 w-3" />
                       )}
                     </Button>
-
-                    {/* Dismiss Button */}
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleDismiss}
-                      className="hover:bg-novunt-gold-500/10 text-muted-foreground hover:text-foreground h-8 w-8 shrink-0 rounded-full"
+                      className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0 rounded-full"
                       aria-label="Dismiss banner"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
+              </CardHeader>
 
-                {/* Countdown Timer - Gold Style */}
+              <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
+                {/* Countdown Timer */}
                 {bonusData.expiresAt && (
                   <div className="mb-4">
                     <CountdownTimer
@@ -552,33 +577,21 @@ export function RegistrationBonusBanner() {
                 )}
 
                 {/* Overall Progress */}
-                <div className="mb-5">
+                <div className="mb-4 sm:mb-5">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-foreground text-sm font-semibold">
                       Overall Progress
                     </span>
-                    <span className="text-novunt-gold-600 dark:text-novunt-gold-500 text-sm font-bold">
+                    <span className="bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-sm font-bold text-transparent">
                       {safeProgressPercentage}%
                     </span>
                   </div>
-                  <div className="bg-muted/50 border-novunt-gold-500/20 relative h-3 overflow-hidden rounded-full border">
+                  <div className="bg-muted/50 relative h-3 overflow-hidden rounded-full">
                     <motion.div
-                      className="from-novunt-gold-500 via-novunt-gold-600 to-novunt-gold-500 shadow-novunt-gold-500/50 h-full bg-gradient-to-r shadow-lg"
+                      className="h-full bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 shadow-lg shadow-amber-500/50"
                       initial={{ width: 0 }}
                       animate={{ width: `${safeProgressPercentage}%` }}
                       transition={{ duration: 0.8, ease: 'easeOut' }}
-                    />
-                    {/* Subtle glow effect on progress bar */}
-                    <motion.div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '200%' }}
-                      transition={{
-                        duration: 3,
-                        ease: 'easeInOut',
-                        repeat: Infinity,
-                        repeatDelay: 3,
-                      }}
                     />
                   </div>
                 </div>
@@ -593,7 +606,7 @@ export function RegistrationBonusBanner() {
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="border-novunt-gold-500/10 mt-4 border-t pt-4">
+                      <div className="border-border/50 mt-4 border-t pt-4">
                         <RequirementSection
                           requirements={bonusData.requirements}
                           nextStepDescription={

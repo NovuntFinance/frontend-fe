@@ -20,6 +20,9 @@ const eslintConfig = [
       'next-env.d.ts',
       'public/sw.js',
       'public/workbox-*.js',
+      'jest.config.js',
+      'jest.setup.js',
+      'scripts/**',
     ],
   },
   {

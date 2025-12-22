@@ -28,15 +28,21 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/enhanced-toast';
 import type { SupportEscalationRequest } from '@/types/assistant';
+import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api';
 
 interface SupportEscalationFormProps {
   isOpen: boolean;
   onClose: () => void;
+  conversationId?: string;
+  onTicketCreated?: (ticketId: string) => void;
 }
 
 export function SupportEscalationForm({
   isOpen,
   onClose,
+  conversationId,
+  onTicketCreated,
 }: SupportEscalationFormProps) {
   const [formData, setFormData] = useState<SupportEscalationRequest>({
     subject: '',
@@ -66,50 +72,26 @@ export function SupportEscalationForm({
         return;
       }
 
-      const apiBaseURL = getAPIBaseURL();
-      const response = await fetch(`${apiBaseURL}/assistant/support/escalate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          subject: formData.subject,
-          description: formData.description,
-          priority: formData.priority,
-          category: formData.category,
-          conversationId: conversationId || undefined, // Link to conversation if available
-        }),
+      const data = await api.post<{
+        success: boolean;
+        data: { ticketId: string };
+        message?: string;
+      }>('/assistant/support/escalate', {
+        subject: formData.subject,
+        description: formData.description,
+        priority: formData.priority,
+        category: formData.category,
+        conversationId: conversationId || undefined, // Link to conversation if available
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error?.message ||
-          errorData.message ||
-          'Failed to submit support request';
-        const errorCode = errorData.error?.code || 'UNKNOWN_ERROR';
-
-        // Handle validation errors
-        if (response.status === 400 && errorCode === 'VALIDATION_ERROR') {
-          const details = errorData.error?.details || {};
-          const fieldErrors = Object.entries(details)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join(', ');
-          throw new Error(fieldErrors || errorMessage);
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
 
       if (!data.success || !data.data) {
         throw new Error(data.message || 'Failed to submit support request');
       }
 
       const ticketData = data.data;
-      setTicketId(ticketData.ticketId);
+      if (onTicketCreated && ticketData.ticketId) {
+        onTicketCreated(ticketData.ticketId);
+      }
 
       setIsSubmitted(true);
       toast.success('Support request submitted successfully!', {

@@ -66,6 +66,7 @@ import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfettiBurst } from '@/components/ui/confetti';
 import { CheckCircle2 } from 'lucide-react';
+import { MoratoriumCountdown } from './MoratoriumCountdown';
 
 // Form schema - walletAddress is not needed if default exists (backend uses it automatically)
 // Note: 2FA code is handled separately via TwoFactorInput component
@@ -117,6 +118,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     defaultAddress?.address ||
     walletInfo?.defaultWithdrawalAddress ||
     detectedAddress;
+  const canChangeAddress = defaultAddress?.canChange ?? true;
+  const moratorium = defaultAddress?.moratorium;
   const schema = createWithdrawalSchema(hasDefaultAddress);
 
   // Debug logging for address detection
@@ -179,13 +182,25 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
   // Also handle case where backend says address exists but GET didn't return it
   useEffect(() => {
     if (step === 'setup-address') {
-      // Only check if address is already set if we have loaded data (not loading)
+      // Only check if address can be changed if we have loaded data (not loading)
       // This prevents blocking the setup step when data is still loading
-      if (!defaultAddressLoading && hasDefaultAddress && actualAddress) {
-        toast.error('Address already set', {
-          description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) is permanently set and cannot be changed. Contact support if needed.`,
-          duration: 5000,
-        });
+      if (
+        !defaultAddressLoading &&
+        hasDefaultAddress &&
+        actualAddress &&
+        !canChangeAddress
+      ) {
+        if (moratorium?.active) {
+          toast.error('Address change locked', {
+            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+            duration: 6000,
+          });
+        } else {
+          toast.error('Address already set', {
+            description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) cannot be changed. Contact support if needed.`,
+            duration: 5000,
+          });
+        }
         setStep('form');
         setAddressToSet('');
         setSetup2FACode('');
@@ -199,13 +214,33 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     defaultAddress,
   ]);
 
-  // Handle ADDRESS_IMMUTABLE error from setDefaultAddress mutation
+  // Handle ADDRESS_MORATORIUM_ACTIVE and ADDRESS_IMMUTABLE errors from setDefaultAddress mutation
   // This is a workaround for when GET doesn't return the address but POST says it exists
   useEffect(() => {
     if (setDefaultAddress.error) {
       const errorData = (setDefaultAddress.error as any)?.response?.data;
+      const code = errorData?.code;
+
+      // Handle moratorium active error
+      if (code === 'ADDRESS_MORATORIUM_ACTIVE') {
+        const moratorium = errorData?.moratorium;
+        if (moratorium) {
+          // Update moratorium in cache
+          queryClient.setQueryData(
+            ['withdrawal', 'default-address'],
+            (old: any) => ({
+              ...old,
+              moratorium: moratorium,
+              canChange: false,
+            })
+          );
+        }
+      }
+
+      // Handle legacy immutable error (for backward compatibility)
       if (
-        errorData?.code === 'ADDRESS_IMMUTABLE' &&
+        (code === 'ADDRESS_IMMUTABLE' ||
+          code === 'ADDRESS_MORATORIUM_ACTIVE') &&
         errorData?.currentAddress
       ) {
         // Address exists but GET didn't return it - store it from error response
@@ -432,8 +467,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                       Set Your Withdrawal Address
                     </p>
                     <p className="text-sm">
-                      This address will be used for all withdrawals and cannot
-                      be changed once set.
+                      This address will be used for all withdrawals. You can
+                      change it after a 48-hour waiting period.
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -653,12 +688,23 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         return;
                       }
 
-                      // Check if address is already set before attempting to set
-                      if (hasDefaultAddress && actualAddress) {
-                        toast.error('Address already set', {
-                          description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) is permanently set and cannot be changed. Contact support if needed.`,
-                          duration: 5000,
-                        });
+                      // Check if address can be changed (moratorium check)
+                      if (
+                        hasDefaultAddress &&
+                        actualAddress &&
+                        !canChangeAddress
+                      ) {
+                        if (moratorium?.active) {
+                          toast.error('Address change locked', {
+                            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+                            duration: 6000,
+                          });
+                        } else {
+                          toast.error('Address already set', {
+                            description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) cannot be changed. Contact support if needed.`,
+                            duration: 5000,
+                          });
+                        }
                         setStep('form');
                         return;
                       }
@@ -718,7 +764,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
             ) : step === 'form' ? (
               <motion.form
                 key="form"
-                {...slideUp()}
+                {...(slideUp() as any)}
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-6"
               >
@@ -848,19 +894,46 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     <div className="flex items-start gap-3">
                       <Lock className="text-success mt-0.5 h-4 w-4" />
                       <AlertDescription>
-                        <div>
+                        <div className="space-y-2">
                           <p className="text-success mb-1 flex items-center gap-2 font-semibold">
                             Withdrawing to:{' '}
                             <span className="font-mono text-sm">
                               {actualAddress}
-                            </span>{' '}
-                            <span className="text-xs">(permanent)</span>
+                            </span>
                           </p>
-                          <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-                            <Lock className="h-3 w-3" />
-                            This address is permanently set and cannot be
-                            changed. Contact support if needed.
-                          </p>
+                          {moratorium?.active && !canChangeAddress && (
+                            <MoratoriumCountdown
+                              moratorium={moratorium}
+                              onExpired={() => {
+                                // Refetch address status when moratorium expires
+                                queryClient.invalidateQueries({
+                                  queryKey: ['withdrawal', 'default-address'],
+                                });
+                              }}
+                            />
+                          )}
+                          {canChangeAddress && (
+                            <div className="mt-2">
+                              <p className="text-muted-foreground mb-2 flex items-center gap-1 text-xs">
+                                <Check className="h-3 w-3" />
+                                You can change this address if needed.
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setStep('setup-address');
+                                  // Generate a BEP20 test address by default
+                                  const testAddress =
+                                    generateTestWalletAddress('BEP20');
+                                  setAddressToSet(testAddress);
+                                }}
+                              >
+                                Change Address
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </AlertDescription>
                     </div>
@@ -875,19 +948,36 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         </p>
                         <p className="mb-3 text-sm">
                           You must set your withdrawal address before making a
-                          withdrawal. This address cannot be changed once set.
+                          withdrawal. Addresses can be changed after a 48-hour
+                          waiting period.
                         </p>
+                        {moratorium?.active && !canChangeAddress && (
+                          <div className="mb-3">
+                            <MoratoriumCountdown moratorium={moratorium} />
+                          </div>
+                        )}
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // Check if address is already set
-                            if (hasDefaultAddress && actualAddress) {
-                              toast.error('Address already set', {
-                                description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) is permanently set and cannot be changed. Contact support if needed.`,
-                                duration: 5000,
-                              });
+                            // Check if address can be changed (moratorium check)
+                            if (
+                              hasDefaultAddress &&
+                              actualAddress &&
+                              !canChangeAddress
+                            ) {
+                              if (moratorium?.active) {
+                                toast.error('Address change locked', {
+                                  description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+                                  duration: 6000,
+                                });
+                              } else {
+                                toast.error('Address already set', {
+                                  description: `Your withdrawal address (${actualAddress.slice(0, 10)}...${actualAddress.slice(-10)}) cannot be changed. Contact support if needed.`,
+                                  duration: 5000,
+                                });
+                              }
                               return;
                             }
                             setStep('setup-address');
@@ -896,8 +986,11 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                               generateTestWalletAddress('BEP20');
                             setAddressToSet(testAddress);
                           }}
+                          disabled={hasDefaultAddress && !canChangeAddress}
                         >
-                          Set Withdrawal Address
+                          {hasDefaultAddress
+                            ? 'Change Withdrawal Address'
+                            : 'Set Withdrawal Address'}
                         </Button>
                       </div>
                     </AlertDescription>

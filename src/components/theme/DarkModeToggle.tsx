@@ -6,7 +6,7 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Monitor as MonitorIcon } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,7 +46,7 @@ export function DarkModeToggle() {
           ) : theme === 'light' ? (
             <Sun className="h-5 w-5" />
           ) : (
-            <MonitorIcon className="h-5 w-5" />
+            <Sun className="h-5 w-5 opacity-50" />
           )}
         </Button>
       </DropdownMenuTrigger>
@@ -60,11 +60,10 @@ export function DarkModeToggle() {
           <span>Dark</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('system')}>
-          <MonitorIcon className="mr-2 h-4 w-4" />
+          <Sun className="mr-2 h-4 w-4 opacity-50" />
           <span>System</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

@@ -235,7 +235,7 @@ export function StakingTransactionHistory() {
 
         <TabsContent value={activeTab} className="space-y-4">
           {isLoading ? (
-            <LoadingStates.List items={5} />
+            <LoadingStates.List lines={5} />
           ) : transactions.length > 0 ? (
             <motion.div
               initial={reducedMotion ? false : { opacity: 0, y: 20 }}
