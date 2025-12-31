@@ -1,8 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { adminAuthService } from './adminAuthService';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+// Get base URL from environment (should not include /api/v1)
+const getBaseURL = (): string => {
+  const envURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  // Remove trailing /api/v1 if present to ensure clean base URL
+  return envURL.replace(/\/api\/v1\/?$/, '');
+};
+
+const API_BASE_URL = getBaseURL();
+// API URL with version prefix
+const API_URL = `${API_BASE_URL}/api/v1`;
 
 // 2FA Code Cache (valid for 85 seconds to match backend's ±2 time steps ~90-second window)
 interface Cached2FA {
@@ -18,7 +26,7 @@ export const createAdminApi = (
   get2FACode: () => Promise<string | null>
 ): AxiosInstance => {
   const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: API_URL, // Use API_URL which includes /api/v1
     withCredentials: true,
   });
 

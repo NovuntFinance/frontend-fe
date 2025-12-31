@@ -1,7 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+// Get base URL from environment (should not include /api/v1)
+const getBaseURL = (): string => {
+  const envURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  // Remove trailing /api/v1 if present to ensure clean base URL
+  return envURL.replace(/\/api\/v1\/?$/, '');
+};
+
+const API_BASE_URL = getBaseURL();
+// API URL with version prefix
+const API_URL = `${API_BASE_URL}/api/v1`;
 
 export interface AdminLoginRequest {
   identifier: string; // email or username
@@ -40,7 +48,7 @@ class AdminAuthService {
    * POST /api/v1/admin/login
    */
   async login(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
-    const url = `${API_BASE_URL}/admin/login`;
+    const url = `${API_URL}/admin/login`;
 
     // Log request details in development
     if (process.env.NODE_ENV === 'development') {
@@ -410,7 +418,7 @@ class AdminAuthService {
     if (token) {
       try {
         await axios.post(
-          `${API_BASE_URL}/admin/logout`,
+          `${API_URL}/admin/logout`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
