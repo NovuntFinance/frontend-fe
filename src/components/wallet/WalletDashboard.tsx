@@ -14,7 +14,6 @@ import {
   ArrowDownRight,
   Eye,
   EyeOff,
-  Send,
   DollarSign,
   Wallet as WalletIcon,
 } from 'lucide-react';
@@ -30,95 +29,14 @@ import { Button } from '@/components/ui/button';
 import { WithdrawalModal } from './WithdrawalModal';
 import { TransferModal } from './modals/TransferModal';
 import { WalletBreakdown } from './WalletBreakdown';
-import { useUIStore } from '@/store/uiStore';
 import { StatCard } from './StatCard';
 import { WalletDashboardSkeleton } from './WalletDashboardSkeleton';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { walletLogger } from '@/lib/logger';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { slideUp, hoverAnimation } from '@/design-system/animations';
-
-/**
- * Quick Actions Component
- * Matching dashboard QuickActions style
- */
-const QuickActions = memo(function QuickActions({
-  onDeposit,
-  onWithdraw,
-  onTransfer,
-  canWithdraw,
-  canTransfer,
-}: {
-  onDeposit: () => void;
-  onWithdraw: () => void;
-  onTransfer: () => void;
-  canWithdraw: boolean;
-  canTransfer: boolean;
-}) {
-  const reducedMotion = prefersReducedMotion();
-  const motionProps = reducedMotion
-    ? {}
-    : {
-        whileHover: { scale: 1.02, y: -2 },
-        whileTap: { scale: 0.98 },
-        transition: { type: 'spring' as const, stiffness: 400, damping: 17 },
-      };
-
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <motion.button
-        {...motionProps}
-        onClick={onDeposit}
-        className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4 transition-all duration-200 hover:shadow-lg dark:border-emerald-800 dark:bg-emerald-900/20"
-      >
-        <div className="rounded-full bg-white p-3 shadow-sm dark:bg-gray-800">
-          <ArrowDownRight className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-        </div>
-        <span className="font-semibold text-gray-900 dark:text-white">
-          Deposit
-        </span>
-      </motion.button>
-      <motion.button
-        {...motionProps}
-        onClick={onWithdraw}
-        disabled={!canWithdraw}
-        className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-amber-200 bg-amber-50 p-4 transition-all duration-200 hover:shadow-lg disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/20"
-      >
-        <div className="rounded-full bg-white p-3 shadow-sm dark:bg-gray-800">
-          <ArrowUpRight className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-        </div>
-        <span className="font-semibold text-gray-900 dark:text-white">
-          Withdraw
-        </span>
-      </motion.button>
-      <motion.button
-        {...motionProps}
-        onClick={onTransfer}
-        disabled={!canTransfer}
-        className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-purple-200 bg-purple-50 p-4 transition-all duration-200 hover:shadow-lg disabled:opacity-50 dark:border-purple-800 dark:bg-purple-900/20"
-      >
-        <div className="rounded-full bg-white p-3 shadow-sm dark:bg-gray-800">
-          <Send className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-        </div>
-        <span className="font-semibold text-gray-900 dark:text-white">
-          Transfer
-        </span>
-      </motion.button>
-      <motion.button
-        {...motionProps}
-        onClick={() => (window.location.href = '/dashboard/stake')}
-        className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-blue-200 bg-blue-50 p-4 transition-all duration-200 hover:shadow-lg dark:border-blue-800 dark:bg-blue-900/20"
-      >
-        <div className="rounded-full bg-white p-3 shadow-sm dark:bg-gray-800">
-          <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-        </div>
-        <span className="font-semibold text-gray-900 dark:text-white">
-          Stake
-        </span>
-      </motion.button>
-    </div>
-  );
-});
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { useActiveStakes, useDashboardOverview } from '@/lib/queries';
 
 /**
  * Wallet Capabilities Component - Staking Streak Template
@@ -213,7 +131,8 @@ const WalletCapabilities = memo(function WalletCapabilities({
  */
 export function WalletDashboard() {
   const { wallet, isLoading, error, refetch } = useWallet();
-  const { openModal } = useUIStore();
+  const { data: activeStakes } = useActiveStakes();
+  const { data: overview } = useDashboardOverview();
 
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
@@ -221,7 +140,7 @@ export function WalletDashboard() {
 
   // Get statistics directly from backend - no calculations needed
   // Backend provides all statistics in wallet.statistics
-  const statistics = wallet?.statistics || {
+  const baseStatistics = wallet?.statistics || {
     totalDeposited: 0,
     totalWithdrawn: 0,
     totalTransferReceived: 0,
@@ -231,21 +150,34 @@ export function WalletDashboard() {
     totalEarned: 0,
   };
 
-  // Memoize callbacks
-  const handleDeposit = useCallback(() => {
-    walletLogger.info('Opening deposit modal');
-    openModal('deposit');
-  }, [openModal]);
+  // Calculate totalStaked similar to dashboard page
+  // Priority: overview > activeStakes calculation > wallet statistics
+  const activeStakesArray = Array.isArray(activeStakes)
+    ? activeStakes
+    : (activeStakes as any)?.data?.activeStakes ||
+      (activeStakes as any)?.activeStakes ||
+      [];
 
-  const handleWithdraw = useCallback(() => {
-    walletLogger.info('Opening withdrawal modal');
-    setWithdrawalModalOpen(true);
-  }, []);
+  const totalStakedFromOverview = overview?.staking?.totalStaked;
+  const totalStakedFromActiveStakes =
+    activeStakesArray.length > 0
+      ? activeStakesArray.reduce((sum: number, stake: any) => {
+          const amount = Number(stake?.amount || stake?.stakeAmount || 0);
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0)
+      : 0;
 
-  const handleTransfer = useCallback(() => {
-    walletLogger.info('Opening transfer modal');
-    setTransferModalOpen(true);
-  }, []);
+  const calculatedTotalStaked =
+    totalStakedFromOverview ??
+    totalStakedFromActiveStakes ??
+    baseStatistics.totalStaked ??
+    0;
+
+  // Merge statistics with calculated totalStaked
+  const statistics = {
+    ...baseStatistics,
+    totalStaked: calculatedTotalStaked,
+  };
 
   const toggleBalanceVisibility = useCallback(() => {
     setBalanceVisible((prev) => !prev);
@@ -367,13 +299,7 @@ export function WalletDashboard() {
             <WalletBreakdown wallet={wallet} balanceVisible={balanceVisible} />
 
             <div className="mt-6">
-              <QuickActions
-                onDeposit={handleDeposit}
-                onWithdraw={handleWithdraw}
-                onTransfer={handleTransfer}
-                canWithdraw={wallet.canWithdraw}
-                canTransfer={wallet.canTransfer}
-              />
+              <QuickActions />
             </div>
 
             <div className="mt-6">

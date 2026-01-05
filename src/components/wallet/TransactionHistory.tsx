@@ -6,7 +6,13 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft,
@@ -70,6 +76,7 @@ import type {
  */
 export function TransactionHistory() {
   const { user } = useUser();
+  const sectionRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<TransactionHistoryParams>({
     page: 1,
     limit: 20,
@@ -568,7 +575,15 @@ export function TransactionHistory() {
       ...prev,
       page: newPage,
     }));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Smoothly scroll back to the transaction history section instead of the very top
+    if (typeof window !== 'undefined' && sectionRef.current) {
+      const rect = sectionRef.current.getBoundingClientRect();
+      // Offset to account for any fixed headers / bottom nav (tuned for dashboard layout)
+      const offset = 96;
+      const targetTop = Math.max(rect.top + window.scrollY - offset, 0);
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    }
   };
 
   const clearFilters = () => {
@@ -991,7 +1006,7 @@ export function TransactionHistory() {
   const reducedMotion = prefersReducedMotion();
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div ref={sectionRef} className="space-y-4 sm:space-y-6">
       {/* Header - Staking Streak Template */}
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 20 }}

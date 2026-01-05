@@ -47,7 +47,9 @@ export default function TeamPage() {
   const { data: referralInfo, isLoading: infoLoading } = useReferralInfo();
   const { data: referralTree, isLoading: treeLoading } = useReferralTree(20);
 
-  type ExtendedReferralEntry = (typeof referralTree)['tree'][number] & {
+  type ExtendedReferralEntry = NonNullable<
+    typeof referralTree
+  >['tree'][number] & {
     personalInvestment?: number;
     referralInvestmentAmount?: number;
   };

@@ -1,7 +1,7 @@
 /**
  * Authentication Utilities
  * Helper functions for authentication operations
- * 
+ *
  * Based on: FRONTEND_IMPLEMENTATION_EXAMPLES.md
  */
 
@@ -28,9 +28,14 @@ import {
  */
 export const normalizeUser = (backendUser: BackendUser): User => {
   // Backend may return profilePicture, frontend uses avatar
-  const backendUserWithAvatar = backendUser as BackendUser & { profilePicture?: string; avatar?: string; rank?: string };
-  const avatar = backendUserWithAvatar.profilePicture || backendUserWithAvatar.avatar;
-  
+  const backendUserWithAvatar = backendUser as BackendUser & {
+    profilePicture?: string;
+    avatar?: string;
+    rank?: string;
+  };
+  const avatar =
+    backendUserWithAvatar.profilePicture || backendUserWithAvatar.avatar;
+
   return {
     _id: backendUser._id,
     email: backendUser.email,
@@ -60,7 +65,12 @@ export const normalizeUser = (backendUser: BackendUser): User => {
  * Get user display name
  */
 export const getUserDisplayName = (user: User | BackendUser): string => {
-  if ('firstName' in user && 'lastName' in user && user.firstName && user.lastName) {
+  if (
+    'firstName' in user &&
+    'lastName' in user &&
+    user.firstName &&
+    user.lastName
+  ) {
     return `${user.firstName} ${user.lastName}`.trim();
   }
   if ('fname' in user && 'lname' in user && user.fname && user.lname) {
@@ -75,7 +85,12 @@ export const getUserDisplayName = (user: User | BackendUser): string => {
  * Get user initials for avatar
  */
 export const getUserInitials = (user: User | BackendUser): string => {
-  if ('firstName' in user && 'lastName' in user && user.firstName && user.lastName) {
+  if (
+    'firstName' in user &&
+    'lastName' in user &&
+    user.firstName &&
+    user.lastName
+  ) {
     const first = user.firstName[0] || '';
     const last = user.lastName[0] || '';
     return `${first}${last}`.toUpperCase();
@@ -87,7 +102,11 @@ export const getUserInitials = (user: User | BackendUser): string => {
   }
   // TypeScript needs help understanding user still has username/email
   const anyUser = user as User & BackendUser;
-  return anyUser.username?.[0]?.toUpperCase() || anyUser.email?.[0]?.toUpperCase() || '?';
+  return (
+    anyUser.username?.[0]?.toUpperCase() ||
+    anyUser.email?.[0]?.toUpperCase() ||
+    '?'
+  );
 };
 
 // ============================================================================
@@ -97,15 +116,17 @@ export const getUserInitials = (user: User | BackendUser): string => {
 /**
  * Validate email format
  */
-export const validateEmail = (email: string): { valid: boolean; message?: string } => {
+export const validateEmail = (
+  email: string
+): { valid: boolean; message?: string } => {
   if (!email) {
     return { valid: false, message: 'Email is required' };
   }
-  
+
   if (!EMAIL_REGEX.test(email)) {
     return { valid: false, message: 'Invalid email format' };
   }
-  
+
   return { valid: true };
 };
 
@@ -118,37 +139,63 @@ export const validateEmail = (email: string): { valid: boolean; message?: string
  * - At least 1 number
  * - At least 1 special character (@_$!%*?&)
  */
-export const validatePassword = (password: string): { valid: boolean; message?: string } => {
-  if (!password) {
+export const validatePassword = (
+  password: string
+): { valid: boolean; message?: string } => {
+  // Trim whitespace for validation (but note: passwords with leading/trailing spaces are usually invalid)
+  const trimmedPassword = password?.trim();
+
+  if (!password || !trimmedPassword) {
     return { valid: false, message: 'Password is required' };
   }
-  
-  if (password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long' };
+
+  // Check for leading/trailing spaces (common user mistake)
+  if (password !== trimmedPassword) {
+    return {
+      valid: false,
+      message: 'Password cannot have leading or trailing spaces',
+    };
   }
-  
-  if (!/[a-z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one lowercase letter' };
+
+  if (trimmedPassword.length < 8) {
+    return {
+      valid: false,
+      message: 'Password must be at least 8 characters long',
+    };
   }
-  
-  if (!/[A-Z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one uppercase letter' };
+
+  if (!/[a-z]/.test(trimmedPassword)) {
+    return {
+      valid: false,
+      message: 'Password must contain at least one lowercase letter',
+    };
   }
-  
-  if (!/\d/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one number' };
+
+  if (!/[A-Z]/.test(trimmedPassword)) {
+    return {
+      valid: false,
+      message: 'Password must contain at least one uppercase letter',
+    };
   }
-  
+
+  if (!/\d/.test(trimmedPassword)) {
+    return {
+      valid: false,
+      message: 'Password must contain at least one number',
+    };
+  }
+
   // Phase 1: Accept any special character (not restricted to @_$!%*?&)
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one special character' };
+  // Special characters include: !@#$%^&*()_+-=[]{}|;:,.<>?/~`
+  if (!/[^A-Za-z0-9]/.test(trimmedPassword)) {
+    return {
+      valid: false,
+      message:
+        'Password must contain at least one special character (e.g., !@#$%^&*)',
+    };
   }
-  
-  // Final validation check
-  if (password.length < 8 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-    return { valid: false, message: 'Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character' };
-  }
-  
+
+  // All checks passed
   return { valid: true };
 };
 
@@ -156,7 +203,9 @@ export const validatePassword = (password: string): { valid: boolean; message?: 
  * Get password strength (0-4)
  * 0 = Very Weak, 1 = Weak, 2 = Fair, 3 = Good, 4 = Strong
  */
-export const getPasswordStrength = (password: string): {
+export const getPasswordStrength = (
+  password: string
+): {
   strength: number;
   label: string;
   color: string;
@@ -164,24 +213,24 @@ export const getPasswordStrength = (password: string): {
   if (!password) {
     return { strength: 0, label: 'Very Weak', color: 'red' };
   }
-  
+
   let strength = 0;
-  
+
   // Length
   if (password.length >= 8) strength++;
   if (password.length >= 12) strength++;
-  
+
   // Character types
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
   if (/\d/.test(password)) strength++;
   if (/[@_$!%*?&]/.test(password)) strength++;
-  
+
   // Cap at 4
   strength = Math.min(strength, 4);
-  
+
   const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
   const colors = ['red', 'orange', 'yellow', 'blue', 'green'];
-  
+
   return {
     strength,
     label: labels[strength],
@@ -192,38 +241,48 @@ export const getPasswordStrength = (password: string): {
 /**
  * Validate 6-digit verification code
  */
-export const validateVerificationCode = (code: string): { valid: boolean; message?: string } => {
+export const validateVerificationCode = (
+  code: string
+): { valid: boolean; message?: string } => {
   if (!code) {
     return { valid: false, message: 'Verification code is required' };
   }
-  
+
   if (!VERIFICATION_CODE_REGEX.test(code)) {
     return { valid: false, message: 'Verification code must be 6 digits' };
   }
-  
+
   return { valid: true };
 };
 
 /**
  * Validate username
  */
-export const validateUsername = (username: string): { valid: boolean; message?: string } => {
+export const validateUsername = (
+  username: string
+): { valid: boolean; message?: string } => {
   if (!username) {
     return { valid: false, message: 'Username is required' };
   }
-  
+
   if (username.length < 3) {
     return { valid: false, message: 'Username must be at least 3 characters' };
   }
-  
+
   if (username.length > 20) {
-    return { valid: false, message: 'Username must be less than 20 characters' };
+    return {
+      valid: false,
+      message: 'Username must be less than 20 characters',
+    };
   }
-  
+
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    return { valid: false, message: 'Username can only contain letters, numbers, and underscores' };
+    return {
+      valid: false,
+      message: 'Username can only contain letters, numbers, and underscores',
+    };
   }
-  
+
   return { valid: true };
 };
 
@@ -274,7 +333,7 @@ export const decodeToken = (token: string): TokenPayload | null => {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    
+
     const payload = JSON.parse(atob(parts[1]));
     return payload as TokenPayload;
   } catch {
@@ -288,7 +347,7 @@ export const decodeToken = (token: string): TokenPayload | null => {
 export const isTokenExpired = (token: string): boolean => {
   const payload = decodeToken(token);
   if (!payload || !payload.exp) return true;
-  
+
   // exp is in seconds, Date.now() is in milliseconds
   return payload.exp * 1000 < Date.now();
 };
@@ -300,7 +359,7 @@ export const isTokenExpired = (token: string): boolean => {
 export const isAuthenticated = (): boolean => {
   const token = getAuthToken();
   if (!token) return false;
-  
+
   return !isTokenExpired(token);
 };
 
@@ -309,11 +368,11 @@ export const isAuthenticated = (): boolean => {
  */
 export const getStoredUser = (): User | null => {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const userStr = localStorage.getItem(USER_STORAGE_KEY);
     if (!userStr) return null;
-    
+
     return JSON.parse(userStr) as User;
   } catch {
     return null;
@@ -335,13 +394,16 @@ export const storeUser = (user: User): void => {
 /**
  * Format phone number for display
  */
-export const formatPhoneNumber = (phoneNumber: string, countryCode?: string): string => {
+export const formatPhoneNumber = (
+  phoneNumber: string,
+  countryCode?: string
+): string => {
   if (!phoneNumber) return '';
-  
+
   if (countryCode) {
     return `${countryCode} ${phoneNumber}`;
   }
-  
+
   return phoneNumber;
 };
 
@@ -351,14 +413,14 @@ export const formatPhoneNumber = (phoneNumber: string, countryCode?: string): st
  */
 export const maskEmail = (email: string): string => {
   if (!email) return '';
-  
+
   const [local, domain] = email.split('@');
   if (!domain) return email;
-  
+
   if (local.length <= 2) {
     return `${local[0]}***@${domain}`;
   }
-  
+
   return `${local[0]}***${local[local.length - 1]}@${domain}`;
 };
 
@@ -367,7 +429,7 @@ export const maskEmail = (email: string): string => {
  */
 export const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
-  
+
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -387,15 +449,18 @@ export const formatDate = (dateString?: string): string => {
 /**
  * Check if user has specific role
  */
-export const hasRole = (user: User | BackendUser | null, role: string | string[]): boolean => {
+export const hasRole = (
+  user: User | BackendUser | null,
+  role: string | string[]
+): boolean => {
   if (!user) return false;
-  
+
   const userRole = user.role.toLowerCase();
-  
+
   if (Array.isArray(role)) {
     return role.some((r) => r.toLowerCase() === userRole);
   }
-  
+
   return role.toLowerCase() === userRole;
 };
 
@@ -465,22 +530,28 @@ export const requiresReauth = (error: unknown): boolean => {
  */
 export const logAuthState = (): void => {
   if (process.env.NODE_ENV !== 'development') return;
-  
+
   console.group('🔐 Auth State');
   console.log('Token:', getAuthToken() ? '✅ Present' : '❌ Missing');
-  console.log('Refresh Token:', getRefreshToken() ? '✅ Present' : '❌ Missing');
+  console.log(
+    'Refresh Token:',
+    getRefreshToken() ? '✅ Present' : '❌ Missing'
+  );
   console.log('User:', getStoredUser());
   console.log('Authenticated:', isAuthenticated());
-  
+
   const token = getAuthToken();
   if (token) {
     const payload = decodeToken(token);
     if (payload) {
       const expiresIn = payload.exp * 1000 - Date.now();
-      console.log('Token expires in:', Math.floor(expiresIn / 1000 / 60), 'minutes');
+      console.log(
+        'Token expires in:',
+        Math.floor(expiresIn / 1000 / 60),
+        'minutes'
+      );
     }
   }
-  
+
   console.groupEnd();
 };
-
