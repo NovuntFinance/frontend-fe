@@ -120,6 +120,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     detectedAddress;
   const canChangeAddress = defaultAddress?.canChange ?? true;
   const moratorium = defaultAddress?.moratorium;
+  // Check if withdrawals are blocked due to moratorium (48 hours after address change)
+  const withdrawalsBlockedByMoratorium = moratorium?.active ?? false;
   const schema = createWithdrawalSchema(hasDefaultAddress);
 
   // Debug logging for address detection
@@ -902,15 +904,37 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             </span>
                           </p>
                           {moratorium?.active && !canChangeAddress && (
-                            <MoratoriumCountdown
-                              moratorium={moratorium}
-                              onExpired={() => {
-                                // Refetch address status when moratorium expires
-                                queryClient.invalidateQueries({
-                                  queryKey: ['withdrawal', 'default-address'],
-                                });
-                              }}
-                            />
+                            <>
+                              <MoratoriumCountdown
+                                moratorium={moratorium}
+                                onExpired={() => {
+                                  // Refetch address status when moratorium expires
+                                  queryClient.invalidateQueries({
+                                    queryKey: ['withdrawal', 'default-address'],
+                                  });
+                                }}
+                              />
+                              <Alert className="mt-2 border-amber-500/30 bg-amber-500/10">
+                                <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                <AlertDescription>
+                                  <p className="font-semibold text-amber-700 dark:text-amber-300">
+                                    Withdrawals Temporarily Blocked
+                                  </p>
+                                  <p className="text-muted-foreground mt-1 text-sm">
+                                    Withdrawals are blocked for 48 hours after
+                                    changing your withdrawal address. This
+                                    security measure protects you from
+                                    unauthorized address changes. You can
+                                    withdraw again in{' '}
+                                    <strong>
+                                      {moratorium.hoursRemaining}h{' '}
+                                      {moratorium.minutesRemaining}m
+                                    </strong>
+                                    .
+                                  </p>
+                                </AlertDescription>
+                              </Alert>
+                            </>
                           )}
                           {canChangeAddress && (
                             <div className="mt-2">
@@ -1049,6 +1073,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     !canWithdrawToday ||
                     !hasDefaultAddress ||
                     !actualAddress ||
+                    withdrawalsBlockedByMoratorium ||
                     !amount ||
                     amount < minWithdrawal ||
                     twoFactorCode.length !== 6

@@ -101,62 +101,13 @@ export function useCreateStake() {
       return response;
     },
     onSuccess: async (data) => {
-      console.log(
-        '[Staking Mutation] ✅ Stake created, processing for registration bonus...'
-      );
+      console.log('[Staking Mutation] ✅ Stake created successfully!');
       console.log(
         '[Staking Mutation] Response data:',
         JSON.stringify(data, null, 2)
       );
 
-      // Process stake for registration bonus (this will update progress to 100% if it's the first stake)
-      try {
-        const stakeId = data?.stake?._id;
-        const stakeAmount = data?.stake?.amount;
-
-        if (!stakeId || !stakeAmount) {
-          console.error('[Staking Mutation] ⚠️ Missing stakeId or amount:', {
-            stakeId,
-            stakeAmount,
-            data,
-          });
-          throw new Error('Stake ID or amount is missing from response');
-        }
-
-        console.log('[Staking Mutation] Processing stake for bonus:', {
-          stakeId,
-          stakeAmount,
-        });
-        const bonusResponse = await registrationBonusApi.processStake(
-          stakeId,
-          stakeAmount
-        );
-        console.log(
-          '[Staking Mutation] 🎁 Registration bonus processed:',
-          bonusResponse
-        );
-
-        // If bonus was activated (100% progress reached), trigger confetti
-        if (bonusResponse.success && bonusResponse.bonusActivated) {
-          console.log(
-            '[Staking Mutation] 🎉 Bonus activated! Progress reached 100%'
-          );
-          // Dispatch custom event to trigger confetti in banner
-          window.dispatchEvent(
-            new CustomEvent('registrationBonusCompleted', {
-              detail: { bonusAmount: bonusResponse.bonusAmount },
-            })
-          );
-        }
-      } catch (error) {
-        console.error(
-          '[Staking Mutation] ⚠️ Failed to process stake for bonus (non-critical):',
-          error
-        );
-        // Don't fail the whole stake creation if bonus processing fails
-      }
-
-      // Invalidate all staking-related queries
+      // Invalidate all staking-related queries immediately (don't wait for bonus processing)
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.dashboard });
       queryClient.invalidateQueries({ queryKey: stakingQueryKeys.history });
 
@@ -166,18 +117,90 @@ export function useCreateStake() {
       // Invalidate dashboard overview
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardOverview });
 
-      // Invalidate registration bonus status to show updated progress
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.registrationBonusStatus,
-      });
-
       // Refresh rank progress (ranks update instantly on backend after stake creation)
-      // This ensures the user sees their updated rank immediately
       queryClient.invalidateQueries({ queryKey: ['rankProgress'] });
 
       console.log(
-        '[Staking Mutation] ✅ All queries invalidated and refetched'
+        '[Staking Mutation] ✅ All queries invalidated - UI will update immediately'
       );
+
+      // Process stake for registration bonus in the background (non-blocking)
+      // Use a timeout wrapper to prevent it from hanging
+      const processBonusWithTimeout = async () => {
+        const stakeId = data?.stake?._id;
+        const stakeAmount = data?.stake?.amount;
+
+        if (!stakeId || !stakeAmount) {
+          console.warn(
+            '[Staking Mutation] ⚠️ Missing stakeId or amount, skipping bonus processing'
+          );
+          return;
+        }
+
+        try {
+          // Create a timeout promise that rejects after 5 seconds
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(
+              () => reject(new Error('Bonus processing timeout')),
+              5000
+            );
+          });
+
+          // Race between the API call and timeout
+          const bonusResponse = (await Promise.race([
+            registrationBonusApi.processStake(stakeId, stakeAmount),
+            timeoutPromise,
+          ])) as any;
+
+          console.log(
+            '[Staking Mutation] 🎁 Registration bonus processed:',
+            bonusResponse
+          );
+
+          // If bonus was activated (100% progress reached), trigger confetti
+          if (bonusResponse?.success && bonusResponse?.bonusActivated) {
+            console.log(
+              '[Staking Mutation] 🎉 Bonus activated! Progress reached 100%'
+            );
+            // Dispatch custom event to trigger confetti in banner
+            window.dispatchEvent(
+              new CustomEvent('registrationBonusCompleted', {
+                detail: { bonusAmount: bonusResponse.bonusAmount },
+              })
+            );
+          }
+
+          // Invalidate registration bonus status after successful processing
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.registrationBonusStatus,
+          });
+        } catch (error: any) {
+          // Check if it's a timeout error
+          if (
+            error?.message?.includes('timeout') ||
+            error?.name === 'TimeoutError'
+          ) {
+            console.warn(
+              '[Staking Mutation] ⚠️ Bonus processing timed out (non-critical) - will retry on next page load'
+            );
+          } else {
+            console.error(
+              '[Staking Mutation] ⚠️ Failed to process stake for bonus (non-critical):',
+              error
+            );
+          }
+          // Don't fail the whole stake creation if bonus processing fails
+          // The bonus will be processed on next page load or when status is refreshed
+        }
+      };
+
+      // Process bonus in background (fire and forget)
+      processBonusWithTimeout().catch((error) => {
+        console.error(
+          '[Staking Mutation] Background bonus processing error:',
+          error
+        );
+      });
     },
     onError: (error) => {
       console.error('[Staking Mutation] ❌ Failed to create stake:', error);

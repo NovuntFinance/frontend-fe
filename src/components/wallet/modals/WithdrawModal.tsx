@@ -165,38 +165,39 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       <AnimatePresence>
         {isOpen && (
           <React.Fragment key="withdraw-modal">
-            {/* Backdrop */}
+            {/* Backdrop - Premium glassmorphism */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleClose}
-              className="bg-background/80 fixed inset-0 z-50 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md backdrop-saturate-150 dark:bg-black/70"
             />
 
-            {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Modal - Mobile-first with proper height constraints */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-4">
               <motion.div
                 key="modal-content"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-card border-border/50 relative w-full max-w-lg overflow-hidden rounded-3xl border shadow-2xl"
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="relative my-4 flex max-h-[calc(100vh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/30 bg-white/95 shadow-2xl shadow-black/20 backdrop-blur-2xl backdrop-saturate-200 sm:my-8 sm:max-h-[calc(100vh-2rem)] sm:rounded-3xl dark:border-white/10 dark:bg-gray-900/95 dark:shadow-black/40"
               >
-                {/* Header */}
-                <div className="from-secondary via-secondary to-secondary/80 relative bg-gradient-to-br p-6">
-                  <div className="from-secondary/20 absolute inset-0 bg-gradient-to-t to-transparent" />
-                  <div className="relative z-10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-secondary-foreground/10 rounded-xl p-3">
-                        <Upload className="text-secondary-foreground h-6 w-6" />
+                {/* Header - Premium gradient */}
+                <div className="from-secondary via-secondary to-secondary/90 relative bg-gradient-to-br p-4 shadow-lg sm:p-6">
+                  <div className="from-secondary/20 via-secondary/10 absolute inset-0 bg-gradient-to-t to-transparent" />
+                  <div className="relative z-10 flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                      <div className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3 dark:bg-white/10">
+                        <Upload className="h-5 w-5 text-white sm:h-6 sm:w-6" />
                       </div>
-                      <div>
-                        <h2 className="text-secondary-foreground text-2xl font-bold">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
                           Withdraw USDT
                         </h2>
-                        <p className="text-secondary-foreground/80 text-sm">
+                        <p className="truncate text-xs text-white/90 sm:text-sm">
                           Cash out your earnings
                         </p>
                       </div>
@@ -206,22 +207,22 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       size="icon"
                       onClick={handleClose}
                       disabled={step === 'submitting'}
-                      className="text-secondary-foreground/80 hover:text-secondary-foreground hover:bg-secondary-foreground/10"
+                      className="h-8 w-8 flex-shrink-0 rounded-xl text-white/90 hover:bg-white/20 hover:text-white sm:h-10 sm:w-10"
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6">
+                {/* Content - Scrollable with custom scrollbar */}
+                <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300/50 [&::-webkit-scrollbar-thumb]:hover:bg-gray-300/70 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700/50 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-700/70 [&::-webkit-scrollbar-track]:bg-transparent">
                   {/* Step 1: Form */}
                   {step === 'form' && (
                     <motion.div
                       key="step-form"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="space-y-6"
+                      className="space-y-4 sm:space-y-6"
                     >
                       {/* Available Balance */}
                       <div className="from-secondary/10 to-secondary/5 border-secondary/20 rounded-xl border bg-gradient-to-br p-4">
@@ -407,7 +408,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       key="step-confirm"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="space-y-6"
+                      className="space-y-4 sm:space-y-6"
                     >
                       <Alert className="bg-secondary/10 border-secondary">
                         <CheckCircle2 className="text-secondary h-4 w-4" />
@@ -477,18 +478,20 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         </Alert>
                       </div>
 
-                      <div className="flex gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row">
                         <Button
                           onClick={() => setStep('form')}
                           variant="outline"
-                          className="flex-1"
+                          className="w-full flex-1 sm:w-auto"
+                          size="lg"
                         >
                           Back
                         </Button>
                         <Button
                           onClick={() => handleSubmit()}
                           disabled={withdrawMutation.isPending}
-                          className="bg-secondary hover:bg-secondary/90 flex-1"
+                          className="bg-secondary hover:bg-secondary/90 w-full flex-1 sm:w-auto"
+                          size="lg"
                         >
                           {withdrawMutation.isPending && (
                             <NovuntSpinner size="sm" className="mr-2" />
@@ -505,7 +508,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       key="step-success"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="space-y-6 py-12 text-center"
+                      className="space-y-4 py-8 text-center sm:space-y-6 sm:py-12"
                     >
                       <motion.div
                         initial={{ scale: 0 }}
@@ -567,7 +570,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                       <Button
                         onClick={onClose}
-                        className="bg-secondary hover:bg-secondary/90 w-full"
+                        className="bg-secondary hover:bg-secondary/90 w-full sm:w-auto sm:min-w-[200px]"
                         size="lg"
                       >
                         Done
