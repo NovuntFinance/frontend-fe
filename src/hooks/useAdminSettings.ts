@@ -20,29 +20,20 @@ export function useAdminSettings(category?: string) {
         setLoading(true);
         setError(null);
 
-        // If no 2FA code provided, prompt for it
-        let code = twoFACode;
-        if (!code) {
-          code = (await promptFor2FA()) || undefined;
-          if (!code) {
-            setError(new Error('2FA code is required to fetch settings'));
-            setLoading(false);
-            return;
-          }
-        }
-
+        // Try to fetch without 2FA first (backend should allow GET requests without 2FA)
+        // Only prompt for 2FA if backend specifically requires it
         if (category) {
           const categorySettings =
             await adminSettingsService.getSettingsByCategory(
               category,
               true,
-              code
+              twoFACode
             );
           setSettings(categorySettings);
         } else {
           const response = await adminSettingsService.getAllSettings(
             true,
-            code
+            twoFACode
           );
           setSettings(response.data);
         }
@@ -52,8 +43,9 @@ export function useAdminSettings(category?: string) {
           const errorData = err.response.data;
           const errorCode = errorData?.error?.code;
 
+          // Only prompt for 2FA if backend explicitly requires it for GET requests
+          // (This shouldn't happen after backend fix, but kept for backward compatibility)
           if (errorCode === '2FA_CODE_REQUIRED' && !twoFACode) {
-            // Retry with 2FA code
             const code = (await promptFor2FA()) || undefined;
             if (code) {
               await fetchSettings(code);

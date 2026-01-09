@@ -209,8 +209,21 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
                         {format(day.date, 'd')}
                       </div>
                       {day.profit && (
-                        <div className="text-xs font-bold">
-                          {day.profit.profitPercentage.toFixed(1)}%
+                        <div className="space-y-0.5 text-left">
+                          <div className="text-xs font-semibold text-green-600 dark:text-green-400">
+                            P: $
+                            {(day.profit.premiumPoolAmount / 1000).toFixed(0)}k
+                          </div>
+                          <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                            Pf: $
+                            {(day.profit.performancePoolAmount / 1000).toFixed(
+                              0
+                            )}
+                            k
+                          </div>
+                          <div className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                            R: {day.profit.rosPercentage.toFixed(2)}%
+                          </div>
                         </div>
                       )}
                       {getDateBadge(day)}

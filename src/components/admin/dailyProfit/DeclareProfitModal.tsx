@@ -23,10 +23,16 @@ import type { DailyProfit } from '@/types/dailyProfit';
 
 const declareProfitSchema = z.object({
   date: z.string().min(1, 'Date is required'),
-  profitPercentage: z
+  premiumPoolAmount: z
     .number()
-    .min(0, 'Percentage must be at least 0')
-    .max(100, 'Percentage cannot exceed 100'),
+    .min(0, 'Premium pool amount must be at least 0'),
+  performancePoolAmount: z
+    .number()
+    .min(0, 'Performance pool amount must be at least 0'),
+  rosPercentage: z
+    .number()
+    .min(0, 'ROS percentage must be at least 0')
+    .max(100, 'ROS percentage cannot exceed 100'),
   description: z.string().optional(),
 });
 
@@ -61,12 +67,20 @@ export function DeclareProfitModal({
     resolver: zodResolver(declareProfitSchema),
     defaultValues: {
       date: initialDate || '',
-      profitPercentage: editingProfit?.profitPercentage || 0,
+      premiumPoolAmount: editingProfit?.premiumPoolAmount || 0,
+      performancePoolAmount: editingProfit?.performancePoolAmount || 0,
+      rosPercentage: editingProfit?.rosPercentage || 0,
       description: editingProfit?.description || '',
     },
   });
 
   const watchedDate = watch('date');
+  const watchedPremiumPool = watch('premiumPoolAmount');
+  const watchedPerformancePool = watch('performancePoolAmount');
+
+  // Calculate total pool amount
+  const totalPoolAmount =
+    (watchedPremiumPool || 0) + (watchedPerformancePool || 0);
 
   // Set initial date when modal opens
   useEffect(() => {
@@ -80,7 +94,9 @@ export function DeclareProfitModal({
       }
       if (editingProfit) {
         setValue('date', editingProfit.date);
-        setValue('profitPercentage', editingProfit.profitPercentage);
+        setValue('premiumPoolAmount', editingProfit.premiumPoolAmount);
+        setValue('performancePoolAmount', editingProfit.performancePoolAmount);
+        setValue('rosPercentage', editingProfit.rosPercentage);
         setValue('description', editingProfit.description || '');
       }
     } else {
@@ -126,7 +142,9 @@ export function DeclareProfitModal({
         await updateMutation.mutateAsync({
           date: editingProfit.date,
           data: {
-            profitPercentage: data.profitPercentage,
+            premiumPoolAmount: data.premiumPoolAmount,
+            performancePoolAmount: data.performancePoolAmount,
+            rosPercentage: data.rosPercentage,
             description: data.description,
             twoFACode,
           },
@@ -136,7 +154,9 @@ export function DeclareProfitModal({
         // Declare new profit
         await declareMutation.mutateAsync({
           date: data.date,
-          profitPercentage: data.profitPercentage,
+          premiumPoolAmount: data.premiumPoolAmount,
+          performancePoolAmount: data.performancePoolAmount,
+          rosPercentage: data.rosPercentage,
           description: data.description,
           twoFACode,
         });
@@ -165,8 +185,8 @@ export function DeclareProfitModal({
           </DialogTitle>
           <DialogDescription>
             {editingProfit
-              ? 'Update the profit percentage for this date'
-              : 'Declare the profit percentage for a specific date (up to 30 days ahead)'}
+              ? 'Update the pool amounts and ROS percentage for this date'
+              : 'Declare the pool amounts and ROS percentage for a specific date (up to 30 days ahead)'}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,24 +221,76 @@ export function DeclareProfitModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="profitPercentage">Profit Percentage (%)</Label>
+            <Label htmlFor="premiumPoolAmount">Premium Pool Amount ($)</Label>
             <Input
-              id="profitPercentage"
+              id="premiumPoolAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register('premiumPoolAmount', { valueAsNumber: true })}
+              disabled={isLoading}
+              placeholder="10000"
+            />
+            {errors.premiumPoolAmount && (
+              <p className="text-sm text-red-500">
+                {errors.premiumPoolAmount.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="performancePoolAmount">
+              Performance Pool Amount ($)
+            </Label>
+            <Input
+              id="performancePoolAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register('performancePoolAmount', { valueAsNumber: true })}
+              disabled={isLoading}
+              placeholder="5000"
+            />
+            {errors.performancePoolAmount && (
+              <p className="text-sm text-red-500">
+                {errors.performancePoolAmount.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="rosPercentage">ROS Percentage (%)</Label>
+            <Input
+              id="rosPercentage"
               type="number"
               step="0.01"
               min="0"
               max="100"
-              {...register('profitPercentage', { valueAsNumber: true })}
+              {...register('rosPercentage', { valueAsNumber: true })}
               disabled={isLoading}
-              placeholder="1.5"
+              placeholder="0.55"
             />
-            {errors.profitPercentage && (
+            {errors.rosPercentage && (
               <p className="text-sm text-red-500">
-                {errors.profitPercentage.message}
+                {errors.rosPercentage.message}
               </p>
             )}
             <p className="text-xs text-gray-500">
-              Enter a value between 0 and 100 (e.g., 1.5 for 1.5%)
+              Enter a value between 0 and 100 (e.g., 0.55 for 0.55%)
+            </p>
+          </div>
+
+          <div className="space-y-2 rounded-lg bg-gray-50 p-4">
+            <Label className="text-base font-semibold">Total Pool Amount</Label>
+            <p className="text-primary text-2xl font-bold">
+              $
+              {totalPoolAmount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+            <p className="text-xs text-gray-500">
+              Sum of Premium Pool and Performance Pool amounts
             </p>
           </div>
 

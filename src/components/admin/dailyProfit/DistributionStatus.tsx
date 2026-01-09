@@ -116,15 +116,44 @@ export function DistributionStatus() {
                 </h4>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400">Profit %</p>
-                  <p className="font-bold">
-                    {testDistributeMutation.data.data.profitPercentage.toFixed(
+                {/* Pool Amounts */}
+                <div className="rounded-lg bg-green-100 p-3 dark:bg-green-800/30">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Premium Pool Amount
+                  </p>
+                  <p className="font-bold text-green-700 dark:text-green-300">
+                    $
+                    {testDistributeMutation.data.data.premiumPoolAmount?.toLocaleString(
+                      'en-US',
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    ) || '0.00'}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-800/30">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Performance Pool Amount
+                  </p>
+                  <p className="font-bold text-blue-700 dark:text-blue-300">
+                    $
+                    {testDistributeMutation.data.data.performancePoolAmount?.toLocaleString(
+                      'en-US',
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    ) || '0.00'}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-purple-100 p-3 dark:bg-purple-800/30">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    ROS Percentage
+                  </p>
+                  <p className="font-bold text-purple-700 dark:text-purple-300">
+                    {testDistributeMutation.data.data.rosPercentage?.toFixed(
                       2
-                    )}
+                    ) || '0.00'}
                     %
                   </p>
                 </div>
+
+                {/* Stakes Information */}
                 <div>
                   <p className="text-gray-600 dark:text-gray-400">
                     Total Stakes
@@ -149,18 +178,66 @@ export function DistributionStatus() {
                     {testDistributeMutation.data.data.completedStakes}
                   </p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Total Distributed
-                  </p>
-                  <p className="flex items-center gap-1 text-lg font-bold">
-                    <DollarSign className="h-4 w-4" />
-                    {testDistributeMutation.data.data.totalDistributed.toFixed(
-                      2
-                    )}{' '}
-                    USDT
-                  </p>
+              </div>
+
+              {/* Distribution Breakdown */}
+              <div className="mt-4 border-t pt-4">
+                <h5 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Distribution Breakdown
+                </h5>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-lg bg-green-100 p-2 dark:bg-green-800/30">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Premium Pool
+                    </p>
+                    <p className="font-bold text-green-700 dark:text-green-300">
+                      $
+                      {testDistributeMutation.data.data.premiumPoolDistributed?.toLocaleString(
+                        'en-US',
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      ) || '0.00'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-800/30">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Performance Pool
+                    </p>
+                    <p className="font-bold text-blue-700 dark:text-blue-300">
+                      $
+                      {testDistributeMutation.data.data.performancePoolDistributed?.toLocaleString(
+                        'en-US',
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      ) || '0.00'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-800/30">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      ROS
+                    </p>
+                    <p className="font-bold text-purple-700 dark:text-purple-300">
+                      $
+                      {testDistributeMutation.data.data.rosDistributed?.toLocaleString(
+                        'en-US',
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      ) || '0.00'}
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              {/* Total Distributed */}
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Distributed
+                </p>
+                <p className="flex items-center gap-1 text-lg font-bold">
+                  <DollarSign className="h-4 w-4" />
+                  {testDistributeMutation.data.data.totalDistributed?.toLocaleString(
+                    'en-US',
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                  ) || '0.00'}{' '}
+                  USDT
+                </p>
               </div>
             </div>
           )}

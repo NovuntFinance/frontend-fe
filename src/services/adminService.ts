@@ -97,28 +97,39 @@ export const createAdminApi = (
           );
         } else {
           // Get fresh 2FA code
-          console.log('[AdminService] Requesting fresh 2FA code...');
+          console.log('[AdminService] Checking if 2FA code is needed...');
           try {
-            twoFACode = await get2FACode();
-            if (twoFACode && twoFACode.trim().length > 0) {
+            // Call the getter - if it returns null, don't prompt (for GET requests)
+            const code = await get2FACode();
+
+            // Only proceed if a code was actually provided (not null)
+            if (code && code.trim().length > 0) {
+              twoFACode = code.trim();
               // Cache for 85 seconds (matches backend's ±2 time steps ~90-second window)
-              // Backend accepts codes within ±2 time steps, so we cache for most of that window
               cached2FA = {
-                code: twoFACode.trim(),
+                code: twoFACode,
                 expiresAt: Date.now() + 85 * 1000,
               };
               console.log(
                 '[AdminService] Cached new 2FA code (valid for 85 seconds)'
               );
+            } else if (code === null) {
+              // Getter returned null intentionally (GET request, no 2FA needed)
+              console.log(
+                '[AdminService] 2FA code not required for this request (GET operation)'
+              );
+              twoFACode = null;
             } else {
+              // Empty string or undefined - user cancelled
               console.warn(
                 '[AdminService] No 2FA code provided by user (user cancelled or empty code)'
               );
-              // Don't throw error here - let the request proceed and backend will return 403
+              twoFACode = null;
             }
           } catch (error) {
             console.error('[AdminService] Error getting 2FA code:', error);
-            // Don't throw - let the request proceed and backend will return 403
+            twoFACode = null;
+            // Don't throw - let the request proceed and backend will return 403 if needed
           }
         }
 
@@ -306,9 +317,12 @@ class AdminService {
   /**
    * Get admin profile
    * GET /api/v1/admin/profile
+   * Note: No 2FA required for read-only operations (after backend update)
    */
   async getProfile() {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const response = await api.get('/admin/profile');
     return response.data;
   }
@@ -347,9 +361,12 @@ class AdminService {
   /**
    * Get all users with balances
    * GET /api/v1/admin/users-balances
+   * Note: No 2FA required for read-only operations (after backend update)
    */
   async getUsersWithBalances() {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const response = await api.get('/admin/users-balances');
     return response.data;
   }
@@ -357,6 +374,7 @@ class AdminService {
   /**
    * Get paginated list of users with filters
    * GET /api/v1/admin/users
+   * Note: No 2FA required for read-only operations (after backend update)
    */
   async getUsers(params?: {
     page?: number;
@@ -367,7 +385,10 @@ class AdminService {
     rank?: string;
     hasActiveStakes?: boolean;
   }) {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    // After backend update, this endpoint won't require 2FA for viewing
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const response = await api.get('/admin/users', { params });
     return response.data;
   }
@@ -428,9 +449,12 @@ class AdminService {
   /**
    * Get user by ID
    * GET /api/v1/admin/users/:userId
+   * Note: No 2FA required for read-only operations (after backend update)
    */
   async getUserById(userId: string) {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const response = await api.get(`/admin/users/${userId}`);
     return response.data;
   }
@@ -455,9 +479,12 @@ class AdminService {
   /**
    * Get all transactions
    * GET /api/v1/admin/transactions
+   * Note: No 2FA required for read-only operations (after backend update)
    */
   async getTransactions(page = 1, limit = 20) {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const response = await api.get('/admin/transactions', {
       params: { page, limit },
     });
@@ -467,13 +494,15 @@ class AdminService {
   /**
    * Get admin dashboard metrics
    * GET /api/v1/admin/ui/dashboard
-   * Requires 2FA code
+   * Note: No 2FA required for read-only operations (after backend update)
    *
    * Backend Fix: Endpoint is now implemented and returns correct structure
    * Response includes: metrics, charts, recentActivity, timeframe, lastUpdated
    */
   async getDashboardMetrics(timeframe: string = '30d') {
-    const api = createAdminApi(this.get2FACode);
+    // For GET requests, don't prompt for 2FA - let backend handle it
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
 
     // Backend has fixed the endpoint - use /admin/ui/dashboard directly
     const response = await api.get('/admin/ui/dashboard', {

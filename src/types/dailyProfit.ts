@@ -11,7 +11,10 @@
 export interface DailyProfit {
   id: string;
   date: string; // YYYY-MM-DD format
-  profitPercentage: number; // 0-100
+  profitPercentage: number; // 0-100 (legacy field, syncs with rosPercentage)
+  premiumPoolAmount: number; // Dollar amount for premium pool
+  performancePoolAmount: number; // Dollar amount for performance pool
+  rosPercentage: number; // 0-100 percentage for ROS
   description?: string;
   isActive: boolean;
   isDistributed: boolean;
@@ -37,7 +40,10 @@ export interface DailyProfit {
  */
 export interface TodayProfit {
   date: string; // YYYY-MM-DD format
-  profitPercentage: number;
+  profitPercentage: number; // Legacy field
+  premiumPoolAmount: number; // Dollar amount for premium pool
+  performancePoolAmount: number; // Dollar amount for performance pool
+  rosPercentage: number; // 0-100 percentage for ROS
   isDistributed: boolean;
 }
 
@@ -47,7 +53,10 @@ export interface TodayProfit {
  */
 export interface DailyProfitHistoryItem {
   date: string; // YYYY-MM-DD format
-  profitPercentage: number;
+  profitPercentage: number; // Legacy field
+  premiumPoolAmount: number; // Dollar amount for premium pool
+  performancePoolAmount: number; // Dollar amount for performance pool
+  rosPercentage: number; // 0-100 percentage for ROS
   isDistributed: boolean;
 }
 
@@ -68,7 +77,10 @@ export interface DailyProfitHistoryResponse {
  */
 export interface DeclareProfitRequest {
   date: string; // YYYY-MM-DD format
-  profitPercentage: number; // 0-100
+  profitPercentage?: number; // 0-100 (legacy, optional)
+  premiumPoolAmount: number; // Dollar amount for premium pool
+  performancePoolAmount: number; // Dollar amount for performance pool
+  rosPercentage: number; // 0-100 percentage for ROS
   description?: string;
   twoFACode: string; // Required if admin has 2FA enabled
 }
@@ -79,7 +91,10 @@ export interface DeclareProfitRequest {
 export interface DeclareBulkProfitRequest {
   declarations: Array<{
     date: string; // YYYY-MM-DD format
-    profitPercentage: number; // 0-100
+    profitPercentage?: number; // 0-100 (legacy, optional)
+    premiumPoolAmount: number; // Dollar amount for premium pool
+    performancePoolAmount: number; // Dollar amount for performance pool
+    rosPercentage: number; // 0-100 percentage for ROS
     description?: string;
   }>;
   twoFACode: string; // Required if admin has 2FA enabled
@@ -89,7 +104,10 @@ export interface DeclareBulkProfitRequest {
  * Update Profit Request
  */
 export interface UpdateProfitRequest {
-  profitPercentage?: number; // 0-100
+  profitPercentage?: number; // 0-100 (legacy)
+  premiumPoolAmount?: number; // Dollar amount for premium pool
+  performancePoolAmount?: number; // Dollar amount for performance pool
+  rosPercentage?: number; // 0-100 percentage for ROS
   description?: string;
   twoFACode: string; // Required if admin has 2FA enabled
 }
@@ -113,11 +131,17 @@ export interface TestDistributionRequest {
  * Distribution Result
  */
 export interface DistributionResult {
-  profitPercentage: number;
+  profitPercentage: number; // Legacy field
+  premiumPoolAmount: number;
+  performancePoolAmount: number;
+  rosPercentage: number;
   totalStakes: number;
   processedStakes: number;
   completedStakes: number;
-  totalDistributed: number; // Total USDT distributed
+  totalDistributed: number; // Total USDT distributed across all three pools
+  premiumPoolDistributed: number; // USDT from premium pool
+  performancePoolDistributed: number; // USDT from performance pool
+  rosDistributed: number; // USDT from ROS
   errors?: string[]; // Array of error messages if any
 }
 

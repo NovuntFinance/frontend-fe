@@ -22,10 +22,16 @@ import { toast } from '@/components/ui/enhanced-toast';
 import { format, addDays, startOfToday } from 'date-fns';
 
 const bulkDeclareSchema = z.object({
-  profitPercentage: z
+  premiumPoolAmount: z
     .number()
-    .min(0, 'Percentage must be at least 0')
-    .max(100, 'Percentage cannot exceed 100'),
+    .min(0, 'Premium pool amount must be at least 0'),
+  performancePoolAmount: z
+    .number()
+    .min(0, 'Performance pool amount must be at least 0'),
+  rosPercentage: z
+    .number()
+    .min(0, 'ROS percentage must be at least 0')
+    .max(100, 'ROS percentage cannot exceed 100'),
   selectedDates: z.array(z.string()).min(1, 'Select at least one date'),
 });
 
@@ -55,12 +61,16 @@ export function BulkDeclareModal({
   } = useForm<BulkDeclareFormData>({
     resolver: zodResolver(bulkDeclareSchema),
     defaultValues: {
-      profitPercentage: 0,
+      premiumPoolAmount: 0,
+      performancePoolAmount: 0,
+      rosPercentage: 0,
       selectedDates: [],
     },
   });
 
-  const profitPercentage = watch('profitPercentage');
+  const premiumPoolAmount = watch('premiumPoolAmount');
+  const performancePoolAmount = watch('performancePoolAmount');
+  const rosPercentage = watch('rosPercentage');
 
   // Generate next 30 days
   const today = startOfToday();
@@ -109,7 +119,9 @@ export function BulkDeclareModal({
 
       const declarations = selectedDates.map((date) => ({
         date,
-        profitPercentage: data.profitPercentage,
+        premiumPoolAmount: data.premiumPoolAmount,
+        performancePoolAmount: data.performancePoolAmount,
+        rosPercentage: data.rosPercentage,
       }));
 
       await bulkDeclareMutation.mutateAsync({
@@ -138,29 +150,84 @@ export function BulkDeclareModal({
         <DialogHeader>
           <DialogTitle>Bulk Declare Daily Profits</DialogTitle>
           <DialogDescription>
-            Select multiple dates and declare the same profit percentage for all
-            (up to 30 days)
+            Select multiple dates and declare the same pool amounts and ROS
+            percentage for all (up to 30 days)
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="profitPercentage">Profit Percentage (%)</Label>
+            <Label htmlFor="premiumPoolAmount">Premium Pool Amount ($)</Label>
             <Input
-              id="profitPercentage"
+              id="premiumPoolAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register('premiumPoolAmount', { valueAsNumber: true })}
+              disabled={isLoading}
+              placeholder="10000"
+            />
+            {errors.premiumPoolAmount && (
+              <p className="text-sm text-red-500">
+                {errors.premiumPoolAmount.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="performancePoolAmount">
+              Performance Pool Amount ($)
+            </Label>
+            <Input
+              id="performancePoolAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register('performancePoolAmount', { valueAsNumber: true })}
+              disabled={isLoading}
+              placeholder="5000"
+            />
+            {errors.performancePoolAmount && (
+              <p className="text-sm text-red-500">
+                {errors.performancePoolAmount.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="rosPercentage">ROS Percentage (%)</Label>
+            <Input
+              id="rosPercentage"
               type="number"
               step="0.01"
               min="0"
               max="100"
-              {...register('profitPercentage', { valueAsNumber: true })}
+              {...register('rosPercentage', { valueAsNumber: true })}
               disabled={isLoading}
-              placeholder="1.5"
+              placeholder="0.55"
             />
-            {errors.profitPercentage && (
+            {errors.rosPercentage && (
               <p className="text-sm text-red-500">
-                {errors.profitPercentage.message}
+                {errors.rosPercentage.message}
               </p>
             )}
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Total Pool Amount:
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                $
+                {(
+                  (premiumPoolAmount || 0) + (performancePoolAmount || 0)
+                ).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2">

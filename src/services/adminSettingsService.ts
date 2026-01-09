@@ -60,18 +60,14 @@ class AdminSettingsService {
    */
   async getAllSettings(
     includeTooltips: boolean = true,
-    twoFACode?: string // Optional - if provided, will be used; otherwise adminService's getter will be used
+    twoFACode?: string // Optional - if provided, will be used; otherwise no 2FA code sent
   ): Promise<AdminSettingsResponse> {
     try {
-      // Use adminService's 2FA getter (shared cache and context)
-      // If twoFACode is provided, use it; otherwise use adminService's getter
+      // For GET requests, 2FA should not be required (after backend fix)
+      // Only use 2FA code if explicitly provided
       const get2FACode = async () => {
         if (twoFACode) return twoFACode;
-        // Use adminService's 2FA getter (shared with other admin operations)
-        const admin2FAGetter = adminService.get2FACodeGetter();
-        if (admin2FAGetter) {
-          return await admin2FAGetter();
-        }
+        // Don't prompt for 2FA on GET requests - let backend handle it
         return null;
       };
 
@@ -98,12 +94,11 @@ class AdminSettingsService {
     twoFACode?: string
   ): Promise<AdminSetting[]> {
     try {
+      // For GET requests, 2FA should not be required (after backend fix)
+      // Only use 2FA code if explicitly provided
       const get2FACode = async () => {
         if (twoFACode) return twoFACode;
-        const admin2FAGetter = adminService.get2FACodeGetter();
-        if (admin2FAGetter) {
-          return await admin2FAGetter();
-        }
+        // Don't prompt for 2FA on GET requests - let backend handle it
         return null;
       };
 
@@ -133,12 +128,11 @@ class AdminSettingsService {
     twoFACode?: string
   ): Promise<AdminSetting> {
     try {
+      // For GET requests, 2FA should not be required (after backend fix)
+      // Only use 2FA code if explicitly provided
       const get2FACode = async () => {
         if (twoFACode) return twoFACode;
-        const admin2FAGetter = adminService.get2FACodeGetter();
-        if (admin2FAGetter) {
-          return await admin2FAGetter();
-        }
+        // Don't prompt for 2FA on GET requests - let backend handle it
         return null;
       };
 

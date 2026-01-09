@@ -63,7 +63,7 @@ export function DailyROSPerformance() {
   // Calculate max percentage for chart scaling
   const maxPercentage = useMemo(() => {
     if (chartData.length === 0) return 1;
-    const max = Math.max(...chartData.map((d) => d.profitPercentage));
+    const max = Math.max(...chartData.map((d) => d.rosPercentage));
     // Add 10% padding for better visualization
     return max * 1.1 || 1;
   }, [chartData]);
@@ -71,7 +71,7 @@ export function DailyROSPerformance() {
   // Calculate average percentage
   const averagePercentage = useMemo(() => {
     if (chartData.length === 0) return 0;
-    const sum = chartData.reduce((acc, d) => acc + d.profitPercentage, 0);
+    const sum = chartData.reduce((acc, d) => acc + d.rosPercentage, 0);
     return sum / chartData.length;
   }, [chartData]);
 
@@ -120,7 +120,10 @@ export function DailyROSPerformance() {
           <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               {isLoading ? (
-                <LoadingStates.Text lines={1} className="h-7 w-24 sm:h-8 sm:w-32" />
+                <LoadingStates.Text
+                  lines={1}
+                  className="h-7 w-24 sm:h-8 sm:w-32"
+                />
               ) : (
                 <>
                   <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
@@ -155,7 +158,11 @@ export function DailyROSPerformance() {
           {/* Chart Area */}
           <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
             {isLoading ? (
-              <LoadingStates.Grid items={Math.min(limit, 7)} columns={Math.min(limit, 7)} className="h-full items-end" />
+              <LoadingStates.Grid
+                items={Math.min(limit, 7)}
+                columns={Math.min(limit, 7)}
+                className="h-full items-end"
+              />
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <EmptyStates.EmptyState
@@ -166,7 +173,7 @@ export function DailyROSPerformance() {
             ) : (
               <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
                 {chartData.map((day, index) => {
-                  const percentage = day.profitPercentage || 0;
+                  const percentage = day.rosPercentage || 0;
                   const heightPercent =
                     maxPercentage > 0 ? (percentage / maxPercentage) * 100 : 0;
 
@@ -230,9 +237,30 @@ export function DailyROSPerformance() {
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between">
                                   <span className="text-muted-foreground">
-                                    Declared Percentage
+                                    Premium Pool
                                   </span>
                                   <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                                    ${(day.premiumPoolAmount / 1000).toFixed(1)}
+                                    k
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">
+                                    Performance Pool
+                                  </span>
+                                  <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                                    $
+                                    {(day.performancePoolAmount / 1000).toFixed(
+                                      1
+                                    )}
+                                    k
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">
+                                    ROS Percentage
+                                  </span>
+                                  <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
                                     {percentage.toFixed(2)}%
                                   </span>
                                 </div>

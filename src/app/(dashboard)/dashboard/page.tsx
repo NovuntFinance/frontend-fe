@@ -547,6 +547,7 @@ export default function DashboardPage() {
             isRefetching={isRefetching}
             totalPortfolioValue={totalPortfolioValue}
             totalEarnings={totalEarnings}
+            lastWeekProfitChange={0}
           />
         </motion.div>
 

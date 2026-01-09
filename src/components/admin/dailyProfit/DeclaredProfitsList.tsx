@@ -145,7 +145,10 @@ export function DeclaredProfitsList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Profit %</TableHead>
+                  <TableHead>Premium Pool</TableHead>
+                  <TableHead>Performance Pool</TableHead>
+                  <TableHead>ROS %</TableHead>
+                  <TableHead>Total Pool</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Declared By</TableHead>
@@ -170,8 +173,32 @@ export function DeclaredProfitsList() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold">
-                        {profit.profitPercentage.toFixed(2)}%
+                      <TableCell className="font-semibold text-green-600">
+                        $
+                        {profit.premiumPoolAmount.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </TableCell>
+                      <TableCell className="font-semibold text-blue-600">
+                        $
+                        {profit.performancePoolAmount.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </TableCell>
+                      <TableCell className="font-semibold text-purple-600">
+                        {profit.rosPercentage.toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="font-bold text-gray-900 dark:text-gray-100">
+                        $
+                        {(
+                          profit.premiumPoolAmount +
+                          profit.performancePoolAmount
+                        ).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {profit.description || '-'}
