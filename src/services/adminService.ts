@@ -34,8 +34,44 @@ export const createAdminApi = (
       }
 
       // For admin endpoints (except login), add 2FA code
-      // BUT ONLY if 2FA is actually enabled for the admin user
+      // BUT ONLY if 2FA is actually enabled AND token doesn't have is2FAVerified flag
       if (config.url?.includes('/admin/') && !config.url.includes('/login')) {
+        const token = adminAuthService.getToken();
+
+        // Check if token has is2FAVerified flag (from new backend behavior)
+        let is2FAVerified = false;
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            is2FAVerified = payload.is2FAVerified === true;
+            console.log('[AdminService] Token is2FAVerified:', is2FAVerified);
+
+            // If token doesn't have is2FAVerified flag, show warning
+            if (!is2FAVerified) {
+              console.warn('[AdminService] ⚠️ OLD TOKEN DETECTED!');
+              console.warn(
+                '[AdminService] Your token was issued before the 2FA update.'
+              );
+              console.warn(
+                '[AdminService] Please LOG OUT and LOG BACK IN with your 2FA code to get a new token.'
+              );
+              console.warn(
+                "[AdminService] With the new token, you won't need 2FA for viewing pages, only for editing."
+              );
+            }
+          } catch (error) {
+            console.error('[AdminService] Failed to decode token:', error);
+          }
+        }
+
+        // If token has is2FAVerified flag, skip 2FA requirement for GET requests
+        if (is2FAVerified && config.method?.toUpperCase() === 'GET') {
+          console.log(
+            '[AdminService] ✅ Token has is2FAVerified flag, skipping 2FA for GET request'
+          );
+          return config;
+        }
+
         // Check if 2FA is enabled for the current admin
         const admin = adminAuthService.getCurrentAdmin();
         const is2FAEnabled = admin?.twoFAEnabled === true;

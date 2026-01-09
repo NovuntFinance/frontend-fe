@@ -25,6 +25,10 @@ import Loading from '@/components/ui/loading';
 const adminLoginSchema = z.object({
   identifier: z.string().min(1, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
+  twoFACode: z
+    .string()
+    .length(6, '2FA code must be 6 digits')
+    .regex(/^[0-9]+$/, '2FA code must contain only numbers'),
 });
 
 type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
@@ -109,6 +113,7 @@ function AdminLoginForm() {
       const response = await adminAuthService.login({
         identifier: data.identifier.trim(),
         password: data.password,
+        twoFACode: data.twoFACode.trim(),
       });
 
       // Log response for debugging
@@ -424,6 +429,31 @@ function AdminLoginForm() {
                   {errors.password.message}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twoFACode">2FA Code</Label>
+              <div className="relative">
+                <Lock className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="twoFACode"
+                  type="text"
+                  placeholder="123456"
+                  className="pl-10"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  {...register('twoFACode')}
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.twoFACode && (
+                <p className="text-sm text-red-500">
+                  {errors.twoFACode.message}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Enter the 6-digit code from your authenticator app
+              </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

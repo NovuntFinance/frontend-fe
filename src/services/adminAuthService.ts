@@ -6,6 +6,7 @@ const API_BASE_URL =
 export interface AdminLoginRequest {
   identifier: string; // email or username
   password: string;
+  twoFACode: string; // 6-digit code from authenticator app
 }
 
 export interface AdminUser {
