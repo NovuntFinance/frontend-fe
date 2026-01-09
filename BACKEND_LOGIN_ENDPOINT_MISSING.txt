@@ -1,0 +1,81 @@
+🔴 URGENT: Missing /better-auth/login Endpoint
+
+Issue Summary:
+The frontend login is failing because the /better-auth/login POST endpoint is not implemented or registered on the backend. The API is returning a "ROUTE_NOT_FOUND" error.
+
+Error Details:
+{
+  "success": false,
+  "message": "The route /better-auth/login with the POST method shows Novunt API is running 🚀",
+  "error": {
+    "code": "ROUTE_NOT_FOUND",
+    "message": "The route /better-auth/login with the POST method shows Novunt API is running 🚀"
+  },
+  "statusCode": 501
+}
+
+Required Endpoint Implementation:
+
+Endpoint: POST /api/v1/better-auth/login
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "userPassword123"
+}
+
+Success Response (Normal Login):
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "username": "username",
+    "fname": "John",
+    "lname": "Doe",
+    "phoneNumber": "+1234567890",
+    "emailVerified": true,
+    "twoFAEnabled": false,
+    "role": "user"
+  }
+}
+
+Success Response (2FA Required):
+{
+  "mfaRequired": true,
+  "userID": "user_id_here"
+}
+
+Error Response:
+{
+  "success": false,
+  "message": "Invalid credentials",
+  "statusCode": 401
+}
+
+Implementation Checklist:
+- Create/register POST /api/v1/better-auth/login route
+- Accept email and password in request body
+- Verify credentials against user database
+- Check if user has 2FA enabled:
+  - If 2FA enabled: Return { mfaRequired: true, userID: "..." }
+  - If 2FA disabled: Generate JWT token and return { token: "...", user: {...} }
+- Return proper error messages for invalid credentials
+- Ensure route is properly registered in the routing middleware
+
+Testing:
+After implementation, test with:
+curl -X POST https://your-backend-url.com/api/v1/better-auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "testPassword123"
+  }'
+
+Notes:
+- This is a regular user login endpoint (not admin login)
+- Admin login uses a different endpoint: /api/v1/admin/login
+- The frontend is already correctly configured and making the right API calls
+- This endpoint should follow BetterAuth authentication patterns
+
+Priority: HIGH - Production login is currently broken for all regular users.
