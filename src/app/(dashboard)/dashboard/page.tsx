@@ -354,10 +354,39 @@ export default function DashboardPage() {
   // Fetch platform activities from API (with fallback to mock) - Fetch multiple for scrollable list
   const { activities: apiActivities, loading: activityLoading } =
     usePlatformActivity({
-      limit: 4, // Fetch 4 activities to match Live Trading Signals
+      limit: 1, // Fetch 1 new activity at a time for smooth updates
       pollInterval: 30000,
       enabled: true,
     });
+
+  // State to manage accumulated activities for smooth animations
+  const [displayActivitiesState, setDisplayActivitiesState] = React.useState<
+    any[]
+  >([]);
+
+  // Update activities when new data arrives - prepend new activity and keep last 3
+  React.useEffect(() => {
+    if (apiActivities && apiActivities.length > 0) {
+      const newActivity = apiActivities[0];
+      setDisplayActivitiesState((prev) => {
+        // Check if this activity already exists (to avoid duplicates)
+        const isDuplicate = prev.some(
+          (act) =>
+            act.user === newActivity.user &&
+            act.action === newActivity.action &&
+            act.time === newActivity.timeAgo &&
+            act.amount === newActivity.amount
+        );
+
+        if (isDuplicate) {
+          return prev;
+        }
+
+        // Add new activity to front and keep only first 3
+        return [newActivity, ...prev].slice(0, 4);
+      });
+    }
+  }, [apiActivities]);
 
   // Map activity type to icon and color
   const getActivityIcon = React.useCallback((type: string) => {
@@ -396,10 +425,10 @@ export default function DashboardPage() {
     return colorMap[type] || 'text-foreground';
   }, []);
 
-  // Convert API activities to display format (with fallback to mock)
+  // Convert accumulated activities to display format
   const displayActivities = React.useMemo(() => {
-    if (apiActivities && apiActivities.length > 0) {
-      return apiActivities.map((activity: PlatformActivity) => ({
+    if (displayActivitiesState.length > 0) {
+      return displayActivitiesState.map((activity: PlatformActivity) => ({
         user: activity.user,
         action: activity.action,
         amount: activity.amount,
@@ -410,10 +439,10 @@ export default function DashboardPage() {
       }));
     }
 
-    // Fallback to mock data if API fails or is loading
+    // Fallback to mock data if no activities yet
     return Array.from({ length: 4 }, () => generateRandomActivity());
   }, [
-    apiActivities,
+    displayActivitiesState,
     getActivityIcon,
     getActivityColor,
     generateRandomActivity,
@@ -490,15 +519,6 @@ export default function DashboardPage() {
   // Calculate total portfolio value (combines all stakes and wallet balances)
   const totalPortfolioValue = totalBalance + totalStaked;
 
-  // Last week's profit (will be updated by backend)
-  // TODO: Backend to add analytics.lastWeekProfit and analytics.lastWeekProfitChange
-  const overviewData = overview as
-    | { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } }
-    | undefined;
-  const lastWeekProfit = overviewData?.analytics?.lastWeekProfit ?? 0;
-  const lastWeekProfitChange =
-    overviewData?.analytics?.lastWeekProfitChange ?? 0;
-
   // Pending earnings (optional - profits awaiting maturity)
   // TODO: Backend to add staking.pendingEarnings
   const pendingEarnings = 0; // Will come from overview?.staking?.pendingEarnings
@@ -526,7 +546,6 @@ export default function DashboardPage() {
             refetch={refetch}
             isRefetching={isRefetching}
             totalPortfolioValue={totalPortfolioValue}
-            lastWeekProfitChange={lastWeekProfitChange}
             totalEarnings={totalEarnings}
           />
         </motion.div>
@@ -852,128 +871,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* Last Week's Profit Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 sm:mt-10"
-          >
-            <Card className="bg-card/50 group relative overflow-visible border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-              {/* Animated Gradient Background */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${
-                  (lastWeekProfitChange ?? 0) >= 0
-                    ? 'from-emerald-500/20 via-green-500/10 to-transparent'
-                    : 'from-orange-500/20 via-red-500/10 to-transparent'
-                }`}
-              />
-
-              {/* Animated Floating Blob */}
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className={`absolute -bottom-8 -left-12 h-24 w-24 rounded-full blur-2xl ${
-                  (lastWeekProfitChange ?? 0) >= 0
-                    ? 'bg-emerald-500/30'
-                    : 'bg-orange-500/30'
-                }`}
-              />
-
-              <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className={`rounded-xl p-2 shadow-lg backdrop-blur-sm sm:p-3 ${
-                      (lastWeekProfitChange ?? 0) >= 0
-                        ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/20'
-                        : 'bg-gradient-to-br from-orange-500/30 to-red-500/20'
-                    }`}
-                  >
-                    {(lastWeekProfitChange ?? 0) >= 0 ? (
-                      <TrendingUp
-                        className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                          (lastWeekProfitChange ?? 0) >= 0
-                            ? 'text-emerald-500'
-                            : 'text-orange-500'
-                        }`}
-                      />
-                    ) : (
-                      <TrendingDown className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
-                    )}
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle
-                      className={`truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg ${
-                        (lastWeekProfitChange ?? 0) >= 0
-                          ? 'bg-gradient-to-r from-emerald-600 to-green-600'
-                          : 'bg-gradient-to-r from-orange-600 to-red-600'
-                      }`}
-                    >
-                      Last Week&apos;s Profit
-                    </CardTitle>
-                    <CardDescription className="text-[10px] sm:text-xs">
-                      Profit made last week
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-                <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.9 }}
-                    key={lastWeekProfit ?? 0}
-                    className={`bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl ${
-                      (lastWeekProfitChange ?? 0) >= 0
-                        ? 'bg-gradient-to-r from-emerald-600 to-green-600'
-                        : 'bg-gradient-to-r from-orange-600 to-red-600'
-                    }`}
-                  >
-                    $
-                    {(lastWeekProfit ?? 0).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </motion.span>
-                </div>
-                {(lastWeekProfitChange ?? 0) !== 0 && (
-                  <div className="mt-3">
-                    <Badge
-                      variant="outline"
-                      className={`${
-                        (lastWeekProfitChange ?? 0) >= 0
-                          ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                          : 'border-orange-500/30 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'
-                      } px-3 py-1 text-sm font-semibold`}
-                    >
-                      <TrendingUp
-                        className={`mr-1.5 h-3.5 w-3.5 ${
-                          (lastWeekProfitChange ?? 0) >= 0
-                            ? 'text-emerald-400'
-                            : 'rotate-180 text-orange-400'
-                        }`}
-                      />
-                      <span className="font-bold">
-                        {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
-                        {(lastWeekProfitChange ?? 0).toFixed(1)}% vs last week
-                      </span>
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
 
         {/* Additional Value Cards - Lower Priority */}
@@ -1058,9 +955,11 @@ export default function DashboardPage() {
                   <AnimatePresence mode="popLayout">
                     {displayActivities.map((activity, index) => {
                       const ActivityIcon = activity.icon;
+                      // Create a unique key based on activity content
+                      const uniqueKey = `${activity.user}-${activity.action}-${activity.time}-${activity.amount || 'no-amount'}`;
                       return (
                         <motion.div
-                          key={`${activity.user}-${activity.time}-${index}`}
+                          key={uniqueKey}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
