@@ -148,15 +148,15 @@ const handleVerify = async () => {
 
 ✅ **Transfers** - All amounts  
 ✅ **Withdrawals** - All amounts  
-✅ **Staking** - Only if amount > $500 USDT  
+✅ **Staking** - Only if amount > $100,000 USDT  
 ❌ **Login** - NOT required
 
 ### Example: High-Value Stake
 
 ```typescript
-// Frontend automatically prompts for 2FA code if stake > $500
+// Frontend automatically prompts for 2FA code if stake > $100,000
 const response = await api.post('/staking/create', {
-  amount: 750,
+  amount: 150000,
   duration: 30,
   twoFactorCode: '123456', // From user's authenticator
 });
@@ -165,7 +165,7 @@ const response = await api.post('/staking/create', {
 Backend validates:
 
 ```typescript
-if (Number(amount) > 500) {
+if (Number(amount) > 100000) {
   await verifyAction2FA(userId, twoFactorCode, 'staking');
 }
 ```

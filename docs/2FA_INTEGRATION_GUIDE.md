@@ -173,16 +173,16 @@ Content-Type: application/json
 
 1. **Transfers** - Any amount
 2. **Withdrawals** - Any amount
-3. **Staking** - Only if amount > $500 USDT
+3. **Staking** - Only if amount > $100,000 USDT
 
-### Example: Staking > $500
+### Example: Staking > $100,000
 
 **Frontend Call:**
 
 ```typescript
-// When creating a stake > $500
+// When creating a stake > $100,000
 const response = await api.post('/staking/create', {
-  amount: 750,
+  amount: 150000,
   duration: 30,
   twoFactorCode: '123456', // 6-digit code from user's authenticator
 });
@@ -196,7 +196,7 @@ Authorization: Bearer <access_token>
 Content-Type: application/json
 
 {
-  "amount": 750,
+  "amount": 150000,
   "duration": 30,
   "twoFactorCode": "123456"
 }
@@ -206,7 +206,7 @@ Content-Type: application/json
 
 ```typescript
 // In staking.controller.ts
-if (Number(amount) > 500) {
+if (Number(amount) > 100000) {
   const { twoFactorCode } = req.body;
   const { verifyAction2FA } = await import('../utils/twoFactorHelper');
 
@@ -275,13 +275,13 @@ if (Number(amount) > 500) {
 
 5. **Test 2FA in Staking**
    - Navigate to Staking page
-   - Create stake with amount = $750
+   - Create stake with amount = $150,000
    - Modal prompts for 2FA code
    - Enter current code from Google Authenticator (e.g., `789012`)
    - Frontend calls `POST /staking/create` with:
      ```json
      {
-       "amount": 750,
+       "amount": 150000,
        "duration": 30,
        "twoFactorCode": "789012"
      }
@@ -446,7 +446,7 @@ The frontend now correctly:
 3. ✅ Stores verification token for the verify step
 4. ✅ Calls `/better-auth/mfa/verify` with `verificationToken` + `verificationCode`
 5. ✅ Handles optional backup codes from backend response
-6. ✅ Uses 2FA codes for high-value operations (staking > $500, transfers, withdrawals)
+6. ✅ Uses 2FA codes for high-value operations (staking > $100,000, transfers, withdrawals)
 7. ✅ Does NOT require 2FA for login
 
 The backend team can now test the complete flow end-to-end using this guide.

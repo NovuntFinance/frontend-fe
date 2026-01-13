@@ -40,7 +40,7 @@ export function CreateStakeModal() {
   const amountNum = parseFloat(amount) || 0;
   const targetReturn = amountNum * (stakingConfig.goalTargetPercentage / 100); // Dynamic target percentage
   const minStake = stakingConfig.minAmount;
-  const requires2FA = amountNum > 500;
+  const requires2FA = amountNum > 100000;
 
   // Calculate available balance based on source
   const availableBalance =
@@ -93,7 +93,7 @@ export function CreateStakeModal() {
     if (requires2FA && !twoFactorCode) {
       toast.error('2FA Required', {
         description:
-          'Staking amounts over $500 require Two-Factor Authentication',
+          'High-value stakes require Two-Factor Authentication for security',
       });
       return;
     }
@@ -346,7 +346,7 @@ export function CreateStakeModal() {
                                 2FA Required
                               </p>
                               <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400/80">
-                                Stakes over $500 require Two-Factor
+                                High-value stakes require Two-Factor
                                 Authentication for security
                               </p>
                             </div>

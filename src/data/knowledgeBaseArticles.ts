@@ -593,7 +593,7 @@ export const knowledgeBaseArticles: Article[] = [
       
       <h3>Staking Requirements</h3>
       <ul>
-        <li><strong>2FA for Large Stakes:</strong> Two-factor authentication (2FA) is required when creating stakes of $500 or more</li>
+        <li><strong>2FA for Large Stakes:</strong> Two-factor authentication (2FA) may be required for high-value stakes to protect your account</li>
         <li><strong>Enable 2FA:</strong> Make sure 2FA is enabled in your account settings before creating large stakes</li>
         <li><strong>Security:</strong> This requirement helps protect your account and larger stake amounts</li>
       </ul>
@@ -605,7 +605,7 @@ export const knowledgeBaseArticles: Article[] = [
         <li><strong>Regular Monitoring:</strong> Check your goals' progress regularly</li>
         <li><strong>Create New Stakes from Completed Goals:</strong> Consider creating new stakes with completed goal proceeds</li>
         <li><strong>Plan Ahead:</strong> Set goals for future financial needs</li>
-        <li><strong>Enable 2FA:</strong> Enable 2FA before creating stakes of $500 or more to avoid delays</li>
+        <li><strong>Enable 2FA:</strong> Enable 2FA before creating large stakes to avoid delays</li>
       </ul>
       
       <h3>Tips for Success</h3>

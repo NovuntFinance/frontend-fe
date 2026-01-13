@@ -14,7 +14,7 @@ export interface CreateStakeRequest {
   sourceWallet?: 'funded' | 'earning' | 'both'; // Backend expects this
   duration?: string; // Backend requires this field
   goal?: string; // Optional goal for this stake (e.g., 'wedding', 'housing', etc.)
-  twoFactorCode?: string; // Required if 2FA enabled and amount > $500
+  twoFactorCode?: string; // Required if 2FA enabled and amount > $100,000
 }
 
 export interface CreateStakeResponse {
@@ -54,7 +54,7 @@ export interface CreateStakeResponse {
  * - Can stake from Deposit Wallet, Earnings Wallet, or both
  * - Receives weekly ROI payouts until 200% return achieved
  * - Stakes are permanent (cannot withdraw principal)
- * - 2FA required if amount > $500 and user has 2FA enabled
+ * - 2FA required if amount > $100,000 and user has 2FA enabled
  */
 export function useCreateStake() {
   const queryClient = useQueryClient();
