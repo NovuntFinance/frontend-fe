@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Mail } from 'lucide-react';
 
 type Message = { id: string; from: 'user' | 'bot'; text: string };
 
@@ -18,7 +19,8 @@ export default function ChatWidget() {
 
   useEffect(() => {
     // scroll to bottom on new messages
-    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (bottomRef.current)
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
   const TELEGRAM_LINK = 'https://t.me/NovuntAssistantBot';
@@ -27,11 +29,12 @@ export default function ChatWidget() {
     setLoading(true);
     try {
       // Use same API base URL logic as main API client
-      const apiBaseURL = process.env.NEXT_PUBLIC_API_URL || 
-        (process.env.NODE_ENV === 'development' 
-          ? 'http://localhost:5000/api/v1' 
+      const apiBaseURL =
+        process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.NODE_ENV === 'development'
+          ? 'http://localhost:5000/api/v1'
           : 'https://novunt-backend-uw3z.onrender.com/api/v1');
-      
+
       const res = await fetch(`${apiBaseURL}/chatbot/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,13 +48,23 @@ export default function ChatWidget() {
       if (!open) setUnread((u) => u + 1);
     } catch (error) {
       // Detect CORS/network errors
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      if (
+        error instanceof TypeError &&
+        error.message.includes('Failed to fetch')
+      ) {
         console.error('🚫 CORS or network error in chat widget:', error);
       }
       console.error('Novunt chat widget failed to reach API', error);
       // fallback message suggesting Telegram
       const id = String(Date.now());
-      setMessages((s) => [...s, { id, from: 'bot', text: 'Chat service unavailable — open Telegram @NovuntAssistantBot' }]);
+      setMessages((s) => [
+        ...s,
+        {
+          id,
+          from: 'bot',
+          text: 'Chat service unavailable — open Telegram @NovuntAssistantBot',
+        },
+      ]);
       if (!open) setUnread((u) => u + 1);
     } finally {
       setLoading(false);
@@ -68,31 +81,49 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="fixed right-3 bottom-3 sm:right-4 sm:bottom-4 lg:right-6 lg:bottom-6 z-50">
+    <div className="fixed bottom-20 left-3 z-40 sm:bottom-24 sm:left-4 lg:bottom-28 lg:left-6">
       <div className="relative">
         <button
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle chat"
-          className="relative inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base text-white font-semibold shadow-lg"
+          className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition-all hover:bg-indigo-700 active:scale-95 sm:h-12 sm:w-12"
         >
-          Chat
+          <Mail className="h-5 w-5 sm:h-6 sm:w-6" />
           {unread > 0 && (
-            <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-xs w-5 h-5">{unread}</span>
+            <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs text-white">
+              {unread}
+            </span>
           )}
         </button>
 
         {open && (
-          <div className="fixed sm:absolute bottom-16 right-0 sm:bottom-auto sm:right-auto sm:mt-3 w-[calc(100vw-1.5rem)] sm:w-80 max-w-md rounded-t-2xl sm:rounded-2xl bg-white/10 backdrop-blur-lg p-3 sm:p-4 shadow-2xl border border-white/20">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm sm:text-base font-semibold">Novunt Chat</div>
-              <a className="text-xs sm:text-sm text-indigo-200 hover:text-indigo-100 hover:underline transition-colors" href={TELEGRAM_LINK} target="_blank" rel="noreferrer">Open in Telegram</a>
+          <div className="fixed bottom-14 left-0 w-[calc(100vw-1.5rem)] max-w-md rounded-2xl border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur-lg sm:absolute sm:bottom-auto sm:left-0 sm:mb-3 sm:w-80 sm:p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold sm:text-base">
+                Novunt Chat
+              </div>
+              <a
+                className="text-xs text-indigo-200 transition-colors hover:text-indigo-100 hover:underline sm:text-sm"
+                href={TELEGRAM_LINK}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Telegram
+              </a>
             </div>
 
-            <div className="mt-2 sm:mt-3 max-h-60 sm:max-h-72 overflow-auto text-sm space-y-2 scroll-smooth">
-              {messages.length === 0 && <div className="text-xs sm:text-sm text-indigo-200 p-2">Say hi — ask about staking, pools, or NXP/NLP.</div>}
+            <div className="mt-2 max-h-60 space-y-2 overflow-auto scroll-smooth text-sm sm:mt-3 sm:max-h-72">
+              {messages.length === 0 && (
+                <div className="p-2 text-xs text-indigo-200 sm:text-sm">
+                  Say hi — ask about staking, pools, or NXP/NLP.
+                </div>
+              )}
               {messages.map((m) => (
-                <div key={m.id} className={`p-2 sm:p-2.5 rounded-lg ${m.from === 'user' ? 'bg-white/10 self-end text-right ml-8' : 'bg-white/5 mr-8'}`}>
-                  <div className="text-xs sm:text-sm break-words">{m.text}</div>
+                <div
+                  key={m.id}
+                  className={`rounded-lg p-2 sm:p-2.5 ${m.from === 'user' ? 'ml-8 self-end bg-white/10 text-right' : 'mr-8 bg-white/5'}`}
+                >
+                  <div className="text-xs break-words sm:text-sm">{m.text}</div>
                 </div>
               ))}
               <div ref={bottomRef} />
@@ -104,9 +135,13 @@ export default function ChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Type a question..."
-                className="flex-1 rounded-full bg-white/5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+                className="flex-1 rounded-full bg-white/5 px-3 py-2 text-xs transition-all outline-none focus:ring-2 focus:ring-indigo-400 sm:px-4 sm:py-2.5 sm:text-sm"
               />
-              <button onClick={handleSend} disabled={loading} className="rounded-full bg-indigo-500 hover:bg-indigo-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-3 sm:px-4 py-2 sm:py-2.5 text-white text-xs sm:text-sm font-medium transition-all min-w-[60px]">
+              <button
+                onClick={handleSend}
+                disabled={loading}
+                className="min-w-[60px] rounded-full bg-indigo-500 px-3 py-2 text-xs font-medium text-white transition-all hover:bg-indigo-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
                 {loading ? '…' : 'Send'}
               </button>
             </div>

@@ -45,6 +45,7 @@ import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
 import { RegistrationBonusBanner } from '@/components/registration-bonus';
+import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
@@ -872,6 +873,15 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
+        </motion.div>
+
+        {/* Referral & Team Metrics */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+        >
+          <ReferralMetricsCard />
         </motion.div>
 
         {/* Additional Value Cards - Lower Priority */}
