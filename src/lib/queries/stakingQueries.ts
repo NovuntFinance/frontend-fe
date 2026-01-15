@@ -13,7 +13,7 @@ export interface Stake {
   updatedAt: string;
   status: 'active' | 'completed' | 'cancelled';
   source: 'funded' | 'earning' | 'both';
-  targetReturn: number; // 200% of amount
+  targetReturn: number; // 200% of amount (or 100% for bonus stakes)
   totalEarned: number;
   progressToTarget: string; // "45.50%"
   remainingToTarget: number;
@@ -24,6 +24,10 @@ export interface Stake {
     date: string;
     status: 'pending' | 'paid';
   }>;
+  // Registration Bonus Fields (confirmed by backend team - Jan 15, 2026)
+  type?: 'regular' | 'registration_bonus' | 'referral_bonus'; // Stake type
+  isRegistrationBonus?: boolean; // Flag for bonus stakes
+  maxReturnMultiplier?: number; // 2.0 for regular, 1.0 for bonus (100% cap)
 }
 
 export interface StakingDashboard {

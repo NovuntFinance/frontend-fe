@@ -115,126 +115,227 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="overflow-hidden">
+        <CardHeader className="space-y-4 bg-gradient-to-br from-blue-50 to-white pb-4 sm:pb-6 dark:from-gray-800 dark:to-gray-900">
+          <div className="space-y-3">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+                <Calendar className="h-5 w-5 text-blue-600 sm:h-6 sm:w-6" />
                 Daily Profit Calendar
               </CardTitle>
-              <CardDescription>
-                30-day lookahead - Click a date to declare or edit profit
+              <CardDescription className="mt-2 text-sm leading-relaxed sm:text-base">
+                30-day lookahead • Tap a date to manage profit
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+
+            {/* Action buttons - Larger, more prominent */}
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button
                 variant="outline"
-                size="sm"
+                size="lg"
                 onClick={() => setBulkModalOpen(true)}
+                className="w-full border-2 text-base font-medium sm:w-auto"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" />
                 Bulk Declare
               </Button>
               <Button
-                size="sm"
+                size="lg"
                 onClick={() => {
                   setEditingDate(null);
                   setDeclareModalOpen(true);
                 }}
+                className="w-full bg-blue-600 text-base font-medium hover:bg-blue-700 sm:w-auto"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" />
                 Declare Profit
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
           {isLoading ? (
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {Array.from({ length: 35 }).map((_, i) => (
-                <LoadingStates.Card key={i} height="h-24" />
+                <LoadingStates.Card key={i} height="h-32 sm:h-36 lg:h-40" />
               ))}
             </div>
           ) : (
             <>
-              {/* Legend */}
-              <div className="mb-4 flex flex-wrap gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20" />
-                  <span>Today</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border border-green-500/30 bg-green-50 dark:bg-green-900/20" />
-                  <span>Distributed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border border-yellow-500/30 bg-yellow-50 dark:bg-yellow-900/20" />
-                  <span>Pending</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900" />
-                  <span>Not Declared</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded bg-gray-100 dark:bg-gray-800" />
-                  <span>Past</span>
+              {/* Legend - Clearer with better spacing */}
+              <div className="rounded-lg border bg-white p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-600 uppercase dark:text-gray-400">
+                  Status Legend
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 flex-shrink-0 rounded-md border-2 border-blue-500 bg-blue-100 sm:h-5 sm:w-5 dark:bg-blue-900/30" />
+                    <span className="text-sm font-medium">Today</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 flex-shrink-0 rounded-md bg-green-500 sm:h-5 sm:w-5" />
+                    <span className="text-sm font-medium">Distributed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 flex-shrink-0 rounded-md bg-yellow-500 sm:h-5 sm:w-5" />
+                    <span className="text-sm font-medium">Pending</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 flex-shrink-0 rounded-md border-2 border-dashed border-gray-300 bg-white sm:h-5 sm:w-5 dark:border-gray-600 dark:bg-gray-800" />
+                    <span className="text-sm font-medium">Not Set</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-2">
-                {/* Day Headers */}
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                  (day) => (
-                    <div
-                      key={day}
-                      className="p-2 text-center text-xs font-semibold text-gray-500 dark:text-gray-400"
-                    >
-                      {day}
-                    </div>
-                  )
-                )}
-
-                {/* Calendar Days */}
-                {days.map((day) => (
-                  <button
-                    key={day.dateStr}
-                    onClick={() => !day.isPast && handleDateClick(day.dateStr)}
-                    disabled={day.isPast}
-                    className={`relative rounded-lg border p-2 transition-all ${getDateColor(day)} ${!day.isPast ? 'cursor-pointer hover:shadow-md' : 'cursor-not-allowed'} ${selectedDate === day.dateStr ? 'ring-2 ring-blue-500' : ''} `}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="text-xs font-medium">
-                        {format(day.date, 'd')}
+              {/* Calendar Grid - Responsive columns: 2 on mobile, 4 on tablet, 5 on desktop */}
+              <div className="space-y-3">
+                {/* Day Headers - Hidden on mobile, visible on larger screens */}
+                <div className="hidden grid-cols-5 gap-3 lg:grid">
+                  {[
+                    'Sunday',
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                  ]
+                    .slice(0, 5)
+                    .map((day) => (
+                      <div
+                        key={day}
+                        className="py-2 text-center text-sm font-bold tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                      >
+                        {day}
                       </div>
-                      {day.profit && (
-                        <div className="space-y-0.5 text-left">
-                          <div className="text-xs font-semibold text-green-600 dark:text-green-400">
-                            P: $
-                            {(day.profit.premiumPoolAmount / 1000).toFixed(0)}k
+                    ))}
+                </div>
+
+                {/* Calendar Days - 2 columns on mobile, 3 on tablet, 5 on desktop */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+                  {days.map((day) => (
+                    <button
+                      key={day.dateStr}
+                      onClick={() =>
+                        !day.isPast && handleDateClick(day.dateStr)
+                      }
+                      disabled={day.isPast}
+                      className={`group relative flex min-h-[140px] flex-col overflow-hidden rounded-2xl border-2 p-3 shadow-md transition-all duration-200 sm:min-h-[150px] sm:p-4 lg:min-h-[160px] ${
+                        day.isPast
+                          ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-40 dark:border-gray-700 dark:bg-gray-800/50'
+                          : day.isToday
+                            ? 'border-blue-500 bg-blue-50 shadow-lg dark:bg-blue-900/20'
+                            : day.profit?.isDistributed
+                              ? 'border-green-400 bg-green-50 hover:shadow-xl dark:border-green-600 dark:bg-green-900/20'
+                              : day.profit
+                                ? 'border-yellow-400 bg-yellow-50 hover:shadow-xl dark:border-yellow-600 dark:bg-yellow-900/20'
+                                : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-xl dark:border-gray-600 dark:bg-gray-800/30'
+                      } ${!day.isPast ? 'cursor-pointer active:scale-95' : ''} ${
+                        selectedDate === day.dateStr
+                          ? 'ring-4 ring-blue-500 ring-offset-2'
+                          : ''
+                      }`}
+                    >
+                      {/* Day name + Date number */}
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                            {format(day.date, 'EEE')}
                           </div>
-                          <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                            Pf: $
-                            {(day.profit.performancePoolAmount / 1000).toFixed(
-                              0
-                            )}
-                            k
+                          <div
+                            className={`text-2xl leading-none font-bold sm:text-3xl ${
+                              day.isToday
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : day.profit?.isDistributed
+                                  ? 'text-green-700 dark:text-green-300'
+                                  : day.profit
+                                    ? 'text-yellow-700 dark:text-yellow-300'
+                                    : 'text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {format(day.date, 'd')}
                           </div>
-                          <div className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                            R: {day.profit.rosPercentage.toFixed(2)}%
+                        </div>
+
+                        {/* Edit indicator */}
+                        {day.profit && !day.isPast && (
+                          <div className="rounded-full bg-white/80 p-1.5 backdrop-blur-sm dark:bg-gray-800/80">
+                            <Edit className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Profit info - Better spacing and larger text */}
+                      {day.profit ? (
+                        <div className="mb-auto space-y-2 text-left">
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                              Premium Pool
+                            </div>
+                            <div className="text-lg font-bold text-green-700 sm:text-xl dark:text-green-400">
+                              $
+                              {(day.profit.premiumPoolAmount / 1000).toFixed(0)}
+                              k
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                              Performance
+                            </div>
+                            <div className="text-lg font-bold text-blue-700 sm:text-xl dark:text-blue-400">
+                              $
+                              {(
+                                day.profit.performancePoolAmount / 1000
+                              ).toFixed(0)}
+                              k
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg bg-purple-100 px-2 py-1.5 dark:bg-purple-900/30">
+                            <div className="text-sm font-bold text-purple-700 dark:text-purple-400">
+                              ROS {day.profit.rosPercentage.toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-auto flex flex-1 items-center justify-center py-4">
+                          <div className="text-center text-sm font-medium text-gray-400 dark:text-gray-500">
+                            Not Set
                           </div>
                         </div>
                       )}
-                      {getDateBadge(day)}
-                    </div>
-                    {day.profit && !day.isPast && (
-                      <div className="absolute top-1 right-1">
-                        <Edit className="h-3 w-3 text-gray-400" />
-                      </div>
-                    )}
-                  </button>
-                ))}
+
+                      {/* Status indicator - Bottom badge */}
+                      {!day.isPast && (
+                        <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                          {day.profit?.isDistributed ? (
+                            <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500 py-2 text-white shadow-md">
+                              <CheckCircle2 className="h-4 w-4" />
+                              <span className="text-sm font-bold tracking-wide uppercase">
+                                Distributed
+                              </span>
+                            </div>
+                          ) : day.profit ? (
+                            <div className="flex items-center justify-center gap-2 rounded-xl bg-yellow-500 py-2 text-white shadow-md">
+                              <Clock className="h-4 w-4" />
+                              <span className="text-sm font-bold tracking-wide uppercase">
+                                Pending
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white/50 py-2 text-center dark:border-gray-600 dark:bg-gray-700/50">
+                              <span className="text-sm font-bold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                                Tap to Set
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}

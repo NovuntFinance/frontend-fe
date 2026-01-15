@@ -418,8 +418,15 @@ class AdminAuthService {
             withCredentials: true,
           }
         );
-      } catch (error) {
-        console.error('Logout error:', error);
+      } catch (error: any) {
+        // Suppress 401 errors as they're expected during logout (token might be expired)
+        // Only log unexpected errors
+        if (error?.response?.status !== 401) {
+          console.error(
+            '[AdminAuthService] Logout error:',
+            error?.message || error
+          );
+        }
         // Continue with logout even if API call fails
       }
     }

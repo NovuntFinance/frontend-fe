@@ -24,6 +24,15 @@ interface StakeCardProps {
 export function StakeCard({ stake, onClick }: StakeCardProps) {
   const stakingConfig = useStakingConfig();
 
+  // ✅ BACKEND CONFIRMED (Jan 15, 2026): Bonus stakes have these identifiers
+  const isRegistrationBonus =
+    stake.isRegistrationBonus === true || stake.type === 'registration_bonus';
+  const maxReturnCap = stake.maxReturnMultiplier
+    ? stake.maxReturnMultiplier * 100
+    : isRegistrationBonus
+      ? 100
+      : stakingConfig.goalTargetPercentage;
+
   // 🔍 DEBUG: Log stake data being rendered
   if (process.env.NODE_ENV === 'development') {
     console.log('[StakeCard] 🔍 Rendering stake:', {
@@ -35,6 +44,10 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
       targetReturn: stake.targetReturn,
       status: stake.status,
       updatedAt: stake.updatedAt,
+      isRegistrationBonus,
+      type: stake.type,
+      maxReturnMultiplier: stake.maxReturnMultiplier,
+      maxReturnCap,
     });
   }
 
@@ -56,21 +69,30 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
   const nextPayout = stake.weeklyPayouts?.find((p) => p.status === 'pending');
 
   const reducedMotion = prefersReducedMotion();
-  const gradientColors = isCompleted
+  // 🎁 SPECIAL STYLING FOR BONUS STAKES (golden theme)
+  const gradientColors = isRegistrationBonus
     ? {
-        gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
-        blob: 'bg-emerald-500/30',
-        iconBg: 'from-emerald-500/30 to-green-500/20',
-        textGradient: 'from-emerald-600 to-green-600',
-        iconColor: 'text-emerald-500',
+        gradient: 'from-amber-500/20 via-yellow-500/10 to-transparent',
+        blob: 'bg-amber-500/30',
+        iconBg: 'from-amber-500/30 to-yellow-500/20',
+        textGradient: 'from-amber-600 to-yellow-600',
+        iconColor: 'text-amber-500',
       }
-    : {
-        gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
-        blob: 'bg-purple-500/30',
-        iconBg: 'from-purple-500/30 to-indigo-500/20',
-        textGradient: 'from-purple-600 to-indigo-600',
-        iconColor: 'text-purple-500',
-      };
+    : isCompleted
+      ? {
+          gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
+          blob: 'bg-emerald-500/30',
+          iconBg: 'from-emerald-500/30 to-green-500/20',
+          textGradient: 'from-emerald-600 to-green-600',
+          iconColor: 'text-emerald-500',
+        }
+      : {
+          gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
+          blob: 'bg-purple-500/30',
+          iconBg: 'from-purple-500/30 to-indigo-500/20',
+          textGradient: 'from-purple-600 to-indigo-600',
+          iconColor: 'text-purple-500',
+        };
 
   return (
     <motion.div
@@ -80,7 +102,13 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
       onClick={onClick}
       className="cursor-pointer"
     >
-      <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
+      <Card
+        className={`bg-card/50 group relative overflow-hidden shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl ${
+          isRegistrationBonus
+            ? 'border-2 border-amber-500/30' // 🎁 Special border for bonus stakes
+            : 'border-0'
+        }`}
+      >
         {/* Animated Gradient Background */}
         <div
           className={`absolute inset-0 bg-gradient-to-br ${gradientColors.gradient}`}
@@ -118,26 +146,37 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
                 <CardTitle
                   className={`bg-gradient-to-r ${gradientColors.textGradient} bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg`}
                 >
-                  ${stake.amount.toFixed(2)} USDT
+                  {isRegistrationBonus && '🎁 '}${stake.amount.toFixed(2)} USDT
                 </CardTitle>
                 <CardDescription className="text-[10px] sm:text-xs">
-                  {formatDate(stake.createdAt)}
+                  {isRegistrationBonus
+                    ? 'Registration Bonus'
+                    : formatDate(stake.createdAt)}
                 </CardDescription>
               </div>
             </div>
-            <Badge
-              className={`text-[10px] sm:text-xs ${
-                isCompleted
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : stake.status === 'active'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-              }`}
-            >
-              {stake.status
-                ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
-                : 'Unknown'}
-            </Badge>
+            <div className="flex flex-col gap-1.5">
+              <Badge
+                className={`text-[10px] sm:text-xs ${
+                  isRegistrationBonus
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    : isCompleted
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : stake.status === 'active'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                }`}
+              >
+                {stake.status
+                  ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
+                  : 'Unknown'}
+              </Badge>
+              {isRegistrationBonus && (
+                <Badge className="bg-amber-100 text-[10px] text-amber-700 sm:text-xs dark:bg-amber-900/30 dark:text-amber-400">
+                  {maxReturnCap}% Cap
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
 
@@ -167,27 +206,77 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
             {/* Stats Grid */}
             <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
               {/* Total Earned */}
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-2 sm:p-3 dark:border-emerald-800 dark:bg-emerald-900/20">
+              <div
+                className={`rounded-lg p-2 sm:p-3 ${
+                  isRegistrationBonus
+                    ? 'border border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20'
+                    : 'border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/20'
+                }`}
+              >
                 <div className="mb-1 flex items-center gap-1.5 sm:gap-2">
-                  <DollarSign className="h-3 w-3 text-emerald-600 sm:h-4 sm:w-4 dark:text-emerald-400" />
-                  <span className="text-[10px] font-medium text-emerald-700 sm:text-xs dark:text-emerald-300">
-                    Total Earned
+                  <DollarSign
+                    className={`h-3 w-3 sm:h-4 sm:w-4 ${
+                      isRegistrationBonus
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  />
+                  <span
+                    className={`text-[10px] font-medium sm:text-xs ${
+                      isRegistrationBonus
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-emerald-700 dark:text-emerald-300'
+                    }`}
+                  >
+                    {isRegistrationBonus ? 'Bonus Paid' : 'Total Earned'}
                   </span>
                 </div>
-                <p className="text-sm font-bold text-emerald-900 sm:text-lg dark:text-emerald-100">
+                <p
+                  className={`text-sm font-bold sm:text-lg ${
+                    isRegistrationBonus
+                      ? 'text-amber-900 dark:text-amber-100'
+                      : 'text-emerald-900 dark:text-emerald-100'
+                  }`}
+                >
                   ${(stake.totalEarned || 0).toFixed(2)}
                 </p>
               </div>
 
               {/* Target Return */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 sm:p-3 dark:border-blue-800 dark:bg-blue-900/20">
+              <div
+                className={`rounded-lg p-2 sm:p-3 ${
+                  isRegistrationBonus
+                    ? 'border border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-900/20'
+                    : 'border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20'
+                }`}
+              >
                 <div className="mb-1 flex items-center gap-1.5 sm:gap-2">
-                  <Target className="h-3 w-3 text-blue-600 sm:h-4 sm:w-4 dark:text-blue-400" />
-                  <span className="text-[10px] font-medium text-blue-700 sm:text-xs dark:text-blue-300">
-                    Target
+                  <Target
+                    className={`h-3 w-3 sm:h-4 sm:w-4 ${
+                      isRegistrationBonus
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-blue-600 dark:text-blue-400'
+                    }`}
+                  />
+                  <span
+                    className={`text-[10px] font-medium sm:text-xs ${
+                      isRegistrationBonus
+                        ? 'text-yellow-700 dark:text-yellow-300'
+                        : 'text-blue-700 dark:text-blue-300'
+                    }`}
+                  >
+                    {isRegistrationBonus
+                      ? `Target (${maxReturnCap}%)`
+                      : 'Target'}
                   </span>
                 </div>
-                <p className="text-sm font-bold text-blue-900 sm:text-lg dark:text-blue-100">
+                <p
+                  className={`text-sm font-bold sm:text-lg ${
+                    isRegistrationBonus
+                      ? 'text-yellow-900 dark:text-yellow-100'
+                      : 'text-blue-900 dark:text-blue-100'
+                  }`}
+                >
                   ${(stake.targetReturn || 0).toFixed(2)}
                 </p>
               </div>

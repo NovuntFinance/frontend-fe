@@ -1055,6 +1055,73 @@ export function TransactionHistory() {
             </div>
           </CardHeader>
 
+          {/* 🔍 DEBUG: Referral Bonus Verification Banner (development only) */}
+          {process.env.NODE_ENV === 'development' &&
+            (() => {
+              const referralBonuses = filteredTransactions.filter(
+                (tx) => tx.type === 'referral_bonus'
+              );
+
+              if (referralBonuses.length === 0) return null;
+
+              const incorrect = referralBonuses.filter((tx) =>
+                tx.description.toLowerCase().includes('earnings')
+              );
+
+              const correct = referralBonuses.filter((tx) =>
+                tx.description.toLowerCase().includes('stake')
+              );
+
+              const allCorrect = incorrect.length === 0;
+
+              return (
+                <CardContent className="relative border-t border-amber-500/20 bg-amber-500/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`rounded-lg p-2 ${allCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}
+                    >
+                      {allCorrect ? '✅' : '⚠️'}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="mb-1 text-sm font-semibold">
+                        {allCorrect
+                          ? '✅ Referral Bonus Verification: PASSED'
+                          : '⚠️ Referral Bonus Verification: ISSUES FOUND'}
+                      </h4>
+                      <div className="text-muted-foreground space-y-1 text-xs">
+                        <p>
+                          Found {referralBonuses.length} referral bonus
+                          transaction(s)
+                        </p>
+                        <p>
+                          ✅ Correct (mentions &quot;stake&quot;):{' '}
+                          {correct.length}
+                        </p>
+                        {incorrect.length > 0 && (
+                          <>
+                            <p className="font-semibold text-red-600">
+                              ❌ Incorrect (mentions &quot;earnings&quot;):{' '}
+                              {incorrect.length}
+                            </p>
+                            <p className="mt-2 text-xs text-red-600">
+                              These transactions should say &quot;from X&apos;s
+                              stake&quot; not &quot;from X&apos;s
+                              earnings&quot;. Backend cleanup may not have
+                              completed.
+                            </p>
+                          </>
+                        )}
+                        <p className="mt-2 text-xs opacity-70">
+                          This banner is only visible in development mode. Check
+                          browser console for detailed logs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              );
+            })()}
+
           {/* Search and Date Filters */}
           <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
             <div className="space-y-4">
@@ -1345,6 +1412,35 @@ function TransactionItem({
   const isNeutral = transaction.direction === 'neutral';
   const [showReceipt, setShowReceipt] = useState(false);
 
+  // 🔍 DEBUG: Log referral bonus transactions for verification
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      transaction.type === 'referral_bonus'
+    ) {
+      console.group(`🎁 Referral Bonus Transaction #${index + 1}`);
+      console.log('Description:', transaction.description);
+      console.log('Expected: Contains "stake"');
+      console.log(
+        'Actual:',
+        transaction.description.includes('stake')
+          ? '✅ CORRECT'
+          : '❌ INCORRECT'
+      );
+      console.log('Metadata:', {
+        stakeId: transaction.metadata?.stakeId || '❌ MISSING',
+        stakeAmount: transaction.metadata?.stakeAmount || '❌ MISSING',
+        origin: transaction.metadata?.origin || '❌ MISSING',
+        trigger: transaction.metadata?.trigger,
+        level: transaction.metadata?.level,
+        // Old incorrect fields (should NOT be present)
+        earningsAmount:
+          transaction.metadata?.earningsAmount || '✅ Not present',
+      });
+      console.groupEnd();
+    }
+  }, [transaction, index]);
+
   return (
     <motion.div
       {...listItemAnimation(index)}
@@ -1385,6 +1481,15 @@ function TransactionItem({
             </div>
             <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
               {transaction.description}
+              {/* 🔍 DEBUG: Highlight incorrect referral bonus descriptions (remove after verification) */}
+              {process.env.NODE_ENV === 'development' &&
+                transaction.type === 'referral_bonus' &&
+                transaction.description.toLowerCase().includes('earnings') && (
+                  <Badge variant="destructive" className="ml-2 text-[10px]">
+                    ⚠️ INCORRECT: Should say &quot;stake&quot; not
+                    &quot;earnings&quot;
+                  </Badge>
+                )}
             </p>
             <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs">
               <span>{formatTransactionDate(transaction.timestamp)}</span>
