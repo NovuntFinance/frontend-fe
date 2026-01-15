@@ -68,7 +68,7 @@ const API_BASE_URL = getAPIBaseURL();
 // Create axios instance with default config aligned with BetterAuth specification
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 60000, // 60 seconds (increased for slow referral tree queries)
   headers: {
     'Content-Type': 'application/json',
   },

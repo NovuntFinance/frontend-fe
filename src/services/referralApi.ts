@@ -179,15 +179,30 @@ export const referralApi = {
       // Validate maxLevels
       const levels = Math.max(1, Math.min(20, maxLevels));
 
+      console.log(
+        `[referralApi] 🔄 Fetching referral tree (maxLevels=${levels})...`
+      );
+      const startTime = Date.now();
+
       const response = await api.get<
         ReferralTreeResponse | ReferralTreeResponse['data']
       >(`/referral/my-tree?maxLevels=${levels}`);
 
-      console.log('[referralApi] Referral tree response:', response);
+      const duration = Date.now() - startTime;
 
       // Handle both unwrapped (data object) and wrapped (full response) formats
       // api.get() unwraps responses, so response is likely already the data object
       const treeData = (response as any)?.data || response;
+
+      // Log successful fetch with details
+      console.log(`[referralApi] ✅ Referral tree fetched in ${duration}ms:`, {
+        totalReferrals: treeData?.tree?.length || 0,
+        activeReferrals: treeData?.stats?.activeReferrals || 0,
+        totalEarned: treeData?.stats?.totalEarned || 0,
+        hasData: !!treeData,
+        hasTree: !!treeData?.tree,
+        hasStats: !!treeData?.stats,
+      });
 
       // Detailed logging for debugging
       if (treeData?.tree) {
@@ -246,31 +261,20 @@ export const referralApi = {
         data: treeData as ReferralTreeResponse['data'],
       };
     } catch (error: any) {
-      // Only log meaningful errors (not empty objects or network errors)
-      const isNetworkError =
-        error?.code === 'ERR_NETWORK' ||
-        error?.message?.includes('Network Error') ||
-        !error?.response;
-
-      if (isNetworkError) {
-        // Suppress network error logs (expected when backend is unavailable)
-        if (process.env.NODE_ENV === 'development') {
-          const logKey = 'referral_tree_network_error_logged';
-          if (
-            typeof window !== 'undefined' &&
-            !sessionStorage.getItem(logKey)
-          ) {
-            console.debug(
-              '[referralApi] Network error (backend may be unavailable)'
-            );
-            sessionStorage.setItem(logKey, 'true');
-          }
-        }
-      } else if (error && (error.response || error.message)) {
-        // Log actual API errors (4xx, 5xx) with meaningful data
+      // Log timeout errors specifically
+      if (
+        error?.code === 'ECONNABORTED' &&
+        error?.message?.includes('timeout')
+      ) {
+        console.warn(
+          '⚠️ [referralApi] Referral tree request timed out. Backend query is too slow (>60s).',
+          'This indicates the backend needs database optimization (indexes, caching).'
+        );
+      } else {
+        // Log other errors
         console.error('[referralApi] Failed to get referral tree:', {
-          message: error?.message || 'Unknown error',
-          response: error?.response?.data,
+          message: error?.message,
+          code: error?.code,
           status: error?.response?.status,
         });
       }
@@ -288,6 +292,51 @@ export const referralApi = {
             canWithdraw: false,
           },
           maxLevels: Math.max(1, Math.min(20, maxLevels)),
+        },
+      };
+    }
+  },
+
+  /**
+   * Get referral and team metrics
+   * GET /api/v1/referral/metrics
+   * @returns Metrics with total/active counts for direct referrals and team members
+   */
+  async getReferralMetrics(): Promise<{
+    success: boolean;
+    message?: string;
+    data?: {
+      referrals: {
+        total_direct: number;
+        active_direct: number;
+      };
+      team: {
+        total_members: number;
+        active_members: number;
+      };
+    };
+  }> {
+    try {
+      const response = await api.get('/referral/metrics');
+
+      console.log('[referralApi] Get referral metrics response:', response);
+      return response as any;
+    } catch (error: any) {
+      console.error('[referralApi] Failed to get referral metrics:', error);
+
+      // Return empty state on error
+      return {
+        success: false,
+        message: error?.message || 'Failed to fetch metrics',
+        data: {
+          referrals: {
+            total_direct: 0,
+            active_direct: 0,
+          },
+          team: {
+            total_members: 0,
+            active_members: 0,
+          },
         },
       };
     }

@@ -124,3 +124,24 @@ export const REFERRAL_COMMISSION_RATES = {
   level4: 1,
   level5: 0.5,
 } as const;
+
+/**
+ * Referral and Team Metrics
+ * From GET /api/v1/referral/metrics
+ */
+export interface ReferralMetrics {
+  referrals: {
+    total_direct: number; // Total number of direct referrals (Level 1)
+    active_direct: number; // Active direct referrals with stakes
+  };
+  team: {
+    total_members: number; // Total downline members (all levels)
+    active_members: number; // Active team members with stakes
+  };
+}
+
+export interface ReferralMetricsResponse {
+  success: boolean;
+  message: string;
+  data: ReferralMetrics;
+}

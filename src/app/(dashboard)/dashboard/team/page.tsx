@@ -13,6 +13,7 @@ import {
   useReferralStats,
   useReferralInfo,
   useReferralTree,
+  useReferralMetrics,
 } from '@/lib/queries';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -29,6 +30,7 @@ import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { toast } from '@/components/ui/enhanced-toast';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { slideUp } from '@/design-system/animations';
+import { NumberedPagination } from '@/components/ui/numbered-pagination';
 
 /**
  * Team Page (Merged: Referrals + Team)
@@ -37,15 +39,50 @@ import { slideUp } from '@/design-system/animations';
 export default function TeamPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [directSearch, setDirectSearch] = useState('');
   const [allSearch, setAllSearch] = useState('');
-  const [directPage, setDirectPage] = useState(1);
   const [allPage, setAllPage] = useState(1);
   const pageSize = 10;
 
   const { data: referralStats, isLoading: statsLoading } = useReferralStats();
   const { data: referralInfo, isLoading: infoLoading } = useReferralInfo();
-  const { data: referralTree, isLoading: treeLoading } = useReferralTree(20);
+  const { data: referralMetrics, isLoading: metricsLoading } =
+    useReferralMetrics();
+  // Auto-load tree with loading indicator
+  const {
+    data: referralTree,
+    isLoading: treeLoading,
+    error: treeError,
+  } = useReferralTree(20);
+
+  // Log fetched data for debugging
+  React.useEffect(() => {
+    if (referralStats) {
+      console.log('✅ [TeamPage] Successfully fetched referral stats:', {
+        totalReferrals: referralStats.totalReferrals,
+        activeReferrals: referralStats.activeReferrals,
+        totalEarned: referralStats.totalEarned,
+      });
+    }
+    if (referralMetrics) {
+      console.log('✅ [TeamPage] Successfully fetched referral metrics:', {
+        fullData: referralMetrics,
+        referrals: referralMetrics.referrals,
+        team: referralMetrics.team,
+        totalDirect: referralMetrics.referrals?.total_direct,
+        activeDirect: referralMetrics.referrals?.active_direct,
+        totalMembers: referralMetrics.team?.total_members,
+        activeMembers: referralMetrics.team?.active_members,
+      });
+    }
+    if (treeError) {
+      console.error('❌ [TeamPage] Error loading referral tree:', treeError);
+      if ((treeError as any)?.code === 'ECONNABORTED') {
+        console.warn(
+          '⏱️ [TeamPage] Request timed out - showing stats only. Tree details will load if backend responds.'
+        );
+      }
+    }
+  }, [referralStats, referralMetrics, treeError]);
 
   type ExtendedReferralEntry = NonNullable<
     typeof referralTree
@@ -54,7 +91,8 @@ export default function TeamPage() {
     referralInvestmentAmount?: number;
   };
 
-  const isLoading = statsLoading || infoLoading || treeLoading;
+  // Only wait for fast endpoints (stats, info, and metrics), not slow tree
+  const isLoading = statsLoading || infoLoading || metricsLoading;
   const reducedMotion = prefersReducedMotion();
 
   // Get referral code and link from API
@@ -62,24 +100,9 @@ export default function TeamPage() {
   const referralCode = referralInfo?.referralCode || '';
   const referralLink = referralInfo?.referralLink || '';
 
-  const directReferrals = useMemo(() => {
-    const entries = (referralTree?.tree || []) as ExtendedReferralEntry[];
-    return entries.filter((entry) => entry.level === 1);
-  }, [referralTree]);
-
   const allReferrals = useMemo(() => {
     return (referralTree?.tree || []) as ExtendedReferralEntry[];
   }, [referralTree]);
-
-  const filteredDirectReferrals = useMemo(() => {
-    const term = directSearch.toLowerCase().trim();
-    if (!term) return directReferrals;
-    return directReferrals.filter((entry) => {
-      const email = entry.email?.toLowerCase() || '';
-      const username = entry.username?.toLowerCase() || '';
-      return email.includes(term) || username.includes(term);
-    });
-  }, [directReferrals, directSearch]);
 
   const filteredAllReferrals = useMemo(() => {
     const term = allSearch.toLowerCase().trim();
@@ -91,19 +114,10 @@ export default function TeamPage() {
     });
   }, [allReferrals, allSearch]);
 
-  const totalDirectPages = Math.max(
-    1,
-    Math.ceil(filteredDirectReferrals.length / pageSize)
-  );
   const totalAllPages = Math.max(
     1,
     Math.ceil(filteredAllReferrals.length / pageSize)
   );
-
-  const paginatedDirectReferrals = useMemo(() => {
-    const start = (directPage - 1) * pageSize;
-    return filteredDirectReferrals.slice(start, start + pageSize);
-  }, [filteredDirectReferrals, directPage]);
 
   const paginatedAllReferrals = useMemo(() => {
     const start = (allPage - 1) * pageSize;
@@ -262,8 +276,8 @@ export default function TeamPage() {
         </Card>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6">
-          {/* Total Referrals */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
+          {/* Total Direct Team */}
           <Card className="bg-card/70 border-0 shadow-md">
             <CardHeader className="space-y-1 p-4 sm:p-6">
               <div className="flex items-center justify-between">
@@ -273,10 +287,10 @@ export default function TeamPage() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-semibold sm:text-base">
-                      Total Referrals
+                      Total Direct Team
                     </CardTitle>
                     <CardDescription className="text-xs sm:text-sm">
-                      Total number of referrals
+                      Level 1
                     </CardDescription>
                   </div>
                 </div>
@@ -284,39 +298,15 @@ export default function TeamPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="text-2xl font-bold sm:text-3xl">
-                {referralStats?.totalReferrals || 0}
+                {referralMetrics?.referrals?.total_direct || 0}
               </p>
               <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                {referralStats?.activeReferrals || 0} active
+                {referralMetrics?.referrals?.active_direct || 0} active
               </p>
             </CardContent>
           </Card>
 
-          {/* Total Earned */}
-          <Card className="bg-card/70 border-0 shadow-md">
-            <CardHeader className="space-y-1 p-4 sm:p-6">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
-                  <TrendingUp className="h-4 w-4 text-emerald-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold sm:text-base">
-                    Total Earned
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Earnings from all levels
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-              <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">
-                {formatCurrency(referralStats?.totalEarned || 0)}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Team Members */}
+          {/* Total Indirect Team */}
           <Card className="bg-card/70 border-0 shadow-md">
             <CardHeader className="space-y-1 p-4 sm:p-6">
               <div className="flex items-center gap-2">
@@ -325,24 +315,68 @@ export default function TeamPage() {
                 </div>
                 <div>
                   <CardTitle className="text-sm font-semibold sm:text-base">
-                    Team Members
+                    Total Indirect Team
                   </CardTitle>
                   <CardDescription className="text-xs sm:text-sm">
-                    Active team members
+                    Level 2+
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="text-2xl font-bold sm:text-3xl">
-                {referralStats?.totalReferrals || 0}
+                {referralMetrics?.team?.total_members || 0}
               </p>
               <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                {referralStats?.activeReferrals || 0} active
+                {referralMetrics?.team?.active_members || 0} active
               </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Show loading indicator when tree is being fetched */}
+        {treeLoading && (
+          <Card className="border border-blue-500/20 bg-blue-500/10 shadow-md">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+              <div className="flex-1">
+                <h4 className="mb-1 text-sm font-semibold">
+                  Loading detailed referral information...
+                </h4>
+                <p className="text-muted-foreground text-xs">
+                  Fetching investment details for all{' '}
+                  {referralMetrics?.referrals?.total_direct || 0} direct
+                  referrals
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Show warning if tree loading is slow or failed */}
+        {treeError && (
+          <Card className="border border-yellow-500/20 bg-yellow-500/10 shadow-md">
+            <CardContent className="flex items-start gap-3 p-4">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-500" />
+              <div className="flex-1">
+                <h4 className="mb-1 text-sm font-semibold">
+                  Referral details are taking longer than expected
+                </h4>
+                <p className="text-muted-foreground mb-2 text-xs">
+                  Your total referrals (
+                  {referralMetrics?.referrals?.total_direct || 0}) and earnings
+                  ({formatCurrency(referralStats?.totalEarned || 0)}) are shown
+                  above, but detailed information is still loading. This can
+                  happen when you have many referrals.
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  💡 Tip: Your stats are safely stored. The page will
+                  auto-update when detailed data is ready.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Referral Link & Code */}
         <Card className="bg-card/70 border-0 shadow-md">
@@ -448,119 +482,12 @@ export default function TeamPage() {
           </CardContent>
         </Card>
 
-        {/* Direct Referrals List */}
+        {/* All Team Members List */}
         <Card className="bg-card/70 border-0 shadow-md">
           <CardHeader className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div>
               <CardTitle className="text-sm font-semibold sm:text-base">
-                Direct Referrals
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                People who joined directly with your link or code
-              </CardDescription>
-            </div>
-            <Input
-              placeholder="Search by email or username"
-              value={directSearch}
-              onChange={(e) => {
-                setDirectSearch(e.target.value);
-                setDirectPage(1);
-              }}
-              className="h-8 w-full max-w-xs text-xs sm:h-9 sm:text-sm"
-            />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="min-h-[200px] text-xs sm:text-sm">
-              {treeLoading ? (
-                <div className="p-4 sm:p-6">
-                  <LoadingStates.List lines={3} />
-                </div>
-              ) : paginatedDirectReferrals.length === 0 ? (
-                <div className="text-muted-foreground flex h-40 items-center justify-center px-4">
-                  <p>No direct referrals yet.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left">
-                    <thead className="border-border/50 bg-background/40 border-b">
-                      <tr>
-                        <th className="px-4 py-2 font-medium">Account</th>
-                        <th className="px-4 py-2 font-medium">Username</th>
-                        <th className="hidden px-4 py-2 font-medium md:table-cell">
-                          Personal Investment
-                        </th>
-                        <th className="hidden px-4 py-2 font-medium lg:table-cell">
-                          Referral Investment
-                        </th>
-                        <th className="px-4 py-2 font-medium">Joined</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedDirectReferrals.map((referral) => (
-                        <tr
-                          key={`${referral.referral}-${referral.joinedAt}`}
-                          className="border-border/20 border-b last:border-0"
-                        >
-                          <td className="px-4 py-2 align-middle">
-                            {maskAccount(referral.email || referral.username)}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {referral.username || '-'}
-                          </td>
-                          <td className="hidden px-4 py-2 align-middle md:table-cell">
-                            {formatCurrency(
-                              (referral as any).personalInvestment ?? 0
-                            )}
-                          </td>
-                          <td className="hidden px-4 py-2 align-middle lg:table-cell">
-                            {formatCurrency(
-                              (referral as any).referralInvestmentAmount ?? 0
-                            )}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {new Date(referral.joinedAt).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 text-xs sm:text-sm">
-              <span className="text-muted-foreground">
-                Page {directPage} of {totalDirectPages}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={directPage <= 1}
-                  onClick={() => setDirectPage((p) => Math.max(1, p - 1))}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={directPage >= totalDirectPages}
-                  onClick={() =>
-                    setDirectPage((p) => Math.min(totalDirectPages, p + 1))
-                  }
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* All Referrals List */}
-        <Card className="bg-card/70 border-0 shadow-md">
-          <CardHeader className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div>
-              <CardTitle className="text-sm font-semibold sm:text-base">
-                All Referrals
+                All Team Members
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Full team across all levels
@@ -595,10 +522,10 @@ export default function TeamPage() {
                         <th className="px-4 py-2 font-medium">Username</th>
                         <th className="px-4 py-2 font-medium">Level</th>
                         <th className="hidden px-4 py-2 font-medium md:table-cell">
-                          Personal Investment
+                          Personal Stake
                         </th>
                         <th className="hidden px-4 py-2 font-medium lg:table-cell">
-                          Referral Investment
+                          Team Stake
                         </th>
                         <th className="px-4 py-2 font-medium">Joined</th>
                       </tr>
@@ -616,7 +543,9 @@ export default function TeamPage() {
                             {referral.username || '-'}
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            L{referral.level}
+                            {referral.level === 1
+                              ? 'Direct'
+                              : `Level ${referral.level}`}
                           </td>
                           <td className="hidden px-4 py-2 align-middle md:table-cell">
                             {formatCurrency(
@@ -642,26 +571,11 @@ export default function TeamPage() {
               <span className="text-muted-foreground">
                 Page {allPage} of {totalAllPages}
               </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={allPage <= 1}
-                  onClick={() => setAllPage((p) => Math.max(1, p - 1))}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={allPage >= totalAllPages}
-                  onClick={() =>
-                    setAllPage((p) => Math.min(totalAllPages, p + 1))
-                  }
-                >
-                  Next
-                </Button>
-              </div>
+              <NumberedPagination
+                currentPage={allPage}
+                totalPages={totalAllPages}
+                onPageChange={setAllPage}
+              />
             </div>
           </CardContent>
         </Card>

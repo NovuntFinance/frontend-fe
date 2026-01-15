@@ -47,6 +47,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
+import { NumberedPagination } from '@/components/ui/numbered-pagination';
 import {
   Dialog,
   DialogContent,
@@ -1315,38 +1316,11 @@ export function TransactionHistory() {
                   )}{' '}
                   of {data.pagination.totalItems} transactions
                 </p>
-                <div className="flex items-center justify-between gap-2 sm:justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handlePageChange(data.pagination.currentPage - 1)
-                    }
-                    disabled={!data.pagination.hasPrev}
-                    className="h-8 text-xs sm:h-9 sm:text-sm"
-                  >
-                    <ChevronLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Previous</span>
-                    <span className="sm:hidden">Prev</span>
-                  </Button>
-                  <span className="bg-muted flex items-center rounded-md px-2 text-xs sm:px-4 sm:text-sm">
-                    Page {data.pagination.currentPage} of{' '}
-                    {data.pagination.totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handlePageChange(data.pagination.currentPage + 1)
-                    }
-                    disabled={!data.pagination.hasNext}
-                    className="h-8 text-xs sm:h-9 sm:text-sm"
-                  >
-                    <span className="hidden sm:inline">Next</span>
-                    <span className="sm:hidden">Next</span>
-                    <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
+                <NumberedPagination
+                  currentPage={data.pagination.currentPage}
+                  totalPages={data.pagination.totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             )}
         </motion.div>

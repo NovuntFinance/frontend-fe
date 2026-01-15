@@ -99,6 +99,7 @@ export const queryKeys = {
   referralTree: (maxLevels?: number) =>
     ['referrals', 'tree', maxLevels] as const,
   referralLeaderboard: ['referrals', 'leaderboard'] as const,
+  referralMetrics: ['referrals', 'metrics'] as const,
 
   // Team & Rank
   teamInfo: ['team', 'info'] as const,
@@ -983,7 +984,10 @@ export function useReferralInfo() {
  * GET /api/v1/referral/my-tree?maxLevels={n}
  * @param maxLevels - Number of levels to show (1-20, default: 5)
  */
-export function useReferralTree(maxLevels: number = 5) {
+export function useReferralTree(
+  maxLevels: number = 5,
+  options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>
+) {
   return useQuery({
     queryKey: queryKeys.referralTree(maxLevels),
     queryFn: async () => {
@@ -1037,6 +1041,7 @@ export function useReferralTree(maxLevels: number = 5) {
     },
     staleTime: 30 * 1000, // 30 seconds - tree updates when referrals join
     refetchInterval: 60 * 1000, // Poll every 60 seconds on referral dashboard
+    ...options, // Spread user options (e.g., enabled: false)
   });
 }
 
@@ -1048,14 +1053,36 @@ export function useReferralStats() {
   return useQuery({
     queryKey: queryKeys.referralStats,
     queryFn: async () => {
-      // Fetch both referral info and tree data
+      console.log('[useReferralStats] 🔄 Fetching referral stats...');
+
+      // Fetch both referral info and tree data with error handling
       const [referralInfoResponse, treeResponse] = await Promise.all([
-        referralApi.getReferralInfo().catch(() => null),
-        referralApi.getReferralTree(5).catch(() => null),
+        referralApi.getReferralInfo().catch((err) => {
+          console.warn(
+            '[useReferralStats] ⚠️ Failed to fetch referral info:',
+            err?.message
+          );
+          return null;
+        }),
+        referralApi.getReferralTree(5).catch((err) => {
+          console.warn(
+            '[useReferralStats] ⚠️ Failed to fetch referral tree:',
+            err?.message
+          );
+          return null;
+        }),
       ]);
 
       const referralInfo = referralInfoResponse?.data;
       const treeData = treeResponse?.data;
+
+      // Log what we got
+      console.log('[useReferralStats] ✅ Data fetched:', {
+        hasReferralInfo: !!referralInfo,
+        hasTreeData: !!treeData,
+        referralInfoCount: referralInfo?.totalReferrals,
+        treeCount: treeData?.stats?.totalReferrals,
+      });
 
       // Combine data from referral info and tree
       const stats: ReferralStats = {
@@ -1109,6 +1136,48 @@ export function useReferralLeaderboard() {
   return useQuery({
     queryKey: queryKeys.referralLeaderboard,
     queryFn: () => api.get<ReferralLeaderboard[]>('/referrals/leaderboard'),
+  });
+}
+
+/**
+ * Get referral and team metrics
+ * GET /api/v1/referral/metrics
+ * Shows total and active counts for direct referrals and team members
+ */
+export function useReferralMetrics() {
+  return useQuery({
+    queryKey: queryKeys.referralMetrics,
+    queryFn: async () => {
+      console.log('[useReferralMetrics] 🔄 Fetching referral metrics...');
+      const response = await referralApi.getReferralMetrics();
+      console.log('[useReferralMetrics] ✅ Response:', response);
+
+      // api.get() unwraps the response, so response is the data directly
+      // Response structure: { referrals: {...}, team: {...} }
+      if (response && typeof response === 'object' && 'referrals' in response) {
+        console.log('[useReferralMetrics] ✅ Data (direct):', response);
+        return response as any;
+      }
+
+      // Fallback: check if it has a data property
+      if (response && typeof response === 'object' && 'data' in response) {
+        console.log(
+          '[useReferralMetrics] ✅ Data (nested):',
+          (response as any).data
+        );
+        return (response as any).data;
+      }
+
+      console.warn(
+        '[useReferralMetrics] ⚠️ Unexpected response format:',
+        response
+      );
+      return null;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
 
