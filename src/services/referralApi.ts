@@ -52,6 +52,14 @@ export interface ReferralTreeEntry {
   email: string;
   hasQualifyingStake: boolean;
   joinedAt: string; // ISO date
+  // NEW backend fields (Jan 2026)
+  personalStake?: number; // User's personal stake from User model
+  teamStake?: number; // Sum of all downlines' stakes
+  // Legacy fields (still available)
+  personalInvestment?: number; // Total staked from Stake collection
+  referralInvestmentAmount?: number; // Referral investment amount
+  activeStakesCount?: number; // Number of active stakes
+  lastStakeDate?: string; // Last stake date
 }
 
 export interface ValidateReferralCodeResponse {
@@ -208,6 +216,20 @@ export const referralApi = {
       if (treeData?.tree) {
         console.log('[referralApi] Tree entries details:', {
           totalEntries: treeData.tree.length,
+          // Log first entry with ALL fields to see what backend returns
+          firstEntry: treeData.tree[0] || null,
+          firstEntryKeys: treeData.tree[0] ? Object.keys(treeData.tree[0]) : [],
+          // Check if investment data is present
+          hasPersonalInvestment: treeData.tree.some(
+            (e: any) =>
+              e.personalInvestment !== undefined &&
+              e.personalInvestment !== null
+          ),
+          hasReferralInvestmentAmount: treeData.tree.some(
+            (e: any) =>
+              e.referralInvestmentAmount !== undefined &&
+              e.referralInvestmentAmount !== null
+          ),
           entries: treeData.tree.map((e: any) => ({
             email: e.email,
             username: e.username,
@@ -215,6 +237,8 @@ export const referralApi = {
             referrer: e.referrer,
             referral: e.referral,
             hasQualifyingStake: e.hasQualifyingStake,
+            personalInvestment: e.personalInvestment,
+            referralInvestmentAmount: e.referralInvestmentAmount,
           })),
           entriesByLevel: treeData.tree.reduce(
             (acc: any, e: any) => {
