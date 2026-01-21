@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Plus, Edit, Trash, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, Plus, Edit, CheckCircle2, Clock, Lock } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -12,12 +12,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDeclaredDailyProfits } from '@/lib/queries';
-import { ShimmerCard } from '@/components/ui/shimmer';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { DeclareProfitModal } from './DeclareProfitModal';
 import { BulkDeclareModal } from './BulkDeclareModal';
 import type { DailyProfit } from '@/types/dailyProfit';
-import { format, addDays, startOfToday, isToday, isPast } from 'date-fns';
+import {
+  utcDayString,
+  isPastDate,
+  isTodayDate,
+  isFutureDate,
+  formatWeekdayShort,
+  formatDateShort,
+} from '@/lib/dateUtils';
 
 interface DailyProfitCalendarProps {
   onDateClick?: (date: string) => void;
@@ -30,12 +36,17 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
   const [editingDate, setEditingDate] = useState<string | null>(null);
 
   // Get declared profits for the next 30 days
-  const today = startOfToday();
-  const endDate = addDays(today, 30);
+  const todayUtc = utcDayString();
+
+  // Calculate end date (30 days from today) using UTC day strings
+  const todayDate = new Date();
+  const endDate = new Date(todayDate);
+  endDate.setUTCDate(todayDate.getUTCDate() + 30);
+  const endDateUtc = utcDayString(endDate);
 
   const { data, isLoading } = useDeclaredDailyProfits({
-    startDate: format(today, 'yyyy-MM-dd'),
-    endDate: format(endDate, 'yyyy-MM-dd'),
+    startDate: todayUtc,
+    endDate: endDateUtc,
   });
 
   const declaredProfits = data?.dailyProfits || [];
@@ -46,18 +57,19 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
     profitMap.set(profit.date, profit);
   });
 
-  // Generate 30 days starting from today
+  // Generate 30 days starting from today (using UTC day strings)
   const days = Array.from({ length: 30 }, (_, i) => {
-    const date = addDays(today, i);
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const date = new Date(todayDate);
+    date.setUTCDate(todayDate.getUTCDate() + i);
+    const dateStr = utcDayString(date);
     const profit = profitMap.get(dateStr);
 
     return {
-      date,
       dateStr,
       profit,
-      isToday: isToday(date),
-      isPast: isPast(date) && !isToday(date),
+      isToday: isTodayDate(dateStr, todayUtc),
+      isPast: isPastDate(dateStr, todayUtc),
+      isFuture: isFutureDate(dateStr, todayUtc),
     };
   });
 
@@ -66,14 +78,11 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
       onDateClick(dateStr);
     } else {
       setSelectedDate(dateStr);
-      const profit = profitMap.get(dateStr);
-      if (profit && !profit.isDistributed) {
-        setEditingDate(dateStr);
-        setDeclareModalOpen(true);
-      } else {
-        setEditingDate(null);
-        setDeclareModalOpen(true);
-      }
+      // Always open the modal for the selected date. If the day is already
+      // declared+distributed, the modal will show "Distributed (locked)" and
+      // disable editing.
+      setEditingDate(dateStr);
+      setDeclareModalOpen(true);
     }
   };
 
@@ -88,27 +97,42 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
     return 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700';
   };
 
+  const getStatusLabel = (day: (typeof days)[0]): string => {
+    if (day.profit?.isDistributed) {
+      return 'Distributed (locked)';
+    }
+    if (day.profit && !day.profit.isDistributed) {
+      if (day.isPast) {
+        return 'Pending (missed)';
+      }
+      return 'Pending (scheduled)';
+    }
+    return 'Not Set';
+  };
+
   const getDateBadge = (day: (typeof days)[0]) => {
-    if (day.isPast) return null;
+    if (day.isPast && !day.profit) return null; // Past dates without profit don't show badge
+
     if (day.profit?.isDistributed) {
       return (
         <Badge variant="default" className="bg-green-500 text-xs text-white">
           <CheckCircle2 className="mr-1 h-3 w-3" />
-          Distributed
+          Distributed (locked)
         </Badge>
       );
     }
     if (day.profit && !day.profit.isDistributed) {
+      const label = day.isPast ? 'Pending (missed)' : 'Pending (scheduled)';
       return (
         <Badge variant="secondary" className="bg-yellow-500 text-xs text-white">
           <Clock className="mr-1 h-3 w-3" />
-          Pending
+          {label}
         </Badge>
       );
     }
     return (
       <Badge variant="outline" className="text-xs">
-        Not Declared
+        Not Set
       </Badge>
     );
   };
@@ -175,7 +199,9 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 flex-shrink-0 rounded-md bg-green-500 sm:h-5 sm:w-5" />
-                    <span className="text-sm font-medium">Distributed</span>
+                    <span className="text-sm font-medium">
+                      Distributed (locked)
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 flex-shrink-0 rounded-md bg-yellow-500 sm:h-5 sm:w-5" />
@@ -241,7 +267,7 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
                       <div className="mb-3 flex items-center justify-between">
                         <div>
                           <div className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                            {format(day.date, 'EEE')}
+                            {formatWeekdayShort(day.dateStr)}
                           </div>
                           <div
                             className={`text-2xl leading-none font-bold sm:text-3xl ${
@@ -254,14 +280,18 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
                                     : 'text-gray-700 dark:text-gray-300'
                             }`}
                           >
-                            {format(day.date, 'd')}
+                            {day.dateStr.split('-')[2]}
                           </div>
                         </div>
 
                         {/* Edit indicator */}
                         {day.profit && !day.isPast && (
                           <div className="rounded-full bg-white/80 p-1.5 backdrop-blur-sm dark:bg-gray-800/80">
-                            <Edit className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                            {day.profit.isDistributed ? (
+                              <Lock className="h-4 w-4 text-green-700 dark:text-green-300" />
+                            ) : (
+                              <Edit className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                            )}
                           </div>
                         )}
                       </div>
@@ -314,14 +344,16 @@ export function DailyProfitCalendar({ onDateClick }: DailyProfitCalendarProps) {
                             <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500 py-2 text-white shadow-md">
                               <CheckCircle2 className="h-4 w-4" />
                               <span className="text-sm font-bold tracking-wide uppercase">
-                                Distributed
+                                Distributed (locked)
                               </span>
                             </div>
                           ) : day.profit ? (
                             <div className="flex items-center justify-center gap-2 rounded-xl bg-yellow-500 py-2 text-white shadow-md">
                               <Clock className="h-4 w-4" />
                               <span className="text-sm font-bold tracking-wide uppercase">
-                                Pending
+                                {day.isPast
+                                  ? 'Pending (missed)'
+                                  : 'Pending (scheduled)'}
                               </span>
                             </div>
                           ) : (

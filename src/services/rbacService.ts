@@ -1,8 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { adminAuthService } from './adminAuthService';
+import { shouldRequire2FA } from '@/lib/twofa';
+import { getApiV1BaseUrl } from '@/lib/admin-api-base';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = getApiV1BaseUrl();
 
 export interface Permission {
   _id: string;
@@ -30,7 +31,7 @@ export interface UserPermissionsResponse {
   success: boolean;
   data: {
     permissions: string[]; // Array of permission keys
-    role: Role;
+    role: Role | string;
   };
 }
 
@@ -52,6 +53,27 @@ interface Cached2FA {
 
 let cached2FA: Cached2FA | null = null;
 
+type RetriableAxiosConfig = any & { _retry2FA?: boolean };
+
+function attach2FACodeToConfig(config: any, twoFACode: string) {
+  const method = config.method?.toUpperCase?.() || '';
+  if (method === 'GET') {
+    // For GET requests, add to query parameters (CORS-safe)
+    config.params = config.params || {};
+    config.params.twoFACode = twoFACode;
+  } else {
+    // For write operations, add to request body
+    if (config.data && typeof config.data === 'object') {
+      config.data.twoFACode = twoFACode;
+    } else if (config.data == null) {
+      config.data = { twoFACode };
+    } else {
+      // Fallback: wrap primitive/string payload
+      config.data = { value: config.data, twoFACode };
+    }
+  }
+}
+
 // Create axios instance with 2FA interceptor
 const createRBACApi = (
   get2FACode: () => Promise<string | null>
@@ -69,8 +91,18 @@ const createRBACApi = (
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Add 2FA code for RBAC endpoints (admin endpoints)
+      // Add 2FA code only when required (never prefetch for normal GET navigation)
       if (config.url?.includes('/rbac/')) {
+        const requires2FA = shouldRequire2FA({
+          method: config.method,
+          url: config.url,
+          // RBAC endpoints shouldn't depend on is2FAVerified; for GET we only require if "sensitive"
+        });
+
+        if (!requires2FA) {
+          return config;
+        }
+
         // Check cache first
         let twoFACode: string | null = null;
 
@@ -93,34 +125,12 @@ const createRBACApi = (
           }
         }
 
-        if (twoFACode) {
-          const method = config.method?.toUpperCase();
-
-          if (method === 'GET') {
-            // For GET requests, add to query parameters (CORS-safe)
-            config.params = config.params || {};
-            config.params.twoFACode = twoFACode;
-            console.log(
-              '[RBACService] Added 2FA code to query params for GET request'
-            );
-          } else if (['POST', 'PUT', 'PATCH'].includes(method || '')) {
-            // For POST/PUT/PATCH, add to request body
-            if (config.data && typeof config.data === 'object') {
-              config.data.twoFACode = twoFACode;
-              console.log(
-                '[RBACService] Added 2FA code to request body for',
-                method
-              );
-            } else {
-              // If no body, create one
-              config.data = { twoFACode };
-              console.log(
-                '[RBACService] Created request body with 2FA code for',
-                method
-              );
-            }
-          }
+        if (!twoFACode) {
+          // User cancelled / no code entered for an operation that requires 2FA
+          return Promise.reject(new Error('2FA_CODE_REQUIRED'));
         }
+
+        attach2FACodeToConfig(config, twoFACode);
       }
 
       return config;
@@ -135,8 +145,11 @@ const createRBACApi = (
       return response;
     },
     async (error: any) => {
-      if (error.response?.status === 403) {
-        const errorCode = error.response.data?.error?.code;
+      const status = error.response?.status;
+      const errorCode = error.response?.data?.error?.code;
+      const originalRequest = error.config as RetriableAxiosConfig;
+
+      if (status === 403) {
         if (
           errorCode === '2FA_CODE_INVALID' ||
           errorCode === '2FA_CODE_REQUIRED'
@@ -144,6 +157,29 @@ const createRBACApi = (
           // Clear cache on invalid/missing code
           cached2FA = null;
           console.log('[RBACService] Cleared 2FA cache due to error');
+        }
+
+        // Only prompt and retry when backend explicitly demands 2FA
+        if (
+          errorCode === '2FA_CODE_REQUIRED' &&
+          originalRequest &&
+          !originalRequest._retry2FA
+        ) {
+          originalRequest._retry2FA = true;
+          try {
+            const twoFACode = await get2FACode();
+            if (!twoFACode) {
+              return Promise.reject(error);
+            }
+            cached2FA = {
+              code: twoFACode,
+              expiresAt: Date.now() + 85 * 1000,
+            };
+            attach2FACodeToConfig(originalRequest, twoFACode);
+            return api(originalRequest);
+          } catch {
+            return Promise.reject(error);
+          }
         }
       }
       return Promise.reject(error);

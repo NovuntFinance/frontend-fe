@@ -14,27 +14,64 @@ export interface DashboardMetrics {
     total: number;
     active: number;
     completed: number;
+    /**
+     * Legacy field used by older dashboard responses.
+     * Prefer `tvl` when available.
+     */
     totalValue: number;
+    /**
+     * TVL = sum of active stake amounts (backend source of truth).
+     * May be omitted by older backend responses.
+     */
+    tvl?: number;
     averageStake: number;
   };
   transactions: {
     total: number;
+    /**
+     * External volume (deposits + withdrawals) in last 24h.
+     */
     volume24h: number;
     volume7d: number;
     volumeTotal: number;
   };
   withdrawals: {
     pending: number;
+    /**
+     * Sum of pending withdrawals amounts.
+     * New backend field: `pendingAmount`
+     */
+    pendingAmount?: number;
     processing: number;
+    processingAmount?: number;
     completed24h: number;
+    /**
+     * Legacy field used by older dashboard responses.
+     * Prefer `pendingAmount` when available.
+     */
     totalPending: number;
   };
   platform: {
     totalBalance: number;
     totalPaidROI: number;
     totalBonusesPaid: number;
-    profit: number;
+    /**
+     * Deprecated for Overview page. Prefer net flow metrics.
+     */
+    profit?: number;
+    /**
+     * deposits - withdrawals (24h)
+     */
+    netFlow24h?: number;
+    /**
+     * deposits - withdrawals (selected timeframe)
+     */
+    netFlowPeriod?: number;
   };
+  /**
+   * Deprecated: KYC is not used on the platform anymore.
+   * Keep optional for compatibility with older UI code paths.
+   */
   kyc?: {
     pending: number;
     highPriority?: number;
@@ -100,6 +137,23 @@ export interface AdminActivityItem {
   relativeTime?: string;
 }
 
+/**
+ * Admin UI dashboard recentActivity item (backend source of truth).
+ * This is different from `AdminActivityItem` which is UI-friendly.
+ */
+export interface AdminUiRecentActivityItem {
+  id?: string;
+  type: string;
+  amount?: number;
+  status?: string;
+  timestamp?: string;
+  user?: {
+    maskedName?: string;
+    name?: string;
+  };
+  currency?: string;
+}
+
 export interface AdminDashboardData {
   metrics: DashboardMetrics;
   charts: {
@@ -107,7 +161,25 @@ export interface AdminDashboardData {
     userGrowth: ChartDataPoint[];
     stakes: ChartDataPoint[];
   };
-  recentActivity: AdminActivityItem[];
+  recentActivity: Array<AdminActivityItem | AdminUiRecentActivityItem>;
+  dailyProfit?: {
+    today?: {
+      rosPercentage?: number;
+      premiumPoolAmount?: number;
+      performancePoolAmount?: number;
+      totalPoolAmount?: number;
+      isDistributed?: boolean;
+      distributionStatus?: string;
+    };
+  };
+  pools?: {
+    qualifiers?: {
+      performancePoolQualified?: number;
+      premiumPoolQualified?: number;
+      rankPoolQualified?: number;
+      redistributionPoolQualified?: number;
+    };
+  };
   alerts?: Array<{
     id: string;
     title: string;
@@ -167,13 +239,27 @@ export interface AdminUser {
       rankBonusPercent: number;
     };
   };
-  // kycStatus removed - backend no longer returns this field
-  totalInvested: number;
-  totalEarned: number;
-  activeStakes: number;
-  totalReferrals: number;
-  lastLogin?: string | null; // Can be null according to backend
+  // New backend users list fields (preferred)
   createdAt: string;
+  lastLoginAt?: string | null;
+  wallets?: {
+    funded: { balance: number };
+    earnings: { balance: number };
+  };
+  stats?: {
+    activeStakesCount: number;
+    totalStaked: number;
+    totalDeposited: number;
+    totalWithdrawn: number;
+    totalEarned: number;
+  };
+
+  // Legacy fields kept for compatibility with older UI code paths
+  totalInvested?: number;
+  totalEarned?: number;
+  activeStakes?: number;
+  totalReferrals?: number;
+  lastLogin?: string | null; // legacy
 }
 
 export interface UserFilters {

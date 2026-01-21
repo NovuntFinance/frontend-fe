@@ -28,6 +28,7 @@ const timeframeOptions: Array<{
   label: string;
   value: AdminDashboardTimeframe;
 }> = [
+  { label: '24H', value: '24h' },
   { label: '7D', value: '7d' },
   { label: '30D', value: '30d' },
   { label: '90D', value: '90d' },
@@ -89,12 +90,12 @@ const AdminChartSection = ({
     return ((last - first) / Math.abs(first)) * 100;
   }, [chartData]);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatUSDT = (value: number) => {
+    const formatted = new Intl.NumberFormat('en-US', {
       maximumFractionDigits: value < 1000 ? 2 : 0,
     }).format(value);
+    return `${formatted} USDT`;
+  };
 
   const formatNumber = (value: number) =>
     new Intl.NumberFormat('en-US', {
@@ -102,9 +103,7 @@ const AdminChartSection = ({
     }).format(value);
 
   const totalDisplay =
-    activeTab === 'revenue'
-      ? formatCurrency(totalValue)
-      : formatNumber(totalValue);
+    activeTab === 'revenue' ? formatUSDT(totalValue) : formatNumber(totalValue);
   const changeDisplay = `${changePercentage >= 0 ? '+' : ''}${changePercentage.toFixed(1)}%`;
   const changeClass =
     changePercentage >= 0
@@ -112,6 +111,34 @@ const AdminChartSection = ({
       : 'text-red-600 dark:text-red-400';
 
   const showSkeleton = isLoading && chartData.length === 0;
+
+  const exportActiveChartCsv = () => {
+    const safeTimeframe = String(timeframe).toLowerCase();
+    const tabLabel =
+      activeTab === 'revenue'
+        ? 'deposits'
+        : activeTab === 'users'
+          ? 'user-growth'
+          : 'stakes';
+
+    const rows = chartData.map((p) => ({
+      date: p.date,
+      value: p.value,
+    }));
+
+    const header = 'date,value';
+    const csv = [header, ...rows.map((r) => `${r.date},${r.value}`)].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `novunt-admin-${tabLabel}-${safeTimeframe}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -126,7 +153,7 @@ const AdminChartSection = ({
                   : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
               }`}
             >
-              Revenue
+              Deposits
             </button>
             <button
               onClick={() => setActiveTab('users')}
@@ -257,7 +284,7 @@ const AdminChartSection = ({
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               {activeTab === 'revenue'
-                ? 'Total Revenue'
+                ? 'Total Deposits'
                 : activeTab === 'users'
                   ? 'Total Users'
                   : 'Total Stakes'}
@@ -269,18 +296,25 @@ const AdminChartSection = ({
 
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {timeframe === '7d'
-                ? '7-Day Change'
-                : timeframe === '30d'
-                  ? '30-Day Change'
-                  : '90-Day Change'}
+              {timeframe === '24h'
+                ? '24h Change'
+                : timeframe === '7d'
+                  ? '7-Day Change'
+                  : timeframe === '30d'
+                    ? '30-Day Change'
+                    : '90-Day Change'}
             </p>
             <p className={`text-xl font-semibold ${changeClass}`}>
               {changeDisplay}
             </p>
           </div>
 
-          <button className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+          <button
+            type="button"
+            onClick={exportActiveChartCsv}
+            disabled={chartData.length === 0}
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="mr-2 h-4 w-4"

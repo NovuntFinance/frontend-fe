@@ -39,6 +39,15 @@ export function RankBadge({ user }: RankBadgeProps) {
     ? false
     : (rankInfo?.premiumPoolQualified ?? false);
 
+  const nxpValueRaw = rankInfo?.nxp?.totalNXP as unknown;
+  const nxpValue =
+    typeof nxpValueRaw === 'number'
+      ? nxpValueRaw
+      : typeof nxpValueRaw === 'string'
+        ? Number(nxpValueRaw)
+        : undefined;
+  const hasNxp = Number.isFinite(nxpValue);
+
   return (
     <div className="flex flex-col gap-1">
       <span
@@ -66,13 +75,13 @@ export function RankBadge({ user }: RankBadgeProps) {
               <span>Prem</span>
             </span>
           )}
-          {rankInfo.nxp && (
+          {rankInfo.nxp && hasNxp && (
             <span
               className="flex items-center gap-1"
-              title={`NXP: ${rankInfo.nxp.totalNXP}`}
+              title={`NXP: ${nxpValue}`}
             >
               <span className="text-purple-500">★</span>
-              <span>{rankInfo.nxp.totalNXP.toLocaleString()}</span>
+              <span>{(nxpValue as number).toLocaleString()}</span>
             </span>
           )}
         </div>

@@ -13,16 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTestDistributeDailyProfit } from '@/lib/mutations';
-import { use2FA } from '@/contexts/TwoFAContext';
 import { toast } from '@/components/ui/enhanced-toast';
-import { format, startOfToday } from 'date-fns';
+import { utcDayString } from '@/lib/dateUtils';
 
 export function DistributionStatus() {
-  const [selectedDate, setSelectedDate] = useState<string>(
-    format(startOfToday(), 'yyyy-MM-dd')
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(utcDayString());
   const [isDistributing, setIsDistributing] = useState(false);
-  const { promptFor2FA } = use2FA();
   const testDistributeMutation = useTestDistributeDailyProfit();
 
   const handleDistribute = async () => {
@@ -33,28 +29,20 @@ export function DistributionStatus() {
 
     setIsDistributing(true);
     try {
-      const twoFACode = await promptFor2FA();
-      if (!twoFACode) {
-        toast.error('2FA code is required');
-        setIsDistributing(false);
+      // Don't manually prompt for 2FA - let the API interceptor handle it
+      // It will prompt once if needed and retry automatically
+      await testDistributeMutation.mutateAsync({
+        date: selectedDate,
+        // twoFACode will be added by the API interceptor if needed
+      });
+      // Success message is handled by the mutation's onSuccess
+    } catch (error: any) {
+      // Error message is handled by the mutation's onError
+      // But handle user cancellation gracefully
+      if (error?.message === '2FA_CODE_REQUIRED') {
+        // User cancelled 2FA prompt - don't show error
         return;
       }
-
-      const result = await testDistributeMutation.mutateAsync({
-        date: selectedDate,
-        twoFACode,
-      });
-
-      const data = result.data;
-      toast.success(
-        `Distribution completed: ${data.totalDistributed.toFixed(2)} USDT distributed to ${data.processedStakes} stakes`
-      );
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to distribute profits';
-      toast.error(message);
     } finally {
       setIsDistributing(false);
     }
@@ -82,7 +70,7 @@ export function DistributionStatus() {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             disabled={isDistributing}
-            max={format(startOfToday(), 'yyyy-MM-dd')}
+            max={utcDayString()}
             className="h-12 text-base font-medium sm:h-14 sm:text-lg"
           />
           <p className="rounded-lg bg-blue-50 p-3 text-xs leading-relaxed text-gray-700 sm:text-sm dark:bg-blue-900/20 dark:text-gray-300">

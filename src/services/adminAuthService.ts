@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { getApiV1BaseUrl } from '@/lib/admin-api-base';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = getApiV1BaseUrl();
 
 export interface AdminLoginRequest {
   identifier: string; // email or username
@@ -15,7 +15,14 @@ export interface AdminUser {
   username: string;
   fname?: string;
   lname?: string;
-  role: 'admin' | 'superAdmin';
+  role:
+    | 'support_agent'
+    | 'support_lead'
+    | 'finance'
+    | 'risk'
+    | 'operations'
+    | 'admin'
+    | 'superAdmin';
   twoFAEnabled: boolean;
   twoFASecret?: string;
   isActive: boolean;

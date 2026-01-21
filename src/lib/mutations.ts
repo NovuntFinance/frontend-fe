@@ -1235,12 +1235,14 @@ export function useUpdateUserStatus() {
     mutationFn: async ({
       userId,
       status,
+      reason,
     }: {
       userId: string;
       status: 'active' | 'suspended' | 'inactive';
+      reason: string;
     }) => {
       const { adminService } = await import('@/services/adminService');
-      return adminService.updateUserStatus(userId, status);
+      return adminService.updateUserStatus(userId, status, reason);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
@@ -1253,6 +1255,106 @@ export function useUpdateUserStatus() {
         error?.response?.data?.error?.message ||
         error?.message ||
         'Failed to update user status';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Force logout user
+ * POST /api/v1/admin/users/:userId/force-logout
+ */
+export function useForceLogoutUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.forceLogoutUser(userId, reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('User logged out successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to force logout user';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Change user role
+ * PATCH /api/v1/admin/users/:userId/role
+ */
+export function useChangeUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      role,
+      reason,
+    }: {
+      userId: string;
+      role: string;
+      reason: string;
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.changeUserRole(userId, role, reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('User role updated successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to update user role';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Delete user (safe anonymize or hard delete)
+ * DELETE /api/v1/admin/users/:userId
+ */
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      reason,
+      mode,
+    }: {
+      userId: string;
+      reason: string;
+      mode: 'anonymize' | 'hard';
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.deleteUser(userId, { reason, mode });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('User deleted successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to delete user';
       toast.error(message);
     },
   });

@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDeclareDailyProfit, useUpdateDailyProfit } from '@/lib/mutations';
-import { use2FA } from '@/contexts/TwoFAContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +19,14 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import type { DailyProfit } from '@/types/dailyProfit';
+import {
+  utcDayString,
+  isPastDate,
+  isFutureDate,
+  formatDateWithWeekday,
+} from '@/lib/dateUtils';
+
+const MAX_ROS_PERCENTAGE = 2.2;
 
 const declareProfitSchema = z.object({
   date: z.string().min(1, 'Date is required'),
@@ -32,7 +39,10 @@ const declareProfitSchema = z.object({
   rosPercentage: z
     .number()
     .min(0, 'ROS percentage must be at least 0')
-    .max(100, 'ROS percentage cannot exceed 100'),
+    .max(
+      MAX_ROS_PERCENTAGE,
+      `ROS percentage cannot exceed ${MAX_ROS_PERCENTAGE}%`
+    ),
   description: z.string().optional(),
 });
 
@@ -52,9 +62,9 @@ export function DeclareProfitModal({
   editingProfit,
 }: DeclareProfitModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { promptFor2FA } = use2FA();
   const declareMutation = useDeclareDailyProfit();
   const updateMutation = useUpdateDailyProfit();
+  const isLocked = editingProfit?.isDistributed === true;
 
   const {
     register,
@@ -89,8 +99,7 @@ export function DeclareProfitModal({
         setValue('date', initialDate);
       } else if (!editingProfit) {
         // Default to today if no date provided
-        const today = new Date().toISOString().split('T')[0];
-        setValue('date', today);
+        setValue('date', utcDayString());
       }
       if (editingProfit) {
         setValue('date', editingProfit.date);
@@ -106,17 +115,19 @@ export function DeclareProfitModal({
 
   // Validate date is not in the past and not more than 30 days ahead
   const validateDate = (dateStr: string): boolean => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const maxDate = new Date(today);
-    maxDate.setDate(maxDate.getDate() + 30);
+    const todayUtc = utcDayString();
 
-    if (date < today) {
+    // Calculate max date (30 days from today) using UTC day strings
+    const todayDate = new Date();
+    const maxDate = new Date(todayDate);
+    maxDate.setUTCDate(todayDate.getUTCDate() + 30);
+    const maxDateUtc = utcDayString(maxDate);
+
+    if (isPastDate(dateStr, todayUtc)) {
       toast.error('Cannot declare profit for past dates');
       return false;
     }
-    if (date > maxDate) {
+    if (dateStr > maxDateUtc) {
       toast.error('Cannot declare profit more than 30 days in advance');
       return false;
     }
@@ -124,19 +135,19 @@ export function DeclareProfitModal({
   };
 
   const onSubmit = async (data: DeclareProfitFormData) => {
+    if (isLocked) {
+      toast.error('Distributed (locked): this day cannot be edited.');
+      return;
+    }
+
     if (!validateDate(data.date)) {
       return;
     }
 
     setIsLoading(true);
     try {
-      const twoFACode = await promptFor2FA();
-      if (!twoFACode) {
-        toast.error('2FA code is required');
-        setIsLoading(false);
-        return;
-      }
-
+      // Don't manually prompt for 2FA - let the API interceptor handle it
+      // It will prompt once if needed and retry automatically
       if (editingProfit) {
         // Update existing profit
         await updateMutation.mutateAsync({
@@ -146,10 +157,10 @@ export function DeclareProfitModal({
             performancePoolAmount: data.performancePoolAmount,
             rosPercentage: data.rosPercentage,
             description: data.description,
-            twoFACode,
+            // twoFACode will be added by the API interceptor if needed
           },
         });
-        toast.success('Profit updated successfully');
+        // Success message is handled by the mutation's onSuccess
       } else {
         // Declare new profit
         await declareMutation.mutateAsync({
@@ -158,19 +169,20 @@ export function DeclareProfitModal({
           performancePoolAmount: data.performancePoolAmount,
           rosPercentage: data.rosPercentage,
           description: data.description,
-          twoFACode,
+          // twoFACode will be added by the API interceptor if needed
         });
-        toast.success('Profit declared successfully');
+        // Success message is handled by the mutation's onSuccess
       }
 
       onOpenChange(false);
       reset();
     } catch (error: any) {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to declare profit';
-      toast.error(message);
+      // Error message is handled by the mutation's onError
+      // But handle user cancellation gracefully
+      if (error?.message === '2FA_CODE_REQUIRED') {
+        // User cancelled 2FA prompt - don't show error
+        return;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -181,41 +193,50 @@ export function DeclareProfitModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {editingProfit ? 'Edit Daily Profit' : 'Declare Daily Profit'}
+            {isLocked
+              ? 'Daily Profit (Locked)'
+              : editingProfit
+                ? 'Edit Daily Profit'
+                : 'Declare Daily Profit'}
           </DialogTitle>
           <DialogDescription>
-            {editingProfit
-              ? 'Update the pool amounts and ROS percentage for this date'
-              : 'Declare the pool amounts and ROS percentage for a specific date (up to 30 days ahead)'}
+            {isLocked
+              ? 'This day has already been distributed and is locked from edits/deletes.'
+              : editingProfit
+                ? 'Update the pool amounts and ROS percentage for this date'
+                : 'Declare the pool amounts and ROS percentage for a specific date (up to 30 days ahead)'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {isLocked && (
+            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-200">
+              <span className="font-semibold">Distributed (locked)</span> —
+              edits and deletes are disabled for this day.
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
             <Input
               id="date"
               type="date"
               {...register('date')}
-              disabled={isLoading || !!editingProfit}
-              min={new Date().toISOString().split('T')[0]}
-              max={
-                new Date(new Date().setDate(new Date().getDate() + 30))
-                  .toISOString()
-                  .split('T')[0]
-              }
+              disabled={isLoading || isLocked || !!editingProfit}
+              min={utcDayString()}
+              max={(() => {
+                const todayDate = new Date();
+                const maxDate = new Date(todayDate);
+                maxDate.setUTCDate(todayDate.getUTCDate() + 30);
+                return utcDayString(maxDate);
+              })()}
             />
             {errors.date && (
               <p className="text-sm text-red-500">{errors.date.message}</p>
             )}
             {watchedDate && (
               <p className="text-xs text-gray-500">
-                {new Date(watchedDate).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                {formatDateWithWeekday(watchedDate)}
               </p>
             )}
           </div>
@@ -228,7 +249,7 @@ export function DeclareProfitModal({
               step="0.01"
               min="0"
               {...register('premiumPoolAmount', { valueAsNumber: true })}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               placeholder="10000"
             />
             {errors.premiumPoolAmount && (
@@ -248,7 +269,7 @@ export function DeclareProfitModal({
               step="0.01"
               min="0"
               {...register('performancePoolAmount', { valueAsNumber: true })}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               placeholder="5000"
             />
             {errors.performancePoolAmount && (
@@ -265,9 +286,9 @@ export function DeclareProfitModal({
               type="number"
               step="0.01"
               min="0"
-              max="100"
+              max={String(MAX_ROS_PERCENTAGE)}
               {...register('rosPercentage', { valueAsNumber: true })}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               placeholder="0.55"
             />
             {errors.rosPercentage && (
@@ -276,7 +297,8 @@ export function DeclareProfitModal({
               </p>
             )}
             <p className="text-xs text-gray-500">
-              Enter a value between 0 and 100 (e.g., 0.55 for 0.55%)
+              Enter a value between 0 and {MAX_ROS_PERCENTAGE} (e.g., 0.55 for
+              0.55%)
             </p>
           </div>
 
@@ -299,7 +321,7 @@ export function DeclareProfitModal({
             <Textarea
               id="description"
               {...register('description')}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               placeholder="Normal day, Special event, etc."
               rows={3}
             />
@@ -317,15 +339,17 @@ export function DeclareProfitModal({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Cancel
+              {isLocked ? 'Close' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? 'Processing...'
-                : editingProfit
-                  ? 'Update Profit'
-                  : 'Declare Profit'}
-            </Button>
+            {!isLocked && (
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? 'Processing...'
+                  : editingProfit
+                    ? 'Update Profit'
+                    : 'Declare Profit'}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

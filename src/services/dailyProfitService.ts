@@ -102,11 +102,14 @@ class DailyProfitService {
   /**
    * Get all declared profits (admin view - includes future dates)
    * GET /api/v1/admin/daily-profit/declared
+   * Note: GET requests do NOT require 2FA
    */
   async getDeclaredProfits(
     filters?: DeclaredProfitsFilters
   ): Promise<GetDeclaredProfitsResponse> {
-    const api = createAdminApi(this.get2FACode);
+    // Use no-op 2FA getter for GET requests (backend doesn't require 2FA for reads)
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
     const params: Record<string, string> = {};
 
     if (filters?.startDate) {

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   Clock,
   Filter,
+  Lock,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Card,
@@ -34,13 +36,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDeclaredDailyProfits } from '@/lib/queries';
-import { useDeleteDailyProfit } from '@/lib/mutations';
-import { use2FA } from '@/contexts/TwoFAContext';
+import {
+  useDeleteDailyProfit,
+  useTestDistributeDailyProfit,
+} from '@/lib/mutations';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
 import { DeclareProfitModal } from './DeclareProfitModal';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import {
+  utcDayString,
+  isPastDate,
+  formatDateShort,
+  formatWeekday,
+} from '@/lib/dateUtils';
 import type { DailyProfit } from '@/types/dailyProfit';
 
 export function DeclaredProfitsList() {
@@ -49,8 +58,8 @@ export function DeclaredProfitsList() {
   >(undefined);
   const [editingProfit, setEditingProfit] = useState<DailyProfit | null>(null);
   const [declareModalOpen, setDeclareModalOpen] = useState(false);
-  const { promptFor2FA } = use2FA();
   const deleteMutation = useDeleteDailyProfit();
+  const testDistributeMutation = useTestDistributeDailyProfit();
 
   const { data, isLoading } = useDeclaredDailyProfits({
     isDistributed: isDistributedFilter,
@@ -70,24 +79,50 @@ export function DeclaredProfitsList() {
       return;
     }
 
+    // Don't manually prompt for 2FA - let the API interceptor handle it
+    // It will prompt once if needed and retry automatically
     try {
-      const twoFACode = await promptFor2FA();
-      if (!twoFACode) {
-        toast.error('2FA code is required');
-        return;
-      }
-
       await deleteMutation.mutateAsync({
         date: profit.date,
-        data: { twoFACode },
+        data: {
+          // twoFACode will be added by the API interceptor if needed
+        },
       });
-      toast.success('Profit deleted successfully');
+      // Success message is handled by the mutation's onSuccess
     } catch (error: any) {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to delete profit';
-      toast.error(message);
+      // Error message is handled by the mutation's onError
+      // But handle user cancellation gracefully
+      if (error?.message === '2FA_CODE_REQUIRED') {
+        // User cancelled 2FA prompt - don't show error
+        return;
+      }
+    }
+  };
+
+  const handleRunDistribution = async (profit: DailyProfit) => {
+    if (
+      !confirm(
+        `Run distribution for ${profit.date}? This will distribute profits to all eligible stakes.`
+      )
+    ) {
+      return;
+    }
+
+    // Don't manually prompt for 2FA - let the API interceptor handle it
+    // It will prompt once if needed and retry automatically
+    try {
+      await testDistributeMutation.mutateAsync({
+        date: profit.date,
+        // twoFACode will be added by the API interceptor if needed
+      });
+      // Success message is handled by the mutation's onSuccess
+    } catch (error: any) {
+      // Error message is handled by the mutation's onError
+      // But we can add additional handling if needed
+      if (error?.message === '2FA_CODE_REQUIRED') {
+        // User cancelled 2FA prompt - don't show error
+        return;
+      }
     }
   };
 
@@ -125,7 +160,9 @@ export function DeclaredProfitsList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Profits</SelectItem>
-                <SelectItem value="distributed">Distributed</SelectItem>
+                <SelectItem value="distributed">
+                  Distributed (locked)
+                </SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
@@ -157,19 +194,20 @@ export function DeclaredProfitsList() {
               </TableHeader>
               <TableBody>
                 {declaredProfits.map((profit) => {
-                  const dateObj = parseISO(profit.date);
-                  const isPast = dateObj < new Date();
+                  const todayUtc = utcDayString();
+                  const isPast = isPastDate(profit.date, todayUtc);
                   const canEdit = !profit.isDistributed && !isPast;
+                  const isMissedPending = !profit.isDistributed && isPast;
 
                   return (
                     <TableRow key={profit.id}>
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {format(dateObj, 'MMM d, yyyy')}
+                            {formatDateShort(profit.date)}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {format(dateObj, 'EEEE')}
+                            {formatWeekday(profit.date)}
                           </div>
                         </div>
                       </TableCell>
@@ -206,8 +244,16 @@ export function DeclaredProfitsList() {
                       <TableCell>
                         {profit.isDistributed ? (
                           <Badge className="bg-green-500 text-white">
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Distributed
+                            <Lock className="mr-1 h-3 w-3" />
+                            Distributed (locked)
+                          </Badge>
+                        ) : isMissedPending ? (
+                          <Badge
+                            variant="secondary"
+                            className="bg-orange-500 text-white"
+                          >
+                            <Clock className="mr-1 h-3 w-3" />
+                            Pending (missed)
                           </Badge>
                         ) : (
                           <Badge
@@ -215,7 +261,7 @@ export function DeclaredProfitsList() {
                             className="bg-yellow-500 text-white"
                           >
                             <Clock className="mr-1 h-3 w-3" />
-                            Pending
+                            Pending (scheduled)
                           </Badge>
                         )}
                       </TableCell>
@@ -223,7 +269,14 @@ export function DeclaredProfitsList() {
                         <div className="text-sm">
                           <div>{profit.declaredBy.email}</div>
                           <div className="text-xs text-gray-500">
-                            {format(parseISO(profit.declaredAt), 'MMM d, yyyy')}
+                            {new Date(profit.declaredAt).toLocaleDateString(
+                              'en-US',
+                              {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              }
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -247,10 +300,23 @@ export function DeclaredProfitsList() {
                               </Button>
                             </>
                           )}
-                          {!canEdit && (
+                          {isMissedPending && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRunDistribution(profit)}
+                              className="text-orange-600 hover:text-orange-700"
+                            >
+                              <ArrowRight className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                Run distribution
+                              </span>
+                            </Button>
+                          )}
+                          {!canEdit && !isMissedPending && (
                             <span className="text-xs text-gray-400">
                               {profit.isDistributed
-                                ? 'Already distributed'
+                                ? 'Distributed (locked)'
                                 : 'Past date'}
                             </span>
                           )}

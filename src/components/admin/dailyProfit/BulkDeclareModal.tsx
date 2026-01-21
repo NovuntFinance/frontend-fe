@@ -5,11 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDeclareBulkDailyProfit } from '@/lib/mutations';
-import { use2FA } from '@/contexts/TwoFAContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +17,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/enhanced-toast';
-import { format, addDays, startOfToday } from 'date-fns';
+import { utcDayString } from '@/lib/dateUtils';
+
+const MAX_ROS_PERCENTAGE = 2.2;
 
 const bulkDeclareSchema = z.object({
   premiumPoolAmount: z
@@ -31,7 +31,10 @@ const bulkDeclareSchema = z.object({
   rosPercentage: z
     .number()
     .min(0, 'ROS percentage must be at least 0')
-    .max(100, 'ROS percentage cannot exceed 100'),
+    .max(
+      MAX_ROS_PERCENTAGE,
+      `ROS percentage cannot exceed ${MAX_ROS_PERCENTAGE}%`
+    ),
   selectedDates: z.array(z.string()).min(1, 'Select at least one date'),
 });
 
@@ -48,7 +51,6 @@ export function BulkDeclareModal({
 }: BulkDeclareModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
-  const { promptFor2FA } = use2FA();
   const bulkDeclareMutation = useDeclareBulkDailyProfit();
 
   const {
@@ -72,11 +74,12 @@ export function BulkDeclareModal({
   const performancePoolAmount = watch('performancePoolAmount');
   const rosPercentage = watch('rosPercentage');
 
-  // Generate next 30 days
-  const today = startOfToday();
+  // Generate next 30 days using UTC day strings
+  const todayDate = new Date();
   const availableDates = Array.from({ length: 30 }, (_, i) => {
-    const date = addDays(today, i);
-    return format(date, 'yyyy-MM-dd');
+    const date = new Date(todayDate);
+    date.setUTCDate(todayDate.getUTCDate() + i);
+    return utcDayString(date);
   });
 
   useEffect(() => {
@@ -110,13 +113,8 @@ export function BulkDeclareModal({
 
     setIsLoading(true);
     try {
-      const twoFACode = await promptFor2FA();
-      if (!twoFACode) {
-        toast.error('2FA code is required');
-        setIsLoading(false);
-        return;
-      }
-
+      // Don't manually prompt for 2FA - let the API interceptor handle it
+      // It will prompt once if needed and retry automatically
       const declarations = selectedDates.map((date) => ({
         date,
         premiumPoolAmount: data.premiumPoolAmount,
@@ -126,19 +124,20 @@ export function BulkDeclareModal({
 
       await bulkDeclareMutation.mutateAsync({
         declarations,
-        twoFACode,
+        // twoFACode will be added by the API interceptor if needed
       });
 
-      toast.success(`Declared profit for ${selectedDates.length} day(s)`);
+      // Success message is handled by the mutation's onSuccess
       onOpenChange(false);
       reset();
       setSelectedDates([]);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to declare bulk profits';
-      toast.error(message);
+      // Error message is handled by the mutation's onError
+      // But handle user cancellation gracefully
+      if (error?.message === '2FA_CODE_REQUIRED') {
+        // User cancelled 2FA prompt - don't show error
+        return;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +200,7 @@ export function BulkDeclareModal({
               type="number"
               step="0.01"
               min="0"
-              max="100"
+              max={String(MAX_ROS_PERCENTAGE)}
               {...register('rosPercentage', { valueAsNumber: true })}
               disabled={isLoading}
               placeholder="0.55"
@@ -211,6 +210,9 @@ export function BulkDeclareModal({
                 {errors.rosPercentage.message}
               </p>
             )}
+            <p className="text-xs text-gray-500">
+              Max {MAX_ROS_PERCENTAGE}% (e.g., 0.55 for 0.55%)
+            </p>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -258,9 +260,15 @@ export function BulkDeclareModal({
             <div className="grid max-h-64 grid-cols-7 gap-2 overflow-y-auto rounded-lg border p-2">
               {availableDates.map((date) => {
                 const isSelected = selectedDates.includes(date);
-                const dateObj = new Date(date);
-                const dayName = format(dateObj, 'EEE');
-                const dayNumber = format(dateObj, 'd');
+                // Extract day number from YYYY-MM-DD string
+                const dayNumber = date.split('-')[2];
+                // Get weekday using UTC-safe formatting
+                const [y, m, d] = date.split('-').map(Number);
+                const dateObj = new Date(Date.UTC(y, m - 1, d));
+                const dayName = new Intl.DateTimeFormat('en-US', {
+                  weekday: 'short',
+                  timeZone: 'UTC',
+                }).format(dateObj);
 
                 return (
                   <button

@@ -264,8 +264,10 @@ export default function UserDetailPage() {
                 Last Login
               </dt>
               <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {user.lastLogin
-                  ? new Date(user.lastLogin).toLocaleDateString()
+                {user.lastLoginAt || user.lastLogin
+                  ? new Date(
+                      (user.lastLoginAt || user.lastLogin) as string
+                    ).toLocaleDateString()
                   : 'Never'}
               </dd>
             </div>
@@ -324,7 +326,10 @@ export default function UserDetailPage() {
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-purple-500">★</span>
                       <span className="text-gray-700 dark:text-gray-300">
-                        NXP: {user.rankInfo.nxp.totalNXP.toLocaleString()}
+                        NXP:{' '}
+                        {Number.isFinite(Number(user.rankInfo.nxp.totalNXP))
+                          ? Number(user.rankInfo.nxp.totalNXP).toLocaleString()
+                          : '0'}
                       </span>
                     </div>
                   )}
@@ -348,7 +353,12 @@ export default function UserDetailPage() {
                 Total Staked
               </dt>
               <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${user.totalInvested.toLocaleString()}
+                $
+                {(
+                  user.totalInvested ??
+                  user.stats?.totalStaked ??
+                  0
+                ).toLocaleString()}
               </dd>
             </div>
             <div>

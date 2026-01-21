@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { adminAuthService } from './adminAuthService';
+import { getIs2FAVerifiedFromToken, shouldRequire2FA } from '@/lib/twofa';
+import { getApiV1BaseUrl } from '@/lib/admin-api-base';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = getApiV1BaseUrl();
 
 // 2FA Code Cache (valid for 85 seconds to match backend's ±2 time steps ~90-second window)
 interface Cached2FA {
@@ -11,6 +12,29 @@ interface Cached2FA {
 }
 
 let cached2FA: Cached2FA | null = null;
+
+type RetriableAxiosConfig = any & { _retry2FA?: boolean };
+
+function attach2FACodeToConfig(config: any, twoFACode: string) {
+  const method = config.method?.toUpperCase?.() || '';
+
+  if (method === 'GET') {
+    // For GET requests, add to query parameters (CORS-safe)
+    config.params = config.params || {};
+    config.params.twoFACode = twoFACode;
+    return;
+  }
+
+  // For write operations, add to request body
+  if (config.data && typeof config.data === 'object') {
+    config.data.twoFACode = twoFACode;
+  } else if (config.data == null) {
+    config.data = { twoFACode };
+  } else {
+    // Fallback: wrap primitive/string payload
+    config.data = { value: config.data, twoFACode };
+  }
+}
 
 // Create axios instance with interceptors
 // Exported so other services (like adminSettingsService) can use it
@@ -33,44 +57,10 @@ export const createAdminApi = (
         console.warn('[AdminService] No admin token found!');
       }
 
-      // For admin endpoints (except login), add 2FA code
-      // BUT ONLY if 2FA is actually enabled AND token doesn't have is2FAVerified flag
+      // For admin endpoints (except login), add 2FA code ONLY when required
+      // (write operations, sensitive GETs, or when backend explicitly demands it).
       if (config.url?.includes('/admin/') && !config.url.includes('/login')) {
-        const token = adminAuthService.getToken();
-
-        // Check if token has is2FAVerified flag (from new backend behavior)
-        let is2FAVerified = false;
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            is2FAVerified = payload.is2FAVerified === true;
-            console.log('[AdminService] Token is2FAVerified:', is2FAVerified);
-
-            // If token doesn't have is2FAVerified flag, show warning
-            if (!is2FAVerified) {
-              console.warn('[AdminService] ⚠️ OLD TOKEN DETECTED!');
-              console.warn(
-                '[AdminService] Your token was issued before the 2FA update.'
-              );
-              console.warn(
-                '[AdminService] Please LOG OUT and LOG BACK IN with your 2FA code to get a new token.'
-              );
-              console.warn(
-                "[AdminService] With the new token, you won't need 2FA for viewing pages, only for editing."
-              );
-            }
-          } catch (error) {
-            console.error('[AdminService] Failed to decode token:', error);
-          }
-        }
-
-        // If token has is2FAVerified flag, skip 2FA requirement for GET requests
-        if (is2FAVerified && config.method?.toUpperCase() === 'GET') {
-          console.log(
-            '[AdminService] ✅ Token has is2FAVerified flag, skipping 2FA for GET request'
-          );
-          return config;
-        }
+        const is2FAVerified = getIs2FAVerifiedFromToken(token);
 
         // Check if 2FA is enabled for the current admin
         const admin = adminAuthService.getCurrentAdmin();
@@ -85,8 +75,59 @@ export const createAdminApi = (
           return config;
         }
 
-        // 2FA is enabled - proceed with 2FA code handling
-        // Check cache first
+        const requires2FA = shouldRequire2FA({
+          method: config.method,
+          url: config.url,
+          is2FAVerified,
+        });
+
+        // Never prompt / prefetch for normal GET navigation pages
+        if (!requires2FA) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[AdminService] 2FA not required for this request:',
+              config.method?.toUpperCase(),
+              config.url
+            );
+          }
+          return config;
+        }
+
+        // 2FA is required - proceed with code handling
+        // First check if twoFACode is already in the request (body or params)
+        const method = config.method?.toUpperCase?.() || '';
+        const existingCodeInBody =
+          method !== 'GET' &&
+          config.data &&
+          typeof config.data === 'object' &&
+          config.data.twoFACode &&
+          typeof config.data.twoFACode === 'string' &&
+          config.data.twoFACode.trim().length > 0;
+        const existingCodeInParams =
+          method === 'GET' &&
+          config.params &&
+          config.params.twoFACode &&
+          typeof config.params.twoFACode === 'string' &&
+          config.params.twoFACode.trim().length > 0;
+        const existingCodeInHeader =
+          config.headers &&
+          (config.headers['X-2FA-Code'] || config.headers['x-2fa-code']);
+
+        // If 2FA code is already provided in the request, use it (don't prompt again)
+        if (
+          existingCodeInBody ||
+          existingCodeInParams ||
+          existingCodeInHeader
+        ) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[AdminService] 2FA code already provided in request, using it'
+            );
+          }
+          return config; // Use the existing code, don't overwrite
+        }
+
+        // No code in request - check cache first
         let twoFACode: string | null = null;
 
         if (cached2FA && Date.now() < cached2FA.expiresAt) {
@@ -96,13 +137,12 @@ export const createAdminApi = (
             twoFACode.substring(0, 2) + '****'
           );
         } else {
-          // Get fresh 2FA code
-          console.log('[AdminService] Checking if 2FA code is needed...');
+          // Get fresh 2FA code (this is the ONLY place we should ever trigger the modal proactively)
+          // and it should only happen for write operations or sensitive GET endpoints.
+          console.log('[AdminService] 2FA required, requesting code...');
           try {
-            // Call the getter - if it returns null, don't prompt (for GET requests)
             const code = await get2FACode();
 
-            // Only proceed if a code was actually provided (not null)
             if (code && code.trim().length > 0) {
               twoFACode = code.trim();
               // Cache for 85 seconds (matches backend's ±2 time steps ~90-second window)
@@ -113,14 +153,7 @@ export const createAdminApi = (
               console.log(
                 '[AdminService] Cached new 2FA code (valid for 85 seconds)'
               );
-            } else if (code === null) {
-              // Getter returned null intentionally (GET request, no 2FA needed)
-              console.log(
-                '[AdminService] 2FA code not required for this request (GET operation)'
-              );
-              twoFACode = null;
             } else {
-              // Empty string or undefined - user cancelled
               console.warn(
                 '[AdminService] No 2FA code provided by user (user cancelled or empty code)'
               );
@@ -129,61 +162,15 @@ export const createAdminApi = (
           } catch (error) {
             console.error('[AdminService] Error getting 2FA code:', error);
             twoFACode = null;
-            // Don't throw - let the request proceed and backend will return 403 if needed
           }
         }
 
-        if (twoFACode) {
-          const method = config.method?.toUpperCase();
-
-          if (method === 'GET') {
-            // For GET requests, add to query parameters
-            config.params = config.params || {};
-            config.params.twoFACode = twoFACode;
-            const fullUrl = `${config.baseURL}${config.url}?${new URLSearchParams(config.params as Record<string, string>).toString()}`;
-            console.log(
-              '[AdminService] GET request with 2FA code in query params:',
-              {
-                url: config.url,
-                hasToken: !!token,
-                has2FACode: true,
-                fullUrl: fullUrl.substring(0, 100) + '...',
-              }
-            );
-          } else if (['POST', 'PUT', 'PATCH'].includes(method || '')) {
-            // For POST/PUT/PATCH, add to request body
-            if (config.data && typeof config.data === 'object') {
-              config.data.twoFACode = twoFACode;
-              console.log(
-                '[AdminService] Added 2FA code to request body for',
-                method,
-                {
-                  url: config.url,
-                  hasToken: !!token,
-                  has2FACode: true,
-                }
-              );
-            } else {
-              // If no body, create one
-              config.data = { twoFACode };
-              console.log(
-                '[AdminService] Created request body with 2FA code for',
-                method
-              );
-            }
-          }
-        } else {
-          // 2FA is required but code is not available
-          // This will cause the request to fail with 403, which is handled by the response interceptor
-          console.warn(
-            '[AdminService] ⚠️ 2FA code required but not available for:',
-            config.url
-          );
-          console.warn(
-            '[AdminService] The request will proceed, but backend will return 403 if 2FA is required'
-          );
-          // Don't block the request - let it proceed and backend will return appropriate error
+        if (!twoFACode) {
+          // Operation requires 2FA and user didn't provide it; do not send request
+          return Promise.reject(new Error('2FA_CODE_REQUIRED'));
         }
+
+        attach2FACodeToConfig(config, twoFACode);
       }
 
       return config;
@@ -205,15 +192,23 @@ export const createAdminApi = (
       const errorData = error.response?.data as any;
       const errorCode = errorData?.error?.code;
       const errorMessage = errorData?.error?.message || errorData?.message;
+      const originalRequest = error.config as RetriableAxiosConfig;
 
-      console.error('[AdminService] ❌ Request failed:', {
+      // Avoid triggering the Next.js dev overlay with console.error spam.
+      // Keep detailed logs in production (where they matter most).
+      const logPayload = {
         status,
         url: error.config?.url,
         errorCode,
         errorMessage,
         hasToken: !!adminAuthService.getToken(),
         hasCached2FA: !!cached2FA,
-      });
+      };
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[AdminService] Request failed:', logPayload);
+      } else {
+        console.error('[AdminService] ❌ Request failed:', logPayload);
+      }
 
       if (status === 403) {
         if (
@@ -234,19 +229,29 @@ export const createAdminApi = (
           cached2FA = null;
           // The error will be thrown and handled by the component
         } else if (errorCode === '2FA_CODE_REQUIRED') {
-          // Clear cache and let component handle retry
-          console.error(
-            '[AdminService] ❌ 2FA code required but not provided, clearing cache'
-          );
-          console.error(
-            '[AdminService] This usually means the 2FA modal was cancelled or not shown'
-          );
-          console.error(
-            '[AdminService] The request will need to be retried manually by the user'
-          );
+          // Clear cache and retry once after prompting (only after backend explicitly demands it)
           cached2FA = null;
-          // Note: We can't automatically retry here because we don't have access to get2FACode
-          // The component should handle retry by calling the mutation again
+
+          if (originalRequest && !originalRequest._retry2FA) {
+            originalRequest._retry2FA = true;
+            try {
+              const code = await get2FACode();
+              if (!code || !code.trim()) {
+                return Promise.reject(error);
+              }
+
+              const twoFACode = code.trim();
+              cached2FA = {
+                code: twoFACode,
+                expiresAt: Date.now() + 85 * 1000,
+              };
+
+              attach2FACodeToConfig(originalRequest, twoFACode);
+              return api(originalRequest);
+            } catch {
+              return Promise.reject(error);
+            }
+          }
         } else {
           // Other 403 errors
           console.error('[AdminService] ❌ 403 Forbidden:', {
@@ -380,10 +385,21 @@ class AdminService {
     page?: number;
     limit?: number;
     search?: string;
+    status?: 'active' | 'suspended' | 'inactive';
     role?: string;
-    status?: string;
     rank?: string;
     hasActiveStakes?: boolean;
+    createdFrom?: string;
+    createdTo?: string;
+    sortBy?:
+      | 'createdAt'
+      | 'lastLoginAt'
+      | 'totalStaked'
+      | 'walletFundedBalance'
+      | 'walletEarningsBalance'
+      | 'totalDeposited'
+      | 'totalWithdrawn';
+    sortOrder?: 'asc' | 'desc';
   }) {
     // For GET requests, don't prompt for 2FA - let backend handle it
     // After backend update, this endpoint won't require 2FA for viewing
@@ -437,11 +453,58 @@ class AdminService {
    */
   async updateUserStatus(
     userId: string,
-    status: 'active' | 'suspended' | 'inactive'
+    status: 'active' | 'suspended' | 'inactive',
+    reason: string
   ) {
     const api = createAdminApi(this.get2FACode);
     const response = await api.patch(`/admin/users/${userId}/status`, {
       status,
+      reason,
+    });
+    return response.data;
+  }
+
+  /**
+   * Force logout a user (revoke sessions)
+   * POST /api/v1/admin/users/:userId/force-logout
+   */
+  async forceLogoutUser(userId: string, reason: string) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post(`/admin/users/${userId}/force-logout`, {
+      reason,
+    });
+    return response.data;
+  }
+
+  /**
+   * Change a user's role
+   * PATCH /api/v1/admin/users/:userId/role
+   */
+  async changeUserRole(userId: string, role: string, reason: string) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.patch(`/admin/users/${userId}/role`, {
+      role,
+      reason,
+    });
+    return response.data;
+  }
+
+  /**
+   * Safe delete (anonymize) or hard delete a user
+   * DELETE /api/v1/admin/users/:userId
+   *
+   * Note: axios DELETE body must be passed via config.data
+   */
+  async deleteUser(
+    userId: string,
+    opts: { reason: string; mode: 'anonymize' | 'hard' }
+  ) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.delete(`/admin/users/${userId}`, {
+      data: {
+        reason: opts.reason,
+        mode: opts.mode,
+      },
     });
     return response.data;
   }
@@ -477,18 +540,42 @@ class AdminService {
   }
 
   /**
-   * Get all transactions
+   * Get transactions list (rich table)
    * GET /api/v1/admin/transactions
-   * Note: No 2FA required for read-only operations (after backend update)
+   * Note: Read-only, NO 2FA
    */
-  async getTransactions(page = 1, limit = 20) {
-    // For GET requests, don't prompt for 2FA - let backend handle it
+  async getTransactions(params?: Record<string, unknown>) {
     const get2FACode = async () => null;
     const api = createAdminApi(get2FACode);
-    const response = await api.get('/admin/transactions', {
-      params: { page, limit },
-    });
+    const response = await api.get('/admin/transactions', { params });
     return response.data;
+  }
+
+  /**
+   * Get transaction detail (drawer)
+   * GET /api/v1/admin/transactions/:transactionId
+   * Note: Read-only, NO 2FA
+   */
+  async getTransactionById(transactionId: string) {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const response = await api.get(`/admin/transactions/${transactionId}`);
+    return response.data;
+  }
+
+  /**
+   * Export transactions CSV (sensitive GET, requires 2FA)
+   * GET /api/v1/admin/transactions/export
+   *
+   * If backend returns 403 2FA_CODE_REQUIRED, the interceptor will prompt and retry.
+   */
+  async exportTransactionsCsv(params?: Record<string, unknown>) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.get('/admin/transactions/export', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
   }
 
   /**
@@ -509,6 +596,67 @@ class AdminService {
       params: { timeframe },
     });
     return response.data;
+  }
+
+  /**
+   * Admin Analytics Dashboard (all tabs in one call)
+   * GET /api/v1/admin/analytics/dashboard
+   * Note: Read-only, NO 2FA
+   */
+  async getAnalyticsDashboard(params: {
+    timeframe: '24h' | '7d' | '30d' | '90d' | 'custom';
+    from?: string;
+    to?: string;
+  }) {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    // Some backend deployments may mount this endpoint under `/admin/ui/*`.
+    // Try the documented route first; fall back to the `/admin/ui` variant on 404 only.
+    const candidates = [
+      '/admin/analytics/dashboard',
+      '/admin/ui/analytics/dashboard',
+      // Common alternates (some backends omit the "dashboard" suffix)
+      '/admin/analytics',
+      '/admin/ui/analytics',
+    ];
+    let lastErr: any = null;
+
+    for (let i = 0; i < candidates.length; i++) {
+      const url = candidates[i];
+      try {
+        const response = await api.get(url, { params });
+        // Some servers respond 200 with a "route not found" payload.
+        // Detect that and keep falling back.
+        const payload = response?.data as any;
+        const msg = payload?.message || payload?.error?.message || '';
+        const looksLikeRouteNotFound =
+          payload?.success === false &&
+          typeof msg === 'string' &&
+          msg.includes('The route ') &&
+          msg.includes('Novunt API is running');
+        if (looksLikeRouteNotFound) {
+          lastErr = new Error(msg);
+          continue;
+        }
+
+        if (process.env.NODE_ENV === 'development' && i > 0) {
+          console.warn(
+            '[AdminService] Analytics dashboard route fallback used:',
+            url
+          );
+        }
+        return response.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          lastErr = err;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    throw lastErr;
   }
 }
 

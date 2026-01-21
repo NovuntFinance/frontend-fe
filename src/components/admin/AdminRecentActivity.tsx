@@ -1,10 +1,10 @@
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
-import { AdminActivityItem } from '@/types/admin';
+import { AdminActivityItem, AdminUiRecentActivityItem } from '@/types/admin';
 import { useAuthStore } from '@/store/authStore';
 import { ShimmerCard } from '@/components/ui/shimmer';
 
 interface AdminRecentActivityProps {
-  activities?: AdminActivityItem[];
+  activities?: Array<AdminActivityItem | AdminUiRecentActivityItem>;
   isLoading?: boolean;
   onViewAll?: () => void;
 }
@@ -21,6 +21,27 @@ const AdminRecentActivity = ({
   if (!isAdmin) {
     return null;
   }
+
+  const getDisplayName = (
+    activity: AdminActivityItem | AdminUiRecentActivityItem
+  ) => {
+    const maybeUser = (activity as AdminUiRecentActivityItem).user;
+    return (
+      maybeUser?.maskedName ||
+      maybeUser?.name ||
+      (activity as any)?.metadata?.maskedName ||
+      (activity as any)?.metadata?.name ||
+      'Anonymous'
+    );
+  };
+
+  const humanizeType = (type: string) => {
+    if (!type) return 'Activity';
+    return type
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -146,10 +167,23 @@ const AdminRecentActivity = ({
     }
   };
 
-  const renderTimeLabel = (activity: AdminActivityItem) => {
-    if (activity.relativeTime) return activity.relativeTime;
-    if (activity.createdAt) {
-      const parsed = parseISO(activity.createdAt);
+  const renderTimeLabel = (
+    activity: AdminActivityItem | AdminUiRecentActivityItem
+  ) => {
+    const anyActivity = activity as unknown as
+      | AdminActivityItem
+      | AdminUiRecentActivityItem;
+
+    if ((anyActivity as AdminActivityItem).relativeTime) {
+      return (anyActivity as AdminActivityItem).relativeTime as string;
+    }
+
+    const createdAt =
+      (anyActivity as AdminActivityItem).createdAt ||
+      (anyActivity as AdminUiRecentActivityItem).timestamp;
+
+    if (createdAt) {
+      const parsed = parseISO(createdAt);
       if (isValid(parsed)) {
         return formatDistanceToNow(parsed, { addSuffix: true });
       }
@@ -157,26 +191,41 @@ const AdminRecentActivity = ({
     return 'Just now';
   };
 
-  const renderDetail = (activity: AdminActivityItem) => {
-    if (activity.description) return activity.description;
-    if (activity.amount) {
-      const currency = activity.currency ?? 'USD';
+  const renderDetail = (
+    activity: AdminActivityItem | AdminUiRecentActivityItem
+  ) => {
+    const anyActivity = activity as any;
+    if (anyActivity.description) return anyActivity.description as string;
+
+    const amount =
+      typeof anyActivity.amount === 'number'
+        ? (anyActivity.amount as number)
+        : undefined;
+
+    const status =
+      typeof anyActivity.status === 'string'
+        ? (anyActivity.status as string)
+        : undefined;
+
+    if (amount !== undefined) {
       const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: activity.amount < 1000 ? 2 : 0,
-      }).format(activity.amount);
-      return formatted;
+        maximumFractionDigits: amount < 1000 ? 2 : 0,
+      }).format(amount);
+      return status ? `${formatted} USDT • ${status}` : `${formatted} USDT`;
     }
+
+    if (status) return status;
+
     if (
-      activity.metadata?.email &&
-      typeof activity.metadata.email === 'string'
+      anyActivity.metadata?.email &&
+      typeof anyActivity.metadata.email === 'string'
     ) {
-      return activity.metadata.email;
+      return anyActivity.metadata.email as string;
     }
-    return activity.metadata?.details &&
-      typeof activity.metadata.details === 'string'
-      ? activity.metadata.details
+
+    return anyActivity.metadata?.details &&
+      typeof anyActivity.metadata.details === 'string'
+      ? (anyActivity.metadata.details as string)
       : undefined;
   };
 
@@ -185,7 +234,7 @@ const AdminRecentActivity = ({
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Recent Activity
+            Live Platform Activity
           </h3>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -206,7 +255,7 @@ const AdminRecentActivity = ({
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          Recent Activity
+          Live Platform Activity
         </h3>
         <button
           className="text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-60 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -219,17 +268,26 @@ const AdminRecentActivity = ({
       </div>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {hasActivities ? (
-          activities.map((activity) => {
+          activities.map((activity, index) => {
             const detail = renderDetail(activity);
+            const displayType = (activity as any).type as string;
+            const displayTitle =
+              typeof (activity as any).title === 'string'
+                ? ((activity as any).title as string)
+                : `${getDisplayName(activity)} • ${humanizeType(displayType)}`;
+
             return (
               <div
-                key={activity.id}
+                key={
+                  (activity as any).id ||
+                  `${(activity as any).timestamp || (activity as any).createdAt || 'activity'}-${index}`
+                }
                 className="flex p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
               >
-                {getActivityIcon(activity.type)}
+                {getActivityIcon(displayType)}
                 <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {activity.title}
+                    {displayTitle}
                   </p>
                   {detail && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">

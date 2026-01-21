@@ -48,7 +48,8 @@ export function usePermissions(): UsePermissionsResult {
       } else {
         const response = await rbacService.getUserPermissions();
         setPermissions(response.data.permissions);
-        setRole(response.data.role.name);
+        const roleValue = (response.data as any).role;
+        setRole(typeof roleValue === 'string' ? roleValue : roleValue?.name);
       }
     } catch (err: any) {
       setError(err);

@@ -1,12 +1,15 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { adminAuthService } from '@/services/adminAuthService';
+import { usePermissions } from '@/hooks/usePermissions';
 
 // Since we're having issues with the lucide-react imports, we'll use simple SVG icons instead
 const AdminSidebar = () => {
   const pathname = usePathname();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
 
   const handleLogout = async () => {
     await adminAuthService.logout();
@@ -15,7 +18,12 @@ const AdminSidebar = () => {
     window.location.href = '/admin/login';
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: (className: string) => ReactNode;
+    name: string;
+    path: string;
+    permission?: string;
+  }> = [
     {
       icon: (className: string) => (
         <svg
@@ -100,6 +108,7 @@ const AdminSidebar = () => {
       ),
       name: 'Analytics',
       path: '/admin/analytics',
+      permission: 'analytics.view',
     },
     {
       icon: (className: string) => (
@@ -196,6 +205,13 @@ const AdminSidebar = () => {
     return pathname === path || pathname.startsWith(`${path}/`);
   };
 
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (!item.permission) return true;
+    // While permissions are loading, don't render protected nav links
+    if (permissionsLoading) return false;
+    return hasPermission(item.permission);
+  });
+
   return (
     <aside className="hidden w-64 border-r border-gray-200 bg-white md:flex md:flex-col dark:border-gray-700 dark:bg-gray-800">
       <div className="flex h-16 items-center justify-center border-b border-gray-200 dark:border-gray-700">
@@ -205,7 +221,7 @@ const AdminSidebar = () => {
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto">
         <nav className="flex-1 space-y-1 px-2 py-4">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const active = isActive(item.path);
 
             return (

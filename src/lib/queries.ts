@@ -45,6 +45,10 @@ import {
   AdminUser,
   UserFilters,
 } from '@/types/admin';
+import type {
+  AdminAnalyticsDashboardData,
+  AdminAnalyticsTimeframe,
+} from '@/types/adminAnalytics';
 import { useAuthStore } from '@/store/authStore';
 import {
   getStakingStreak,
@@ -124,6 +128,11 @@ export const queryKeys = {
   // Admin
   adminDashboard: (timeframe: AdminDashboardTimeframe) =>
     ['admin', 'dashboard', timeframe] as const,
+  adminAnalyticsDashboard: (params: {
+    timeframe: AdminAnalyticsTimeframe;
+    from?: string;
+    to?: string;
+  }) => ['admin', 'analytics-dashboard', params] as const,
 
   // RBAC
   rbacPermissions: ['rbac', 'permissions'] as const,
@@ -1643,8 +1652,44 @@ export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
       const { adminService } = await import('@/services/adminService');
       try {
         const response = await adminService.getDashboardMetrics(timeframe);
-        // Handle both response.data and direct response structures
-        return (response.data || response) as AdminDashboardData;
+        // Normalize dashboard response:
+        // Backend may return a wrapper `{ status/success, data: {...}, dailyProfit, pools, ... }`.
+        // If we naïvely return `response.data`, we can accidentally DROP sibling fields like
+        // `dailyProfit` and `pools` that are not nested under `data`.
+        const raw = response as any;
+        const maybeNested = raw?.data;
+
+        // If nested `data` exists and looks like the dashboard payload, merge it with any
+        // extra top-level fields (dailyProfit/pools/recentActivity/lastUpdated).
+        if (maybeNested && typeof maybeNested === 'object') {
+          const merged: AdminDashboardData = {
+            ...(maybeNested as object),
+            // Preserve top-level extras if present
+            dailyProfit: raw?.dailyProfit ?? (maybeNested as any)?.dailyProfit,
+            pools: raw?.pools ?? (maybeNested as any)?.pools,
+            recentActivity:
+              raw?.recentActivity ?? (maybeNested as any)?.recentActivity,
+            lastUpdated: raw?.lastUpdated ?? (maybeNested as any)?.lastUpdated,
+            timeframe: raw?.timeframe ?? (maybeNested as any)?.timeframe,
+          } as AdminDashboardData;
+
+          if (process.env.NODE_ENV === 'development') {
+            if (!merged.dailyProfit || !merged.pools) {
+              console.log('[useAdminDashboard] Dashboard merge debug:', {
+                hasNestedData: true,
+                topLevelKeys: Object.keys(raw || {}),
+                nestedKeys: Object.keys(maybeNested || {}),
+                hasDailyProfit: !!merged.dailyProfit,
+                hasPools: !!merged.pools,
+              });
+            }
+          }
+
+          return merged;
+        }
+
+        // Otherwise it is already the dashboard payload.
+        return raw as AdminDashboardData;
       } catch (error: any) {
         // Clear 2FA cache on invalid code error
         const errorCode = error?.response?.data?.error?.code;
@@ -1682,9 +1727,26 @@ export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
  * Get paginated list of users (Admin only)
  * GET /api/v1/admin/users
  */
-export function useAdminUsers(
-  filters?: UserFilters & { page?: number; limit?: number }
-) {
+export function useAdminUsers(filters?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: 'active' | 'suspended' | 'inactive';
+  role?: string;
+  rank?: string;
+  hasActiveStakes?: boolean;
+  createdFrom?: string;
+  createdTo?: string;
+  sortBy?:
+    | 'createdAt'
+    | 'lastLoginAt'
+    | 'totalStaked'
+    | 'walletFundedBalance'
+    | 'walletEarningsBalance'
+    | 'totalDeposited'
+    | 'totalWithdrawn';
+  sortOrder?: 'asc' | 'desc';
+}) {
   const checkAdminAuth = (): boolean => {
     if (typeof window === 'undefined') return false;
     try {
@@ -1702,7 +1764,7 @@ export function useAdminUsers(
       const { adminService } = await import('@/services/adminService');
       try {
         const response = await adminService.getUsers(filters);
-        return response.data || response;
+        return response;
       } catch (error: any) {
         const errorCode = error?.response?.data?.error?.code;
         if (errorCode === '2FA_CODE_INVALID') {
@@ -1718,6 +1780,116 @@ export function useAdminUsers(
       if (status === 401 || status === 403) {
         return false;
       }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Admin Transactions list (Admin only)
+ * GET /api/v1/admin/transactions
+ */
+export function useAdminTransactions(params?: Record<string, unknown> | null) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: ['admin-transactions', params] as const,
+    queryFn: async () => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.getTransactions(params || undefined);
+    },
+    staleTime: 30 * 1000,
+    enabled: checkAdminAuth() && !!params,
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Admin Transaction detail (Admin only)
+ * GET /api/v1/admin/transactions/:transactionId
+ */
+export function useAdminTransactionDetail(transactionId?: string | null) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: ['admin-transaction', transactionId] as const,
+    queryFn: async () => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.getTransactionById(transactionId as string);
+    },
+    enabled: checkAdminAuth() && !!transactionId,
+    staleTime: 30 * 1000,
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403 || status === 404) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Admin Analytics dashboard (all tabs in one call)
+ * GET /api/v1/admin/analytics/dashboard
+ * Note: Read-only, NO 2FA
+ */
+export function useAdminAnalyticsDashboard(params: {
+  timeframe: AdminAnalyticsTimeframe;
+  from?: string;
+  to?: string;
+}) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  const isParamsReady =
+    params.timeframe !== 'custom' || (!!params.from && !!params.to);
+
+  return useQuery<AdminAnalyticsDashboardData>({
+    queryKey: queryKeys.adminAnalyticsDashboard(params),
+    queryFn: async (): Promise<AdminAnalyticsDashboardData> => {
+      const { adminService } = await import('@/services/adminService');
+      const raw = await adminService.getAnalyticsDashboard({
+        timeframe: params.timeframe,
+        from: params.from,
+        to: params.to,
+      });
+      // expected: { success: true, data: { ... } }
+      return ((raw as any)?.data ?? raw) as AdminAnalyticsDashboardData;
+    },
+    staleTime: 5 * 60 * 1000, // endpoint cached ~5 mins server-side
+    enabled: checkAdminAuth() && isParamsReady,
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) return false;
       return failureCount < 2;
     },
   });

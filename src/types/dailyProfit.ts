@@ -11,10 +11,10 @@
 export interface DailyProfit {
   id: string;
   date: string; // YYYY-MM-DD format
-  profitPercentage: number; // 0-100 (legacy field, syncs with rosPercentage)
+  profitPercentage: number; // 0-2.2 (legacy field; backend still accepts it for compatibility)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-100 percentage for ROS
+  rosPercentage: number; // 0-2.2 percentage for ROS (correct field)
   description?: string;
   isActive: boolean;
   isDistributed: boolean;
@@ -40,10 +40,10 @@ export interface DailyProfit {
  */
 export interface TodayProfit {
   date: string; // YYYY-MM-DD format
-  profitPercentage: number; // Legacy field
+  profitPercentage: number; // Legacy field (compat)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-100 percentage for ROS
+  rosPercentage: number; // 0-2.2 percentage for ROS
   isDistributed: boolean;
 }
 
@@ -53,10 +53,10 @@ export interface TodayProfit {
  */
 export interface DailyProfitHistoryItem {
   date: string; // YYYY-MM-DD format
-  profitPercentage: number; // Legacy field
+  profitPercentage: number; // Legacy field (compat)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-100 percentage for ROS
+  rosPercentage: number; // 0-2.2 percentage for ROS
   isDistributed: boolean;
 }
 
@@ -77,12 +77,12 @@ export interface DailyProfitHistoryResponse {
  */
 export interface DeclareProfitRequest {
   date: string; // YYYY-MM-DD format
-  profitPercentage?: number; // 0-100 (legacy, optional)
+  profitPercentage?: number; // 0-2.2 (legacy, optional; prefer rosPercentage)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-100 percentage for ROS
+  rosPercentage: number; // 0-2.2 percentage for ROS (correct field)
   description?: string;
-  twoFACode: string; // Required if admin has 2FA enabled
+  twoFACode?: string; // Optional - interceptor will add it if not provided
 }
 
 /**
@@ -91,32 +91,32 @@ export interface DeclareProfitRequest {
 export interface DeclareBulkProfitRequest {
   declarations: Array<{
     date: string; // YYYY-MM-DD format
-    profitPercentage?: number; // 0-100 (legacy, optional)
+    profitPercentage?: number; // 0-2.2 (legacy, optional; prefer rosPercentage)
     premiumPoolAmount: number; // Dollar amount for premium pool
     performancePoolAmount: number; // Dollar amount for performance pool
-    rosPercentage: number; // 0-100 percentage for ROS
+    rosPercentage: number; // 0-2.2 percentage for ROS
     description?: string;
   }>;
-  twoFACode: string; // Required if admin has 2FA enabled
+  twoFACode?: string; // Optional - interceptor will add it if not provided
 }
 
 /**
  * Update Profit Request
  */
 export interface UpdateProfitRequest {
-  profitPercentage?: number; // 0-100 (legacy)
+  profitPercentage?: number; // 0-2.2 (legacy; prefer rosPercentage)
   premiumPoolAmount?: number; // Dollar amount for premium pool
   performancePoolAmount?: number; // Dollar amount for performance pool
-  rosPercentage?: number; // 0-100 percentage for ROS
+  rosPercentage?: number; // 0-2.2 percentage for ROS
   description?: string;
-  twoFACode: string; // Required if admin has 2FA enabled
+  twoFACode?: string; // Optional - interceptor will add it if not provided
 }
 
 /**
  * Delete Profit Request
  */
 export interface DeleteProfitRequest {
-  twoFACode: string; // Required if admin has 2FA enabled
+  twoFACode?: string; // Optional - interceptor will add it if not provided
 }
 
 /**
@@ -124,7 +124,7 @@ export interface DeleteProfitRequest {
  */
 export interface TestDistributionRequest {
   date: string; // YYYY-MM-DD format
-  twoFACode: string; // Required if admin has 2FA enabled
+  twoFACode?: string; // Optional - interceptor will add it if not provided
 }
 
 /**
