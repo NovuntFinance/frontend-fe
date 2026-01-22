@@ -68,10 +68,15 @@ export default function TeamPage() {
         fullData: referralMetrics,
         referrals: referralMetrics.referrals,
         team: referralMetrics.team,
+        user: referralMetrics.user,
         totalDirect: referralMetrics.referrals?.total_direct,
         activeDirect: referralMetrics.referrals?.active_direct,
         totalMembers: referralMetrics.team?.total_members,
         activeMembers: referralMetrics.team?.active_members,
+        // NEW fields
+        totalTeamStake: referralMetrics.team?.total_team_stake,
+        userPersonalStake: referralMetrics.user?.personal_stake,
+        userTeamStake: referralMetrics.user?.team_stake,
       });
     }
     if (treeError) {
@@ -276,7 +281,7 @@ export default function TeamPage() {
         </Card>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:gap-6">
           {/* Total Direct Team */}
           <Card className="bg-card/70 border-0 shadow-md">
             <CardHeader className="space-y-1 p-4 sm:p-6">
@@ -329,6 +334,36 @@ export default function TeamPage() {
               </p>
               <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
                 {referralMetrics?.team?.active_members || 0} active
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total Team Stake - NEW */}
+          <Card className="bg-card/70 border-0 shadow-md">
+            <CardHeader className="space-y-1 p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/20">
+                    <TrendingUp className="h-4 w-4 text-green-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-semibold sm:text-base">
+                      Total Team Stake
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                      All Levels
+                    </CardDescription>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <p className="text-2xl font-bold sm:text-3xl">
+                {formatCurrency(referralMetrics?.user?.team_stake ?? 0)}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+                Personal:{' '}
+                {formatCurrency(referralMetrics?.user?.personal_stake ?? 0)}
               </p>
             </CardContent>
           </Card>
@@ -549,12 +584,16 @@ export default function TeamPage() {
                           </td>
                           <td className="hidden px-4 py-2 align-middle md:table-cell">
                             {formatCurrency(
-                              (referral as any).personalInvestment ?? 0
+                              referral.personalStake ??
+                                referral.personalInvestment ??
+                                0
                             )}
                           </td>
                           <td className="hidden px-4 py-2 align-middle lg:table-cell">
                             {formatCurrency(
-                              (referral as any).referralInvestmentAmount ?? 0
+                              referral.teamStake ??
+                                referral.referralInvestmentAmount ??
+                                0
                             )}
                           </td>
                           <td className="px-4 py-2 align-middle">

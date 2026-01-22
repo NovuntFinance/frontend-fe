@@ -137,6 +137,12 @@ export interface ReferralMetrics {
   team: {
     total_members: number; // Total downline members (all levels)
     active_members: number; // Active team members with stakes
+    total_team_stake?: number; // NEW - Sum of all downlines' stakes
+  };
+  user?: {
+    // NEW - Current user's stakes (Jan 2026)
+    personal_stake: number; // User's own personal stake
+    team_stake: number; // Sum of all their downlines' stakes
   };
 }
 
