@@ -28,9 +28,12 @@ export function TodayROSCard() {
   }
 
   if (error) {
+    // Check for 404 or "No profit" error (handles both old and new error messages)
     const isNotFound =
       error instanceof Error &&
-      error.message === 'No profit declared for today';
+      (error.message.includes('No profit') ||
+        error.message.includes('not available') ||
+        error.message.includes('becomes visible'));
 
     if (isNotFound) {
       return (
@@ -41,13 +44,21 @@ export function TodayROSCard() {
               Today&apos;s Profit
             </CardTitle>
             <CardDescription className="text-xs">
-              No profit declared
+              Not yet available
             </CardDescription>
           </CardHeader>
-          <CardContent className="relative">
+          <CardContent className="relative space-y-3">
             <p className="text-muted-foreground text-sm">
-              No profit has been declared for today. Please check back later.
+              Today&apos;s profit becomes visible at 23:59:59 BIT after
+              distribution.
             </p>
+            <div className="text-muted-foreground flex items-start gap-2 text-xs">
+              <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
+              <p>
+                You can only see previous day&apos;s profit during the day.
+                Today&apos;s profit will be visible after distribution.
+              </p>
+            </div>
           </CardContent>
         </Card>
       );
@@ -154,12 +165,32 @@ export function TodayROSCard() {
               <TrendingUp className="h-6 w-6 text-purple-500" />
             </motion.div>
             <div>
-              <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-lg font-bold text-transparent">
-                Today&apos;s Profit
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-lg font-bold text-transparent">
+                  Today&apos;s Profit
+                </CardTitle>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="text-muted-foreground h-3.5 w-3.5 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">
+                        This shows yesterday&apos;s distributed profit.
+                        Today&apos;s profit becomes visible at 23:59:59 BIT
+                        after distribution.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <CardDescription className="flex items-center gap-1 text-xs">
                 <Calendar className="h-3 w-3" />
                 {displayDate}
+                <span className="text-muted-foreground/70">
+                  {' '}
+                  (Previous day)
+                </span>
               </CardDescription>
             </div>
           </div>
@@ -223,20 +254,19 @@ export function TodayROSCard() {
           <p>
             {isDistributed
               ? 'Profit has been distributed to all qualified users and active stakes'
-              : 'Profit will be distributed at the end of the day'}
+              : 'Profit will be distributed at 23:59:59 BIT'}
           </p>
         </div>
 
-        {/* Date Info */}
+        {/* Visibility Info */}
         <div className="border-border/50 border-t pt-2">
-          <p className="text-muted-foreground text-xs">
-            Daily profit declaration for{' '}
-            {new Date(date).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </p>
+          <div className="text-muted-foreground flex items-start gap-2 text-xs">
+            <Clock className="mt-0.5 h-3 w-3 flex-shrink-0" />
+            <p>
+              Today&apos;s profit becomes visible at 23:59:59 BIT after
+              distribution. You are currently viewing yesterday&apos;s profit.
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

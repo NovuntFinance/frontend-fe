@@ -128,30 +128,12 @@ const AdminSidebar = () => {
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-      ),
-      name: 'Daily Profit',
-      path: '/admin/daily-profit',
-    },
-    {
-      icon: (className: string) => (
-        <svg
-          className={className}
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
           <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
         </svg>
       ),
-      name: 'Pool Declaration',
-      path: '/admin/pool',
+      name: 'Daily Declaration Returns',
+      path: '/admin/daily-declaration-returns',
+      permission: 'financial.declare',
     },
     // ROS Management (OLD - DEPRECATED) - Hidden but kept for backward compatibility
     // The old weekly ROS system has been replaced by the Daily Profit system above

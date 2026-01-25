@@ -47,7 +47,10 @@ import {
 } from '@/lib/queries/rankProgressQueries';
 import { cn } from '@/lib/utils';
 import type { Requirement } from '@/types/rankProgress';
-import { getPremiumPoolDownlineRequirement } from '@/lib/utils/premiumPoolUtils';
+import {
+  getPremiumPoolDownlineRequirement,
+  getPremiumPoolProgressHelperText,
+} from '@/lib/utils/premiumPoolUtils';
 
 /**
  * Main Rank Progress Card
@@ -223,6 +226,9 @@ export function RankProgressCard() {
     prevProgress && performanceProgress < prevProgress.performance;
   const premiumDecreased =
     prevProgress && premiumProgress < prevProgress.premium;
+
+  const premiumProgressHelperText =
+    getPremiumPoolProgressHelperText(current_rank);
 
   return (
     <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
@@ -476,20 +482,29 @@ export function RankProgressCard() {
                         <TooltipContent className="max-w-xs">
                           <p className="mb-1 font-semibold">Premium Pool:</p>
                           <p className="text-xs">
-                            {current_rank === 'Associate Stakeholder' ? (
-                              <>
-                                Requires 2 <strong>Stakeholder</strong>{' '}
-                                downlines with <strong>$50+ stake each</strong>.
-                                You can lose this qualification if downlines
-                                become inactive or their stake drops below $50.
-                              </>
-                            ) : (
-                              <>
-                                Requires maintaining active downlines at
-                                specific ranks. You can lose this qualification
-                                if downlines become inactive.
-                              </>
-                            )}
+                            {(() => {
+                              const { rankType, stakeRequirement } =
+                                getPremiumPoolDownlineRequirement(current_rank);
+                              if (stakeRequirement) {
+                                return (
+                                  <>
+                                    Requires 2 <strong>{rankType}</strong>{' '}
+                                    downlines with{' '}
+                                    <strong>{stakeRequirement}</strong>. You can
+                                    lose this qualification if downlines become
+                                    inactive or their stake drops below the
+                                    required minimum.
+                                  </>
+                                );
+                              }
+                              return (
+                                <>
+                                  Requires maintaining active downlines at
+                                  specific ranks. You can lose this
+                                  qualification if downlines become inactive.
+                                </>
+                              );
+                            })()}
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -567,9 +582,9 @@ export function RankProgressCard() {
                 )}
                 {!isStakeholder &&
                   premiumProgress < 100 &&
-                  current_rank === 'Associate Stakeholder' && (
+                  premiumProgressHelperText && (
                     <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                      Need 2 Stakeholder downlines with $50+ stake each
+                      {premiumProgressHelperText}
                     </p>
                   )}
                 {!isStakeholder &&
@@ -653,34 +668,37 @@ export function RankProgressCard() {
                           requirements.lower_rank_downlines.required &&
                           requirements.lower_rank_downlines.required > 0)) && (
                         <div className="space-y-1">
-                          <RequirementItem
-                            icon={TrendingUp}
-                            title={
-                              getPremiumPoolDownlineRequirement(
-                                current_rank,
-                                detailedRequirements?.lower_rank_downlines
-                                  ?.description ||
-                                  requirements?.lower_rank_downlines
-                                    ?.description
-                              ).description
-                            }
-                            requirement={
+                          {(() => {
+                            const lrReq = getPremiumPoolDownlineRequirement(
+                              current_rank,
+                              detailedRequirements?.lower_rank_downlines
+                                ?.description ||
+                                requirements?.lower_rank_downlines?.description
+                            );
+                            const lr =
                               detailedRequirements?.lower_rank_downlines ||
-                              requirements?.lower_rank_downlines || {
-                                current: 0,
-                                required: 0,
-                                progress_percent: 0,
-                                is_met: false,
-                              }
-                            }
-                          />
-                          {/* Show stake requirement for Associate Stakeholder */}
-                          {current_rank === 'Associate Stakeholder' && (
-                            <p className="text-muted-foreground ml-11 text-xs">
-                              Each must have $50+ stake (Premium Pool
-                              requirement)
-                            </p>
-                          )}
+                                requirements?.lower_rank_downlines || {
+                                  current: 0,
+                                  required: 0,
+                                  progress_percent: 0,
+                                  is_met: false,
+                                };
+                            return (
+                              <>
+                                <RequirementItem
+                                  icon={TrendingUp}
+                                  title={lrReq.description}
+                                  requirement={lr}
+                                />
+                                {lrReq.stakeRequirement && (
+                                  <p className="text-muted-foreground ml-11 text-xs">
+                                    Each must have {lrReq.stakeRequirement}{' '}
+                                    (Premium Pool requirement)
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -736,12 +754,21 @@ export function RankProgressCard() {
                             message={
                               isStakeholder
                                 ? 'Stakeholders are not eligible for Premium Pool. Qualification starts from Associate Stakeholder.'
-                                : current_rank === 'Associate Stakeholder'
-                                  ? 'Requires 2 Stakeholder downlines with $50+ stake each'
-                                  : detailedPoolQualification?.premium_pool
-                                      ?.message ||
-                                    pool_qualification?.premium_pool?.message ||
-                                    'Requires lower-rank downlines'
+                                : (() => {
+                                    const { rankType, stakeRequirement } =
+                                      getPremiumPoolDownlineRequirement(
+                                        current_rank
+                                      );
+                                    if (stakeRequirement)
+                                      return `Requires 2 ${rankType} downlines with ${stakeRequirement}`;
+                                    return (
+                                      detailedPoolQualification?.premium_pool
+                                        ?.message ||
+                                      pool_qualification?.premium_pool
+                                        ?.message ||
+                                      'Requires lower-rank downlines'
+                                    );
+                                  })()
                             }
                             type="premium"
                             isStakeholder={isStakeholder}

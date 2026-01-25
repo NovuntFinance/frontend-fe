@@ -2,7 +2,36 @@
  * Premium Pool Qualification Utilities
  * Ensures consistent display of Premium Pool requirements across the platform
  * Based on: Premium Pool Qualification Logic (December 14, 2025)
+ * Updated: Premium Pool Stake Requirement Fix (January 2025) – all ranks require
+ * downlines to meet their rank's minimum stake ($50+, $100+, $250+, $500+).
  */
+
+/** Premium Pool downline + stake requirements by user rank (post Jan 2025 fix) */
+const PREMIUM_POOL_REQUIREMENTS: Record<
+  string,
+  { lowerRankType: string; stakeRequirement: string }
+> = {
+  'Associate Stakeholder': {
+    lowerRankType: 'Stakeholder',
+    stakeRequirement: '$50+ stake each',
+  },
+  'Principal Strategist': {
+    lowerRankType: 'Associate Stakeholder',
+    stakeRequirement: '$50+ stake each',
+  },
+  'Elite Capitalist': {
+    lowerRankType: 'Principal Strategist',
+    stakeRequirement: '$100+ stake each',
+  },
+  'Wealth Architect': {
+    lowerRankType: 'Elite Capitalist',
+    stakeRequirement: '$250+ stake each',
+  },
+  'Finance Titan': {
+    lowerRankType: 'Wealth Architect',
+    stakeRequirement: '$500+ stake each',
+  },
+};
 
 /**
  * Get the correct downline rank requirement for Premium Pool qualification
@@ -18,22 +47,20 @@ export function getPremiumPoolDownlineRequirement(
   stakeRequirement: string | null;
   rankType: string;
 } {
-  // CRITICAL: Associate Stakeholder has a special rule
-  if (currentRank === 'Associate Stakeholder') {
+  const known = PREMIUM_POOL_REQUIREMENTS[currentRank];
+  if (known) {
     return {
-      description: 'Stakeholder downlines',
-      stakeRequirement: '$50+ stake each',
-      rankType: 'Stakeholder',
+      description: `${known.lowerRankType} downlines`,
+      stakeRequirement: known.stakeRequirement,
+      rankType: known.lowerRankType,
     };
   }
 
-  // For other ranks, use backend description but ensure it's correct
-  // Backend should send the correct lowerRankType (e.g., "Associate Stakeholder" for Principal Strategist)
+  // Fallback for unknown ranks (e.g. Stakeholder – not eligible)
   const description = backendDescription || 'Lower Rank Downlines';
-
   return {
     description,
-    stakeRequirement: null, // Other ranks only need stake > $0 (no specific amount)
+    stakeRequirement: null,
     rankType: description
       .replace(' downlines', '')
       .replace('Downlines', '')
@@ -55,25 +82,19 @@ export function formatPremiumPoolRequirement(
   required: number,
   backendDescription?: string
 ): string {
-  const { description, stakeRequirement, rankType } =
-    getPremiumPoolDownlineRequirement(currentRank, backendDescription);
+  const { stakeRequirement, rankType } = getPremiumPoolDownlineRequirement(
+    currentRank,
+    backendDescription
+  );
 
   const remaining = required - current;
   const plural = required > 1 ? 's' : '';
+  const withStake = stakeRequirement ? ` with ${stakeRequirement}` : '';
 
-  if (currentRank === 'Associate Stakeholder') {
-    // Special format for Associate Stakeholder
-    if (remaining > 0) {
-      return `${remaining} more ${rankType} downline${remaining > 1 ? 's' : ''} with ${stakeRequirement} for Premium Pool`;
-    }
-    return `All ${required} ${rankType} downline${plural} with ${stakeRequirement} required for Premium Pool`;
-  }
-
-  // Standard format for other ranks
   if (remaining > 0) {
-    return `${remaining} more ${rankType} downline${remaining > 1 ? 's' : ''} for Premium Pool`;
+    return `${remaining} more ${rankType} downline${remaining > 1 ? 's' : ''}${withStake} for Premium Pool`;
   }
-  return `All ${required} ${rankType} downline${plural} required for Premium Pool`;
+  return `All ${required} ${rankType} downline${plural}${withStake} required for Premium Pool`;
 }
 
 /**
@@ -89,16 +110,28 @@ export function formatPremiumPoolTask(
   required: number,
   backendDescription?: string
 ): string {
-  const { description, stakeRequirement, rankType } =
-    getPremiumPoolDownlineRequirement(currentRank, backendDescription);
+  const { stakeRequirement, rankType } = getPremiumPoolDownlineRequirement(
+    currentRank,
+    backendDescription
+  );
 
   const plural = required > 1 ? 's' : '';
+  const withStake = stakeRequirement ? ` with ${stakeRequirement}` : '';
 
-  if (currentRank === 'Associate Stakeholder') {
-    return `${required} ${rankType} downline${plural} with ${stakeRequirement} for Premium Pool`;
-  }
+  return `${required} ${rankType} downline${plural}${withStake} for Premium Pool`;
+}
 
-  return `${required} ${rankType} downline${plural} for Premium Pool`;
+/**
+ * Short helper text for Premium Pool progress (e.g. under progress bar)
+ * "Need 2 Principal Strategist downlines with $100+ stake each"
+ */
+export function getPremiumPoolProgressHelperText(
+  currentRank: string,
+  required = 2
+): string {
+  const formatted = formatPremiumPoolTask(currentRank, required);
+  const withoutSuffix = formatted.replace(/\s+for Premium Pool$/i, '');
+  return withoutSuffix ? `Need ${withoutSuffix}` : '';
 }
 
 /**
@@ -178,17 +211,35 @@ export function correctPremiumPoolTask(
     }
   }
 
-  // For other ranks, check if it's a Premium Pool task and ensure correct format
+  // For other ranks (PS, EC, WA, FT), add stake requirement if missing
+  const known = PREMIUM_POOL_REQUIREMENTS[currentRank];
+  if (!known) return task;
+
+  const taskLower = task.toLowerCase();
   const isPremiumPoolTask =
-    task.toLowerCase().includes('premium') ||
-    task.toLowerCase().includes('premium pool') ||
-    task.toLowerCase().includes('premium rank');
+    taskLower.includes('premium') ||
+    taskLower.includes('premium pool') ||
+    taskLower.includes('premium rank');
+  if (!isPremiumPoolTask) return task;
 
-  if (isPremiumPoolTask && currentRank !== 'Associate Stakeholder') {
-    // Ensure the description matches the rank's lowerRankType
-    // This is a safety check - backend should be correct for other ranks
-    return task;
+  const hasStake = /\$(\d+)|stake each/i.test(task);
+  if (hasStake) return task;
+
+  const lower = known.lowerRankType;
+  const stake = known.stakeRequirement;
+  const escaped = lower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // "X more lowerRank downlines" or "X lowerRank downlines" → add " with $X+ stake each"
+  if (new RegExp(`\\d+\\s+more\\s+${escaped}\\s+downlines?`, 'i').test(task)) {
+    return task.replace(
+      new RegExp(`(\\d+)\\s+more\\s+${escaped}\\s+downlines?`, 'gi'),
+      `$1 more ${lower} downlines with ${stake}`
+    );
   }
-
+  if (new RegExp(`\\d+\\s+${escaped}\\s+downlines?`, 'i').test(task)) {
+    return task.replace(
+      new RegExp(`(\\d+)\\s+${escaped}\\s+downlines?`, 'gi'),
+      `$1 ${lower} downlines with ${stake}`
+    );
+  }
   return task;
 }

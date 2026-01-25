@@ -43,6 +43,12 @@ import type {
   DeleteProfitRequest,
   TestDistributionRequest,
 } from '@/types/dailyProfit';
+import type {
+  DeclareReturnsRequest,
+  UpdateDeclarationRequest,
+  DeleteDeclarationRequest,
+  DistributeDeclarationRequest,
+} from '@/types/dailyDeclarationReturns';
 
 // ============================================
 // AUTH MUTATIONS - BetterAuth Implementation
@@ -1364,6 +1370,17 @@ export function useDeleteUser() {
 // DAILY PROFIT MUTATIONS
 // ============================================
 
+// IMPORTANT:
+// `queryKeys.declaredDailyProfits(filters)` includes the filters object as part of the key.
+// When we mutate, we must invalidate by a *prefix* key (not by calling the queryKey factory
+// with no filters), otherwise filtered queries (calendar range, status filter) won't refetch.
+const ADMIN_DAILY_PROFIT_DECLARED_KEY = [
+  'admin',
+  'daily-profit',
+  'declared',
+] as const;
+const USER_DAILY_PROFIT_KEY = ['daily-profit'] as const;
+
 /**
  * Declare profit for a single day
  * POST /api/v1/admin/daily-profit/declare
@@ -1380,8 +1397,10 @@ export function useDeclareDailyProfit() {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.declaredDailyProfits(),
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
+      // If admin declares/updates today's profit, user-facing widgets should update immediately.
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       toast.success('Daily profit declared successfully');
     },
     onError: (error: any) => {
@@ -1410,8 +1429,9 @@ export function useDeclareBulkDailyProfit() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.declaredDailyProfits(),
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       const count =
         (data as any)?.declared?.length ||
         (data as any)?.data?.declared?.length ||
@@ -1450,8 +1470,9 @@ export function useUpdateDailyProfit() {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.declaredDailyProfits(),
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       toast.success('Daily profit updated successfully');
     },
     onError: (error: any) => {
@@ -1486,8 +1507,9 @@ export function useDeleteDailyProfit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.declaredDailyProfits(),
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       toast.success('Daily profit deleted successfully');
     },
     onError: (error: any) => {
@@ -1516,8 +1538,9 @@ export function useTestDistributeDailyProfit() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.declaredDailyProfits(),
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       const result = data?.data || data;
       toast.success(
         `Distribution completed: ${result.totalDistributed} USDT to ${result.processedStakes} stakes`
@@ -1528,6 +1551,185 @@ export function useTestDistributeDailyProfit() {
         error?.response?.data?.error?.message ||
         error?.message ||
         'Failed to distribute profits';
+      toast.error(message);
+    },
+  });
+}
+
+// ============================================
+// DAILY DECLARATION RETURNS MUTATIONS (Unified)
+// ============================================
+
+// IMPORTANT:
+// `queryKeys.declaredReturns(filters)` includes the filters object as part of the key.
+// When we mutate, we must invalidate by a *prefix* key (not by calling the queryKey factory
+// with no filters), otherwise filtered queries (calendar range, status filter) won't refetch.
+const ADMIN_DECLARATION_RETURNS_KEY = [
+  'admin',
+  'daily-declaration-returns',
+] as const;
+
+/**
+ * Declare pools + ROS for a specific date (unified endpoint)
+ * POST /api/v1/admin/daily-declaration-returns/declare
+ */
+export function useDeclareReturns() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeclareReturnsRequest) => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      return dailyDeclarationReturnsService.declareReturns(data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+      });
+      // Also invalidate daily profit queries for backward compatibility
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+      });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+      toast.success('Daily declaration returns declared successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to declare returns';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Update a future declaration
+ * PATCH /api/v1/admin/daily-declaration-returns/:date
+ */
+export function useUpdateDeclaration() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      date,
+      data,
+    }: {
+      date: string;
+      data: UpdateDeclarationRequest;
+    }) => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      return dailyDeclarationReturnsService.updateDeclaration(date, data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+      });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+      toast.success('Declaration updated successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to update declaration';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Delete a future declaration
+ * DELETE /api/v1/admin/daily-declaration-returns/:date
+ */
+export function useDeleteDeclaration() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      date,
+      data,
+    }: {
+      date: string;
+      data: DeleteDeclarationRequest;
+    }) => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      return dailyDeclarationReturnsService.deleteDeclaration(date, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+      });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+      toast.success('Declaration deleted successfully');
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to delete declaration';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Distribute pools and/or ROS for a specific date
+ * POST /api/v1/admin/daily-declaration-returns/:date/distribute
+ */
+export function useDistributeDeclaration() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      date,
+      data,
+    }: {
+      date: string;
+      data: DistributeDeclarationRequest;
+    }) => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      return dailyDeclarationReturnsService.distributeDeclaration(date, data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+      });
+      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+
+      const result = data?.data || data;
+      const poolsDistributed = result.poolDistribution?.distributed;
+      const rosDistributed = result.rosDistribution?.distributed;
+
+      if (poolsDistributed && rosDistributed) {
+        toast.success('Pools and ROS distributed successfully');
+      } else if (poolsDistributed) {
+        toast.success('Pools distributed successfully');
+      } else if (rosDistributed) {
+        toast.success('ROS distributed successfully');
+      }
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to distribute';
       toast.error(message);
     },
   });

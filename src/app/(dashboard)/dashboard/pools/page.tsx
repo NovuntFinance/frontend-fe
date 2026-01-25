@@ -25,6 +25,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   getPremiumPoolDownlineRequirement,
   formatPremiumPoolRequirement,
+  getPremiumPoolProgressHelperText,
   correctPremiumPoolTask,
 } from '@/lib/utils/premiumPoolUtils';
 import {
@@ -129,6 +130,8 @@ export default function PoolsPage() {
   }
 
   const isStakeholder = currentRank === 'Stakeholder';
+  const premiumProgressHelperText =
+    getPremiumPoolProgressHelperText(currentRank);
   // Stakeholders can NEVER qualify for premium or performance pools
   // Qualification starts from Associate Stakeholder and above
   const performancePoolQualified = isStakeholder
@@ -148,7 +151,11 @@ export default function PoolsPage() {
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="space-y-4 sm:space-y-6">
           <LoadingStates.Card height="h-20" className="w-full" />
-          <LoadingStates.Grid items={3} columns={3} className="gap-3 sm:gap-4 md:gap-6" />
+          <LoadingStates.Grid
+            items={3}
+            columns={3}
+            className="gap-3 sm:gap-4 md:gap-6"
+          />
           <LoadingStates.Card height="h-96" />
         </div>
       </div>
@@ -471,10 +478,16 @@ export default function PoolsPage() {
                   <p className="text-muted-foreground text-[10px] sm:text-xs">
                     {isStakeholder
                       ? 'Stakeholders are not eligible for Premium Pool. Qualification starts from Associate Stakeholder.'
-                      : currentRank === 'Associate Stakeholder'
-                        ? 'Requires 2 Stakeholder downlines with $50+ stake each'
-                        : poolQualification?.premium_pool?.message ||
-                          'Requires lower-rank downlines'}
+                      : (() => {
+                          const { rankType, stakeRequirement } =
+                            getPremiumPoolDownlineRequirement(currentRank);
+                          if (stakeRequirement)
+                            return `Requires 2 ${rankType} downlines with ${stakeRequirement}`;
+                          return (
+                            poolQualification?.premium_pool?.message ||
+                            'Requires lower-rank downlines'
+                          );
+                        })()}
                   </p>
                 </div>
               </CardContent>
@@ -565,10 +578,11 @@ export default function PoolsPage() {
                       value={premiumProgressPercent}
                       className="h-2 bg-emerald-500/20 sm:h-3"
                     />
-                    {currentRank === 'Associate Stakeholder' &&
-                      premiumProgressPercent < 100 && (
+                    {!isStakeholder &&
+                      premiumProgressPercent < 100 &&
+                      premiumProgressHelperText && (
                         <p className="text-muted-foreground text-[10px] sm:text-xs">
-                          Need 2 Stakeholder downlines with $50+ stake each
+                          {premiumProgressHelperText}
                         </p>
                       )}
                   </div>
@@ -775,61 +789,58 @@ export default function PoolsPage() {
                     )}
 
                     {/* Lower Rank Downlines - Premium Pool Requirement */}
-                    {requirements.lower_rank_downlines && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {requirements.lower_rank_downlines.is_met ? (
-                              <CheckCircle className="h-5 w-5 text-emerald-500" />
-                            ) : (
-                              <Circle className="text-muted-foreground h-5 w-5" />
-                            )}
-                            <div className="flex flex-col gap-1">
+                    {requirements.lower_rank_downlines &&
+                      (() => {
+                        const lrReq = getPremiumPoolDownlineRequirement(
+                          currentRank,
+                          requirements.lower_rank_downlines.description
+                        );
+                        const lr = requirements.lower_rank_downlines;
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <Shield className="text-muted-foreground h-4 w-4" />
-                                <span className="font-medium">
-                                  {
-                                    getPremiumPoolDownlineRequirement(
-                                      currentRank,
-                                      requirements.lower_rank_downlines
-                                        .description
-                                    ).description
-                                  }
-                                </span>
+                                {lr.is_met ? (
+                                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                                ) : (
+                                  <Circle className="text-muted-foreground h-5 w-5" />
+                                )}
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <Shield className="text-muted-foreground h-4 w-4" />
+                                    <span className="font-medium">
+                                      {lrReq.description}
+                                    </span>
+                                  </div>
+                                  {lrReq.stakeRequirement && (
+                                    <p className="text-muted-foreground ml-6 text-xs">
+                                      Each must have {lrReq.stakeRequirement}{' '}
+                                      (Premium Pool requirement)
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              {/* Show stake requirement for Associate Stakeholder */}
-                              {currentRank === 'Associate Stakeholder' && (
-                                <p className="text-muted-foreground ml-6 text-xs">
-                                  Each must have $50+ stake (Premium Pool
-                                  requirement)
-                                </p>
-                              )}
+                              <span className="text-xs sm:text-sm">
+                                {lr.current} / {lr.required}
+                              </span>
                             </div>
+                            <Progress
+                              value={lr.progress_percent}
+                              className="h-2"
+                            />
+                            {lr.remaining != null && lr.remaining > 0 && (
+                              <p className="text-muted-foreground text-[10px] sm:text-xs">
+                                {formatPremiumPoolRequirement(
+                                  currentRank,
+                                  lr.current,
+                                  lr.required,
+                                  lr.description
+                                )}
+                              </p>
+                            )}
                           </div>
-                          <span className="text-xs sm:text-sm">
-                            {requirements.lower_rank_downlines.current} /{' '}
-                            {requirements.lower_rank_downlines.required}
-                          </span>
-                        </div>
-                        <Progress
-                          value={
-                            requirements.lower_rank_downlines.progress_percent
-                          }
-                          className="h-2"
-                        />
-                        {requirements.lower_rank_downlines.remaining &&
-                          requirements.lower_rank_downlines.remaining > 0 && (
-                            <p className="text-muted-foreground text-[10px] sm:text-xs">
-                              {formatPremiumPoolRequirement(
-                                currentRank,
-                                requirements.lower_rank_downlines.current,
-                                requirements.lower_rank_downlines.required,
-                                requirements.lower_rank_downlines.description
-                              )}
-                            </p>
-                          )}
-                      </div>
-                    )}
+                        );
+                      })()}
                   </div>
                 </CardContent>
               </Card>

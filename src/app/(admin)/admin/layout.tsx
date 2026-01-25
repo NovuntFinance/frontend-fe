@@ -58,6 +58,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       .catch((err) => {
         console.warn('[AdminLayout] Failed to initialize pool service:', err);
       });
+
+    // Initialize daily declaration returns service with 2FA context
+    import('@/services/dailyDeclarationReturnsService')
+      .then((module) => {
+        module.dailyDeclarationReturnsService.set2FACodeGetter(get2FACode);
+      })
+      .catch((err) => {
+        console.warn(
+          '[AdminLayout] Failed to initialize daily declaration returns service:',
+          err
+        );
+      });
   }, [promptFor2FA, isLoginPage]);
 
   useEffect(() => {

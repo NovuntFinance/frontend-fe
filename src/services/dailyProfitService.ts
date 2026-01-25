@@ -204,9 +204,14 @@ class DailyProfitService {
       );
       return response.data;
     } catch (error) {
-      // Handle 404 gracefully - no profit declared for today
+      // Handle 404 gracefully - no profit available
+      // Users see previous day's profit. Today's profit becomes visible at 23:59:59 BIT after distribution.
       if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('No profit declared for today');
+        const backendMessage = error.response?.data?.error?.message;
+        throw new Error(
+          backendMessage ||
+            "No profit available. Today's profit becomes visible at 23:59:59 BIT after distribution."
+        );
       }
       throw error;
     }

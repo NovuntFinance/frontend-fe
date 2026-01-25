@@ -1,19 +1,18 @@
 'use client';
 
-import React from 'react';
-import { PoolDeclarationManager } from '@/components/admin/pool/PoolDeclarationManager';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function PoolDeclarationPage() {
+export default function PoolRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/admin/daily-declaration-returns');
+  }, [router]);
+
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">Pool Declaration</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Declare and distribute Performance Pool and Premium Pool amounts
-        </p>
-      </div>
-
-      <PoolDeclarationManager />
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-muted-foreground">Redirecting...</p>
     </div>
   );
 }

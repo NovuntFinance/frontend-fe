@@ -149,6 +149,12 @@ export const queryKeys = {
   profitHistory: (limit?: number, offset?: number) =>
     ['daily-profit', 'history', limit, offset] as const,
 
+  // Daily Declaration Returns (Unified - Admin)
+  declaredReturns: (filters?: any) =>
+    ['admin', 'daily-declaration-returns', 'declared', filters] as const,
+  declarationByDate: (date: string) =>
+    ['admin', 'daily-declaration-returns', date] as const,
+
   // Announcements
   announcements: ['announcements'] as const,
   activeAnnouncements: ['announcements', 'active'] as const,
@@ -2186,5 +2192,128 @@ export function useActiveAnnouncements() {
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     retry: false, // Don't retry - API service handles 404 gracefully
     retryOnMount: false, // Don't retry on mount if it failed
+  });
+}
+
+// ============================================
+// DAILY DECLARATION RETURNS QUERIES (Unified)
+// ============================================
+
+import type {
+  GetDeclaredReturnsFilters,
+  GetDeclaredReturnsResponse,
+  GetDeclarationByDateResponse,
+} from '@/types/dailyDeclarationReturns';
+
+/**
+ * Get all declared returns (pools + ROS) for a date range
+ * GET /api/v1/admin/daily-declaration-returns/declared
+ */
+export function useDeclaredReturns(filters?: GetDeclaredReturnsFilters) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: queryKeys.declaredReturns(filters),
+    queryFn: async () => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      try {
+        const response =
+          await dailyDeclarationReturnsService.getDeclaredReturns(filters);
+
+        // Debug logging to verify response structure
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[useDeclaredReturns] Full response:', response);
+          console.log('[useDeclaredReturns] Response structure:', {
+            success: (response as any).success,
+            hasData: !!(response as any).data,
+            declarations: (response as any).data?.declarations,
+            declarationsCount: (response as any).data?.declarations?.length,
+            summary: (response as any).data?.summary,
+          });
+        }
+
+        // Return the inner data object (contains declarations and summary)
+        // Response structure from backend: { success, data: { declarations, summary }, meta }
+        // Service returns: GetDeclaredReturnsResponse = { success, data: { declarations, summary }, meta }
+        // We want to return: { declarations, summary } for component access
+        // Access response.data to get the inner data object
+        const responseTyped = response as GetDeclaredReturnsResponse;
+        return responseTyped.data || (response as any);
+      } catch (error: any) {
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          const { adminService } = await import('@/services/adminService');
+          adminService.clearCached2FA();
+        }
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    enabled: checkAdminAuth(),
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get declaration for a specific date
+ * GET /api/v1/admin/daily-declaration-returns/:date
+ */
+export function useDeclarationByDate(date: string) {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: queryKeys.declarationByDate(date),
+    queryFn: async () => {
+      const { dailyDeclarationReturnsService } = await import(
+        '@/services/dailyDeclarationReturnsService'
+      );
+      try {
+        const response =
+          await dailyDeclarationReturnsService.getDeclarationByDate(date);
+        return response.data;
+      } catch (error: any) {
+        const errorCode = error?.response?.data?.error?.code;
+        if (errorCode === '2FA_CODE_INVALID') {
+          const { adminService } = await import('@/services/adminService');
+          adminService.clearCached2FA();
+        }
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    enabled: checkAdminAuth() && !!date,
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403 || status === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 }
