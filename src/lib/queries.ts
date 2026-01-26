@@ -109,6 +109,8 @@ export const queryKeys = {
   teamInfo: ['team', 'info'] as const,
   rankInfo: ['rank', 'info'] as const,
   nextRankRequirements: ['rank', 'next-requirements'] as const,
+  allTeamMembers: (page?: number, limit?: number, search?: string) =>
+    ['team', 'all-members', page, limit, search] as const,
   poolDistributions: (page?: number, limit?: number, type?: string) =>
     ['pools', 'distributions', page, limit, type] as const,
   incentiveWallet: ['pools', 'incentive-wallet'] as const,
@@ -1280,6 +1282,38 @@ export function useRankInfo() {
 }
 
 /**
+ * Get all team members with referrer information
+ * GET /api/v1/user-rank/all-team-members
+ */
+export function useAllTeamMembers(
+  page: number = 1,
+  limit: number = 30,
+  search?: string
+) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: queryKeys.allTeamMembers(page, limit, search),
+    queryFn: async () => {
+      const response = await teamRankApi.getAllTeamMembers(page, limit, search);
+      return (
+        response.data || {
+          teamMembers: [],
+          pagination: {
+            page: 1,
+            limit: 30,
+            total: 0,
+            totalPages: 0,
+          },
+        }
+      );
+    },
+    enabled: isAuthenticated,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
  * Calculate rank (triggers recalculation)
  * GET /api/v1/user-rank/calculate-rank
  */
@@ -1295,6 +1329,7 @@ export function useCalculateRank() {
         queryKey: queryKeys.nextRankRequirements,
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.teamInfo });
+      queryClient.invalidateQueries({ queryKey: ['team', 'all-members'] });
     },
   });
 }

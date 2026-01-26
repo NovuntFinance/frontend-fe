@@ -1,19 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import {
-  Users,
-  Copy,
-  CheckCircle,
-  TrendingUp,
-  Share,
-  AlertCircle,
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Copy, CheckCircle, Share, AlertCircle } from 'lucide-react';
 import {
   useReferralStats,
   useReferralInfo,
   useReferralTree,
   useReferralMetrics,
+  useAllTeamMembers,
 } from '@/lib/queries';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -26,10 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingStates } from '@/components/ui/loading-states';
-import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { toast } from '@/components/ui/enhanced-toast';
-import { prefersReducedMotion } from '@/lib/accessibility';
-import { slideUp } from '@/design-system/animations';
 import { NumberedPagination } from '@/components/ui/numbered-pagination';
 
 /**
@@ -41,18 +32,19 @@ export default function TeamPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [allSearch, setAllSearch] = useState('');
   const [allPage, setAllPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 30; // Match backend default
 
   const { data: referralStats, isLoading: statsLoading } = useReferralStats();
   const { data: referralInfo, isLoading: infoLoading } = useReferralInfo();
   const { data: referralMetrics, isLoading: metricsLoading } =
     useReferralMetrics();
-  // Auto-load tree with loading indicator
-  const {
-    data: referralTree,
-    isLoading: treeLoading,
-    error: treeError,
-  } = useReferralTree(20);
+
+  // Use new endpoint for team members with referrer info
+  const { data: allTeamMembersData, isLoading: allTeamMembersLoading } =
+    useAllTeamMembers(allPage, pageSize, allSearch || undefined);
+
+  // Keep referral tree for other parts of the page (if needed)
+  const { isLoading: treeLoading, error: treeError } = useReferralTree(20);
 
   // Log fetched data for debugging
   React.useEffect(() => {
@@ -84,50 +76,21 @@ export default function TeamPage() {
     }
   }, [referralStats, referralMetrics, treeError]);
 
-  type ExtendedReferralEntry = NonNullable<
-    typeof referralTree
-  >['tree'][number] & {
-    personalInvestment?: number;
-    referralInvestmentAmount?: number;
-  };
-
   // Only wait for fast endpoints (stats, info, and metrics), not slow tree
   const isLoading = statsLoading || infoLoading || metricsLoading;
-  const reducedMotion = prefersReducedMotion();
 
   // Get referral code and link from API
   // useReferralInfo returns the data object { referralCode, referralLink, ... }
   const referralCode = referralInfo?.referralCode || '';
   const referralLink = referralInfo?.referralLink || '';
 
-  const allReferrals = useMemo(() => {
-    return (referralTree?.tree || []) as ExtendedReferralEntry[];
-  }, [referralTree]);
-
-  const filteredAllReferrals = useMemo(() => {
-    const term = allSearch.toLowerCase().trim();
-    if (!term) return allReferrals;
-    return allReferrals.filter((entry) => {
-      const email = entry.email?.toLowerCase() || '';
-      const username = entry.username?.toLowerCase() || '';
-      return email.includes(term) || username.includes(term);
-    });
-  }, [allReferrals, allSearch]);
-
-  const totalAllPages = Math.max(
-    1,
-    Math.ceil(filteredAllReferrals.length / pageSize)
-  );
-
-  const paginatedAllReferrals = useMemo(() => {
-    const start = (allPage - 1) * pageSize;
-    return filteredAllReferrals.slice(start, start + pageSize);
-  }, [filteredAllReferrals, allPage]);
-
-  const maskAccount = (value: string) => {
-    if (!value) return '';
-    if (value.length <= 6) return value;
-    return `${value.slice(0, 3)}***${value.slice(-3)}`;
+  // Use new endpoint data (already paginated and filtered by backend)
+  const teamMembers = allTeamMembersData?.teamMembers || [];
+  const pagination = allTeamMembersData?.pagination || {
+    page: 1,
+    limit: pageSize,
+    total: 0,
+    totalPages: 0,
   };
 
   const copyLink = async () => {
@@ -505,13 +468,13 @@ export default function TeamPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="min-h-[200px] text-xs sm:text-sm">
-              {treeLoading ? (
+              {allTeamMembersLoading ? (
                 <div className="p-4 sm:p-6">
                   <LoadingStates.List lines={3} />
                 </div>
-              ) : paginatedAllReferrals.length === 0 ? (
+              ) : teamMembers.length === 0 ? (
                 <div className="text-muted-foreground flex h-40 items-center justify-center px-4">
-                  <p>No referrals yet.</p>
+                  <p>No team members found.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -528,37 +491,46 @@ export default function TeamPage() {
                           Team Stake
                         </th>
                         <th className="px-4 py-2 font-medium">Joined</th>
+                        <th className="px-4 py-2 font-medium">Referrer</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedAllReferrals.map((referral) => (
+                      {teamMembers.map((member) => (
                         <tr
-                          key={`${referral.referral}-${referral.joinedAt}`}
+                          key={`${member.account}-${member.username}`}
                           className="border-border/20 border-b last:border-0"
                         >
                           <td className="px-4 py-2 align-middle">
-                            {maskAccount(referral.email || referral.username)}
+                            {member.account}
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            {referral.username || '-'}
+                            {member.username || '-'}
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            {referral.level === 1
-                              ? 'Direct'
-                              : `Level ${referral.level}`}
+                            {member.level}
                           </td>
                           <td className="hidden px-4 py-2 align-middle md:table-cell">
-                            {formatCurrency(
-                              (referral as any).personalInvestment ?? 0
-                            )}
+                            {formatCurrency(member.personalStake)}
                           </td>
                           <td className="hidden px-4 py-2 align-middle lg:table-cell">
-                            {formatCurrency(
-                              (referral as any).referralInvestmentAmount ?? 0
-                            )}
+                            {formatCurrency(member.teamStake)}
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            {new Date(referral.joinedAt).toLocaleDateString()}
+                            {member.joined}
+                          </td>
+                          <td className="px-4 py-2 align-middle">
+                            {member.referrer ? (
+                              <div>
+                                <div className="font-medium">
+                                  {member.referrer.account}
+                                </div>
+                                <div className="text-muted-foreground text-[10px] sm:text-xs">
+                                  @{member.referrer.username}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">N/A</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -569,11 +541,12 @@ export default function TeamPage() {
             </div>
             <div className="flex items-center justify-between px-4 py-3 text-xs sm:text-sm">
               <span className="text-muted-foreground">
-                Page {allPage} of {totalAllPages}
+                Page {pagination.page} of {pagination.totalPages} (
+                {pagination.total} total)
               </span>
               <NumberedPagination
-                currentPage={allPage}
-                totalPages={totalAllPages}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
                 onPageChange={setAllPage}
               />
             </div>

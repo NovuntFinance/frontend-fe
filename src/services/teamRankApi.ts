@@ -37,6 +37,34 @@ export interface TeamStats {
   totalTeamMembers: number;
 }
 
+export interface TeamMemberReferrer {
+  account: string; // Masked email (e.g., "ref***com")
+  username: string;
+}
+
+export interface AllTeamMember {
+  account: string; // Masked email (e.g., "cry***com")
+  username: string;
+  level: string; // "Direct" or level number
+  personalStake: number;
+  teamStake: number;
+  joined: string; // Date string (e.g., "25/11/2025")
+  referrer: TeamMemberReferrer | null; // null if no referrer
+}
+
+export interface AllTeamMembersResponse {
+  success: boolean;
+  data?: {
+    teamMembers: AllTeamMember[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
+
 export interface RankInfoResponse {
   success: boolean;
   data?: {
@@ -663,6 +691,60 @@ export const teamRankApi = {
       }
 
       throw error;
+    }
+  },
+
+  /**
+   * Get all team members with referrer information
+   * GET /api/v1/user-rank/all-team-members
+   * @param page - Page number (default: 1)
+   * @param limit - Items per page (default: 30)
+   * @param search - Search by email or username (optional)
+   * @returns All team members across all levels with referrer info
+   */
+  async getAllTeamMembers(
+    page: number = 1,
+    limit: number = 30,
+    search?: string
+  ): Promise<AllTeamMembersResponse> {
+    try {
+      const params: Record<string, string> = {
+        page: page.toString(),
+        limit: limit.toString(),
+      };
+
+      if (search) {
+        params.search = search;
+      }
+
+      const queryString = new URLSearchParams(params).toString();
+      const response = await api.get<AllTeamMembersResponse>(
+        `/user-rank/all-team-members?${queryString}`
+      );
+
+      console.log('[teamRankApi] All team members response:', response);
+      return response;
+    } catch (error: any) {
+      console.error('[teamRankApi] Failed to get all team members:', {
+        message: error?.message || 'Unknown error',
+        response: error?.response?.data,
+        status: error?.response?.status,
+        error: error,
+      });
+
+      // Return a structured error response instead of throwing
+      return {
+        success: false,
+        data: {
+          teamMembers: [],
+          pagination: {
+            page: 1,
+            limit: 30,
+            total: 0,
+            totalPages: 0,
+          },
+        },
+      };
     }
   },
 };
