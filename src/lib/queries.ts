@@ -1295,18 +1295,50 @@ export function useAllTeamMembers(
   return useQuery({
     queryKey: queryKeys.allTeamMembers(page, limit, search),
     queryFn: async () => {
-      const response = await teamRankApi.getAllTeamMembers(page, limit, search);
-      return (
-        response.data || {
-          teamMembers: [],
-          pagination: {
-            page: 1,
-            limit: 30,
-            total: 0,
-            totalPages: 0,
-          },
-        }
+      const response: any = await teamRankApi.getAllTeamMembers(
+        page,
+        limit,
+        search
       );
+
+      // NOTE: Our `api.get()` helper auto-unwraps `{ data: ... }` responses.
+      // Depending on the backend + endpoint, `teamRankApi.getAllTeamMembers()`
+      // may return either:
+      // - `{ success: true, data: { teamMembers, pagination } }` (wrapped)
+      // - `{ teamMembers, pagination }` (already unwrapped)
+      const maybeData =
+        response &&
+        typeof response === 'object' &&
+        'data' in response &&
+        (response as any).data
+          ? (response as any).data
+          : response;
+
+      if (
+        maybeData &&
+        typeof maybeData === 'object' &&
+        'teamMembers' in maybeData
+      ) {
+        return maybeData as {
+          teamMembers: any[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+          };
+        };
+      }
+
+      return {
+        teamMembers: [],
+        pagination: {
+          page: 1,
+          limit: 30,
+          total: 0,
+          totalPages: 0,
+        },
+      };
     },
     enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000, // 2 minutes
