@@ -70,8 +70,37 @@ class ConfigService {
       });
 
       return response.data;
-    } catch (error) {
-      console.error('Error fetching public configs:', error);
+    } catch (error: any) {
+      // Extract meaningful error information
+      const isNetworkError =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message?.includes('Network Error') ||
+        !error?.response;
+
+      if (isNetworkError) {
+        // Suppress verbose network error logs (expected when backend is unavailable)
+        if (process.env.NODE_ENV === 'development') {
+          const logKey = 'config_network_error_logged';
+          if (
+            typeof window !== 'undefined' &&
+            !sessionStorage.getItem(logKey)
+          ) {
+            console.debug(
+              '[ConfigService] Network error (backend may be unavailable)'
+            );
+            sessionStorage.setItem(logKey, 'true');
+          }
+        }
+      } else {
+        // Log actual API errors (4xx, 5xx)
+        console.error('[ConfigService] Error fetching public configs:', {
+          message: error?.message || 'Unknown error',
+          code: error?.code,
+          status: error?.response?.status,
+          statusText: error?.response?.statusText,
+          data: error?.response?.data,
+        });
+      }
       throw error;
     }
   }

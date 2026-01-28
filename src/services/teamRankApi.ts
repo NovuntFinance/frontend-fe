@@ -45,7 +45,8 @@ export interface TeamMemberReferrer {
 export interface AllTeamMember {
   account: string; // Masked email (e.g., "cry***com")
   username: string;
-  level: string; // "Direct" or level number
+  level: string; // "Direct", "Level 2", "Level 3", etc. (referral depth)
+  rank: string; // "Stakeholder", "Associate Stakeholder", etc. (user achievement rank)
   personalStake: number;
   teamStake: number;
   joined: string; // Date string (e.g., "25/11/2025")
@@ -722,15 +723,140 @@ export const teamRankApi = {
         `/user-rank/all-team-members?${queryString}`
       );
 
+      // Log detailed response for debugging level/rank issues
       console.log('[teamRankApi] All team members response:', response);
-      return response;
+
+      // Ensure response structure matches expected format: { success: true, data: { teamMembers, pagination } }
+      let responseData = response;
+
+      // Handle both wrapped and unwrapped responses
+      if (response && typeof response === 'object') {
+        // If response has 'data' property, use it
+        if ('data' in response && response.data) {
+          responseData = response;
+        }
+        // If response has 'teamMembers' directly (unwrapped), wrap it
+        else if ('teamMembers' in response && !('success' in response)) {
+          responseData = {
+            success: true,
+            data: {
+              teamMembers: (response as any).teamMembers || [],
+              pagination: (response as any).pagination || {
+                page: 1,
+                limit: 30,
+                total: 0,
+                totalPages: 0,
+              },
+            },
+          };
+        }
+
+        // Validate and log team members data
+        const teamMembers =
+          (responseData as any)?.data?.teamMembers ||
+          (responseData as any)?.teamMembers ||
+          [];
+
+        console.log('[teamRankApi] Team members count:', teamMembers.length);
+
+        if (teamMembers.length > 0) {
+          // Validate first member has required fields
+          const firstMember = teamMembers[0];
+          console.log('[teamRankApi] Sample team member:', {
+            account: firstMember.account,
+            username: firstMember.username,
+            level: firstMember.level,
+            rank: firstMember.rank,
+            hasLevel: !!firstMember.level,
+            hasRank: !!firstMember.rank,
+            hasReferrer: !!firstMember.referrer,
+            referrer: firstMember.referrer,
+          });
+
+          // Check for "Unknown" levels
+          const unknownLevels = teamMembers.filter(
+            (m: any) =>
+              !m.level || m.level === 'Unknown' || m.level === 'unknown'
+          );
+          if (unknownLevels.length > 0) {
+            console.warn(
+              `[teamRankApi] ⚠️ Found ${unknownLevels.length} team members with Unknown level:`,
+              unknownLevels.map((m: any) => ({
+                account: m.account,
+                username: m.username,
+                level: m.level,
+                rank: m.rank,
+                referrer: m.referrer,
+              }))
+            );
+          }
+
+          // Check for missing rank fields
+          const missingRanks = teamMembers.filter((m: any) => !m.rank);
+          if (missingRanks.length > 0) {
+            console.warn(
+              `[teamRankApi] ⚠️ Found ${missingRanks.length} team members with missing rank field:`,
+              missingRanks.map((m: any) => ({
+                account: m.account,
+                username: m.username,
+                level: m.level,
+              }))
+            );
+          }
+
+          // Log level and rank distributions
+          const levelDist = teamMembers.reduce(
+            (acc: Record<string, number>, m: any) => {
+              acc[m.level || 'Missing'] = (acc[m.level || 'Missing'] || 0) + 1;
+              return acc;
+            },
+            {}
+          );
+          const rankDist = teamMembers.reduce(
+            (acc: Record<string, number>, m: any) => {
+              acc[m.rank || 'Missing'] = (acc[m.rank || 'Missing'] || 0) + 1;
+              return acc;
+            },
+            {}
+          );
+
+          console.log('[teamRankApi] Level distribution:', levelDist);
+          console.log('[teamRankApi] Rank distribution:', rankDist);
+        }
+      }
+
+      return responseData as AllTeamMembersResponse;
     } catch (error: any) {
-      console.error('[teamRankApi] Failed to get all team members:', {
-        message: error?.message || 'Unknown error',
-        response: error?.response?.data,
-        status: error?.response?.status,
-        error: error,
-      });
+      // Extract meaningful error information
+      const isNetworkError =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message?.includes('Network Error') ||
+        !error?.response;
+
+      if (isNetworkError) {
+        // Suppress verbose network error logs (expected when backend is unavailable)
+        if (process.env.NODE_ENV === 'development') {
+          const logKey = 'team_members_network_error_logged';
+          if (
+            typeof window !== 'undefined' &&
+            !sessionStorage.getItem(logKey)
+          ) {
+            console.debug(
+              '[teamRankApi] Network error (backend may be unavailable)'
+            );
+            sessionStorage.setItem(logKey, 'true');
+          }
+        }
+      } else {
+        // Log actual API errors (4xx, 5xx)
+        console.error('[teamRankApi] Failed to get all team members:', {
+          message: error?.message || 'Unknown error',
+          code: error?.code,
+          status: error?.response?.status,
+          statusText: error?.response?.statusText,
+          data: error?.response?.data,
+        });
+      }
 
       // Return a structured error response instead of throwing
       return {

@@ -979,8 +979,37 @@ export function useReferralInfo() {
           referralBonusBalance: 0,
         };
         return emptyInfo;
-      } catch (error) {
-        console.error('[useReferralInfo] Error fetching referral info:', error);
+      } catch (error: any) {
+        // Extract meaningful error information
+        const isNetworkError =
+          error?.code === 'ERR_NETWORK' ||
+          error?.message?.includes('Network Error') ||
+          !error?.response;
+
+        if (isNetworkError) {
+          // Suppress verbose network error logs (expected when backend is unavailable)
+          if (process.env.NODE_ENV === 'development') {
+            const logKey = 'referral_info_network_error_logged';
+            if (
+              typeof window !== 'undefined' &&
+              !sessionStorage.getItem(logKey)
+            ) {
+              console.debug(
+                '[useReferralInfo] Network error (backend may be unavailable)'
+              );
+              sessionStorage.setItem(logKey, 'true');
+            }
+          }
+        } else {
+          // Log actual API errors (4xx, 5xx)
+          console.error('[useReferralInfo] Error fetching referral info:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            status: error?.response?.status,
+            statusText: error?.response?.statusText,
+            data: error?.response?.data,
+          });
+        }
         // Return empty structure on error instead of throwing
         const emptyInfo: ReferralInfo = {
           referralCode: '',
@@ -1319,14 +1348,77 @@ export function useAllTeamMembers(
         typeof maybeData === 'object' &&
         'teamMembers' in maybeData
       ) {
-        return maybeData as {
-          teamMembers: any[];
-          pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
+        const teamMembers = maybeData.teamMembers || [];
+
+        // Process team members to handle "Unknown" levels and validate ranks
+        const processedMembers = teamMembers.map((member: any) => {
+          // If level is "Unknown" or missing, try to calculate from referrer
+          let level = member.level;
+          if (!level || level === 'Unknown' || level === 'unknown') {
+            // If member has a referrer, they're at least Level 2
+            // If no referrer or referrer is the current user, they're Direct
+            // Note: This is a fallback - backend should calculate this correctly
+            if (member.referrer) {
+              // We can't determine exact level without traversing the tree
+              // So we'll mark it as needing calculation
+              level = 'Unknown'; // Keep as Unknown but we'll style it differently
+            } else {
+              level = 'Direct';
+            }
+          }
+
+          // Ensure rank is present and valid
+          const rank = member.rank || 'Stakeholder';
+
+          // Log if we're fixing data
+          if (member.level !== level || member.rank !== rank) {
+            console.warn('[useAllTeamMembers] Fixed team member data:', {
+              account: member.account,
+              username: member.username,
+              originalLevel: member.level,
+              newLevel: level,
+              originalRank: member.rank,
+              newRank: rank,
+            });
+          }
+
+          return {
+            ...member,
+            level,
+            rank,
           };
+        });
+
+        // Log summary
+        const levelDistribution = processedMembers.reduce(
+          (acc: Record<string, number>, m: any) => {
+            acc[m.level] = (acc[m.level] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
+        const rankDistribution = processedMembers.reduce(
+          (acc: Record<string, number>, m: any) => {
+            acc[m.rank] = (acc[m.rank] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
+
+        console.log('[useAllTeamMembers] Processed team members:', {
+          total: processedMembers.length,
+          levelDistribution,
+          rankDistribution,
+        });
+
+        return {
+          teamMembers: processedMembers,
+          pagination: maybeData.pagination || {
+            page: 1,
+            limit: 30,
+            total: 0,
+            totalPages: 0,
+          },
         };
       }
 

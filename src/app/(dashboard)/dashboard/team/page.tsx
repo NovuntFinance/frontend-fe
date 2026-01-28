@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { toast } from '@/components/ui/enhanced-toast';
 import { NumberedPagination } from '@/components/ui/numbered-pagination';
@@ -92,6 +93,14 @@ export default function TeamPage() {
     total: 0,
     totalPages: 0,
   };
+
+  // Check for unknown levels
+  const hasUnknownLevels = teamMembers.some(
+    (m) => !m.level || m.level === 'Unknown' || m.level === 'unknown'
+  );
+  const unknownLevelCount = teamMembers.filter(
+    (m) => !m.level || m.level === 'Unknown' || m.level === 'unknown'
+  ).length;
 
   const copyLink = async () => {
     if (!referralLink) {
@@ -454,6 +463,11 @@ export default function TeamPage() {
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Full team across all levels
+                {hasUnknownLevels && (
+                  <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                    ({unknownLevelCount} with unknown level)
+                  </span>
+                )}
               </CardDescription>
             </div>
             <Input
@@ -467,6 +481,23 @@ export default function TeamPage() {
             />
           </CardHeader>
           <CardContent className="p-0">
+            {hasUnknownLevels && (
+              <div className="border-b border-yellow-500/20 bg-yellow-500/10 px-4 py-2 sm:px-6">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+                      Some team members have unknown levels
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
+                      The backend needs to calculate referral levels by
+                      traversing the referral tree. Please ensure the backend
+                      API is correctly calculating levels.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="min-h-[200px] text-xs sm:text-sm">
               {allTeamMembersLoading ? (
                 <div className="p-4 sm:p-6">
@@ -484,6 +515,7 @@ export default function TeamPage() {
                         <th className="px-4 py-2 font-medium">Account</th>
                         <th className="px-4 py-2 font-medium">Username</th>
                         <th className="px-4 py-2 font-medium">Level</th>
+                        <th className="px-4 py-2 font-medium">Rank</th>
                         <th className="hidden px-4 py-2 font-medium md:table-cell">
                           Personal Stake
                         </th>
@@ -507,7 +539,28 @@ export default function TeamPage() {
                             {member.username || '-'}
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            {member.level}
+                            {member.level === 'Unknown' || !member.level ? (
+                              <Badge variant="warning" className="text-xs">
+                                Unknown
+                              </Badge>
+                            ) : member.level === 'Direct' ? (
+                              <Badge variant="success" className="text-xs">
+                                {member.level}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                {member.level}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-4 py-2 align-middle">
+                            {member.rank ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {member.rank}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </td>
                           <td className="hidden px-4 py-2 align-middle md:table-cell">
                             {formatCurrency(member.personalStake)}

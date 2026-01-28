@@ -271,12 +271,36 @@ export const referralApi = {
           'This indicates the backend needs database optimization (indexes, caching).'
         );
       } else {
-        // Log other errors
-        console.error('[referralApi] Failed to get referral tree:', {
-          message: error?.message,
-          code: error?.code,
-          status: error?.response?.status,
-        });
+        // Extract meaningful error information
+        const isNetworkError =
+          error?.code === 'ERR_NETWORK' ||
+          error?.message?.includes('Network Error') ||
+          !error?.response;
+
+        if (isNetworkError) {
+          // Suppress verbose network error logs (expected when backend is unavailable)
+          if (process.env.NODE_ENV === 'development') {
+            const logKey = 'referral_tree_network_error_logged';
+            if (
+              typeof window !== 'undefined' &&
+              !sessionStorage.getItem(logKey)
+            ) {
+              console.debug(
+                '[referralApi] Network error (backend may be unavailable)'
+              );
+              sessionStorage.setItem(logKey, 'true');
+            }
+          }
+        } else {
+          // Log actual API errors (4xx, 5xx)
+          console.error('[referralApi] Failed to get referral tree:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            status: error?.response?.status,
+            statusText: error?.response?.statusText,
+            data: error?.response?.data,
+          });
+        }
       }
 
       // Return a structured error response instead of throwing
@@ -322,7 +346,36 @@ export const referralApi = {
       console.log('[referralApi] Get referral metrics response:', response);
       return response as any;
     } catch (error: any) {
-      console.error('[referralApi] Failed to get referral metrics:', error);
+      // Extract meaningful error information
+      const isNetworkError =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message?.includes('Network Error') ||
+        !error?.response;
+
+      if (isNetworkError) {
+        // Suppress verbose network error logs (expected when backend is unavailable)
+        if (process.env.NODE_ENV === 'development') {
+          const logKey = 'referral_metrics_network_error_logged';
+          if (
+            typeof window !== 'undefined' &&
+            !sessionStorage.getItem(logKey)
+          ) {
+            console.debug(
+              '[referralApi] Network error (backend may be unavailable)'
+            );
+            sessionStorage.setItem(logKey, 'true');
+          }
+        }
+      } else {
+        // Log actual API errors (4xx, 5xx)
+        console.error('[referralApi] Failed to get referral metrics:', {
+          message: error?.message || 'Unknown error',
+          code: error?.code,
+          status: error?.response?.status,
+          statusText: error?.response?.statusText,
+          data: error?.response?.data,
+        });
+      }
 
       // Return empty state on error
       return {
