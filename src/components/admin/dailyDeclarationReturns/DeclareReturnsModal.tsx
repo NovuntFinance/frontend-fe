@@ -194,8 +194,13 @@ export function DeclareReturnsModal({
         onSuccess();
       }
     } catch (error: any) {
-      // Error is handled by mutation's onError
-      console.error('Failed to declare/update returns:', error);
+      // Mutation's onError shows the toast; log full response for debugging
+      console.error('[DeclareReturnsModal] Declare/update failed:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+      });
     } finally {
       setIsLoading(false);
     }

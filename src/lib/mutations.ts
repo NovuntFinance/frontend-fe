@@ -1595,13 +1595,36 @@ export function useDeclareReturns() {
       toast.success('Daily declaration returns declared successfully');
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to declare returns';
+      const message = getDeclarationErrorMessage(
+        error,
+        'Failed to declare returns'
+      );
       toast.error(message);
     },
   });
+}
+
+/** Extract user-facing message from API error (handles various backend shapes) */
+function getDeclarationErrorMessage(error: any, fallback: string): string {
+  if (!error) return fallback;
+  const data = error?.response?.data;
+  if (data && typeof data === 'object') {
+    const nested = (data as any).error;
+    if (
+      nested &&
+      typeof nested === 'object' &&
+      typeof nested.message === 'string'
+    )
+      return nested.message;
+    if (typeof (data as any).message === 'string') return (data as any).message;
+    if (typeof (data as any).error === 'string') return (data as any).error;
+  }
+  if (
+    typeof error?.message === 'string' &&
+    !error.message.startsWith('Request failed')
+  )
+    return error.message;
+  return fallback;
 }
 
 /**
@@ -1635,10 +1658,10 @@ export function useUpdateDeclaration() {
       toast.success('Declaration updated successfully');
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to update declaration';
+      const message = getDeclarationErrorMessage(
+        error,
+        'Failed to update declaration'
+      );
       toast.error(message);
     },
   });
