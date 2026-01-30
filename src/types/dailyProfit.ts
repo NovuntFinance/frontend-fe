@@ -14,7 +14,7 @@ export interface DailyProfit {
   profitPercentage: number; // 0-2.2 (legacy field; backend still accepts it for compatibility)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-2.2 percentage for ROS (correct field)
+  rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   description?: string;
   isActive: boolean;
   isDistributed: boolean;
@@ -43,7 +43,7 @@ export interface TodayProfit {
   profitPercentage: number; // Legacy field (compat)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-2.2 percentage for ROS
+  rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   isDistributed: boolean;
 }
 
@@ -56,7 +56,7 @@ export interface DailyProfitHistoryItem {
   profitPercentage: number; // Legacy field (compat)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-2.2 percentage for ROS
+  rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   isDistributed: boolean;
 }
 
@@ -80,7 +80,7 @@ export interface DeclareProfitRequest {
   profitPercentage?: number; // 0-2.2 (legacy, optional; prefer rosPercentage)
   premiumPoolAmount: number; // Dollar amount for premium pool
   performancePoolAmount: number; // Dollar amount for performance pool
-  rosPercentage: number; // 0-2.2 percentage for ROS (correct field)
+  rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   description?: string;
   twoFACode?: string; // Optional - interceptor will add it if not provided
 }
@@ -94,7 +94,7 @@ export interface DeclareBulkProfitRequest {
     profitPercentage?: number; // 0-2.2 (legacy, optional; prefer rosPercentage)
     premiumPoolAmount: number; // Dollar amount for premium pool
     performancePoolAmount: number; // Dollar amount for performance pool
-    rosPercentage: number; // 0-2.2 percentage for ROS
+    rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
     description?: string;
   }>;
   twoFACode?: string; // Optional - interceptor will add it if not provided
@@ -107,7 +107,7 @@ export interface UpdateProfitRequest {
   profitPercentage?: number; // 0-2.2 (legacy; prefer rosPercentage)
   premiumPoolAmount?: number; // Dollar amount for premium pool
   performancePoolAmount?: number; // Dollar amount for performance pool
-  rosPercentage?: number; // 0-2.2 percentage for ROS
+  rosPercentage?: number; // 0-100 (testing; revert to 0-2.2 for production)
   description?: string;
   twoFACode?: string; // Optional - interceptor will add it if not provided
 }

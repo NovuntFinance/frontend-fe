@@ -26,7 +26,8 @@ import {
   formatDateWithWeekday,
 } from '@/lib/dateUtils';
 
-const MAX_ROS_PERCENTAGE = 2.2;
+// Testing: up to 100% allowed. Revert to 2.2 for production.
+const MAX_ROS_PERCENTAGE = 100;
 
 const declareProfitSchema = z.object({
   date: z.string().min(1, 'Date is required'),
@@ -39,10 +40,7 @@ const declareProfitSchema = z.object({
   rosPercentage: z
     .number()
     .min(0, 'ROS percentage must be at least 0')
-    .max(
-      MAX_ROS_PERCENTAGE,
-      `ROS percentage cannot exceed ${MAX_ROS_PERCENTAGE}%`
-    ),
+    .max(MAX_ROS_PERCENTAGE, 'ROS percentage must be between 0 and 100'),
   description: z.string().optional(),
 });
 
@@ -298,7 +296,7 @@ export function DeclareProfitModal({
             )}
             <p className="text-xs text-gray-500">
               Enter a value between 0 and {MAX_ROS_PERCENTAGE} (e.g., 0.55 for
-              0.55%)
+              0.55%). Testing: up to 100% allowed.
             </p>
           </div>
 

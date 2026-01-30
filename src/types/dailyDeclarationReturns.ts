@@ -13,7 +13,7 @@ export interface DeclareReturnsRequest {
   date: string; // YYYY-MM-DD format
   premiumPoolAmount: number; // >= 0
   performancePoolAmount: number; // >= 0
-  rosPercentage: number; // 0-2.2
+  rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   description?: string;
   autoDistributePools?: boolean; // Default: false
   autoDistributeROS?: boolean; // Default: false

@@ -28,7 +28,8 @@ import {
   formatDateWithWeekday,
 } from '@/lib/dateUtils';
 
-const MAX_ROS_PERCENTAGE = 2.2;
+// Testing: up to 100% allowed. Revert to 2.2 for production.
+const MAX_ROS_PERCENTAGE = 100;
 
 const declareReturnsSchema = z
   .object({
@@ -42,10 +43,7 @@ const declareReturnsSchema = z
     rosPercentage: z
       .number()
       .min(0, 'ROS percentage must be at least 0')
-      .max(
-        MAX_ROS_PERCENTAGE,
-        `ROS percentage cannot exceed ${MAX_ROS_PERCENTAGE}%`
-      ),
+      .max(MAX_ROS_PERCENTAGE, 'ROS percentage must be between 0 and 100'),
     description: z.string().optional(),
     autoDistributePools: z.boolean(),
     autoDistributeROS: z.boolean(),
@@ -317,7 +315,8 @@ export function DeclareReturnsModal({
           {/* ROS Percentage */}
           <div className="space-y-2">
             <Label htmlFor="rosPercentage">
-              ROS Percentage (%) * (Max: {MAX_ROS_PERCENTAGE}%)
+              ROS Percentage (%) * (Max: {MAX_ROS_PERCENTAGE}%. Testing: up to
+              100% allowed.)
             </Label>
             <Input
               id="rosPercentage"
