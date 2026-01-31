@@ -72,8 +72,20 @@ export interface DailyDeclarationReturn {
   totalPoolAmount: number;
   poolsDistributed: boolean;
   poolsDistributedAt: string | null;
-  rosDistributed: boolean;
-  rosDistributedAt: string | null;
+  rosDistributed: boolean; // Previously isDistributed
+  rosDistributedAt: string | null; // Previously distributedAt
+  poolsDistributionDetails?: {
+    performancePool: {
+      distributed: number; // Number of users
+      totalDistributed: number; // Total amount
+    };
+    premiumPool: {
+      distributed: number; // Number of users
+      totalDistributed: number; // Total amount
+    };
+    totalDistributed: number;
+    note?: string; // Optional note (e.g., "No qualified users - automatically marked as complete")
+  };
   declaredBy: {
     _id: string;
     email: string;
@@ -105,10 +117,12 @@ export interface PoolDistributionDetails {
  * ROS Distribution Details
  */
 export interface ROSDistributionDetails {
-  scheduled: boolean;
-  scheduledFor: string | null;
+  scheduled?: boolean;
+  scheduledFor?: string | null;
   distributed: boolean;
-  distributedAt: string | null;
+  distributedAt?: string | null;
+  status?: 'processing' | 'completed' | 'failed'; // For async responses
+  message?: string; // For async responses (e.g., "ROS distribution is running in the background...")
 }
 
 /**
@@ -116,12 +130,12 @@ export interface ROSDistributionDetails {
  */
 export interface QualifiersInfo {
   performancePool: {
-    totalQualifiers: number;
-    byRank: Record<string, number>;
+    total: number; // Total qualifiers
+    byRank: Record<string, number>; // Breakdown by rank
   };
   premiumPool: {
-    totalQualifiers: number;
-    byRank: Record<string, number>;
+    total: number; // Total qualifiers
+    byRank: Record<string, number>; // Breakdown by rank
   };
 }
 
@@ -139,17 +153,12 @@ export interface DeclareReturnsResponse {
       performancePoolAmount: number;
       rosPercentage: number;
       description?: string;
-      totalPoolAmount: number;
-      declaredBy: {
-        _id: string;
-        email: string;
-        username: string;
-      };
-      declaredAt: string;
+      poolsDistributed: boolean; // May be true if 0 qualifiers
+      rosDistributed: boolean;
     };
-    poolDistribution: PoolDistributionDetails;
-    rosDistribution: ROSDistributionDetails;
-    qualifiers: QualifiersInfo;
+    qualifiers?: QualifiersInfo; // NEW - Qualifier counts
+    poolDistribution?: PoolDistributionDetails | null; // NEW - Distribution result (if autoDistributePools=true)
+    rosDistribution?: ROSDistributionDetails | null; // NEW - Distribution result (if autoDistributeROS=true)
   };
 }
 
@@ -167,6 +176,9 @@ export interface GetDeclaredReturnsResponse {
       totalROSDeclared: number;
       distributedDates: number;
       pendingDates: number;
+      pendingROS: number; // NEW - Dates with ROS not distributed
+      pendingPools: number; // NEW - Dates with pools not distributed
+      partiallyDistributed: number; // NEW - Dates with only one distributed (ROS or pools)
     };
   };
   meta: {
@@ -225,15 +237,17 @@ export interface DeleteDeclarationResponse {
 /**
  * Distribute Declaration Response
  * POST /api/v1/admin/daily-declaration-returns/:date/distribute
+ * Returns 202 Accepted for async processing
  */
 export interface DistributeDeclarationResponse {
   success: boolean;
   message: string;
   data: {
     date: string;
-    poolDistribution: {
+    status: 'processing'; // NEW - Always "processing" for 202 responses
+    poolDistribution?: {
       distributed: boolean;
-      distributedAt: string;
+      distributedAt?: string;
       performancePool: {
         distributed: number;
         totalDistributed: number;
@@ -246,11 +260,8 @@ export interface DistributeDeclarationResponse {
     };
     rosDistribution: {
       distributed: boolean;
-      distributedAt: string;
-      rosPercentage: number;
-      totalStakes: number;
-      processedStakes: number;
-      totalDistributed: number;
+      status: 'processing';
+      message: string; // e.g., "ROS distribution is running in the background. This may take several minutes."
     };
   };
 }

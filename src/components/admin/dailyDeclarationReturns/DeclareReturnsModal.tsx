@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { AlertCircle, Info } from 'lucide-react';
 import {
@@ -117,6 +118,14 @@ export function DeclareReturnsModal({
   const watchedPerformancePool = watch('performancePoolAmount');
   const watchedROS = watch('rosPercentage');
 
+  // Clear mutation errors when modal closes so the "backend 2.2%" banner only shows after a failed submit
+  useEffect(() => {
+    if (!open) {
+      declareMutation.reset();
+      updateMutation.reset();
+    }
+  }, [open, declareMutation, updateMutation]);
+
   // Calculate total pool amount
   const totalPoolAmount =
     (watchedPremiumPool || 0) + (watchedPerformancePool || 0);
@@ -178,7 +187,7 @@ export function DeclareReturnsModal({
         });
       } else {
         // Create new declaration
-        await declareMutation.mutateAsync({
+        const response = await declareMutation.mutateAsync({
           date: data.date,
           premiumPoolAmount: data.premiumPoolAmount,
           performancePoolAmount: data.performancePoolAmount,
@@ -187,6 +196,47 @@ export function DeclareReturnsModal({
           autoDistributePools: data.autoDistributePools,
           autoDistributeROS: data.autoDistributeROS,
         });
+
+        // Show qualifier counts if available
+        const responseData = response?.data || response;
+        if (responseData?.qualifiers) {
+          const qualifiers = responseData.qualifiers;
+          const perfTotal = qualifiers.performancePool?.total ?? 0;
+          const premTotal = qualifiers.premiumPool?.total ?? 0;
+
+          if (perfTotal > 0 || premTotal > 0) {
+            toast.success('Declaration created', {
+              description: `Performance Pool: ${perfTotal} qualifiers, Premium Pool: ${premTotal} qualifiers`,
+              duration: 5000,
+            });
+          }
+        }
+
+        // Show auto-distribution results if available
+        if (responseData?.poolDistribution && data.autoDistributePools) {
+          const poolDist = responseData.poolDistribution;
+          if (poolDist.distributed) {
+            toast.success('Pools auto-distributed', {
+              description: `Performance: ${poolDist.performancePool.distributed} users, Premium: ${poolDist.premiumPool.distributed} users`,
+              duration: 5000,
+            });
+          }
+        }
+
+        if (responseData?.rosDistribution && data.autoDistributeROS) {
+          const rosDist = responseData.rosDistribution;
+          if (rosDist.distributed) {
+            toast.success('ROS auto-distributed', {
+              description: 'ROS distribution completed successfully',
+              duration: 5000,
+            });
+          } else if (rosDist.status === 'processing') {
+            toast.info('ROS distribution started', {
+              description: rosDist.message || 'Processing in background...',
+              duration: 5000,
+            });
+          }
+        }
       }
 
       onOpenChange(false);
@@ -195,12 +245,30 @@ export function DeclareReturnsModal({
       }
     } catch (error: any) {
       // Mutation's onError shows the toast; log full response for debugging
-      console.error('[DeclareReturnsModal] Declare/update failed:', {
-        message: error?.message,
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        data: error?.response?.data,
-      });
+      const message =
+        typeof error?.message === 'string'
+          ? error.message
+          : String(error?.message ?? '');
+      const status = error?.response?.status ?? error?.statusCode ?? '';
+      const statusText =
+        typeof error?.response?.statusText === 'string'
+          ? error.response.statusText
+          : '';
+      let dataStr = '';
+      try {
+        const d = error?.response?.data ?? error?.response;
+        dataStr = d != null ? JSON.stringify(d) : '';
+      } catch (_) {
+        dataStr = String(error?.response?.data ?? '');
+      }
+      console.error(
+        '[DeclareReturnsModal] Declare/update failed:',
+        message || 'Unknown error',
+        '| status:',
+        status,
+        statusText ? `| statusText: ${statusText}` : '',
+        dataStr ? `| response: ${dataStr}` : ''
+      );
     } finally {
       setIsLoading(false);
     }
@@ -210,6 +278,25 @@ export function DeclareReturnsModal({
   const isPast = dateObj ? isPastDate(watchedDate, utcDayString()) : false;
   const isFuture = dateObj ? isFutureDate(watchedDate, utcDayString()) : false;
   const canEdit = !isLocked && (!isPast || isEditing);
+
+  // Detect "ROS 0–2.2%" backend error so we can show a clear fix banner
+  const lastError = declareMutation.error ?? updateMutation.error ?? null;
+  const lastErrorMessage =
+    typeof lastError?.response?.data?.message === 'string'
+      ? lastError.response.data.message
+      : typeof (lastError?.response?.data as any)?.error === 'string'
+        ? (lastError.response.data as any).error
+        : typeof lastError?.message === 'string'
+          ? lastError.message
+          : '';
+  const isBackendRos22Error =
+    lastErrorMessage.includes('2.2') &&
+    (lastErrorMessage.toLowerCase().includes('ros') ||
+      lastErrorMessage.includes('percentage'));
+  const apiBaseUrl =
+    typeof process.env.NEXT_PUBLIC_API_URL === 'string'
+      ? process.env.NEXT_PUBLIC_API_URL
+      : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,6 +321,47 @@ export function DeclareReturnsModal({
               : 'Declare pools and ROS (Returns on Stake) for a specific date.'}
           </DialogDescription>
         </DialogHeader>
+
+        {isBackendRos22Error && (
+          <Alert variant="destructive" className="rounded-lg">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Backend does not allow 0–100% ROS yet</AlertTitle>
+            <AlertDescription>
+              <div className="mt-1 space-y-2 text-sm">
+                <p>
+                  The server you&apos;re connected to still only allows ROS
+                  0–2.2%. The frontend cannot fix this — the backend must be
+                  updated and redeployed.
+                </p>
+                {apiBaseUrl && (
+                  <p className="font-mono text-xs break-all">
+                    Current API: {apiBaseUrl}
+                  </p>
+                )}
+                <p className="mt-2 font-medium">To fix:</p>
+                <ol className="ml-1 list-inside list-decimal space-y-1">
+                  <li>
+                    <strong>Redeploy the backend</strong> at the URL above with
+                    the 0–100% ROS validation (see{' '}
+                    <code className="text-xs">
+                      BACKEND_PROMPT_ROS_0_100_VALIDATION.md
+                    </code>
+                    ).
+                  </li>
+                  <li>
+                    <strong>Or use a local backend:</strong> In{' '}
+                    <code className="text-xs">.env.local</code> set only{' '}
+                    <code className="text-xs">
+                      NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+                    </code>
+                    , run your backend locally with the 0–100% fix, then restart
+                    this app.
+                  </li>
+                </ol>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Date Input */}

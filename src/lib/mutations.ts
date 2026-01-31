@@ -1608,6 +1608,7 @@ export function useDeclareReturns() {
 function getDeclarationErrorMessage(error: any, fallback: string): string {
   if (!error) return fallback;
   const data = error?.response?.data;
+  let message = fallback;
   if (data && typeof data === 'object') {
     const nested = (data as any).error;
     if (
@@ -1615,16 +1616,27 @@ function getDeclarationErrorMessage(error: any, fallback: string): string {
       typeof nested === 'object' &&
       typeof nested.message === 'string'
     )
-      return nested.message;
-    if (typeof (data as any).message === 'string') return (data as any).message;
-    if (typeof (data as any).error === 'string') return (data as any).error;
-  }
-  if (
+      message = nested.message;
+    else if (typeof (data as any).message === 'string')
+      message = (data as any).message;
+    else if (typeof (data as any).error === 'string')
+      message = (data as any).error;
+  } else if (
     typeof error?.message === 'string' &&
     !error.message.startsWith('Request failed')
-  )
-    return error.message;
-  return fallback;
+  ) {
+    message = error.message;
+  }
+  // If backend still returns old 2.2% validation, add a hint so user knows it's a backend/deploy issue
+  if (
+    typeof message === 'string' &&
+    message.includes('2.2') &&
+    (message.toLowerCase().includes('ros') || message.includes('percentage'))
+  ) {
+    message +=
+      " The server you're connected to has not been updated to allow 0–100% ROS yet. Use a backend that has the 0–100% validation deployed, or check NEXT_PUBLIC_API_URL.";
+  }
+  return message;
 }
 
 /**
@@ -1710,6 +1722,7 @@ export function useDeleteDeclaration() {
 /**
  * Distribute pools and/or ROS for a specific date
  * POST /api/v1/admin/daily-declaration-returns/:date/distribute
+ * Returns 202 Accepted for async processing
  */
 export function useDistributeDeclaration() {
   const queryClient = useQueryClient();
@@ -1725,32 +1738,84 @@ export function useDistributeDeclaration() {
       const { dailyDeclarationReturnsService } = await import(
         '@/services/dailyDeclarationReturnsService'
       );
-      return dailyDeclarationReturnsService.distributeDeclaration(date, data);
+      const response =
+        await dailyDeclarationReturnsService.distributeDeclaration(date, data);
+
+      // Check if response indicates async processing (202 status)
+      // The service will return the response data, but we need to check the status
+      // We'll check the response structure to determine if it's async
+      return {
+        ...response,
+        _isAsync: response?.data?.status === 'processing',
+      };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
-      });
-      queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
-
       const result = data?.data || data;
-      const poolsDistributed = result.poolDistribution?.distributed;
-      const rosDistributed = result.rosDistribution?.distributed;
+      const isAsync = data?._isAsync || result?.status === 'processing';
 
-      if (poolsDistributed && rosDistributed) {
-        toast.success('Pools and ROS distributed successfully');
-      } else if (poolsDistributed) {
-        toast.success('Pools distributed successfully');
-      } else if (rosDistributed) {
-        toast.success('ROS distributed successfully');
+      if (isAsync) {
+        // Show processing message
+        toast.success('Distribution started', {
+          description:
+            result?.rosDistribution?.message ||
+            'Processing in background. This may take a few seconds...',
+        });
+
+        // Poll for completion (optional - can be done in component)
+        // For now, invalidate queries after a short delay to refresh status
+        setTimeout(() => {
+          queryClient.invalidateQueries({
+            queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+          });
+          queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+        }, 3000);
+
+        // Also invalidate immediately to show updated status
+        queryClient.invalidateQueries({
+          queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+        });
+      } else {
+        // Synchronous completion
+        queryClient.invalidateQueries({
+          queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+        });
+        queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
+
+        const poolsDistributed = result.poolDistribution?.distributed;
+        const rosDistributed = result.rosDistribution?.distributed;
+
+        if (poolsDistributed && rosDistributed) {
+          toast.success('Pools and ROS distributed successfully');
+        } else if (poolsDistributed) {
+          toast.success('Pools distributed successfully');
+        } else if (rosDistributed) {
+          toast.success('ROS distributed successfully');
+        }
       }
     },
     onError: (error: any) => {
+      // Check if it's a 202 response that axios might have treated as an error
+      if (error?.response?.status === 202) {
+        // This shouldn't happen as axios treats 2xx as success
+        // But handle it just in case
+        toast.info('Distribution started', {
+          description: 'Processing in background...',
+        });
+        queryClient.invalidateQueries({
+          queryKey: ADMIN_DECLARATION_RETURNS_KEY,
+        });
+        return;
+      }
+
       const message =
         error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
         error?.message ||
         'Failed to distribute';
       toast.error(message);
