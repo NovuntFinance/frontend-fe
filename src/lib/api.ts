@@ -549,17 +549,30 @@ apiClient.interceptors.response.use(
         }
       }
 
+      // Check if this is a login endpoint - 401 errors are expected for invalid credentials
+      const isLoginEndpoint =
+        originalRequest.url?.includes('/better-auth/login') ||
+        originalRequest.url?.includes('/admin/login') ||
+        originalRequest.url?.includes('/auth/login');
+      const isLogin401Error = isLoginEndpoint && error.response?.status === 401;
+
       // Log error with proper serialization
+      // For login 401 errors, use console.warn instead of console.error to avoid Next.js error overlay
+      const logMethod = isLogin401Error ? console.warn : console.error;
+      const logPrefix = isLogin401Error
+        ? `⚠️ [Login Auth Failure]`
+        : `❌ [API Error]`;
+
       try {
         const errorInfoStr = JSON.stringify(errorInfo, null, 2);
-        console.error(
-          `❌ [API Error] ${originalRequest.method?.toUpperCase()} ${originalRequest.url}`,
+        logMethod(
+          `${logPrefix} ${originalRequest.method?.toUpperCase()} ${originalRequest.url}`,
           errorInfoStr
         );
       } catch (e) {
         // Fallback if JSON.stringify fails
-        console.error(
-          `❌ [API Error] ${originalRequest.method?.toUpperCase()} ${originalRequest.url}`,
+        logMethod(
+          `${logPrefix} ${originalRequest.method?.toUpperCase()} ${originalRequest.url}`,
           {
             status: error.response?.status,
             message: error.message,
@@ -584,7 +597,11 @@ apiClient.interceptors.response.use(
       }
 
       // Special logging for 401/404 errors (common for profile updates)
-      if (error.response?.status === 401 || error.response?.status === 404) {
+      // Skip login endpoints - they're handled above with console.warn
+      if (
+        (error.response?.status === 401 || error.response?.status === 404) &&
+        !isLoginEndpoint
+      ) {
         const authHeader = originalRequest.headers?.Authorization;
         const isProfileUpdate = originalRequest.url?.includes('/users/profile');
 
