@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import {
@@ -46,24 +46,46 @@ export function DailyROSPerformance() {
   }, [selectedRange]);
 
   // Fetch profit history for selected range
-  const { data: profitHistory, isLoading } = useProfitHistory(limit, 0);
+  const { data: profitHistory, isLoading, error } = useProfitHistory(limit, 0);
 
   // Prepare chart data - reverse to show oldest to newest (left to right)
   const chartData = useMemo(() => {
     if (!profitHistory?.profits) return [];
 
     // Sort by date (oldest first) and take the last N entries
-    const sorted = [...profitHistory.profits].sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
+    const sorted = [...profitHistory.profits]
+      .sort((a, b) => {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      })
+      .slice(-limit)
+      // Filter out entries with invalid rosPercentage values
+      .filter((d) => {
+        const ros = d.rosPercentage;
+        return (
+          ros !== undefined &&
+          ros !== null &&
+          !isNaN(ros) &&
+          isFinite(ros) &&
+          ros >= 0
+        );
+      })
+      // Ensure rosPercentage is a valid number
+      .map((d) => ({
+        ...d,
+        rosPercentage: Number(d.rosPercentage) || 0,
+      }));
 
-    return sorted.slice(-limit);
+    return sorted;
   }, [profitHistory, limit]);
 
   // Calculate max percentage for chart scaling
   const maxPercentage = useMemo(() => {
     if (chartData.length === 0) return 1;
-    const max = Math.max(...chartData.map((d) => d.rosPercentage));
+    const validPercentages = chartData
+      .map((d) => d.rosPercentage)
+      .filter((p) => !isNaN(p) && isFinite(p) && p >= 0);
+    if (validPercentages.length === 0) return 1;
+    const max = Math.max(...validPercentages);
     // Add 10% padding for better visualization
     return max * 1.1 || 1;
   }, [chartData]);
@@ -71,9 +93,29 @@ export function DailyROSPerformance() {
   // Calculate average percentage
   const averagePercentage = useMemo(() => {
     if (chartData.length === 0) return 0;
-    const sum = chartData.reduce((acc, d) => acc + d.rosPercentage, 0);
-    return sum / chartData.length;
+    const validPercentages = chartData
+      .map((d) => d.rosPercentage)
+      .filter((p) => !isNaN(p) && isFinite(p) && p >= 0);
+    if (validPercentages.length === 0) return 0;
+    const sum = validPercentages.reduce((acc, p) => acc + p, 0);
+    return sum / validPercentages.length;
   }, [chartData]);
+
+  // Debug logging in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DailyROSPerformance] Profit History:', {
+        profitHistory,
+        profitsCount: profitHistory?.profits?.length || 0,
+        firstProfit: profitHistory?.profits?.[0],
+        isLoading,
+        error,
+        chartDataLength: chartData.length,
+        averagePercentage,
+        chartDataSample: chartData.slice(0, 3),
+      });
+    }
+  }, [profitHistory, isLoading, error, chartData, averagePercentage]);
 
   return (
     <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
@@ -127,7 +169,10 @@ export function DailyROSPerformance() {
               ) : (
                 <>
                   <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
-                    {averagePercentage.toFixed(2)}%
+                    {isNaN(averagePercentage) || !isFinite(averagePercentage)
+                      ? '0.00'
+                      : averagePercentage.toFixed(2)}
+                    %
                   </h2>
                   <span className="text-muted-foreground text-xs sm:text-sm">
                     avg in {selectedRange}
@@ -163,6 +208,13 @@ export function DailyROSPerformance() {
                 columns={Math.min(limit, 7)}
                 className="h-full items-end"
               />
+            ) : error ? (
+              <div className="flex h-full items-center justify-center">
+                <EmptyStates.EmptyState
+                  title="Failed to load data"
+                  description="Unable to fetch ROS performance data. Please try again later."
+                />
+              </div>
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <EmptyStates.EmptyState
