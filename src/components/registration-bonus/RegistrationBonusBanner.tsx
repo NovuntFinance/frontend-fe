@@ -285,8 +285,16 @@ export function RegistrationBonusBanner() {
       err?.error?.message || // Error property
       'Unable to load bonus status'; // Fallback
 
-    // Log error details for debugging (especially useful with backend's improved error messages)
-    console.error('[RegistrationBonusBanner] Error loading bonus status:', {
+    // 404 is expected for users without bonus records - use warn instead of error
+    // This prevents Next.js error overlay from showing
+    const isExpectedError = status === 404;
+    const logMethod = isExpectedError ? console.warn : console.error;
+    const logPrefix = isExpectedError
+      ? '⚠️ [RegistrationBonusBanner] Expected 404 - no bonus record'
+      : '❌ [RegistrationBonusBanner] Error loading bonus status';
+
+    // Better error serialization to avoid empty objects
+    const errorInfo: Record<string, unknown> = {
       status,
       extractedMessage: errorMessage,
       errorStructure: {
@@ -296,10 +304,16 @@ export function RegistrationBonusBanner() {
         hasResponseData: !!err?.response?.data,
         hasResponseDataMessage: !!err?.response?.data?.message,
       },
-      errorObject: err,
-      responseData: err?.response?.data,
-      fullError: error,
-    });
+    };
+
+    // Only include full error details in development
+    if (process.env.NODE_ENV === 'development') {
+      errorInfo.errorObject = err;
+      errorInfo.responseData = err?.response?.data;
+      errorInfo.fullError = error;
+    }
+
+    logMethod(logPrefix, errorInfo);
 
     if (status === 404) {
       if (process.env.NODE_ENV === 'development') {
