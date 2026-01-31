@@ -48,9 +48,33 @@ export function DailyROSPerformance() {
   // Fetch profit history for selected range
   const { data: profitHistory, isLoading, error } = useProfitHistory(limit, 0);
 
+  // Debug logging in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DailyROSPerformance] Data Debug:', {
+        profitHistory,
+        hasProfits: !!profitHistory?.profits,
+        profitsLength: profitHistory?.profits?.length || 0,
+        profits: profitHistory?.profits,
+        isLoading,
+        error,
+        errorStatus: error?.statusCode || error?.response?.status,
+        errorMessage: error?.message || error?.response?.data?.message,
+      });
+    }
+  }, [profitHistory, isLoading, error]);
+
   // Prepare chart data - reverse to show oldest to newest (left to right)
   const chartData = useMemo(() => {
-    if (!profitHistory?.profits) return [];
+    if (!profitHistory?.profits) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[DailyROSPerformance] No profits data:', {
+          profitHistory,
+          hasProfits: !!profitHistory?.profits,
+        });
+      }
+      return [];
+    }
 
     // Sort by date (oldest first) and take the last N entries
     const sorted = [...profitHistory.profits]
@@ -215,11 +239,23 @@ export function DailyROSPerformance() {
                   description="Unable to fetch ROS performance data. Please try again later."
                 />
               </div>
+            ) : error ? (
+              <div className="flex h-full items-center justify-center">
+                <EmptyStates.EmptyState
+                  title="Unable to load data"
+                  description={
+                    (error as any)?.statusCode === 404 ||
+                    (error as any)?.response?.status === 404
+                      ? 'The profit history endpoint is not available yet. Data will appear here once the backend endpoint is implemented.'
+                      : 'Failed to fetch ROS performance data. Please try again later.'
+                  }
+                />
+              </div>
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <EmptyStates.EmptyState
                   title={`No data available for ${selectedRange}`}
-                  description="ROS performance data will appear here once profits are declared"
+                  description="ROS performance data will appear here once profits are declared and distributed"
                 />
               </div>
             ) : (

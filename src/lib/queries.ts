@@ -2324,11 +2324,56 @@ export function useProfitHistory(limit: number = 30, offset: number = 0) {
       const { dailyProfitService } = await import(
         '@/services/dailyProfitService'
       );
-      const response = await dailyProfitService.getProfitHistory(limit, offset);
-      return response.data;
+      try {
+        const response = await dailyProfitService.getProfitHistory(
+          limit,
+          offset
+        );
+
+        // Debug logging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[useProfitHistory] API Response:', {
+            success: response?.success,
+            hasData: !!response?.data,
+            profitsCount: response?.data?.profits?.length || 0,
+            profits: response?.data?.profits,
+            pagination: response?.data?.pagination,
+          });
+        }
+
+        return response.data;
+      } catch (error: any) {
+        // Enhanced error logging
+        const status = error?.statusCode || error?.response?.status;
+        const message = error?.message || error?.response?.data?.message;
+
+        // 404 is expected if no history exists yet - use warn instead of error
+        if (status === 404) {
+          console.warn(
+            '[useProfitHistory] ⚠️ 404 - No profit history found (this is normal for new users)'
+          );
+        } else {
+          console.error(
+            '[useProfitHistory] ❌ Failed to fetch profit history:',
+            {
+              status,
+              message,
+              error,
+            }
+          );
+        }
+
+        throw error;
+      }
     },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry 404 errors (no data exists)
+      const status = error?.statusCode || error?.response?.status;
+      if (status === 404) return false;
+      return failureCount < 2;
+    },
   });
 }
 

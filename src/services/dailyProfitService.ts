@@ -234,17 +234,65 @@ class DailyProfitService {
       throw new Error('User not authenticated');
     }
 
-    const response = await axios.get<ProfitHistoryResponse>(
-      `${API_BASE_URL}/api/v1/daily-profit/history`,
-      {
-        params: { limit, offset },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
+    try {
+      const response = await axios.get<ProfitHistoryResponse>(
+        `${API_BASE_URL}/api/v1/daily-profit/history`,
+        {
+          params: { limit, offset },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      // Debug logging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[dailyProfitService.getProfitHistory] Response:', {
+          status: response.status,
+          hasData: !!response.data,
+          success: response.data?.success,
+          profitsCount: response.data?.data?.profits?.length || 0,
+          profits: response.data?.data?.profits,
+        });
       }
-    );
-    return response.data;
+
+      return response.data;
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const message = error?.message || error?.response?.data?.message;
+
+      // Enhanced error logging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[dailyProfitService.getProfitHistory] Error:', {
+          status,
+          message,
+          url: `${API_BASE_URL}/api/v1/daily-profit/history`,
+          params: { limit, offset },
+          error,
+        });
+      }
+
+      // If 404, return empty response instead of throwing (endpoint might not exist yet)
+      if (status === 404) {
+        console.warn(
+          '[dailyProfitService.getProfitHistory] ⚠️ 404 - Endpoint not found or no data. Returning empty response.'
+        );
+        return {
+          success: true,
+          data: {
+            profits: [],
+            pagination: {
+              limit,
+              offset,
+              total: 0,
+            },
+          },
+        };
+      }
+
+      throw error;
+    }
   }
 }
 
