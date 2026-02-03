@@ -24,6 +24,18 @@ import { LoadingStates } from '@/components/ui/loading-states';
 import { toast } from '@/components/ui/enhanced-toast';
 import { NumberedPagination } from '@/components/ui/numbered-pagination';
 
+/** Team member row from all-team-members API */
+interface TeamMemberRow {
+  account: string;
+  username?: string;
+  level?: string;
+  rank?: string;
+  personalStake?: number;
+  teamStake?: number;
+  joined?: string;
+  referrer?: { account?: string; username?: string };
+}
+
 /**
  * Team Page (Merged: Referrals + Team)
  * Premium design matching dashboard, wallet, and stake pages using Staking Streak template
@@ -95,11 +107,13 @@ export default function TeamPage() {
   };
 
   // Check for unknown levels
-  const hasUnknownLevels = teamMembers.some(
-    (m) => !m.level || m.level === 'Unknown' || m.level === 'unknown'
+  const hasUnknownLevels = (teamMembers as TeamMemberRow[]).some(
+    (m: TeamMemberRow) =>
+      !m.level || m.level === 'Unknown' || m.level === 'unknown'
   );
-  const unknownLevelCount = teamMembers.filter(
-    (m) => !m.level || m.level === 'Unknown' || m.level === 'unknown'
+  const unknownLevelCount = (teamMembers as TeamMemberRow[]).filter(
+    (m: TeamMemberRow) =>
+      !m.level || m.level === 'Unknown' || m.level === 'unknown'
   ).length;
 
   const copyLink = async () => {
@@ -527,66 +541,70 @@ export default function TeamPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {teamMembers.map((member) => (
-                        <tr
-                          key={`${member.account}-${member.username}`}
-                          className="border-border/20 border-b last:border-0"
-                        >
-                          <td className="px-4 py-2 align-middle">
-                            {member.account}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {member.username || '-'}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {member.level === 'Unknown' || !member.level ? (
-                              <Badge variant="warning" className="text-xs">
-                                Unknown
-                              </Badge>
-                            ) : member.level === 'Direct' ? (
-                              <Badge variant="success" className="text-xs">
-                                {member.level}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                {member.level}
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {member.rank ? (
-                              <Badge variant="secondary" className="text-xs">
-                                {member.rank}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </td>
-                          <td className="hidden px-4 py-2 align-middle md:table-cell">
-                            {formatCurrency(member.personalStake)}
-                          </td>
-                          <td className="hidden px-4 py-2 align-middle lg:table-cell">
-                            {formatCurrency(member.teamStake)}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {member.joined}
-                          </td>
-                          <td className="px-4 py-2 align-middle">
-                            {member.referrer ? (
-                              <div>
-                                <div className="font-medium">
-                                  {member.referrer.account}
+                      {(teamMembers as TeamMemberRow[]).map(
+                        (member: TeamMemberRow) => (
+                          <tr
+                            key={`${member.account}-${member.username}`}
+                            className="border-border/20 border-b last:border-0"
+                          >
+                            <td className="px-4 py-2 align-middle">
+                              {member.account}
+                            </td>
+                            <td className="px-4 py-2 align-middle">
+                              {member.username || '-'}
+                            </td>
+                            <td className="px-4 py-2 align-middle">
+                              {member.level === 'Unknown' || !member.level ? (
+                                <Badge variant="warning" className="text-xs">
+                                  Unknown
+                                </Badge>
+                              ) : member.level === 'Direct' ? (
+                                <Badge variant="success" className="text-xs">
+                                  {member.level}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  {member.level}
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 align-middle">
+                              {member.rank ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  {member.rank}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+                            <td className="hidden px-4 py-2 align-middle md:table-cell">
+                              {formatCurrency(member.personalStake ?? 0)}
+                            </td>
+                            <td className="hidden px-4 py-2 align-middle lg:table-cell">
+                              {formatCurrency(member.teamStake ?? 0)}
+                            </td>
+                            <td className="px-4 py-2 align-middle">
+                              {member.joined}
+                            </td>
+                            <td className="px-4 py-2 align-middle">
+                              {member.referrer ? (
+                                <div>
+                                  <div className="font-medium">
+                                    {member.referrer.account}
+                                  </div>
+                                  <div className="text-muted-foreground text-[10px] sm:text-xs">
+                                    @{member.referrer.username}
+                                  </div>
                                 </div>
-                                <div className="text-muted-foreground text-[10px] sm:text-xs">
-                                  @{member.referrer.username}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">N/A</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  N/A
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      )}
                     </tbody>
                   </table>
                 </div>

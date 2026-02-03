@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDeclareReturns, useUpdateDeclaration } from '@/lib/mutations';
 import { useDeclarationByDate } from '@/lib/queries';
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,10 @@ export function DeclareReturnsModal({
   onSuccess,
 }: DeclareReturnsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const declareMutation = useDeclareReturns();
   const updateMutation = useUpdateDeclaration();
+  const pollAbortRef = useRef(false);
 
   // Fetch existing declaration if initialDate is provided
   const { data: existingDeclaration, isLoading: isLoadingDeclaration } =
@@ -165,6 +168,38 @@ export function DeclareReturnsModal({
     }
   }, [open, initialDate, existingDeclaration, isEditing, setValue, reset]);
 
+  // Stop polling when modal closes
+  useEffect(() => {
+    if (!open) pollAbortRef.current = true;
+  }, [open]);
+
+  /** Poll GET declaration by date until rosDistributed is true (for 202 declare with autoDistributeROS) */
+  const pollDeclarationUntilROSDone = async (date: string) => {
+    const POLL_INTERVAL_MS = 5000;
+    const MAX_ATTEMPTS = 24; // ~2 minutes
+    let attempts = 0;
+
+    const poll = async () => {
+      if (pollAbortRef.current || attempts >= MAX_ATTEMPTS) return;
+      attempts++;
+      try {
+        const { dailyDeclarationReturnsService } = await import(
+          '@/services/dailyDeclarationReturnsService'
+        );
+        const res =
+          await dailyDeclarationReturnsService.getDeclarationByDate(date);
+        queryClient.invalidateQueries({
+          queryKey: ['admin', 'daily-declaration-returns'],
+        });
+        if (res?.data?.rosDistributed) return;
+      } catch {
+        // ignore; will retry or timeout
+      }
+      setTimeout(poll, POLL_INTERVAL_MS);
+    };
+    setTimeout(poll, POLL_INTERVAL_MS);
+  };
+
   const onSubmit = async (data: DeclareReturnsFormData) => {
     if (isLocked) {
       toast.error('Cannot modify a fully distributed declaration');
@@ -186,7 +221,7 @@ export function DeclareReturnsModal({
           },
         });
       } else {
-        // Create new declaration
+        // Create new declaration (backend returns 201 or 202 when autoDistributeROS + rosPercentage > 0)
         const response = await declareMutation.mutateAsync({
           date: data.date,
           premiumPoolAmount: data.premiumPoolAmount,
@@ -197,8 +232,9 @@ export function DeclareReturnsModal({
           autoDistributeROS: data.autoDistributeROS,
         });
 
-        // Show qualifier counts if available
-        const responseData = response?.data || response;
+        const responseData = response?.data ?? response;
+        const is202 =
+          (response as { _httpStatus?: number })?._httpStatus === 202;
         if (responseData?.qualifiers) {
           const qualifiers = responseData.qualifiers;
           const perfTotal = qualifiers.performancePool?.total ?? 0;
@@ -230,11 +266,10 @@ export function DeclareReturnsModal({
               description: 'ROS distribution completed successfully',
               duration: 5000,
             });
-          } else if (rosDist.status === 'processing') {
-            toast.info('ROS distribution started', {
-              description: rosDist.message || 'Processing in background...',
-              duration: 5000,
-            });
+          } else if (is202 || rosDist.status === 'processing') {
+            // Backend returned 202: ROS running in background (handoff: poll GET :date until rosDistributed)
+            pollAbortRef.current = false;
+            pollDeclarationUntilROSDone(data.date);
           }
         }
       }
@@ -442,6 +477,50 @@ export function DeclareReturnsModal({
               <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
                 Total Pool Amount: ${totalPoolAmount.toLocaleString()}
               </p>
+            </div>
+          )}
+
+          {/* Declaration detail: show pools distribution breakdown when available (from GET by date; includes Premium) */}
+          {isEditing && existingDeclaration?.poolsDistributionDetails && (
+            <div className="rounded-lg border border-green-500/30 bg-green-50 p-3 dark:bg-green-900/20">
+              <p className="mb-2 text-sm font-semibold text-green-900 dark:text-green-100">
+                Pool distribution (this date)
+              </p>
+              <div className="text-muted-foreground space-y-1 text-sm">
+                <p>
+                  Performance:{' '}
+                  {existingDeclaration.poolsDistributionDetails.performancePool
+                    ?.distributed ?? 0}{' '}
+                  users,{' '}
+                  {(
+                    existingDeclaration.poolsDistributionDetails.performancePool
+                      ?.totalDistributed ?? 0
+                  ).toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+                <p>
+                  Premium:{' '}
+                  {existingDeclaration.poolsDistributionDetails.premiumPool
+                    ?.distributed ?? 0}{' '}
+                  users,{' '}
+                  {(
+                    existingDeclaration.poolsDistributionDetails.premiumPool
+                      ?.totalDistributed ?? 0
+                  ).toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+                {existingDeclaration.poolsDistributionDetails.note && (
+                  <p className="mt-1 text-yellow-600 italic dark:text-yellow-400">
+                    {existingDeclaration.poolsDistributionDetails.note}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 

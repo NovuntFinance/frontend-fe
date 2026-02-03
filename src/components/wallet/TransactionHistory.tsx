@@ -1690,6 +1690,20 @@ function getTransactionIcon(
 }
 
 /**
+ * Strip total pool amount from receipt description (e.g. " - $2000 total pool").
+ * Pool totals are not shown on user-facing receipts.
+ */
+function receiptDescriptionWithoutPoolAmount(
+  description: string | undefined
+): string {
+  if (!description || typeof description !== 'string') return description ?? '';
+  return description
+    .replace(/\s*-\s*\$\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
+    .replace(/\s*-\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
+    .trim();
+}
+
+/**
  * Transaction Receipt Component
  * Generates a printable/downloadable receipt for transactions
  */
@@ -1883,7 +1897,12 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                 label="Date & Time"
                 value={formatTransactionDate(transaction.timestamp)}
               />
-              <DetailRow label="Description" value={transaction.description} />
+              <DetailRow
+                label="Description"
+                value={receiptDescriptionWithoutPoolAmount(
+                  transaction.description
+                )}
+              />
             </div>
           </div>
 
@@ -2262,7 +2281,7 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                 <div className="space-y-2">
                   {Object.entries(transaction.metadata)
                     .filter(([key]) => {
-                      // Filter out fields already shown in specific sections
+                      // Filter out fields already shown in specific sections and pool totals (not for user receipt)
                       const excludedKeys = [
                         'network',
                         'weekNumber',
@@ -2273,8 +2292,16 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                         'stakeId',
                         'bonusType',
                         'relatedUserId',
+                        'totalPoolAmount',
+                        'total_pool_amount',
                       ];
-                      return !excludedKeys.includes(key);
+                      const keyNorm = key.replace(/_/g, '').toLowerCase();
+                      const isPoolTotal =
+                        keyNorm === 'totalpoolamount' ||
+                        keyNorm === 'totalpool' ||
+                        key.includes('TotalPoolAmount') ||
+                        key.includes('total_pool_amount');
+                      return !excludedKeys.includes(key) && !isPoolTotal;
                     })
                     .map(([key, value]) => (
                       <DetailRow

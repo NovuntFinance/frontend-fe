@@ -13,7 +13,6 @@ import type {
   ResendVerificationPayload,
   LoginPayload,
   Verify2FAPayload,
-  Generate2FASecretPayload,
   Enable2FAPayload,
   RequestPasswordResetPayload,
   ResetPasswordPayload,
@@ -45,6 +44,7 @@ import type {
 } from '@/types/dailyProfit';
 import type {
   DeclareReturnsRequest,
+  DeclareReturnsResponse,
   UpdateDeclarationRequest,
   DeleteDeclarationRequest,
   DistributeDeclarationRequest,
@@ -775,7 +775,7 @@ export function useDisable2FA() {
       console.log('[useDisable2FA] Disabling 2FA');
       return authService.disable2FA();
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       console.log('[useDisable2FA] 2FA disabled successfully');
       updateUser({ twoFAEnabled: false } as Partial<User>);
 
@@ -1395,7 +1395,7 @@ export function useDeclareDailyProfit() {
       );
       return dailyProfitService.declareProfit(data);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
@@ -1468,7 +1468,7 @@ export function useUpdateDailyProfit() {
       );
       return dailyProfitService.updateProfit(date, data);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
@@ -1572,6 +1572,7 @@ const ADMIN_DECLARATION_RETURNS_KEY = [
 /**
  * Declare pools + ROS for a specific date (unified endpoint)
  * POST /api/v1/admin/daily-declaration-returns/declare
+ * Backend returns 202 Accepted when autoDistributeROS and rosPercentage > 0 (ROS runs in background).
  */
 export function useDeclareReturns() {
   const queryClient = useQueryClient();
@@ -1581,18 +1582,29 @@ export function useDeclareReturns() {
       const { dailyDeclarationReturnsService } = await import(
         '@/services/dailyDeclarationReturnsService'
       );
-      return dailyDeclarationReturnsService.declareReturns(data);
+      const { data: body, status } =
+        await dailyDeclarationReturnsService.declareReturns(data);
+      return { ...body, _httpStatus: status };
     },
-    onSuccess: (response) => {
+    onSuccess: (
+      response: DeclareReturnsResponse & { _httpStatus?: number }
+    ) => {
       queryClient.invalidateQueries({
         queryKey: ADMIN_DECLARATION_RETURNS_KEY,
       });
-      // Also invalidate daily profit queries for backward compatibility
       queryClient.invalidateQueries({
         queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
       });
       queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
-      toast.success('Daily declaration returns declared successfully');
+      const is202 = response?._httpStatus === 202;
+      if (is202) {
+        toast.success('Declaration created', {
+          description:
+            'ROS distribution started in background. Usually completes within 1–2 minutes.',
+        });
+      } else {
+        toast.success('Daily declaration returns declared successfully');
+      }
     },
     onError: (error: any) => {
       const message = getDeclarationErrorMessage(
@@ -1659,7 +1671,7 @@ export function useUpdateDeclaration() {
       );
       return dailyDeclarationReturnsService.updateDeclaration(date, data);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ADMIN_DECLARATION_RETURNS_KEY,
       });
@@ -1738,45 +1750,31 @@ export function useDistributeDeclaration() {
       const { dailyDeclarationReturnsService } = await import(
         '@/services/dailyDeclarationReturnsService'
       );
-      const response =
+      const { data: body, status } =
         await dailyDeclarationReturnsService.distributeDeclaration(date, data);
-
-      // Check if response indicates async processing (202 status)
-      // The service will return the response data, but we need to check the status
-      // We'll check the response structure to determine if it's async
       return {
-        ...response,
-        _isAsync: response?.data?.status === 'processing',
+        ...body,
+        _httpStatus: status,
+        _isAsync: status === 202,
       };
     },
     onSuccess: (data) => {
-      const result = data?.data || data;
-      const isAsync = data?._isAsync || result?.status === 'processing';
+      const result = data?.data ?? data;
+      const isAsync = data?._isAsync === true;
 
       if (isAsync) {
-        // Show processing message
         toast.success('Distribution started', {
           description:
             result?.rosDistribution?.message ||
-            'Processing in background. This may take a few seconds...',
+            'ROS distribution is running in the background. Usually completes within 1–2 minutes.',
         });
-
-        // Poll for completion (optional - can be done in component)
-        // For now, invalidate queries after a short delay to refresh status
-        setTimeout(() => {
-          queryClient.invalidateQueries({
-            queryKey: ADMIN_DECLARATION_RETURNS_KEY,
-          });
-          queryClient.invalidateQueries({
-            queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
-          });
-          queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
-        }, 3000);
-
-        // Also invalidate immediately to show updated status
         queryClient.invalidateQueries({
           queryKey: ADMIN_DECLARATION_RETURNS_KEY,
         });
+        queryClient.invalidateQueries({
+          queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
+        });
+        queryClient.invalidateQueries({ queryKey: USER_DAILY_PROFIT_KEY });
       } else {
         // Synchronous completion
         queryClient.invalidateQueries({

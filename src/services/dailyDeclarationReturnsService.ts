@@ -51,16 +51,17 @@ class DailyDeclarationReturnsService {
   /**
    * Declare pools + ROS for a specific date
    * POST /api/v1/admin/daily-declaration-returns/declare
+   * Backend returns 202 Accepted when autoDistributeROS and rosPercentage > 0 (ROS in background).
    */
   async declareReturns(
     data: DeclareReturnsRequest
-  ): Promise<DeclareReturnsResponse> {
+  ): Promise<{ data: DeclareReturnsResponse; status: number }> {
     const api = createAdminApi(this.get2FACode);
     const response = await api.post<DeclareReturnsResponse>(
       '/admin/daily-declaration-returns/declare',
       data
     );
-    return response.data;
+    return { data: response.data, status: response.status };
   }
 
   /**
@@ -145,17 +146,18 @@ class DailyDeclarationReturnsService {
   /**
    * Manually trigger distribution for a specific date
    * POST /api/v1/admin/daily-declaration-returns/:date/distribute
+   * Backend returns 202 Accepted when distributeROS is true (ROS runs in background).
    */
   async distributeDeclaration(
     date: string,
     data: DistributeDeclarationRequest
-  ): Promise<DistributeDeclarationResponse> {
+  ): Promise<{ data: DistributeDeclarationResponse; status: number }> {
     const api = createAdminApi(this.get2FACode);
     const response = await api.post<DistributeDeclarationResponse>(
       `/admin/daily-declaration-returns/${date}/distribute`,
       data
     );
-    return response.data;
+    return { data: response.data, status: response.status };
   }
 }
 

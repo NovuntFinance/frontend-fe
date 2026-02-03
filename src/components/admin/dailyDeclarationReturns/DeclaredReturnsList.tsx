@@ -150,8 +150,7 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
         response?._isAsync || response?.data?.status === 'processing' || false;
 
       if (isAsync) {
-        // Keep processing indicator and poll for completion
-        pollDistributionStatus(selectedDate);
+        pollDistributionStatus(selectedDate, distributePools, distributeROS);
       } else {
         // Remove from processing set immediately
         setProcessingDates((prev) => {
@@ -177,14 +176,18 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
     }
   };
 
-  // Poll for distribution completion
-  const pollDistributionStatus = async (date: string) => {
-    const maxAttempts = 20; // Poll for up to 60 seconds (20 * 3s)
+  // Poll GET declaration by date until requested distribution(s) are complete (handoff: 5–10s interval, ~2–3 min timeout)
+  const pollDistributionStatus = async (
+    date: string,
+    requestedPools: boolean,
+    requestedROS: boolean
+  ) => {
+    const POLL_INTERVAL_MS = 5000;
+    const MAX_ATTEMPTS = 36; // ~3 minutes
     let attempts = 0;
 
     const poll = async () => {
-      if (attempts >= maxAttempts) {
-        // Stop polling after max attempts
+      if (attempts >= MAX_ATTEMPTS) {
         setProcessingDates((prev) => {
           const next = new Set(prev);
           next.delete(date);
@@ -192,7 +195,6 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
         });
         return;
       }
-
       attempts++;
 
       try {
@@ -201,27 +203,20 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
         );
         const declaration =
           await dailyDeclarationReturnsService.getDeclarationByDate(date);
-
-        // Check if both are distributed
-        if (
-          declaration.data.poolsDistributed &&
-          declaration.data.rosDistributed
-        ) {
-          // Complete - remove from processing set
+        const d = declaration?.data;
+        const poolsDone = !requestedPools || d?.poolsDistributed;
+        const rosDone = !requestedROS || d?.rosDistributed;
+        if (poolsDone && rosDone) {
           setProcessingDates((prev) => {
             const next = new Set(prev);
             next.delete(date);
             return next;
           });
-          // Refresh the list - React Query will auto-refresh
           return;
         }
-
-        // Continue polling
-        setTimeout(poll, 3000);
+        setTimeout(poll, POLL_INTERVAL_MS);
       } catch (error) {
         console.error('Failed to poll distribution status:', error);
-        // Stop polling on error
         setProcessingDates((prev) => {
           const next = new Set(prev);
           next.delete(date);
@@ -230,8 +225,7 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
       }
     };
 
-    // Start polling after initial delay
-    setTimeout(poll, 3000);
+    setTimeout(poll, POLL_INTERVAL_MS);
   };
 
   const canDelete = (declaration: (typeof declarations)[0]) => {
@@ -398,8 +392,13 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
                                 <Badge
                                   variant="outline"
                                   className="text-xs text-yellow-600 dark:text-yellow-400"
+                                  title="ROS distribution pending or running in background. Usually completes within 1–2 minutes."
                                 >
-                                  <Clock className="mr-1 h-3 w-3" />
+                                  {isProcessing ? (
+                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Clock className="mr-1 h-3 w-3" />
+                                  )}
                                   ROS
                                 </Badge>
                               )}
@@ -417,41 +416,43 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
                                 </Badge>
                               ) : null}
                             </div>
-                            {/* Distribution Details */}
+                            {/* Distribution Details (backend returns poolsDistributionDetails on GET) */}
+                            {declaration.poolsDistributed &&
+                              !declaration.poolsDistributionDetails && (
+                                <p className="text-muted-foreground mt-1 text-[10px]">
+                                  Pools distributed (details unavailable)
+                                </p>
+                              )}
                             {declaration.poolsDistributionDetails && (
                               <div className="text-muted-foreground mt-1 space-y-0.5 text-[10px]">
                                 <p>
                                   Performance:{' '}
-                                  {
-                                    declaration.poolsDistributionDetails
-                                      .performancePool.distributed
-                                  }{' '}
+                                  {declaration.poolsDistributionDetails
+                                    .performancePool?.distributed ?? 0}{' '}
                                   users (
-                                  {declaration.poolsDistributionDetails.performancePool.totalDistributed.toLocaleString(
-                                    'en-US',
-                                    {
-                                      style: 'currency',
-                                      currency: 'USD',
-                                      minimumFractionDigits: 2,
-                                    }
-                                  )}
+                                  {(
+                                    declaration.poolsDistributionDetails
+                                      .performancePool?.totalDistributed ?? 0
+                                  ).toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
+                                    minimumFractionDigits: 2,
+                                  })}
                                   )
                                 </p>
                                 <p>
                                   Premium:{' '}
-                                  {
-                                    declaration.poolsDistributionDetails
-                                      .premiumPool.distributed
-                                  }{' '}
+                                  {declaration.poolsDistributionDetails
+                                    .premiumPool?.distributed ?? 0}{' '}
                                   users (
-                                  {declaration.poolsDistributionDetails.premiumPool.totalDistributed.toLocaleString(
-                                    'en-US',
-                                    {
-                                      style: 'currency',
-                                      currency: 'USD',
-                                      minimumFractionDigits: 2,
-                                    }
-                                  )}
+                                  {(
+                                    declaration.poolsDistributionDetails
+                                      .premiumPool?.totalDistributed ?? 0
+                                  ).toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
+                                    minimumFractionDigits: 2,
+                                  })}
                                   )
                                 </p>
                                 {declaration.poolsDistributionDetails.note && (
@@ -529,7 +530,10 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
             <DialogTitle>Distribute Declaration</DialogTitle>
             <DialogDescription>
               Select which distributions to trigger for{' '}
-              {selectedDate && formatDateWithWeekday(selectedDate)}
+              {selectedDate && formatDateWithWeekday(selectedDate)}.
+              &quot;Distribute Pools&quot; distributes both Premium and
+              Performance pools. If you distribute ROS, it runs in the
+              background and usually completes within 1–2 minutes.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -559,6 +563,10 @@ export function DeclaredReturnsList({ onEdit }: DeclaredReturnsListProps) {
                 </Label>
               </div>
             </div>
+            <p className="text-muted-foreground text-xs">
+              If ROS doesn&apos;t complete in a few minutes, retry distribute
+              for this date or check with support.
+            </p>
           </div>
           <DialogFooter>
             <Button
