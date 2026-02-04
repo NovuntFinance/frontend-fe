@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { poolService } from '@/services/poolService';
+import { adminSettingsService } from '@/services/adminSettingsService';
 import { use2FA } from '@/contexts/TwoFAContext';
 import { QualifierCounts } from '@/components/admin/pool/QualifierCounts';
 import { UnifiedDeclarationCalendar } from './UnifiedDeclarationCalendar';
@@ -15,15 +17,33 @@ import { toast } from 'sonner';
 import { RefreshCw } from 'lucide-react';
 import type { PoolQualifiersResponse } from '@/types/pool';
 
+const DEFAULT_MAX_ROS = 100;
+
 export function DailyDeclarationReturnsManager() {
   const [qualifiers, setQualifiers] = useState<
     PoolQualifiersResponse['data'] | null
   >(null);
   const [isLoadingQualifiers, setIsLoadingQualifiers] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [declareModalOpen, setDeclareModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const { promptFor2FA } = use2FA();
+
+  // Max ROS % from Admin Settings (optional; backend validates regardless)
+  const { data: maxRosPercentage } = useQuery({
+    queryKey: ['admin', 'setting', 'max_ros_percentage'],
+    queryFn: async () => {
+      try {
+        const s = await adminSettingsService.getSetting('max_ros_percentage');
+        const v = s?.value;
+        return typeof v === 'number' && Number.isFinite(v)
+          ? v
+          : DEFAULT_MAX_ROS;
+      } catch {
+        return DEFAULT_MAX_ROS;
+      }
+    },
+    staleTime: 60_000,
+  });
 
   // Set 2FA getter from context
   useEffect(() => {
@@ -131,6 +151,7 @@ export function DailyDeclarationReturnsManager() {
         onOpenChange={setDeclareModalOpen}
         initialDate={editingDate || undefined}
         onSuccess={handleDeclareSuccess}
+        maxRosPercentage={maxRosPercentage ?? DEFAULT_MAX_ROS}
       />
     </div>
   );

@@ -4,14 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Calendar,
-  Plus,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Info,
-} from 'lucide-react';
+import { Calendar, Plus, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { useDeclaredReturns } from '@/lib/queries';
 import {
   utcDayString,
@@ -31,7 +24,7 @@ export function UnifiedDeclarationCalendar({
   onDateClick,
   onDeclareClick,
 }: UnifiedDeclarationCalendarProps) {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [, setSelectedDate] = useState<string | null>(null);
 
   // Get declared returns for the next 30 days
   const todayUtc = utcDayString();

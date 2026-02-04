@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,53 +22,61 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import {
   utcDayString,
   isPastDate,
-  isFutureDate,
   formatDateWithWeekday,
 } from '@/lib/dateUtils';
 
-// Testing: up to 100% allowed. Revert to 2.2 for production.
-const MAX_ROS_PERCENTAGE = 100;
+// Default max when not provided by backend (e.g. testing/staging). Production uses Admin Settings → max_ros_percentage.
+const DEFAULT_MAX_ROS_PERCENTAGE = 100;
 
-const declareReturnsSchema = z
-  .object({
-    date: z.string().min(1, 'Date is required'),
-    premiumPoolAmount: z
-      .number()
-      .min(0, 'Premium pool amount must be at least 0'),
-    performancePoolAmount: z
-      .number()
-      .min(0, 'Performance pool amount must be at least 0'),
-    rosPercentage: z
-      .number()
-      .min(0, 'ROS percentage must be at least 0')
-      .max(MAX_ROS_PERCENTAGE, 'ROS percentage must be between 0 and 100'),
-    description: z.string().optional(),
-    autoDistributePools: z.boolean(),
-    autoDistributeROS: z.boolean(),
-  })
-  .refine(
-    (data) =>
-      data.premiumPoolAmount > 0 ||
-      data.performancePoolAmount > 0 ||
-      data.rosPercentage > 0,
-    {
-      message:
-        'At least one pool amount or ROS percentage must be greater than 0',
-      path: ['premiumPoolAmount'],
-    }
-  );
+function makeDeclareReturnsSchema(maxRos: number) {
+  return z
+    .object({
+      date: z.string().min(1, 'Date is required'),
+      premiumPoolAmount: z
+        .number()
+        .min(0, 'Premium pool amount must be at least 0'),
+      performancePoolAmount: z
+        .number()
+        .min(0, 'Performance pool amount must be at least 0'),
+      rosPercentage: z
+        .number()
+        .min(0, 'ROS percentage must be at least 0')
+        .max(
+          maxRos,
+          `ROS percentage must be between 0 and ${maxRos} (cap set in Admin Settings)`
+        ),
+      description: z.string().optional(),
+      autoDistributePools: z.boolean(),
+      autoDistributeROS: z.boolean(),
+    })
+    .refine(
+      (data) =>
+        data.premiumPoolAmount > 0 ||
+        data.performancePoolAmount > 0 ||
+        data.rosPercentage > 0,
+      {
+        message:
+          'At least one pool amount or ROS percentage must be greater than 0',
+        path: ['premiumPoolAmount'],
+      }
+    );
+}
 
-type DeclareReturnsFormData = z.infer<typeof declareReturnsSchema>;
+type DeclareReturnsFormData = z.infer<
+  ReturnType<typeof makeDeclareReturnsSchema>
+>;
 
 interface DeclareReturnsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialDate?: string;
   onSuccess?: () => void;
+  /** Max ROS % from Admin Settings (max_ros_percentage). If not provided, defaults to 100 for testing. */
+  maxRosPercentage?: number;
 }
 
 export function DeclareReturnsModal({
@@ -76,7 +84,12 @@ export function DeclareReturnsModal({
   onOpenChange,
   initialDate,
   onSuccess,
+  maxRosPercentage = DEFAULT_MAX_ROS_PERCENTAGE,
 }: DeclareReturnsModalProps) {
+  const declareReturnsSchema = useMemo(
+    () => makeDeclareReturnsSchema(maxRosPercentage),
+    [maxRosPercentage]
+  );
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const declareMutation = useDeclareReturns();
@@ -293,7 +306,7 @@ export function DeclareReturnsModal({
       try {
         const d = error?.response?.data ?? error?.response;
         dataStr = d != null ? JSON.stringify(d) : '';
-      } catch (_) {
+      } catch {
         dataStr = String(error?.response?.data ?? '');
       }
       console.error(
@@ -311,7 +324,6 @@ export function DeclareReturnsModal({
 
   const dateObj = watchedDate ? new Date(watchedDate + 'T00:00:00Z') : null;
   const isPast = dateObj ? isPastDate(watchedDate, utcDayString()) : false;
-  const isFuture = dateObj ? isFutureDate(watchedDate, utcDayString()) : false;
   const canEdit = !isLocked && (!isPast || isEditing);
 
   // Detect "ROS 0–2.2%" backend error so we can show a clear fix banner
@@ -527,15 +539,15 @@ export function DeclareReturnsModal({
           {/* ROS Percentage */}
           <div className="space-y-2">
             <Label htmlFor="rosPercentage">
-              ROS Percentage (%) * (Max: {MAX_ROS_PERCENTAGE}%. Testing: up to
-              100% allowed.)
+              ROS Percentage (%) * (Max: {maxRosPercentage}% — set in Admin
+              Settings → Financial)
             </Label>
             <Input
               id="rosPercentage"
               type="number"
               step="0.01"
               min="0"
-              max={MAX_ROS_PERCENTAGE}
+              max={maxRosPercentage}
               {...register('rosPercentage', {
                 valueAsNumber: true,
               })}

@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAdminSettings } from '@/hooks/useAdminSettings';
-import { AdminSetting } from '@/services/adminSettingsService';
+import React, { useState, useEffect } from 'react';
+import { useSettingsBundle } from '@/hooks/useAdminSettings';
+import type {
+  BundleSetting,
+  BundleCategory,
+} from '@/services/adminSettingsService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,120 +18,196 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Info, RefreshCw } from 'lucide-react';
 import { SettingTooltip } from './SettingTooltip';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
 
-interface SettingInputProps {
-  setting: AdminSetting;
-  value: any;
-  onChange: (value: any) => void;
+interface BundleSettingInputProps {
+  setting: BundleSetting;
+  value: unknown;
+  onChange: (value: unknown) => void;
 }
 
-function SettingInput({ setting, value, onChange }: SettingInputProps) {
-  const renderInput = () => {
-    switch (setting.type) {
-      case 'boolean':
-        return (
-          <Switch
-            checked={value}
-            onCheckedChange={onChange}
-            disabled={!setting.isEditable}
-          />
-        );
+function BundleSettingInput({
+  setting,
+  value,
+  onChange,
+}: BundleSettingInputProps) {
+  const controlType =
+    setting.ui?.controlType ??
+    (setting.type === 'boolean'
+      ? 'toggle'
+      : setting.type === 'number'
+        ? 'number'
+        : 'text');
+  const validations = setting.validations ?? {};
+  const min = validations.min;
+  const max = validations.max;
+  const options = validations.options;
+  const unit = setting.ui?.recommendedUnit;
 
-      case 'number':
-        return (
+  switch (controlType) {
+    case 'toggle':
+      return (
+        <Switch
+          checked={Boolean(value)}
+          onCheckedChange={(v) => onChange(v)}
+          disabled={!setting.isEditable}
+        />
+      );
+
+    case 'number': {
+      const num =
+        typeof value === 'number' && !Number.isNaN(value) ? value : '';
+      return (
+        <div className="flex items-center gap-2">
           <Input
             type="number"
-            value={value}
-            onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            min={setting.minValue}
-            max={setting.maxValue}
-            disabled={!setting.isEditable}
-            className="max-w-xs"
-          />
-        );
-
-      case 'string':
-        return (
-          <Input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={!setting.isEditable}
-            className="max-w-xs"
-          />
-        );
-
-      case 'select':
-        if (setting.validOptions && setting.validOptions.length > 0) {
-          return (
-            <Select
-              value={String(value)}
-              onValueChange={onChange}
-              disabled={!setting.isEditable}
-            >
-              <SelectTrigger className="max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {setting.validOptions.map((option) => (
-                  <SelectItem key={String(option)} value={String(option)}>
-                    {String(option)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          );
-        }
-        return null;
-
-      default:
-        return (
-          <Input
-            type="text"
-            value={JSON.stringify(value)}
+            value={num}
             onChange={(e) => {
-              try {
-                onChange(JSON.parse(e.target.value));
-              } catch {
-                // Invalid JSON, ignore
-              }
+              const v = e.target.value;
+              if (v === '') onChange(0);
+              else onChange(parseFloat(v));
+            }}
+            min={min}
+            max={max}
+            disabled={!setting.isEditable}
+            className="max-w-xs"
+          />
+          {unit && (
+            <span className="text-muted-foreground text-sm">{unit}</span>
+          )}
+        </div>
+      );
+    }
+
+    case 'text':
+      return (
+        <Input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={!setting.isEditable}
+          className="max-w-xs"
+        />
+      );
+
+    case 'select':
+      if (options && options.length > 0) {
+        return (
+          <Select
+            value={String(value ?? '')}
+            onValueChange={(v) => {
+              const first = options[0];
+              if (typeof first === 'number') onChange(parseFloat(v) || first);
+              else onChange(v);
             }}
             disabled={!setting.isEditable}
-            className="max-w-xs"
-          />
+          >
+            <SelectTrigger className="max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((opt) => (
+                <SelectItem key={String(opt)} value={String(opt)}>
+                  {String(opt)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
+      }
+      return (
+        <Input
+          type="text"
+          value={String(value ?? '')}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={!setting.isEditable}
+          className="max-w-xs"
+        />
+      );
+
+    case 'multiselect': {
+      const arr = Array.isArray(value) ? value : [];
+      return (
+        <Input
+          type="text"
+          value={arr.join(', ')}
+          onChange={(e) => {
+            const s = e.target.value;
+            const next = s
+              ? s
+                  .split(',')
+                  .map((x) => x.trim())
+                  .filter(Boolean)
+              : [];
+            onChange(next);
+          }}
+          disabled={!setting.isEditable}
+          className="max-w-xs"
+          placeholder="Comma-separated values"
+        />
+      );
     }
-  };
 
-  return (
-    <div className="space-y-2">
-      {renderInput()}
-      {setting.minValue !== undefined && setting.maxValue !== undefined && (
-        <p className="text-muted-foreground text-xs">
-          Range: {setting.minValue} - {setting.maxValue}
-        </p>
-      )}
-    </div>
-  );
+    case 'json':
+      return (
+        <Input
+          type="text"
+          value={
+            typeof value === 'object'
+              ? JSON.stringify(value)
+              : String(value ?? '')
+          }
+          onChange={(e) => {
+            try {
+              const v = e.target.value.trim();
+              if (!v) onChange(null);
+              else onChange(JSON.parse(v));
+            } catch {
+              // leave as-is on invalid JSON
+            }
+          }}
+          disabled={!setting.isEditable}
+          className="max-w-md font-mono text-sm"
+        />
+      );
+
+    default:
+      return (
+        <Input
+          type="text"
+          value={
+            typeof value === 'object'
+              ? JSON.stringify(value)
+              : String(value ?? '')
+          }
+          onChange={(e) => onChange(e.target.value)}
+          disabled={!setting.isEditable}
+          className="max-w-xs"
+        />
+      );
+  }
 }
 
-interface SettingRowProps {
-  setting: AdminSetting;
-  onUpdate: (key: string, value: any) => Promise<void>;
+interface BundleSettingRowProps {
+  setting: BundleSetting;
+  onUpdate: (key: string, value: unknown) => Promise<void>;
 }
 
-function SettingRow({ setting, onUpdate }: SettingRowProps) {
-  const [value, setValue] = useState(setting.value);
+function BundleSettingRow({ setting, onUpdate }: BundleSettingRowProps) {
+  const [value, setValue] = useState<unknown>(setting.value);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const handleChange = (newValue: any) => {
+  useEffect(() => {
+    setValue(setting.value);
+  }, [setting.value]);
+
+  const handleChange = (newValue: unknown) => {
     setValue(newValue);
     setHasChanges(JSON.stringify(newValue) !== JSON.stringify(setting.value));
   };
@@ -139,24 +218,31 @@ function SettingRow({ setting, onUpdate }: SettingRowProps) {
       await onUpdate(setting.key, value);
       setHasChanges(false);
     } catch {
-      // Error already handled in onUpdate
+      // Error shown by hook
     } finally {
       setSaving(false);
     }
   };
 
-  const tooltip = setting.tooltip || {
-    title: setting.helperTitle,
-    content: setting.helperText || setting.description,
-    description: setting.description,
-  };
+  const tooltip =
+    setting.label || setting.description
+      ? {
+          title: setting.label,
+          content: setting.description || setting.label || '',
+          description: setting.description || '',
+        }
+      : null;
+
+  const validations = setting.validations ?? {};
+  const min = validations.min;
+  const max = validations.max;
 
   return (
     <div className="hover:bg-muted/50 flex items-start justify-between gap-4 rounded-lg border p-4 transition-colors">
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
           <Label htmlFor={setting.key} className="font-semibold">
-            {setting.displayName}
+            {setting.label}
           </Label>
           {tooltip && (
             <SettingTooltip tooltip={tooltip}>
@@ -166,8 +252,19 @@ function SettingRow({ setting, onUpdate }: SettingRowProps) {
             </SettingTooltip>
           )}
         </div>
-        <p className="text-muted-foreground text-sm">{setting.description}</p>
-        <SettingInput setting={setting} value={value} onChange={handleChange} />
+        {setting.description && (
+          <p className="text-muted-foreground text-sm">{setting.description}</p>
+        )}
+        <BundleSettingInput
+          setting={setting}
+          value={value}
+          onChange={handleChange}
+        />
+        {typeof min === 'number' && typeof max === 'number' && (
+          <p className="text-muted-foreground text-xs">
+            Range: {min} – {max}
+          </p>
+        )}
       </div>
       {setting.isEditable && (
         <Button
@@ -188,8 +285,12 @@ interface SettingsManagerProps {
 }
 
 export function SettingsManager({ category }: SettingsManagerProps) {
-  const { settings, loading, error, refresh, updateSetting } =
-    useAdminSettings(category);
+  const { categories, loading, error, refresh, updateSetting } =
+    useSettingsBundle();
+
+  const handleUpdate = async (key: string, value: unknown) => {
+    await updateSetting(key, value, `Updated ${key} via admin panel`);
+  };
 
   if (loading) {
     return <LoadingStates.Page />;
@@ -205,69 +306,79 @@ export function SettingsManager({ category }: SettingsManagerProps) {
     );
   }
 
-  const handleUpdate = async (key: string, value: any) => {
-    await updateSetting(key, value, `Updated ${key} via admin panel`);
-  };
+  const list: BundleCategory[] = category
+    ? categories.filter((c) => c.key === category)
+    : [...categories].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
 
-  // Render settings grouped by category or as a single list
-  if (category && Array.isArray(settings)) {
+  if (list.length === 0) {
+    return (
+      <EmptyStates.EmptyState
+        title="No settings found"
+        description="Settings will appear here once they are configured."
+      />
+    );
+  }
+
+  if (list.length === 1) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Settings: {category}</h2>
+          <h2 className="text-2xl font-bold">{list[0].title}</h2>
           <Button onClick={() => refresh()} variant="outline" size="sm">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
         <div className="space-y-2">
-          {settings.map((setting) => (
-            <SettingRow
-              key={setting.key}
-              setting={setting}
-              onUpdate={handleUpdate}
-            />
+          {list[0].settings.map((s) => (
+            <BundleSettingRow key={s.key} setting={s} onUpdate={handleUpdate} />
           ))}
         </div>
       </div>
     );
   }
 
-  if (!category && settings && typeof settings === 'object') {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">System Settings</h2>
-          <Button onClick={() => refresh()} variant="outline" size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
-        </div>
-        {Object.entries(settings).map(([categoryName, categorySettings]) => (
-          <Card key={categoryName}>
-            <CardHeader>
-              <CardTitle className="capitalize">{categoryName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {Array.isArray(categorySettings) &&
-                categorySettings.map((setting) => (
-                  <SettingRow
-                    key={setting.key}
-                    setting={setting}
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Platform Settings</h2>
+        <Button onClick={() => refresh()} variant="outline" size="sm">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
+      </div>
+      <Tabs defaultValue={list[0]?.key ?? 'general'} className="w-full">
+        <TabsList className="flex h-auto flex-wrap gap-1">
+          {list.map((cat) => (
+            <TabsTrigger key={cat.key} value={cat.key}>
+              {cat.title}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {list.map((cat) => (
+          <TabsContent key={cat.key} value={cat.key} className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>{cat.title}</CardTitle>
+                {cat.description && (
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {cat.description}
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {cat.settings.map((s) => (
+                  <BundleSettingRow
+                    key={s.key}
+                    setting={s}
                     onUpdate={handleUpdate}
                   />
                 ))}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
         ))}
-      </div>
-    );
-  }
-
-  return (
-    <EmptyStates.EmptyState
-      title="No settings found"
-      description="Settings will appear here once they are configured"
-    />
+      </Tabs>
+    </div>
   );
 }
