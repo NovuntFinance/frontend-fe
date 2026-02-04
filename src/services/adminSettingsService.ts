@@ -360,7 +360,12 @@ class AdminSettingsService {
       );
 
       const body = response.data;
-      if (!body.success) {
+      const isSuccess =
+        body.success === true ||
+        (response.status >= 200 &&
+          response.status < 300 &&
+          (body as any).status === 'success');
+      if (!isSuccess) {
         const err = new Error(
           (body as any).message || (body as any).error || 'Update failed'
         ) as Error & { response?: { status: number; data?: unknown } };

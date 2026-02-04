@@ -111,7 +111,15 @@ export function useSettingsBundle() {
           err?.response?.data?.message ??
           err?.message ??
           'Failed to update setting';
-        toast.error(errorMessage);
+        // If the message looks like a success message, show success toast (backend may send success: false with success text)
+        if (
+          typeof errorMessage === 'string' &&
+          errorMessage.toLowerCase().includes('updated successfully')
+        ) {
+          toast.success(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
         throw err;
       }
     },
