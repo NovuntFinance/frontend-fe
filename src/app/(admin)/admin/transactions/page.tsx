@@ -18,6 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 function formatMoney(value: number) {
   const formatted = new Intl.NumberFormat('en-US', {
@@ -79,6 +82,10 @@ export default function TransactionsPage() {
   const canView =
     hasPermission('transactions.view') || hasPermission('transactions.read');
   const canExport = hasPermission('reports.export');
+  const canApprove =
+    hasPermission('transactions.approve') ||
+    hasPermission('transactions.update') ||
+    canView;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -104,6 +111,8 @@ export default function TransactionsPage() {
 
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalReason, setApprovalReason] = useState('');
 
   // Debounce search
   useEffect(() => {
@@ -189,6 +198,65 @@ export default function TransactionsPage() {
   const openDrawer = (txId: string) => {
     setSelectedTxId(txId);
     setDrawerOpen(true);
+    setApprovalReason('');
+  };
+
+  const handleApproveWithdrawal = async (
+    transactionId: string,
+    status: 'approved' | 'rejected'
+  ) => {
+    if (!canApprove || approvalLoading) return;
+    setApprovalLoading(true);
+    try {
+      const result = await adminService.approveWithdrawal(
+        transactionId,
+        status,
+        approvalReason.trim() || undefined
+      );
+      const successMessage =
+        (result as { message?: string })?.message ||
+        (status === 'approved'
+          ? 'Withdrawal approved successfully'
+          : 'Withdrawal rejected');
+      toast.success(successMessage);
+      setDrawerOpen(false);
+      setSelectedTxId(null);
+      setApprovalReason('');
+      refetch();
+    } catch (err: unknown) {
+      const ax = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string; error?: { code?: string } };
+        };
+        message?: string;
+      };
+      const statusCode = ax.response?.status;
+      const code = ax.response?.data?.error?.code;
+      const message =
+        ax.response?.data?.message ||
+        ax.message ||
+        (status === 'approved'
+          ? 'Failed to approve withdrawal'
+          : 'Failed to reject withdrawal');
+
+      if (statusCode === 409 && code === 'ALREADY_PROCESSED') {
+        toast.info('This withdrawal was already processed.');
+        setDrawerOpen(false);
+        setSelectedTxId(null);
+        setApprovalReason('');
+        refetch();
+      } else if (statusCode === 404) {
+        toast.error(message);
+        setDrawerOpen(false);
+        setSelectedTxId(null);
+        refetch();
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setApprovalLoading(false);
+    }
   };
 
   const handleExport = async () => {
@@ -1067,7 +1135,13 @@ export default function TransactionsPage() {
       )}
 
       {/* Transaction View Drawer (Dialog) */}
-      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Dialog
+        open={drawerOpen}
+        onOpenChange={(open) => {
+          setDrawerOpen(open);
+          if (!open) setApprovalReason('');
+        }}
+      >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Transaction details</DialogTitle>
@@ -1166,6 +1240,66 @@ export default function TransactionsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Admin approval actions for pending withdrawals that require approval */}
+              {(detailTx as any).requiresAdminApproval &&
+                (detailTx as any).status === 'pending' &&
+                String((detailTx as any).type).toLowerCase() === 'withdrawal' &&
+                canApprove && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                    <div className="text-muted-foreground mb-2 font-medium">
+                      Withdrawal approval
+                    </div>
+                    <p className="text-muted-foreground mb-3 text-xs">
+                      This withdrawal is pending admin approval. Approve to
+                      release funds or reject with an optional reason.
+                    </p>
+                    <div className="mb-3">
+                      <Label
+                        htmlFor="approval-reason"
+                        className="text-muted-foreground text-xs"
+                      >
+                        Reason (optional)
+                      </Label>
+                      <Input
+                        id="approval-reason"
+                        placeholder="e.g. Verified user and amount"
+                        value={approvalReason}
+                        onChange={(e) => setApprovalReason(e.target.value)}
+                        className="mt-1"
+                        disabled={approvalLoading}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleApproveWithdrawal(
+                            (detailTx as any).id ?? selectedTxId ?? '',
+                            'approved'
+                          )
+                        }
+                        disabled={approvalLoading}
+                        className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                      >
+                        {approvalLoading ? 'Processing…' : 'Approve'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() =>
+                          handleApproveWithdrawal(
+                            (detailTx as any).id ?? selectedTxId ?? '',
+                            'rejected'
+                          )
+                        }
+                        disabled={approvalLoading}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
               <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                 <div className="text-muted-foreground mb-2">Raw payload</div>
