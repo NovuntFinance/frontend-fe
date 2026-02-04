@@ -32,6 +32,23 @@ function filterVisibleSettings(settings: BundleSetting[]): BundleSetting[] {
   return settings.filter((s) => !HIDDEN_SETTING_KEYS.has(s.key));
 }
 
+/** Normalize value for display/compare; backend may send booleans as strings. */
+function normalizeSettingValue(
+  value: unknown,
+  controlType: string,
+  type: string
+): unknown {
+  if (controlType === 'toggle' || type === 'boolean') {
+    return value === true || value === 'true';
+  }
+  if (controlType === 'number' || type === 'number') {
+    if (value === '' || value == null) return 0;
+    const n = Number(value);
+    return Number.isNaN(n) ? 0 : n;
+  }
+  return value;
+}
+
 interface BundleSettingInputProps {
   setting: BundleSetting;
   value: unknown;
@@ -60,7 +77,11 @@ function BundleSettingInput({
     case 'toggle':
       return (
         <Switch
-          checked={Boolean(value)}
+          checked={
+            value === true ||
+            value === 'true' ||
+            (typeof value === 'string' && value.toLowerCase() === 'true')
+          }
           onCheckedChange={(v) => onChange(v)}
           disabled={!setting.isEditable}
         />
@@ -206,23 +227,48 @@ interface BundleSettingRowProps {
 }
 
 function BundleSettingRow({ setting, onUpdate }: BundleSettingRowProps) {
-  const [value, setValue] = useState<unknown>(setting.value);
+  const controlType =
+    setting.ui?.controlType ??
+    (setting.type === 'boolean' ? 'toggle' : 'text');
+  const normalizedInitial = normalizeSettingValue(
+    setting.value,
+    controlType,
+    setting.type
+  );
+  const [value, setValue] = useState<unknown>(normalizedInitial);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Sync from backend only when there are no local unsaved changes, so the toggle doesn't jump back
   useEffect(() => {
-    setValue(setting.value);
-  }, [setting.value]);
+    if (!hasChanges) {
+      const next = normalizeSettingValue(
+        setting.value,
+        controlType,
+        setting.type
+      );
+      setValue(next);
+    }
+  }, [setting.value, controlType, setting.type, hasChanges]);
 
   const handleChange = (newValue: unknown) => {
     setValue(newValue);
-    setHasChanges(JSON.stringify(newValue) !== JSON.stringify(setting.value));
+    const normalizedBackend = normalizeSettingValue(
+      setting.value,
+      controlType,
+      setting.type
+    );
+    setHasChanges(JSON.stringify(newValue) !== JSON.stringify(normalizedBackend));
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      await onUpdate(setting.key, value);
+      const valueToSave =
+        controlType === 'toggle' || setting.type === 'boolean'
+          ? value === true || value === 'true'
+          : value;
+      await onUpdate(setting.key, valueToSave);
       setHasChanges(false);
     } catch {
       // Error shown by hook
