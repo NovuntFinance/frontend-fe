@@ -25,6 +25,13 @@ import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
 
+/** Setting keys to hide from admin UI; daily distribution is done via Daily Declaration Returns page. */
+const HIDDEN_SETTING_KEYS = new Set<string>(['weekly_return_percentage']);
+
+function filterVisibleSettings(settings: BundleSetting[]): BundleSetting[] {
+  return settings.filter((s) => !HIDDEN_SETTING_KEYS.has(s.key));
+}
+
 interface BundleSettingInputProps {
   setting: BundleSetting;
   value: unknown;
@@ -367,7 +374,7 @@ export function SettingsManager({ category }: SettingsManagerProps) {
                 )}
               </CardHeader>
               <CardContent className="space-y-2">
-                {cat.settings.map((s) => (
+                {filterVisibleSettings(cat.settings).map((s) => (
                   <BundleSettingRow
                     key={s.key}
                     setting={s}
