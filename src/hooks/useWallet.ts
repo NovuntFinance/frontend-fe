@@ -447,6 +447,7 @@ export function useCreateWithdrawal() {
       walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
       network?: 'TRC20' | 'BEP20';
       twoFACode: string; // Required
+      turnstileToken?: string; // Cloudflare Turnstile; required when backend has TURNSTILE_SECRET_KEY set
     }) => walletApi.createWithdrawal(payload),
     onSuccess: (response) => {
       // Invalidate wallet queries
@@ -475,6 +476,16 @@ export function useCreateWithdrawal() {
       const code = errorData?.code;
       const message =
         errorData?.message || error?.message || 'Failed to create withdrawal';
+
+      // Turnstile verification failed (widget reset is done in WithdrawalModal)
+      if (code === 'TURNSTILE_FAILED') {
+        toast.error('Security check failed', {
+          description:
+            errorData?.message ||
+            'Please complete the verification and try again.',
+        });
+        return;
+      }
 
       // Handle specific error codes
       if (code === 'INSUFFICIENT_FUNDS') {

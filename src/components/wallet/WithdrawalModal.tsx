@@ -13,7 +13,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { slideUp } from '@/design-system/animations';
 import {
@@ -67,6 +67,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfettiBurst } from '@/components/ui/confetti';
 import { CheckCircle2 } from 'lucide-react';
 import { MoratoriumCountdown } from './MoratoriumCountdown';
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
 
 // Form schema - walletAddress is not needed if default exists (backend uses it automatically)
 // Note: 2FA code is handled separately via TwoFactorInput component
@@ -97,6 +98,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
   const [addressToSet, setAddressToSet] = useState('');
   const [setup2FACode, setSetup2FACode] = useState('');
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null); // Address detected from error response
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   // API hooks
   const queryClient = useQueryClient();
@@ -341,15 +343,18 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     try {
       // Build withdrawal payload
       // walletAddress is optional - if not provided, backend uses user's default withdrawal address
+      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
       const withdrawalPayload: {
         amount: number;
         walletAddress?: string;
         network: 'BEP20';
         twoFACode: string;
+        turnstileToken?: string;
       } = {
         amount,
         network: 'BEP20', // Only BEP20 is supported
         twoFACode,
+        ...(turnstileToken ? { turnstileToken } : {}),
       };
 
       // Only include walletAddress if user provided a custom address different from default
@@ -370,8 +375,20 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         onOpenChange(false);
       }, 3000);
     } catch (error: any) {
-      // Check if error requires setup redirect
       const errorData = error?.response?.data;
+
+      // Turnstile verification failed: reset widget (toast shown by mutation onError)
+      if (
+        error?.response?.status === 400 &&
+        errorData &&
+        typeof errorData === 'object' &&
+        errorData.code === 'TURNSTILE_FAILED'
+      ) {
+        turnstileRef.current?.reset();
+        return;
+      }
+
+      // Check if error requires setup redirect
       if (
         errorData?.code === 'WALLET_ADDRESS_REQUIRED' &&
         errorData?.requiresSetup
@@ -1020,6 +1037,9 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     </AlertDescription>
                   </Alert>
                 )}
+
+                {/* Cloudflare Turnstile */}
+                <TurnstileWidget widgetRef={turnstileRef} size="normal" />
 
                 {/* 2FA Input */}
                 <div>

@@ -172,8 +172,16 @@ export function TurnstileWidget({
     };
   }, [scriptLoaded, theme, size, onToken, onError]);
 
+  // No site key: widget not configured (e.g. missing NEXT_PUBLIC_TURNSTILE_SITE_KEY in production build)
   if (!SITE_KEY) {
-    return null;
+    return (
+      <div
+        className={`rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-200 ${className}`}
+        role="status"
+      >
+        Security verification is not configured for this site. Please contact support or try again later.
+      </div>
+    );
   }
 
   return (

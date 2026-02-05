@@ -181,6 +181,8 @@ export interface WithdrawalRequest {
   walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
   network?: 'TRC20' | 'BEP20'; // Optional, backend may use address's network
   twoFACode: string; // Required
+  /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
+  turnstileToken?: string;
 }
 
 export interface WithdrawalResponse {
