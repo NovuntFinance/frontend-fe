@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -43,6 +43,10 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { toast } from '@/components/ui/enhanced-toast';
 
 // Disable static generation
@@ -70,6 +74,7 @@ function SignupPageContent() {
     email: '',
     canResetPassword: false,
   });
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   const {
     register,
@@ -247,13 +252,19 @@ function SignupPageContent() {
         return;
       }
 
-      console.log('[Signup] Sending payload:', {
+      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+      const payloadWithTurnstile = {
         ...payload,
+        ...(turnstileToken ? { turnstileToken } : {}),
+      };
+
+      console.log('[Signup] Sending payload:', {
+        ...payloadWithTurnstile,
         password: '***',
         confirmPassword: '***',
       });
 
-      await signupMutation.mutateAsync(payload);
+      await signupMutation.mutateAsync(payloadWithTurnstile);
 
       // Store user info for welcome modal after verification
       if (typeof window !== 'undefined') {
@@ -272,6 +283,29 @@ function SignupPageContent() {
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error: unknown) {
       console.error('[Signup Error]', error);
+
+      // Turnstile verification failed: reset widget and show message
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number; data?: unknown };
+        responseData?: unknown;
+      };
+      const statusCode = err.statusCode ?? err.response?.status;
+      const responseData = err.response?.data ?? err.responseData;
+      if (
+        statusCode === 400 &&
+        responseData &&
+        typeof responseData === 'object' &&
+        (responseData as { code?: string }).code === 'TURNSTILE_FAILED'
+      ) {
+        turnstileRef.current?.reset();
+        const msg =
+          (responseData as { message?: string }).message ??
+          'Security check failed. Please complete the verification and try again.';
+        setError('root', { message: msg });
+        toast.error('Security check failed', { description: msg });
+        return;
+      }
 
       // Extract error response from backend
       // API client wraps errors in ApiError format, which includes field, action, canResetPassword
@@ -761,6 +795,9 @@ function SignupPageContent() {
                       </p>
                     )}
                   </div>
+
+                  {/* Cloudflare Turnstile - only on final step */}
+                  <TurnstileWidget widgetRef={turnstileRef} size="normal" />
                 </motion.div>
               )}
             </AnimatePresence>

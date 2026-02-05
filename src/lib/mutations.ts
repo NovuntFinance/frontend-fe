@@ -349,6 +349,9 @@ export function useSignup() {
         ...(credentials.referralCode?.trim()
           ? { referralCode: credentials.referralCode.trim() }
           : {}),
+        ...(credentials.turnstileToken
+          ? { turnstileToken: credentials.turnstileToken }
+          : {}),
         // Avatar/profilePicture is intentionally NOT included - should be null in backend
       };
 
