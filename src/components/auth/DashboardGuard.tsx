@@ -24,15 +24,8 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
   const hasRedirected = useRef(false);
 
   useEffect(() => {
-    console.log('[DashboardGuard] Auth check:', { 
-      hasHydrated, 
-      isAuthenticated, 
-      hasUser: !!user, 
-      hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 30) + '...' : 'null',
-      pathname 
-    });
-    
+    // Auth check (no sensitive data logged)
+
     // Wait for store to hydrate before checking auth
     if (!hasHydrated) {
       console.log('[DashboardGuard] Waiting for hydration...');
@@ -58,7 +51,7 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
   // Show loading while checking authentication
   if (!hasHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <Loading label="Loading..." />
       </div>
     );
@@ -67,7 +60,7 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
   // Show loading while redirecting (only after hydration)
   if (hasHydrated && !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <Loading label="Checking authentication..." />
       </div>
     );
@@ -76,4 +69,3 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
   // User is authenticated - render children
   return <>{children}</>;
 }
-

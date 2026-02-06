@@ -2,6 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 // Temporarily disable PWA to debug build issue - will re-enable after fixing
 // import withPWA from 'next-pwa';
 import type { NextConfig } from 'next';
+import { securityHeaders } from './src/lib/security-headers';
 
 // Temporarily disabled PWA config
 // const withPWAConfig = withPWA({
@@ -95,6 +96,16 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+
+  // Security: HTTPS-only, HSTS, CSP, clickjacking protection (see src/lib/security-headers.ts)
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ];
+  },
 };
 
 // Temporarily export config without Sentry/PWA wrappers to debug build

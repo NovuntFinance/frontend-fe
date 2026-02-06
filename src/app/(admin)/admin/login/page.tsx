@@ -116,9 +116,6 @@ function AdminLoginForm() {
         twoFACode: data.twoFACode.trim(),
       });
 
-      // Log response for debugging
-      console.log('[AdminLogin] Login response:', response);
-
       // Validate response structure - must have success, data, and token
       if (!response) {
         setError('No response received from server. Please try again.');
@@ -133,7 +130,8 @@ function AdminLoginForm() {
         // Response indicates failure or missing token
         const errorMsg =
           response.message || 'Login failed. Please check your credentials.';
-        console.error('[AdminLogin] Invalid response structure:', {
+        // Invalid response structure
+        console.error('[AdminLogin] Unexpected response shape:', {
           success: response.success,
           hasData: !!response.data,
           hasToken: !!response.data?.token,
@@ -184,22 +182,10 @@ function AdminLoginForm() {
 
       const verifyAndRedirect = () => {
         const token = adminAuthService.getToken();
-        const admin = adminAuthService.getCurrentAdmin();
-
-        console.log('[AdminLogin] Verifying auth before redirect:', {
-          hasToken: !!token,
-          hasAdmin: !!admin,
-          adminRole: admin?.role,
-          isSuperAdmin: admin?.role === 'superAdmin',
-          twoFAEnabled: admin?.twoFAEnabled,
-          tokenPreview: token ? token.substring(0, 30) + '...' : 'null',
-          retryCount,
-        });
 
         // If we have a token, proceed with redirect
         if (token) {
           const redirectTo = determineRedirect();
-          console.log('[AdminLogin] Redirecting to:', redirectTo);
 
           // Use multiple redirect methods for reliability
           try {
@@ -209,9 +195,6 @@ function AdminLoginForm() {
             // Method 2: Fallback after short delay if still on login page
             setTimeout(() => {
               if (window.location.pathname === '/admin/login') {
-                console.log(
-                  '[AdminLogin] Still on login page, trying router.push'
-                );
                 router.push(redirectTo);
               }
             }, 300);
@@ -219,14 +202,10 @@ function AdminLoginForm() {
             // Method 3: Final fallback using window.location
             setTimeout(() => {
               if (window.location.pathname === '/admin/login') {
-                console.log(
-                  '[AdminLogin] Still on login page, using window.location'
-                );
                 window.location.href = redirectTo;
               }
             }, 1000);
-          } catch (redirectError) {
-            console.error('[AdminLogin] Redirect error:', redirectError);
+          } catch {
             // Immediate fallback
             window.location.href = redirectTo;
           }
@@ -236,20 +215,10 @@ function AdminLoginForm() {
         // No token yet - retry with limit
         if (retryCount < maxRetries) {
           retryCount++;
-          console.log(
-            `[AdminLogin] Token not stored yet, retrying... (${retryCount}/${maxRetries})`
-          );
           setTimeout(verifyAndRedirect, 100);
         } else {
-          console.error(
-            '[AdminLogin] Max retries reached, attempting redirect anyway'
-          );
           // Even if token check fails, try redirecting (token might be in cookie)
           const redirectTo = determineRedirect();
-          console.log(
-            '[AdminLogin] Attempting fallback redirect to:',
-            redirectTo
-          );
           window.location.href = redirectTo;
         }
       };
@@ -257,68 +226,19 @@ function AdminLoginForm() {
       // Start verification immediately (token should be stored synchronously)
       verifyAndRedirect();
     } catch (err: any) {
-      // Error occurred - definitely not a success
-      console.error('Admin login error:', err);
-
-      // Extract detailed error message from backend response
+      // Extract error message from backend response (no sensitive data logged)
       let errorMessage = 'Login failed. Please check your credentials.';
 
-      // Log error details separately to avoid serialization issues
-      console.error('[AdminLogin] Error details:');
-      console.error('  - Error Type:', err?.constructor?.name || typeof err);
-      console.error('  - Error Message:', err?.message || 'No message');
-      console.error('  - Error Code:', err?.code || 'No code');
-
-      if (err.response) {
-        console.error('  - Response Status:', err.response.status);
-        console.error('  - Response Status Text:', err.response.statusText);
-
-        if (err.response.data) {
-          try {
-            console.error(
-              '  - Response Data:',
-              JSON.stringify(err.response.data, null, 2)
-            );
-            console.error('  - Response Data (Raw):', err.response.data);
-
-            const errorData = err.response.data;
-
-            // Extract error message from various possible locations
-            errorMessage =
-              errorData.message ||
-              errorData.error?.message ||
-              errorData.error?.code ||
-              (typeof errorData === 'string' ? errorData : null) ||
-              errorMessage;
-
-            // Log specific error fields
-            if (errorData.message) {
-              console.error('  - Backend Message:', errorData.message);
-            }
-            if (errorData.error) {
-              console.error('  - Backend Error Object:', errorData.error);
-              if (errorData.error.code) {
-                console.error('  - Error Code:', errorData.error.code);
-              }
-              if (errorData.error.message) {
-                console.error('  - Error Message:', errorData.error.message);
-              }
-            }
-          } catch {
-            console.error(
-              '  - Response Data (could not serialize):',
-              err.response.data
-            );
-            errorMessage = err.response.data?.message || errorMessage;
-          }
-        } else {
-          console.error('  - Response Data: No data');
-        }
-      } else {
-        console.error('  - No response object (network error?)');
-        if (err.message && !err.message.includes('status code')) {
-          errorMessage = err.message;
-        }
+      if (err?.response?.data) {
+        const errorData = err.response.data;
+        errorMessage =
+          errorData.message ||
+          errorData.error?.message ||
+          errorData.error?.code ||
+          (typeof errorData === 'string' ? errorData : null) ||
+          errorMessage;
+      } else if (err?.message && !err.message.includes('status code')) {
+        errorMessage = err.message;
       }
 
       // Ensure we never set "success" as error message

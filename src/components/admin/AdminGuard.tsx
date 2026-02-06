@@ -22,15 +22,7 @@ const AdminGuard = ({ children }: AdminGuardProps) => {
     const isAuthenticated = adminAuthService.isAuthenticated();
     const token = adminAuthService.getToken();
 
-    // Log auth check for debugging
-    console.log('[AdminGuard] Auth check:', {
-      pathname,
-      isAuthenticated,
-      hasAdmin: !!admin,
-      hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 30) + '...' : 'null',
-      adminEmail: admin?.email,
-    });
+    // Auth check (no sensitive data logged)
 
     if (!isAuthenticated || !admin) {
       // Not authenticated as admin - redirect to admin login

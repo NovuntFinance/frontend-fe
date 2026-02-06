@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+import apiClient from '@/lib/api';
 
 export interface PublicConfigItem {
   key: string;
@@ -56,51 +53,24 @@ class ConfigService {
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/config`, {
+      const response = await apiClient.get('/config', {
         params: {
           format,
           includeTooltips: includeTooltips ? 'true' : 'false',
         },
       });
 
-      // Cache the response
+      const data = response.data as
+        | PublicConfigResponse
+        | PublicConfigFlatResponse;
+
       this.cache.set(cacheKey, {
-        data: response.data,
+        data,
         timestamp: Date.now(),
       });
 
-      return response.data;
-    } catch (error: any) {
-      // Extract meaningful error information
-      const isNetworkError =
-        error?.code === 'ERR_NETWORK' ||
-        error?.message?.includes('Network Error') ||
-        !error?.response;
-
-      if (isNetworkError) {
-        // Suppress verbose network error logs (expected when backend is unavailable)
-        if (process.env.NODE_ENV === 'development') {
-          const logKey = 'config_network_error_logged';
-          if (
-            typeof window !== 'undefined' &&
-            !sessionStorage.getItem(logKey)
-          ) {
-            console.debug(
-              '[ConfigService] Network error (backend may be unavailable)'
-            );
-            sessionStorage.setItem(logKey, 'true');
-          }
-        }
-      } else {
-        // Log actual API errors (4xx, 5xx)
-        console.error('[ConfigService] Error fetching public configs:', {
-          message: error?.message || 'Unknown error',
-          code: error?.code,
-          status: error?.response?.status,
-          statusText: error?.response?.statusText,
-          data: error?.response?.data,
-        });
-      }
+      return data;
+    } catch (error) {
       throw error;
     }
   }
@@ -115,15 +85,13 @@ class ConfigService {
     includeTooltip: boolean = false
   ): Promise<PublicConfigItem> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/config/${key}`, {
+      const response = await apiClient.get(`/config/${key}`, {
         params: {
           includeTooltip: includeTooltip ? 'true' : 'false',
         },
       });
-
-      return response.data.data;
+      return response.data.data as PublicConfigItem;
     } catch (error) {
-      console.error(`Error fetching config '${key}':`, error);
       throw error;
     }
   }

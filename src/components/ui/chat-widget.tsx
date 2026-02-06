@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Mail } from 'lucide-react';
+import { sendChatbotMessage } from '@/services/chatbotApi';
 
 type Message = { id: string; from: 'user' | 'bot'; text: string };
+
+const FALLBACK_MESSAGE =
+  'Chat service unavailable — open Telegram @NovuntAssistantBot';
+const TELEGRAM_LINK = 'https://t.me/NovuntAssistantBot';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -18,53 +23,20 @@ export default function ChatWidget() {
   }, [open]);
 
   useEffect(() => {
-    // scroll to bottom on new messages
     if (bottomRef.current)
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
-  const TELEGRAM_LINK = 'https://t.me/NovuntAssistantBot';
-
   async function sendToApi(text: string) {
     setLoading(true);
     try {
-      // Use same API base URL logic as main API client
-      const apiBaseURL =
-        process.env.NEXT_PUBLIC_API_URL ||
-        (process.env.NODE_ENV === 'development'
-          ? 'http://localhost:5000/api/v1'
-          : 'https://novunt-backend-uw3z.onrender.com/api/v1');
-
-      const res = await fetch(`${apiBaseURL}/chatbot/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
-      });
-      if (!res.ok) throw new Error('Network');
-      const json = await res.json();
-      const reply = json?.data?.message ?? 'Sorry, I could not get a response.';
+      const reply = await sendChatbotMessage(text);
       const id = String(Date.now());
       setMessages((s) => [...s, { id, from: 'bot', text: reply }]);
       if (!open) setUnread((u) => u + 1);
-    } catch (error) {
-      // Detect CORS/network errors
-      if (
-        error instanceof TypeError &&
-        error.message.includes('Failed to fetch')
-      ) {
-        console.error('🚫 CORS or network error in chat widget:', error);
-      }
-      console.error('Novunt chat widget failed to reach API', error);
-      // fallback message suggesting Telegram
+    } catch {
       const id = String(Date.now());
-      setMessages((s) => [
-        ...s,
-        {
-          id,
-          from: 'bot',
-          text: 'Chat service unavailable — open Telegram @NovuntAssistantBot',
-        },
-      ]);
+      setMessages((s) => [...s, { id, from: 'bot', text: FALLBACK_MESSAGE }]);
       if (!open) setUnread((u) => u + 1);
     } finally {
       setLoading(false);

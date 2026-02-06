@@ -50,15 +50,6 @@ class AdminAuthService {
   async login(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
     const url = `${API_BASE_URL}/admin/login`;
 
-    // Log request details in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AdminAuthService] Login request:', {
-        url,
-        identifier: credentials.identifier,
-        passwordLength: credentials.password?.length,
-      });
-    }
-
     try {
       const response = await axios.post<any>(url, credentials, {
         withCredentials: true,
@@ -66,20 +57,6 @@ class AdminAuthService {
           'Content-Type': 'application/json',
         },
       });
-
-      // Log full response for debugging (always log in development)
-      console.log('[AdminAuthService] ===== RAW BACKEND RESPONSE =====');
-      console.log('[AdminAuthService] Status:', response.status);
-      console.log('[AdminAuthService] Full response.data:', response.data);
-      console.log(
-        '[AdminAuthService] Response data type:',
-        typeof response.data
-      );
-      console.log(
-        '[AdminAuthService] Response data keys:',
-        Object.keys(response.data || {})
-      );
-      console.log('[AdminAuthService] ===== END RAW RESPONSE =====');
 
       // Handle different possible response structures from backend
       let responseData = response.data;
@@ -146,15 +123,6 @@ class AdminAuthService {
                 ? (response.data as any).data.user.twoFAEnabled
                 : undefined;
 
-      // Log role extraction for debugging
-      console.log('[AdminAuthService] Role extraction:', {
-        backendRole,
-        responseDataRole: responseData?.role,
-        userRole: responseData?.user?.role,
-        responseDataKeys: Object.keys(responseData || {}),
-        userKeys: responseData?.user ? Object.keys(responseData.user) : [],
-      });
-
       // If we have a token, store it and return success
       if (token) {
         this.setToken(token);
@@ -193,13 +161,7 @@ class AdminAuthService {
               isActive: payload.isActive !== false,
               emailVerified: payload.emailVerified !== false,
             } as AdminUser;
-
-            console.log('[AdminAuthService] Extracted user from token:', user);
-          } catch (error) {
-            console.error(
-              '[AdminAuthService] Failed to extract user from token:',
-              error
-            );
+          } catch {
             // Create minimal user object with backend data if available
             user = {
               _id: '',
@@ -224,24 +186,9 @@ class AdminAuthService {
 
         // Store user data
         if (user) {
-          // Ensure role is set correctly (prioritize backendRole)
           if (backendRole) {
             user.role = backendRole as 'admin' | 'superAdmin';
-            console.log(
-              '[AdminAuthService] Role set from backend response:',
-              backendRole
-            );
           }
-
-          // Log stored user data for debugging
-          console.log('[AdminAuthService] Storing user data:', {
-            email: user.email,
-            username: user.username,
-            role: user.role,
-            isSuperAdmin: user.role === 'superAdmin',
-            twoFAEnabled: user.twoFAEnabled,
-            backendRole,
-          });
           this.setUser(user);
         }
 
@@ -271,68 +218,7 @@ class AdminAuthService {
         message: responseData.message || 'Login failed. No token received.',
       } as AdminLoginResponse;
     } catch (error: any) {
-      // Enhanced error logging - log each property separately to avoid serialization issues
-      console.error('[AdminAuthService] Login failed');
-      console.error('  - URL:', url);
-      console.error(
-        '  - Error Type:',
-        error?.constructor?.name || typeof error
-      );
-      console.error('  - Error Message:', error?.message || 'No message');
-      console.error('  - Error Code:', error?.code || 'No code');
-
-      if (error.response) {
-        console.error('  - Response Status:', error.response.status);
-        console.error('  - Response Status Text:', error.response.statusText);
-        console.error('  - Response Headers:', error.response.headers);
-
-        if (error.response.data) {
-          try {
-            console.error(
-              '  - Response Data:',
-              JSON.stringify(error.response.data, null, 2)
-            );
-            console.error('  - Response Data (Raw):', error.response.data);
-
-            // Log specific error fields if they exist
-            if (error.response.data.message) {
-              console.error(
-                '  - Backend Message:',
-                error.response.data.message
-              );
-            }
-            if (error.response.data.error) {
-              console.error(
-                '  - Backend Error Object:',
-                error.response.data.error
-              );
-              if (error.response.data.error.code) {
-                console.error(
-                  '  - Error Code:',
-                  error.response.data.error.code
-                );
-              }
-              if (error.response.data.error.message) {
-                console.error(
-                  '  - Error Message:',
-                  error.response.data.error.message
-                );
-              }
-            }
-          } catch {
-            console.error(
-              '  - Response Data (could not serialize):',
-              error.response.data
-            );
-          }
-        } else {
-          console.error('  - Response Data: No data');
-        }
-      } else {
-        console.error('  - No response object (network error?)');
-      }
-
-      // Re-throw the error so the component can handle it
+      // Re-throw; component handles display. No sensitive data logged.
       throw error;
     }
   }

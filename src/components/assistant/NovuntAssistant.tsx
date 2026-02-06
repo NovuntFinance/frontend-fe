@@ -21,6 +21,7 @@ import { useNovuntAssistant } from '@/hooks/useNovuntAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { sanitizeHTMLForDisplay } from '@/lib/sanitization';
 import { slideUp } from '@/design-system/animations';
 import { SupportEscalationForm } from './SupportEscalationForm';
 import type { HTMLMotionProps } from 'framer-motion';
@@ -75,7 +76,11 @@ export function NovuntAssistant({ isOpen, onClose }: NovuntAssistantProps) {
 
       return (
         <React.Fragment key={index}>
-          <span dangerouslySetInnerHTML={{ __html: formattedLine }} />
+          <span
+            dangerouslySetInnerHTML={{
+              __html: sanitizeHTMLForDisplay(formattedLine),
+            }}
+          />
           {index < content.split('\n').length - 1 && <br />}
         </React.Fragment>
       );

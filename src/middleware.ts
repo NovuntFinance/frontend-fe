@@ -61,14 +61,7 @@ export function middleware(request: NextRequest) {
   // Get token from cookie
   const token = request.cookies.get('authToken')?.value;
 
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Middleware] Request:', {
-      pathname,
-      hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 40) + '...' : 'none',
-    });
-  }
+  // Minimal logging (no token data)
 
   // Check if the route matches any category
   const isProtectedRoute = protectedRoutes.some((route) =>

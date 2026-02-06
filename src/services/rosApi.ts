@@ -368,18 +368,8 @@ export const rosApi = {
           withCredentials: true,
         };
 
-        // Add 2FA code as query parameter for GET requests
         if (twoFACode) {
           config.params = { twoFACode };
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              '[rosApi] getAllCalendars with 2FA code (query param):',
-              {
-                endpoint,
-                hasTwoFACode: true,
-              }
-            );
-          }
         }
 
         const response = await axios.get(endpoint, config);
@@ -442,40 +432,11 @@ export const rosApi = {
           withCredentials: true,
         };
 
-        // Use query parameter only (CORS blocks custom headers)
-        // Backend accepts twoFACode as query parameter (?twoFACode=123456) for GET requests
         if (twoFACode) {
-          // Use query parameter only - headers cause CORS issues
           config.params = { twoFACode };
-          // Always log when sending 2FA code for debugging
-          console.log(
-            '[rosApi] getCurrentCalendar with 2FA code (query param only):',
-            {
-              endpoint,
-              hasTwoFACode: true,
-              twoFACodeLength: twoFACode.length,
-              twoFACodePreview: twoFACode.substring(0, 2) + '****',
-              fullUrl: `${endpoint}?twoFACode=${twoFACode}`,
-            }
-          );
-        }
-
-        // Log the actual request URL that will be sent (for debugging)
-        if (twoFACode && process.env.NODE_ENV === 'development') {
-          const urlWithParams = new URL(endpoint);
-          urlWithParams.searchParams.set('twoFACode', twoFACode);
-          console.log('[rosApi] Actual request URL:', urlWithParams.toString());
         }
 
         const response = await axios.get(endpoint, config);
-
-        // Log success when 2FA code was used
-        if (twoFACode && process.env.NODE_ENV === 'development') {
-          console.log(
-            '[rosApi] ✅ Successfully fetched calendar with 2FA code'
-          );
-        }
-
         return response.data.data || null;
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -484,20 +445,6 @@ export const rosApi = {
             handleAuthError(error);
             // After redirect, throw error to stop execution
             throw error;
-          }
-
-          // Enhanced logging for errors
-          if (process.env.NODE_ENV === 'development') {
-            console.error('[rosApi] getCurrentCalendar error:');
-            console.error('  - Endpoint:', endpoint);
-            console.error('  - Status:', error.response?.status);
-            console.error('  - Message:', error.message);
-            if (error.response?.data) {
-              console.error(
-                '  - Response Data:',
-                JSON.stringify(error.response.data, null, 2)
-              );
-            }
           }
 
           // Check if it's a 2FA error
@@ -514,17 +461,6 @@ export const rosApi = {
           // If we sent a code but still got REQUIRED, it's a critical error
           if (is2FAError) {
             // If we sent a 2FA code but still got REQUIRED, log detailed error
-            if (errorCode === '2FA_CODE_REQUIRED' && twoFACode) {
-              console.error(
-                '[rosApi] ⚠️ CRITICAL: Sent 2FA code but backend still requires it!'
-              );
-              console.error('[rosApi] Endpoint:', endpoint);
-              console.error(
-                '[rosApi] Code sent:',
-                twoFACode.substring(0, 2) + '****'
-              );
-              console.error('[rosApi] Query param should be in URL');
-            }
             // Preserve the error structure so component can check it
             throw error;
           }
@@ -581,107 +517,10 @@ export const rosApi = {
 
     for (const endpoint of endpoints) {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[rosApi] Attempting to create calendar at:', endpoint);
-          console.log('[rosApi] Payload:', data);
-        }
-
         const headers = getAdminAuthHeader();
-        // NOTE: We're NOT adding X-2FA-Code header because CORS doesn't allow it
-        // The backend accepts twoFACode in the request body, which bypasses CORS restrictions
-        const requestData = twoFACode ? { ...data, twoFACode } : data;
-
-        if (twoFACode && process.env.NODE_ENV === 'development') {
-          console.log(
-            '[rosApi] Adding 2FA code to request body (header skipped due to CORS):',
-            {
-              endpoint,
-              hasBody: true,
-              twoFACodeValue: twoFACode,
-            }
-          );
-        }
-
-        // Verify the data is correct before sending
-        if (twoFACode && process.env.NODE_ENV === 'development') {
-          console.log('[rosApi] Verifying request data includes 2FA code:', {
-            originalData: data,
-            requestData,
-            hasTwoFACode: !!(requestData as any).twoFACode,
-            twoFACodeValue: (requestData as any).twoFACode,
-          });
-        }
-
-        if (process.env.NODE_ENV === 'development' && twoFACode) {
-          console.log('[rosApi] Request with 2FA code:', {
-            endpoint,
-            headers: {
-              ...headers,
-              Authorization: headers.Authorization ? 'Bearer ***' : undefined,
-            },
-            payload: requestData,
-          });
-        }
-
-        // Ensure 2FA code is in the body if provided
-        // We use body instead of header to avoid CORS preflight issues
-        const finalRequestData: any = { ...requestData };
-        if (twoFACode && !finalRequestData.twoFACode) {
-          finalRequestData.twoFACode = twoFACode;
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[rosApi] Added 2FA code to request body:', {
-              twoFACode,
-              requestDataKeys: Object.keys(finalRequestData),
-            });
-          }
-        }
-
-        console.log('[rosApi] About to make POST request to:', endpoint);
-        console.log('[rosApi] Request config:', {
-          hasAuthHeader: !!headers.Authorization,
-          has2FABody: !!finalRequestData.twoFACode,
-          timeout: 30000,
-          note: 'Using body for 2FA code (CORS-safe)',
-        });
-        console.log(
-          '[rosApi] Full headers object:',
-          JSON.stringify(headers, null, 2)
-        );
-        console.log(
-          '[rosApi] Full request body:',
-          JSON.stringify(finalRequestData, null, 2)
-        );
-
-        // Log final request data before sending
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[rosApi] Final request being sent:', {
-            endpoint,
-            headers: Object.keys(headers),
-            bodyKeys: Object.keys(finalRequestData),
-            hasTwoFACode: !!finalRequestData.twoFACode,
-            twoFACodeInBody: finalRequestData.twoFACode || 'NOT INCLUDED',
-          });
-        }
-
-        // Final verification - ensure 2FA code is definitely in the body
-        if (twoFACode) {
-          if (!finalRequestData.twoFACode) {
-            console.error(
-              '[rosApi] ⚠️ CRITICAL: 2FA code was provided but not in finalRequestData!'
-            );
-            console.error('[rosApi] twoFACode parameter:', twoFACode);
-            console.error('[rosApi] finalRequestData:', finalRequestData);
-            // Force add it
-            finalRequestData.twoFACode = twoFACode;
-          }
-          // Always log the final body before sending
-          console.log('[rosApi] ✅ Final request body includes 2FA code:', {
-            hasTwoFACode: !!finalRequestData.twoFACode,
-            twoFACodeValue: finalRequestData.twoFACode,
-            allKeys: Object.keys(finalRequestData),
-            fullBody: JSON.stringify(finalRequestData, null, 2),
-          });
-        }
+        const finalRequestData: any = twoFACode
+          ? { ...data, twoFACode }
+          : { ...data };
 
         let response;
         try {
@@ -701,32 +540,8 @@ export const rosApi = {
             throw requestError;
           }
 
-          // Immediately log the error before any processing
-          console.error('[rosApi] 🚨 IMMEDIATE ERROR in axios.post');
-          console.error('[rosApi] Error details:', {
-            isAxiosError: axios.isAxiosError(requestError),
-            hasResponse: !!requestError?.response,
-            status: requestError?.response?.status,
-            statusText: requestError?.response?.statusText,
-            data: requestError?.response?.data,
-            message: requestError?.message,
-            code: requestError?.code,
-          });
           // Re-throw to be caught by outer catch
           throw requestError;
-        }
-
-        console.log('[rosApi] ✅ Request completed successfully!');
-        console.log('[rosApi] Response received:', {
-          status: response.status,
-          statusText: response.statusText,
-          hasData: !!response.data,
-        });
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[rosApi] Calendar created successfully at:', endpoint);
-          console.log('[rosApi] Response status:', response.status);
-          console.log('[rosApi] Response data:', response.data);
         }
 
         // Handle both response formats:
@@ -737,114 +552,7 @@ export const rosApi = {
         }
         return response.data;
       } catch (error) {
-        console.error('[rosApi] ⚠️ ERROR CAUGHT in createCalendar catch block');
-        console.error('[rosApi] Error type:', typeof error);
-        console.error('[rosApi] Error constructor:', error?.constructor?.name);
-
         lastError = error;
-
-        // Enhanced error logging - ALWAYS log errors
-        if (process.env.NODE_ENV === 'development' || true) {
-          if (axios.isAxiosError(error)) {
-            // Extract error details in a way that can be logged
-            const errorDetails: any = {
-              endpoint,
-              message: error.message,
-              code: error.code,
-              hasResponse: !!error.response,
-              requestUrl: error.config?.url,
-              requestMethod: error.config?.method,
-            };
-
-            if (error.response) {
-              errorDetails.status = error.response.status;
-              errorDetails.statusText = error.response.statusText;
-
-              // Try to extract response data safely
-              try {
-                if (error.response.data) {
-                  if (typeof error.response.data === 'string') {
-                    errorDetails.responseData = error.response.data;
-                  } else {
-                    errorDetails.responseData = JSON.stringify(
-                      error.response.data,
-                      null,
-                      2
-                    );
-                    // Also log the raw data for inspection
-                    errorDetails.responseDataRaw = error.response.data;
-                  }
-                }
-              } catch {
-                errorDetails.responseDataError =
-                  'Could not serialize response data';
-              }
-            }
-
-            // Log each property separately to avoid serialization issues
-            console.error('[rosApi] Error creating calendar:');
-            console.error('  - Endpoint:', errorDetails.endpoint);
-            console.error('  - Message:', errorDetails.message);
-            console.error('  - Code:', errorDetails.code);
-            console.error('  - Has Response:', errorDetails.hasResponse);
-            if (errorDetails.status) {
-              console.error('  - Status:', errorDetails.status);
-              console.error('  - Status Text:', errorDetails.statusText);
-            }
-
-            // ALWAYS try to log response data - this is critical!
-            if (error.response?.data) {
-              console.error('  - 🚨 BACKEND RESPONSE DATA (direct access):');
-              try {
-                const respData = error.response.data;
-                console.error('    Type:', typeof respData);
-                console.error('    Raw:', respData);
-                if (typeof respData === 'string') {
-                  console.error('    String content:', respData);
-                } else if (typeof respData === 'object') {
-                  console.error('    JSON:', JSON.stringify(respData, null, 2));
-                  console.error('    Keys:', Object.keys(respData));
-                  if (respData.message)
-                    console.error('    Message:', respData.message);
-                  if (respData.error) {
-                    console.error('    Error object:', respData.error);
-                    if (respData.error.code)
-                      console.error('    Error Code:', respData.error.code);
-                    if (respData.error.message)
-                      console.error(
-                        '    Error Message:',
-                        respData.error.message
-                      );
-                  }
-                }
-              } catch {
-                console.error('    Could not parse response data');
-              }
-            }
-
-            if (errorDetails.responseData) {
-              console.error(
-                '  - Response Data (stringified):',
-                errorDetails.responseData
-              );
-            }
-            if (errorDetails.responseDataRaw) {
-              console.error(
-                '  - Response Data (Raw):',
-                errorDetails.responseDataRaw
-              );
-            }
-
-            // Also log the actual headers sent
-            console.error('  - Request Headers Sent:', error.config?.headers);
-            console.error('  - Request Body Sent:', error.config?.data);
-          } else {
-            console.error(
-              '[rosApi] Error creating calendar (non-axios):',
-              String(error)
-            );
-          }
-        }
 
         if (axios.isAxiosError(error)) {
           // Handle 401 authentication errors first
@@ -854,64 +562,14 @@ export const rosApi = {
             break;
           }
 
-          // Network error (no response) - don't try other endpoints
+          // Network error - don't try other endpoints
           if (!error.response) {
-            console.error('[rosApi] Network error (no response):');
-            console.error('  - Message:', error.message);
-            console.error('  - Code:', error.code);
-            console.error('  - Endpoint:', endpoint);
-            console.error('  - Request URL:', error.config?.url);
-            // Don't try other endpoints on network errors
             break;
-          }
-
-          // Log response errors for debugging
-          if (process.env.NODE_ENV === 'development') {
-            const responseDetails: any = {
-              status: error.response.status,
-              statusText: error.response.statusText,
-            };
-
-            try {
-              if (error.response.data) {
-                if (typeof error.response.data === 'string') {
-                  responseDetails.data = error.response.data;
-                } else {
-                  responseDetails.data = JSON.stringify(
-                    error.response.data,
-                    null,
-                    2
-                  );
-                  responseDetails.dataRaw = error.response.data;
-                }
-              } else {
-                responseDetails.data = 'No data';
-              }
-            } catch {
-              responseDetails.dataError = 'Could not serialize response data';
-            }
-
-            // Log each property separately to avoid serialization issues
-            console.error('[rosApi] Response error:');
-            console.error('  - Status:', responseDetails.status);
-            console.error('  - Status Text:', responseDetails.statusText);
-            if (responseDetails.data) {
-              console.error('  - Data:', responseDetails.data);
-            }
-            if (responseDetails.dataRaw) {
-              console.error('  - Data (Raw):', responseDetails.dataRaw);
-            }
           }
 
           // If it's not a 404, don't try the other endpoint
           if (error.response?.status !== 404) {
             break;
-          }
-
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              `[rosApi] Endpoint ${endpoint} returned 404, trying next endpoint...`
-            );
           }
         }
       }

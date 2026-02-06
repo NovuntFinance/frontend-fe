@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import type { Article } from './ArticleCard';
+import { sanitizeHTMLForDisplay } from '@/lib/sanitization';
 
 interface ArticleDetailModalProps {
   article: Article | null;
@@ -91,7 +92,9 @@ export function ArticleDetailModal({
           {article.content ? (
             <div
               className="text-foreground [&_code]:bg-muted space-y-4 text-sm leading-relaxed sm:text-base [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_h1]:mt-6 [&_h1]:mb-4 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_ol]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-2 [&_p]:mb-3 [&_strong]:font-semibold [&_ul]:ml-6 [&_ul]:list-disc [&_ul]:space-y-2"
-              dangerouslySetInnerHTML={{ __html: article.content }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHTMLForDisplay(article.content),
+              }}
             />
           ) : (
             <div className="text-muted-foreground space-y-4 text-sm leading-relaxed sm:text-base">

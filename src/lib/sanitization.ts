@@ -3,6 +3,49 @@
  * Security-focused input validation and sanitization
  */
 
+/** Allowed tags when rendering rich content (e.g. knowledge base, assistant). */
+const ALLOWED_DISPLAY_TAGS = [
+  'p',
+  'br',
+  'strong',
+  'em',
+  'b',
+  'i',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'a',
+  'span',
+  'code',
+  'pre',
+  'blockquote',
+  'hr',
+];
+
+/**
+ * Sanitize HTML for safe display (e.g. dangerouslySetInnerHTML).
+ * Uses DOMPurify in browser; falls back to regex-based strip on server.
+ */
+export function sanitizeHTMLForDisplay(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  if (typeof window === 'undefined') return sanitizeHTML(html);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- client-only; DOMPurify needs DOM
+    const DOMPurify = require('dompurify');
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ALLOWED_DISPLAY_TAGS,
+      ALLOWED_ATTR: ['href', 'class', 'target', 'rel'],
+    });
+  } catch {
+    return sanitizeHTML(html);
+  }
+}
+
 /**
  * Sanitize HTML to prevent XSS attacks
  * Removes potentially dangerous tags and attributes
