@@ -38,6 +38,7 @@ import { registrationBonusApi } from '@/services/registrationBonusApi';
 import {
   RegistrationBonusStatusResponse,
   BonusPayoutHistoryResponse,
+  RegistrationBonusStatus,
 } from '@/types/registrationBonus';
 import {
   AdminDashboardData,
@@ -1656,27 +1657,24 @@ export function useRegistrationBonusStatus() {
           return {
             success: false,
             data: {
-              status: 'pending' as const,
+              status: RegistrationBonusStatus.PENDING,
               bonusPercentage: 10,
               bonusAmount: null,
               daysRemaining: 7,
               expiresAt,
               progressPercentage: 0,
               requirements: {
-                profileCompletion: {
-                  completed: false,
-                  percentage: 0,
+                twoFASetup: {
+                  isCompleted: false,
+                  completedAt: null,
                 },
-                socialMediaVerification: {
-                  completed: false,
-                  verifiedCount: 0,
-                  totalRequired: 5,
-                  platforms: [],
+                withdrawalAddressWhitelist: {
+                  isCompleted: false,
+                  address: null,
+                  network: null,
                 },
-                firstStake: {
-                  completed: false,
-                  stakeId: null,
-                },
+                socialMediaVerifications: [],
+                firstStakeCompleted: false,
               },
               allRequirementsMet: false,
             },
@@ -1694,14 +1692,14 @@ export function useRegistrationBonusStatus() {
 
       // Smart polling based on status
       switch (status) {
-        case 'pending':
-        case 'requirements_met':
+        case RegistrationBonusStatus.PENDING:
+        case RegistrationBonusStatus.REQUIREMENTS_MET:
           return 30000; // 30 seconds - active user
-        case 'bonus_active':
+        case RegistrationBonusStatus.BONUS_ACTIVE:
           return 300000; // 5 minutes - less frequent
-        case 'expired':
-        case 'completed':
-        case 'cancelled':
+        case RegistrationBonusStatus.EXPIRED:
+        case RegistrationBonusStatus.COMPLETED:
+        case RegistrationBonusStatus.CANCELLED:
           return false; // No polling needed
         default:
           return 60000; // 1 minute default

@@ -7,15 +7,22 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 // Framer Motion removed - no longer needed for navigation
 import {
-  TrendingDown,
-  Users,
+  Shield,
+  AlertTriangle,
+  ArrowUpRight,
+  Lock,
+  CheckCircle2,
+  Clock,
+  Wallet,
   Bell,
   LogOut,
   User,
   Sun,
   Moon,
-  Shield,
+  TrendingDown,
+  Users,
 } from 'lucide-react';
+import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
@@ -89,6 +96,12 @@ export default function DashboardLayout({
   const { logout } = useAuth();
   const { user } = useUser();
   const { data: overview } = useDashboardOverview();
+  const { data: bonusResponse } = useRegistrationBonusStatus();
+
+  const bonusData = bonusResponse?.data;
+  const progress = bonusData?.progressPercentage || 0;
+  const isLocked = progress < 60;
+  const isOnboardingPage = pathname === '/dashboard/onboarding';
 
   // Get weekly profit percentage
   const overviewData = overview as
@@ -385,8 +398,138 @@ export default function DashboardLayout({
 
         {/* Breadcrumbs */}
         <div className="border-b border-white/10 bg-white/5 px-4 py-3 dark:border-white/5 dark:bg-white/2">
-          <Breadcrumbs />
+          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <Breadcrumbs />
+
+            {/* Wallet Quick Access with Lock Indicator */}
+            {!isOnboardingPage && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="group hover:bg-novunt-gold-500/10 relative rounded-xl border-white/10 bg-white/5 pr-3 transition-all"
+                onClick={() => router.push('/dashboard/wallets')}
+              >
+                <div className="bg-novunt-gold-100 group-hover:bg-novunt-gold-200 dark:bg-novunt-gold-900/30 h-6 w-6 rounded-lg p-1 transition-colors">
+                  <Wallet className="text-novunt-gold-600 dark:text-novunt-gold-500 h-full w-full" />
+                </div>
+                <span className="ml-2 text-xs font-bold tracking-wider uppercase">
+                  Wallet
+                </span>
+                {isLocked && (
+                  <Lock className="bg-background absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full border border-amber-500/50 text-amber-500 shadow-lg" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Compliance & Registration Bonus Banners */}
+        {!isOnboardingPage && (
+          <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
+            {/* Mandatory 2FA Banner (Progress < 40%) */}
+            {progress < 40 && (
+              <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4 backdrop-blur-xl transition-all hover:bg-red-500/15 sm:flex-row">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-500">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-red-500">
+                      CRITICAL SECURITY REQUIRED
+                    </h4>
+                    <p className="text-xs text-red-400/80">
+                      Setup 2FA to access platform features and protect your
+                      account.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => router.push('/dashboard/onboarding')}
+                  className="w-full rounded-xl bg-red-500 font-bold hover:bg-red-600 sm:w-auto"
+                >
+                  Setup Now
+                  <ArrowUpRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Wallet Setup Banner (40% <= Progress < 60%) */}
+            {progress >= 40 && progress < 60 && (
+              <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-500">
+                      WALLET SETUP REQUIRED
+                    </h4>
+                    <p className="text-xs text-amber-400/80">
+                      Whitelist your BEP20 withdrawal address to unlock
+                      transfers & withdrawals.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => router.push('/dashboard/onboarding')}
+                  className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
+                >
+                  Whitelist
+                  <ArrowUpRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Registration Bonus Progress Banner (Unlocked but active) */}
+            {progress >= 60 && progress < 100 && bonusData && (
+              <div className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 backdrop-blur-xl transition-all hover:bg-emerald-500/10">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold tracking-widest text-emerald-500/80 uppercase">
+                        Registration Bonus: {progress}%
+                      </span>
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-emerald-500/10">
+                        <div
+                          className="h-full bg-emerald-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      Complete social follows and first stake to activate your
+                      10% bonus.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="hidden text-right sm:block">
+                    <span className="block text-[10px] leading-tight text-slate-500 uppercase">
+                      Time Left
+                    </span>
+                    <span className="font-mono text-xs font-bold text-emerald-400">
+                      {bonusData.daysRemaining}d left
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => router.push('/dashboard/onboarding')}
+                    className="h-8 rounded-lg px-2 text-[10px] text-emerald-400 hover:bg-emerald-500/20"
+                  >
+                    Complete
+                    <ArrowUpRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Page content - Mobile first padding */}
         <main

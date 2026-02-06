@@ -8,12 +8,12 @@
 // ============================================
 
 export enum RegistrationBonusStatus {
-  PENDING = 'pending',
-  REQUIREMENTS_MET = 'requirements_met',
-  BONUS_ACTIVE = 'bonus_active',
-  EXPIRED = 'expired',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  PENDING = 'PENDING',
+  REQUIREMENTS_MET = 'REQUIREMENTS_MET',
+  BONUS_ACTIVE = 'BONUS_ACTIVE',
+  EXPIRED = 'EXPIRED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum SocialMediaPlatform {
@@ -24,10 +24,10 @@ export enum SocialMediaPlatform {
   TELEGRAM = 'telegram',
 }
 
-export type ProfileFieldName = 
-  | 'dateOfBirth' 
-  | 'gender' 
-  | 'profilePhoto' 
+export type ProfileFieldName =
+  | 'dateOfBirth'
+  | 'gender'
+  | 'profilePhoto'
   | 'address';
 
 // ============================================
@@ -43,95 +43,38 @@ export interface RegistrationBonusStatusResponse {
 export interface RegistrationBonusData {
   // Status Information
   status: RegistrationBonusStatus;
-  bonusPercentage: number;        // e.g., 10
-  
-  // Bonus Credit Tracking (NEW - for gradual payout mechanism)
-  bonus?: {
-    bonusAmount: number;          // Total bonus earned (e.g., 1000 for 10% of $10k stake)
-    bonusPaidOut: number;         // Amount already paid via weekly ROS (e.g., 350)
-    remainingBonus: number;       // Amount still to be paid (e.g., 650)
-    payoutPercentage: number;     // Percentage paid out (e.g., 35)
-    activatedAt: string;          // ISO 8601 date when bonus was activated
-    completedAt?: string | null;  // ISO 8601 date when fully paid out
-    weeklyPayoutCount?: number;   // Number of payouts made
-    lastPayoutDate?: string | null;  // Last payout date
-    nextPayoutDate?: string | null;  // Next expected payout date
-  } | null;                        // null if not yet activated
-  
-  // DEPRECATED: bonusAmount at root level (kept for backward compatibility)
-  bonusAmount?: number | null;    // Use bonus.bonusAmount instead
-  
-  // Timeline (new API structure)
-  daysRemaining: number;          // Days remaining until expiration
-  expiresAt: string;              // ISO 8601 date string
-  
-  // Progress Tracking (calculated from requirements)
-  progressPercentage?: number;    // 0, 25, 50, 75, 100 (calculated: 25% per requirement met)
-  
-  // First Stake Information (NEW)
-  firstStake?: {
-    stakeId: string;              // ID of the first stake
-    amount: number;               // Amount staked (e.g., 10000)
-    createdAt: string;            // ISO 8601 date
-  } | null;
-  
-  // Requirements Breakdown (new API structure)
+  bonusPercentage: number; // e.g., 10
+
+  // Progress Tracking
+  progressPercentage: number; // 0, 20, 40, 60, 80, 100
+  daysRemaining: number; // 7-day countdown
+
+  // Requirements Breakdown (V2 - Matching Backend Structure)
   requirements: {
-    // Profile Completion Requirements
-    profileCompletion: {
-      completed: boolean;
-      percentage: number;          // 0-100
+    twoFASetup: {
+      isCompleted: boolean;
+      completedAt: string | null;
     };
-    
-    // Social Media Verification Requirements
-    socialMediaVerification: {
-      completed: boolean;
-      verifiedCount: number;       // Number of verified platforms
-      totalRequired: number;       // Total platforms required (5)
-      platforms?: string[];        // Array of verified platform names
+    withdrawalAddressWhitelist: {
+      isCompleted: boolean;
+      address: string | null;
+      network: 'BEP20' | null;
     };
-    
-    // First Stake Requirement
-    firstStake: {
-      completed: boolean;
-      stakeId: string | null;      // First stake ID
-    };
+    socialMediaVerifications: Array<{
+      platform: SocialMediaPlatform | string;
+      isVerified: boolean;
+    }>;
+    firstStakeCompleted: boolean;
   };
-  
-  // Overall status
+
+  // Metadata
   allRequirementsMet: boolean;
-  
-  // Legacy fields (for backward compatibility with existing components)
-  deadline?: string;              // ISO 8601 date string (same as expiresAt)
-  timeRemaining?: number;         // Milliseconds remaining (calculated from daysRemaining)
-  currentStep?: number;           // 1, 2, 3, 4 (calculated from progress)
-  nextStepDescription?: string;   // Human-readable CTA (calculated)
-  
-  // Legacy nested structure (for backward compatibility)
-  socialMedia?: {
-    completed: number;
-    total: number;
-    minimumRequired: number;
-    details: SocialMediaVerification[];
-  };
-  
-  profile?: {
-    completionPercentage: number;
-    details: ProfileCompletionField[];
-  };
-  
-  // DEPRECATED: Use requirements.firstStake and firstStake at root instead
-  firstStakeOld?: {
-    completed: boolean;
-    amount: number | null;
-    stakeId: string | null;
-  };
-  
-  // Fraud Analysis (may not be in new API, kept for compatibility)
-  fraudAnalysis?: {
-    suspicionScore: number;
-    isApproved: boolean;
-  };
+
+  // Legacy fields (for backward compatibility during migration)
+  deadline?: string;
+  timeRemaining?: number;
+  currentStep?: number;
+  nextStepDescription?: string;
 }
 
 // ============================================
@@ -145,32 +88,32 @@ export interface BonusPayoutHistoryResponse {
 }
 
 export interface BonusPayoutHistoryData {
-  bonusAmount: number;            // Total bonus earned
-  totalPaidOut: number;           // Total paid so far
-  remainingBonus: number;         // Remaining to be paid
-  payouts: BonusPayout[];         // Individual payout records
+  bonusAmount: number; // Total bonus earned
+  totalPaidOut: number; // Total paid so far
+  remainingBonus: number; // Remaining to be paid
+  payouts: BonusPayout[]; // Individual payout records
 }
 
 export interface BonusPayout {
-  week: number;                   // Week number since activation
-  date: string;                   // ISO 8601 date of payout
-  roiPercentage: number;          // Declared ROI % for that week
-  amount: number;                 // Bonus amount paid that week
-  remainingAfter: number;         // Remaining bonus after this payout
+  week: number; // Week number since activation
+  date: string; // ISO 8601 date of payout
+  roiPercentage: number; // Declared ROI % for that week
+  amount: number; // Bonus amount paid that week
+  remainingAfter: number; // Remaining bonus after this payout
 }
 
 export interface SocialMediaVerification {
   platform: SocialMediaPlatform;
   isVerified: boolean;
-  verifiedAt: string | null;      // ISO 8601 date or null
+  verifiedAt: string | null; // ISO 8601 date or null
   accountHandle: string | null;
 }
 
 export interface ProfileCompletionField {
   fieldName: ProfileFieldName;
   isCompleted: boolean;
-  completedAt: string | null;      // ISO 8601 date or null
-  value?: string;                  // Optional field value
+  completedAt: string | null; // ISO 8601 date or null
+  value?: string; // Optional field value
 }
 
 export interface ProcessStakeRequest {
@@ -317,4 +260,3 @@ export interface ErrorStateProps {
 // Platform configuration is now in @/config/socialMediaIcons.ts
 // This allows runtime imports of React components
 // Import PLATFORM_CONFIG from '@/config/socialMediaIcons' instead
-

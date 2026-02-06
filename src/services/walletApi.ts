@@ -162,18 +162,19 @@ export interface DefaultWithdrawalAddress {
     address: string | null;
     hasDefaultAddress: boolean;
     canChange: boolean;
+    network: 'BEP20'; // Strictly BEP20 for compliance
     moratorium: MoratoriumStatus;
     note?: string;
     isFirstTime?: boolean;
-    // Legacy field for backward compatibility
     immutable?: boolean;
+    // Backend may return code: DUPLICATE_WITHDRAWAL_ADDRESS if address already exists
   };
 }
 
 export interface SetDefaultAddressRequest {
   address: string;
-  network?: 'TRC20' | 'BEP20'; // Optional, backend may auto-detect
-  twoFACode?: string; // Required for setting address
+  network: 'BEP20'; // MANDATORY: Must be BEP20 for compliance
+  twoFACode?: string; // Required for setting/updating address
 }
 
 export interface WithdrawalRequest {

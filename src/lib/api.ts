@@ -523,6 +523,20 @@ apiClient.interceptors.response.use(
       },
     };
 
+    // Handle 403 Forbidden - Security Compliance Required
+    if (error.response?.status === 403) {
+      const errorData = error.response.data as any;
+      if (errorData?.code === 'SECURITY_COMPLIANCE_REQUIRED') {
+        if (typeof window !== 'undefined') {
+          console.warn(
+            '[API] Security compliance required, redirecting to onboarding...'
+          );
+          window.location.href = '/dashboard/onboarding';
+        }
+        return Promise.reject(error);
+      }
+    }
+
     return Promise.reject(errorResponse);
   }
 );

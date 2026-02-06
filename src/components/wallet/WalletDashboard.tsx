@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { WithdrawalModal } from './WithdrawalModal';
+import { WithdrawalAddressManager } from './WithdrawalAddressManager';
 import { TransferModal } from './modals/TransferModal';
 import { WalletBreakdown } from './WalletBreakdown';
 import { StatCard } from './StatCard';
@@ -344,6 +345,11 @@ export function WalletDashboard() {
           icon={<ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6" />}
           colorTheme="blue"
         />
+      </motion.div>
+
+      {/* Security Whitelist Section - Hardened V2 */}
+      <motion.div {...slideUp(0.3)}>
+        <WithdrawalAddressManager />
       </motion.div>
 
       {/* Modals */}

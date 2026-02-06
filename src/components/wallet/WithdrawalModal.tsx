@@ -54,6 +54,7 @@ import {
   useWallet,
 } from '@/hooks/useWallet';
 import { useWalletBalance } from '@/lib/queries';
+import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   formatCurrency,
@@ -67,7 +68,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfettiBurst } from '@/components/ui/confetti';
 import { CheckCircle2 } from 'lucide-react';
 import { MoratoriumCountdown } from './MoratoriumCountdown';
-import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 
 // Form schema - walletAddress is not needed if default exists (backend uses it automatically)
 // Note: 2FA code is handled separately via TwoFactorInput component
@@ -121,8 +125,13 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     walletInfo?.defaultWithdrawalAddress ||
     detectedAddress;
   const canChangeAddress = defaultAddress?.canChange ?? true;
+  const { data: bonusResponse } = useRegistrationBonusStatus();
+  const bonusData = bonusResponse?.data;
+  const progress = bonusData?.progressPercentage || 0;
+  const isLocked = progress < 60;
+
+  // Check if withdrawals are blocked due to moratorium (72 hours after address change)
   const moratorium = defaultAddress?.moratorium;
-  // Check if withdrawals are blocked due to moratorium (48 hours after address change)
   const withdrawalsBlockedByMoratorium = moratorium?.active ?? false;
   const schema = createWithdrawalSchema(hasDefaultAddress);
 
@@ -487,7 +496,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     </p>
                     <p className="text-sm">
                       This address will be used for all withdrawals. You can
-                      change it after a 48-hour waiting period.
+                      change it after a 72-hour waiting period.
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -938,7 +947,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                                     Withdrawals Temporarily Blocked
                                   </p>
                                   <p className="text-muted-foreground mt-1 text-sm">
-                                    Withdrawals are blocked for 48 hours after
+                                    Withdrawals are blocked for 72 hours after
                                     changing your withdrawal address. This
                                     security measure protects you from
                                     unauthorized address changes. You can
@@ -989,7 +998,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         </p>
                         <p className="mb-3 text-sm">
                           You must set your withdrawal address before making a
-                          withdrawal. Addresses can be changed after a 48-hour
+                          withdrawal. Addresses can be changed after a 72-hour
                           waiting period.
                         </p>
                         {moratorium?.active && !canChangeAddress && (
@@ -1094,6 +1103,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     !hasDefaultAddress ||
                     !actualAddress ||
                     withdrawalsBlockedByMoratorium ||
+                    isLocked ||
                     !amount ||
                     amount < minWithdrawal ||
                     twoFactorCode.length !== 6
@@ -1105,6 +1115,11 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processing...
+                    </>
+                  ) : isLocked ? (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Compliance Locked ({progress}%)
                     </>
                   ) : (
                     <>

@@ -280,6 +280,7 @@ export function useDefaultWithdrawalAddress() {
               moratoriumDurationHours: 48,
             },
             immutable: false,
+            network: 'BEP20' as const,
           };
         }
 
@@ -312,6 +313,7 @@ export function useDefaultWithdrawalAddress() {
               moratoriumDurationHours: 48,
             },
             immutable: false,
+            network: 'BEP20' as const,
           };
         }
         // For other errors, return default instead of throwing
@@ -350,7 +352,7 @@ export function useSetDefaultWithdrawalAddress() {
   return useMutation({
     mutationFn: (payload: {
       address: string;
-      network?: 'TRC20' | 'BEP20';
+      network: 'BEP20';
       twoFACode?: string;
     }) => walletApi.setDefaultWithdrawalAddress(payload),
     onSuccess: async (response) => {

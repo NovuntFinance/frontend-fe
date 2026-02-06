@@ -1,279 +1,339 @@
 /**
- * Onboarding Flow for New Users
- * Guides users through initial setup and key features
+ * Onboarding Flow for New Users (V2)
+ * Tiered Compliance Model: 5-Step Process
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
+import { registrationBonusApi } from '@/services/registrationBonusApi';
+import {
+  RegistrationBonusData,
+  RegistrationBonusStatus,
+  SocialMediaPlatform,
+} from '@/types/registrationBonus';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   CheckCircle2,
-  User,
+  Shield,
+  ShieldCheck,
   Wallet,
+  Tv as YoutubeIcon,
   TrendingUp,
-  Award,
   ArrowRight,
-  X,
+  Clock,
+  Loader2,
+  ChevronRight,
+  Info,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface OnboardingStep {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  action?: {
-    label: string;
-    href: string;
-  };
-  completed: boolean;
-}
+import { toast } from '@/components/ui/enhanced-toast';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useUser();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [bonusData, setBonusData] = useState<RegistrationBonusData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [verifyingSocial, setVerifyingSocial] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
-  // Check which steps are completed
+  const fetchStatus = useCallback(async () => {
+    try {
+      const response = await registrationBonusApi.getStatus();
+      if (response.success && response.data) {
+        setBonusData(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch onboarding status', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const completed = new Set<string>();
+    fetchStatus();
 
-    // Step 1: Profile completion
-    if (user?.firstName && user?.lastName && user?.phoneNumber) {
-      completed.add('profile');
+    // Polling to catch automated backend updates (2FA, Wallet, Stake)
+    const interval = setInterval(fetchStatus, 5000);
+    setPollingInterval(interval);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [fetchStatus]);
+
+  const handleVerifySocial = async (platform: string) => {
+    setVerifyingSocial(true);
+    try {
+      const response = await registrationBonusApi.completeSocialStep(platform);
+      if (response.success) {
+        toast.success(`Social media verification for ${platform} submitted!`);
+        await fetchStatus();
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to verify social media');
+    } finally {
+      setVerifyingSocial(false);
     }
-
-    // Step 2: First deposit (check if user has made any deposit)
-    // This would need to check wallet balance or transaction history
-    // For now, we'll mark as incomplete if balance is 0
-    if (user && (user as any).walletBalance > 0) {
-      completed.add('deposit');
-    }
-
-    // Step 3: First stake (check if user has created any stake)
-    // This would need to check stakes count
-    // For now, we'll leave as incomplete
-
-    // Step 4: Explore features - always available
-    completed.add('explore');
-
-    setCompletedSteps(completed);
-  }, [user]);
-
-  const steps: OnboardingStep[] = [
-    {
-      id: 'profile',
-      title: 'Complete Your Profile',
-      description: 'Add your personal information to get started',
-      icon: User,
-      action: {
-        label: 'Complete Profile',
-        href: '/dashboard',
-      },
-      completed: completedSteps.has('profile'),
-    },
-    {
-      id: 'deposit',
-      title: 'Make Your First Deposit',
-      description: 'Add funds to your wallet to start staking',
-      icon: Wallet,
-      action: {
-        label: 'Deposit Funds',
-        href: '/dashboard/wallets',
-      },
-      completed: completedSteps.has('deposit'),
-    },
-    {
-      id: 'stake',
-      title: 'Create Your First Stake',
-      description: 'Set a goal and start earning returns',
-      icon: TrendingUp,
-      action: {
-        label: 'Create Stake',
-        href: '/dashboard/stakes/new',
-      },
-      completed: false, // Would check from API
-    },
-    {
-      id: 'explore',
-      title: 'Explore Features',
-      description: 'Discover achievements, pools, and team features',
-      icon: Award,
-      action: {
-        label: 'Explore Dashboard',
-        href: '/dashboard',
-      },
-      completed: completedSteps.has('explore'),
-    },
-  ];
-
-  const handleSkip = () => {
-    localStorage.setItem('novunt-onboarding-completed', 'true');
-    router.push('/dashboard');
-  };
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handleComplete = () => {
-    localStorage.setItem('novunt-onboarding-completed', 'true');
-    router.push('/dashboard');
   };
 
   const handleAction = (href: string) => {
     router.push(href);
   };
 
-  const currentStepData = steps[currentStep];
-  const Icon = currentStepData.icon;
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const steps = [
+    {
+      id: 'reg',
+      title: 'Registration',
+      description: 'Account created and email verified',
+      icon: ShieldCheck,
+      completed: true, // Always true if they reach here
+      requiredForLock: true,
+    },
+    {
+      id: '2fa',
+      title: '2FA Security',
+      description: 'Enable Two-Factor Authentication',
+      icon: Shield,
+      completed: bonusData?.requirements?.twoFASetup?.isCompleted || false,
+      action: { label: 'Setup 2FA', href: '/dashboard/settings' },
+      requiredForLock: true,
+    },
+    {
+      id: 'wallet',
+      title: 'Wallet Whitelist',
+      description: 'Set your BEP20 withdrawal address',
+      icon: Wallet,
+      completed:
+        bonusData?.requirements?.withdrawalAddressWhitelist?.isCompleted ||
+        false,
+      action: { label: 'Whitelist Address', href: '/dashboard/wallets' },
+      requiredForLock: true,
+    },
+    {
+      id: 'social',
+      title: 'Social Media',
+      description: 'Follow us on YouTube & Facebook',
+      icon: YoutubeIcon,
+      completed:
+        bonusData?.requirements?.socialMediaVerifications?.every(
+          (v) => v.isVerified
+        ) || false,
+      action: {
+        label: 'Verify Follow',
+        onClick: () => handleVerifySocial('youtube'),
+      },
+      requiredForLock: false,
+    },
+    {
+      id: 'stake',
+      title: 'First Stake',
+      description: 'Activate your 10% bonus with a stake',
+      icon: TrendingUp,
+      completed: bonusData?.requirements?.firstStakeCompleted || false,
+      action: { label: 'Create Stake', href: '/dashboard/staking/new' },
+      requiredForLock: false,
+    },
+  ];
+
+  const progress = bonusData?.progressPercentage || 0;
+  const isUnlocked = progress >= 60;
+
+  if (loading && !bonusData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-background p-4 dark:from-slate-950 dark:via-indigo-950 dark:to-slate-950">
-      <Card className="w-full max-w-2xl border-white/20 bg-white/10 p-8 backdrop-blur-2xl dark:border-white/10 dark:bg-white/8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4 font-sans text-white">
+      <Card className="relative w-full max-w-3xl overflow-hidden border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-2xl sm:p-10">
+        {/* Background glow effects */}
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="bg-neon-green/10 absolute -bottom-24 -left-24 h-64 w-64 rounded-full blur-3xl" />
+
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome to Novunt!</h1>
-            <p className="mt-2 text-muted-foreground">
-              Let&apos;s get you started in just a few steps
+        <div className="relative mb-10 flex flex-col items-center text-center sm:flex-row sm:text-left">
+          <div className="mb-4 flex-1 sm:mb-0">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Compliance <span className="text-cyan-400">Onboarding</span>
+            </h1>
+            <p className="mt-2 text-slate-400">
+              Complete your security profile to unlock full platform access.
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSkip}
-            aria-label="Skip onboarding"
+
+          <div
+            className={cn(
+              'flex items-center gap-3 rounded-2xl px-5 py-3 text-sm font-semibold transition-all duration-500',
+              isUnlocked
+                ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
+                : 'border border-amber-500/30 bg-amber-500/20 text-amber-400'
+            )}
           >
-            <X className="h-5 w-5" />
-          </Button>
+            {isUnlocked ? (
+              <ShieldCheck className="h-5 w-5" />
+            ) : (
+              <Lock className="h-5 w-5" />
+            )}
+            {isUnlocked ? 'PLATFORM UNLOCKED' : 'PLATFORM LOCKED'}
+          </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Step {currentStep + 1} of {steps.length}
+        {/* Countdown & Status */}
+        {bonusData &&
+          bonusData.status !== RegistrationBonusStatus.COMPLETED && (
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-cyan-400" />
+                <div>
+                  <span className="block text-xs tracking-wider text-slate-500 uppercase">
+                    Time Remaining
+                  </span>
+                  <span className="font-mono text-lg font-bold">
+                    {bonusData.daysRemaining} Days
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="block text-xs tracking-wider text-slate-500 uppercase">
+                  Bonus Status
+                </span>
+                <span className="font-bold text-cyan-400">
+                  {bonusData.status.replace(/_/g, ' ')}
+                </span>
+              </div>
+            </div>
+          )}
+
+        {/* Progress Bar V2 */}
+        <div className="mb-12">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-300">
+              Completion Progress
             </span>
-            <span className="font-medium">{Math.round(progress)}%</span>
+            <span className="text-sm font-bold text-emerald-400">
+              {progress}%
+            </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
+          <p className="mt-3 text-center text-xs text-slate-500">
+            Reach <span className="font-bold text-emerald-400">60%</span> to
+            unlock Withdrawals and Transfers.
+          </p>
         </div>
 
-        {/* Current Step Content */}
-        <div className="mb-8 text-center">
-          <div
-            className={cn(
-              'mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all',
-              currentStepData.completed
-                ? 'border-success bg-success/10'
-                : 'border-primary bg-primary/10'
-            )}
-          >
-            {currentStepData.completed ? (
-              <CheckCircle2 className="h-10 w-10 text-success" />
-            ) : (
-              <Icon className="h-10 w-10 text-primary" />
-            )}
-          </div>
-
-          <h2 className="mb-2 text-2xl font-semibold">{currentStepData.title}</h2>
-          <p className="text-muted-foreground">{currentStepData.description}</p>
-
-          {currentStepData.completed && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm text-success">
-              <CheckCircle2 className="h-4 w-4" />
-              Completed
-            </div>
-          )}
-        </div>
-
-        {/* Step Indicators */}
-        <div className="mb-8 grid grid-cols-4 gap-2">
-          {steps.map((step, index) => {
-            const StepIcon = step.icon;
-            const isActive = index === currentStep;
-            const isCompleted = step.completed || index < currentStep;
-
-            return (
-              <button
-                key={step.id}
-                onClick={() => setCurrentStep(index)}
+        {/* Step Checklist */}
+        <div className="grid gap-4 sm:grid-cols-1">
+          {steps.map((step, idx) => (
+            <div
+              key={step.id}
+              className={cn(
+                'group relative flex items-center gap-4 rounded-2xl border p-4 transition-all duration-300',
+                step.completed
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-white/10 bg-white/5 hover:border-white/20'
+              )}
+            >
+              <div
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border p-3 transition-all',
-                  isActive
-                    ? 'border-primary bg-primary/10'
-                    : isCompleted
-                      ? 'border-success/50 bg-success/5'
-                      : 'border-muted bg-muted/50',
-                  'hover:border-primary/50'
+                  'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors',
+                  step.completed
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-slate-800 text-slate-500'
                 )}
-                aria-label={`Go to step ${index + 1}: ${step.title}`}
               >
-                {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5 text-success" />
+                {step.completed ? (
+                  <CheckCircle2 className="h-6 w-6" />
                 ) : (
-                  <StepIcon
-                    className={cn(
-                      'h-5 w-5',
-                      isActive ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  />
+                  <step.icon className="h-6 w-6" />
                 )}
-                <span
+              </div>
+
+              <div className="flex-1">
+                <h3
                   className={cn(
-                    'text-xs',
-                    isActive ? 'font-medium text-foreground' : 'text-muted-foreground'
+                    'font-bold transition-colors',
+                    step.completed ? 'text-emerald-400' : 'text-white'
                   )}
                 >
-                  {step.title.split(' ')[0]}
-                </span>
-              </button>
-            );
-          })}
+                  {step.title}
+                </h3>
+                <p className="text-sm text-slate-400">{step.description}</p>
+              </div>
+
+              {!step.completed && step.action && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={verifyingSocial && step.id === 'social'}
+                  onClick={() =>
+                    step.action?.onClick
+                      ? step.action.onClick()
+                      : handleAction(step.action!.href)
+                  }
+                  className="rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
+                >
+                  {verifyingSocial && step.id === 'social' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      {step.action.label}
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {step.completed && (
+                <div className="hidden text-xs font-bold tracking-widest text-emerald-500/50 uppercase sm:block">
+                  Verified
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-4">
-          {currentStepData.action && (
-            <Button
-              onClick={() => handleAction(currentStepData.action!.href)}
-              className="flex-1"
-              size="lg"
-            >
-              {currentStepData.action.label}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+        {/* Global Action */}
+        <div className="mt-10 flex flex-col gap-4">
           <Button
-            onClick={currentStep === steps.length - 1 ? handleComplete : handleNext}
-            variant={currentStepData.action ? 'outline' : 'default'}
             size="lg"
-            className={currentStepData.action ? '' : 'flex-1'}
-          >
-            {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
-            {currentStep < steps.length - 1 && (
-              <ArrowRight className="ml-2 h-4 w-4" />
+            disabled={!isUnlocked}
+            onClick={() => router.push('/dashboard')}
+            className={cn(
+              'h-14 w-full rounded-2xl text-lg font-bold shadow-xl transition-all duration-500',
+              isUnlocked
+                ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 shadow-emerald-500/20 hover:from-emerald-500 hover:to-cyan-500'
+                : 'cursor-not-allowed bg-slate-800 text-slate-500'
             )}
+          >
+            {isUnlocked
+              ? 'Continue to Dashboard'
+              : 'Platform Locked - Complete Requirements'}
+            {isUnlocked && <ArrowRight className="ml-2 h-5 w-5" />}
           </Button>
+
+          {!isUnlocked && (
+            <p className="text-center text-sm text-amber-400/80">
+              * Withdrawal and Transfer features remain locked until 60%
+              completion.
+            </p>
+          )}
         </div>
       </Card>
     </div>
   );
 }
-
