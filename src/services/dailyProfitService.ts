@@ -30,7 +30,7 @@ const getAPIBaseURL = (): string => {
   // Fallback without /api/v1 (we'll add it in endpoints)
   return process.env.NODE_ENV === 'development'
     ? 'http://localhost:5000'
-    : 'https://novunt-backend-uw3z.onrender.com';
+    : 'https://api.novunt.com';
 };
 
 const API_BASE_URL = getAPIBaseURL();

@@ -84,7 +84,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'novunt-backend-uw3z.onrender.com',
+        hostname: 'api.novunt.com',
       },
       {
         protocol: 'https',

@@ -15,7 +15,7 @@ export function getApiV1BaseUrl(): string {
   const fallback =
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:5000'
-      : 'https://novunt-backend-uw3z.onrender.com';
+      : 'https://api.novunt.com';
 
   const raw = (envURL || fallback).trim();
 

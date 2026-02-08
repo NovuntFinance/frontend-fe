@@ -26,8 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logger.warn('NEXT_PUBLIC_API_URL is not set', {
         instructions: {
           development: 'NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1',
-          production:
-            'NEXT_PUBLIC_API_URL=https://novunt-backend-uw3z.onrender.com/api/v1',
+          production: 'NEXT_PUBLIC_API_URL=https://api.novunt.com/api/v1',
         },
       });
     } else {

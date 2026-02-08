@@ -7,11 +7,12 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   // Get API base URL from environment (same as main API client)
-  const apiBaseURL = process.env.NEXT_PUBLIC_API_URL || 
-    (process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5000/api/v1' 
-      : 'https://novunt-backend-uw3z.onrender.com/api/v1');
-  
+  const apiBaseURL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (process.env.NODE_ENV === 'development'
+      ? 'http://localhost:5000/api/v1'
+      : 'https://api.novunt.com/api/v1');
+
   try {
     // Test direct connection to backend
     const response = await fetch(`${apiBaseURL}/better-auth/register`, {
@@ -39,10 +40,13 @@ export async function GET() {
       response: data,
     });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Backend connection failed',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Backend connection failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

@@ -14,7 +14,7 @@ const getBackendURL = (): string => {
   // Fallback based on environment
   return process.env.NODE_ENV === 'development'
     ? 'http://localhost:5000/api/v1'
-    : 'https://novunt-backend-uw3z.onrender.com/api/v1';
+    : 'https://api.novunt.com/api/v1';
 };
 
 const BACKEND_URL = getBackendURL();
@@ -42,42 +42,27 @@ type RouteSegment = {
   }>;
 };
 
-export async function GET(
-  request: NextRequest,
-  segment: RouteSegment
-) {
+export async function GET(request: NextRequest, segment: RouteSegment) {
   const params = await segment.params;
   return proxyRequest(request, params);
 }
 
-export async function POST(
-  request: NextRequest,
-  segment: RouteSegment
-) {
+export async function POST(request: NextRequest, segment: RouteSegment) {
   const params = await segment.params;
   return proxyRequest(request, params);
 }
 
-export async function PUT(
-  request: NextRequest,
-  segment: RouteSegment
-) {
+export async function PUT(request: NextRequest, segment: RouteSegment) {
   const params = await segment.params;
   return proxyRequest(request, params);
 }
 
-export async function DELETE(
-  request: NextRequest,
-  segment: RouteSegment
-) {
+export async function DELETE(request: NextRequest, segment: RouteSegment) {
   const params = await segment.params;
   return proxyRequest(request, params);
 }
 
-export async function PATCH(
-  request: NextRequest,
-  segment: RouteSegment
-) {
+export async function PATCH(request: NextRequest, segment: RouteSegment) {
   const params = await segment.params;
   return proxyRequest(request, params);
 }
@@ -89,11 +74,14 @@ async function proxyRequest(
   const pathStr = params.path.join('/');
   const targetUrl = `${BACKEND_URL}/${pathStr}`;
   const timeoutMs = Number(process.env.NEXT_PUBLIC_PROXY_TIMEOUT_MS) || 120000;
-  
+
   try {
     console.log(`[API Proxy] ${request.method} ${pathStr} → ${targetUrl}`);
-    console.log('[API Proxy] Headers:', Object.fromEntries(request.headers.entries()));
-    
+    console.log(
+      '[API Proxy] Headers:',
+      Object.fromEntries(request.headers.entries())
+    );
+
     // Get and validate request body
     let body: string | undefined;
     if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -111,17 +99,19 @@ async function proxyRequest(
             message: 'Invalid JSON in request body',
             error: {
               code: 'INVALID_JSON',
-              details: err.message
-            }
+              details: err.message,
+            },
           },
-          { 
+          {
             status: 400,
             headers: {
               'Access-Control-Allow-Origin': process.env.VERCEL_URL || '*',
-              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-              'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+              'Access-Control-Allow-Methods':
+                'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+              'Access-Control-Allow-Headers':
+                'Content-Type, Authorization, Accept',
               'Access-Control-Allow-Credentials': 'true',
-            }
+            },
           }
         );
       }
@@ -130,7 +120,7 @@ async function proxyRequest(
     // Forward headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
 
     // Copy original headers, ensuring Authorization is preserved
@@ -146,7 +136,9 @@ async function proxyRequest(
     // Make request to backend with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.warn(`[API Proxy] Aborting request after ${timeoutMs}ms: ${request.method} ${pathStr}`);
+      console.warn(
+        `[API Proxy] Aborting request after ${timeoutMs}ms: ${request.method} ${pathStr}`
+      );
       controller.abort();
     }, timeoutMs);
 
@@ -162,7 +154,10 @@ async function proxyRequest(
 
     // Read response body
     const responseBody = await response.text();
-    console.log(`[API Proxy] Response ${response.status}:`, responseBody.substring(0, 200));
+    console.log(
+      `[API Proxy] Response ${response.status}:`,
+      responseBody.substring(0, 200)
+    );
 
     // Parse response body
     let parsedBody;
@@ -179,16 +174,17 @@ async function proxyRequest(
         message: parsedBody.message || 'An error occurred',
         error: {
           code: response.status.toString(),
-          details: parsedBody.error || parsedBody
-        }
+          details: parsedBody.error || parsedBody,
+        },
       };
-      
+
       return NextResponse.json(errorResponse, {
         status: response.status,
         statusText: response.statusText,
         headers: {
           'Access-Control-Allow-Origin': process.env.VERCEL_URL || '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+          'Access-Control-Allow-Methods':
+            'GET, POST, PUT, DELETE, PATCH, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
           'Access-Control-Allow-Credentials': 'true',
         },
@@ -199,7 +195,7 @@ async function proxyRequest(
     const successResponse = {
       success: true,
       data: parsedBody.data || parsedBody,
-      message: parsedBody.message
+      message: parsedBody.message,
     };
 
     // Return response with CORS headers
@@ -208,7 +204,8 @@ async function proxyRequest(
       statusText: response.statusText,
       headers: {
         'Access-Control-Allow-Origin': process.env.VERCEL_URL || '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+        'Access-Control-Allow-Methods':
+          'GET, POST, PUT, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Access-Control-Allow-Credentials': 'true',
       },
@@ -223,23 +220,26 @@ async function proxyRequest(
       isAbort,
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
     });
-    
+
     const errorResponse = {
       success: false,
-      message: isAbort ? `Request timed out after ${timeoutMs}ms` : 'Internal Server Error',
+      message: isAbort
+        ? `Request timed out after ${timeoutMs}ms`
+        : 'Internal Server Error',
       error: {
         code: isAbort ? 'TIMEOUT' : 'INTERNAL_ERROR',
-        details: error.message
-      }
+        details: error.message,
+      },
     };
 
-    return NextResponse.json(errorResponse, { 
+    return NextResponse.json(errorResponse, {
       status: isAbort ? 504 : 500,
       headers: {
         'Access-Control-Allow-Origin': process.env.VERCEL_URL || '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+        'Access-Control-Allow-Methods':
+          'GET, POST, PUT, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Access-Control-Allow-Credentials': 'true',
       },

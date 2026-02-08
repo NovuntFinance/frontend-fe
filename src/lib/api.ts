@@ -15,7 +15,7 @@ import { ApiError, ApiResponse } from '@/types/api';
  * Get API base URL from environment
  *
  * Development: http://localhost:5000/api/v1
- * Production: https://novunt-backend-uw3z.onrender.com/api/v1
+ * Production: https://api.novunt.com/api/v1
  *
  * CRITICAL: Always use NEXT_PUBLIC_API_URL environment variable
  * DO NOT hardcode URLs - this causes CORS failures
@@ -31,7 +31,7 @@ const getAPIBaseURL = (): string => {
   const fallback =
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:5000/api/v1'
-      : 'https://novunt-backend-uw3z.onrender.com/api/v1';
+      : 'https://api.novunt.com/api/v1';
 
   if (process.env.NODE_ENV === 'development') {
     console.warn('NEXT_PUBLIC_API_URL not set; using fallback.');
@@ -449,18 +449,15 @@ apiClient.interceptors.response.use(
         let diagnosticMessage = `Unable to connect to the server at ${requestURL}.`;
 
         // Check if backend might be down
-        if (API_BASE_URL.includes('onrender.com')) {
+        if (API_BASE_URL.includes('api.novunt.com')) {
           diagnosticMessage += '\n\nPossible causes:\n';
           diagnosticMessage +=
-            '1. Backend server might be sleeping (Render free tier - wait 30-60 seconds)\n';
-          diagnosticMessage +=
-            '2. Backend server might be down or restarting\n';
-          diagnosticMessage += '3. CORS not configured on backend\n';
-          diagnosticMessage += '4. Network connectivity issue\n\n';
+            '1. Backend server might be down or restarting\n';
+          diagnosticMessage += '2. CORS not configured on backend\n';
+          diagnosticMessage += '3. Network connectivity issue\n\n';
           diagnosticMessage += 'Try:\n';
           diagnosticMessage +=
-            '- Visit https://novunt-backend-uw3z.onrender.com in your browser to wake up the server\n';
-          diagnosticMessage += '- Wait 30-60 seconds if backend was sleeping\n';
+            '- Visit https://api.novunt.com in your browser to check backend status\n';
           diagnosticMessage +=
             '- Check browser DevTools Network tab for CORS errors\n';
           diagnosticMessage +=

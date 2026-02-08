@@ -29,6 +29,10 @@ export const cspDirectives = {
 
   'connect-src': [
     "'self'",
+    // Novunt API and frontend domains
+    'https://api.novunt.com',
+    'https://www.novunt.com',
+    'https://novunt.com',
     process.env.NEXT_PUBLIC_API_URL || '',
     'https://*.vercel.com',
     'wss://*.vercel.com',
