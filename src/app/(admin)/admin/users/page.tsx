@@ -953,9 +953,16 @@ export default function UsersPage() {
               </h3>
               <div className="mt-2 text-sm text-red-700 dark:text-red-300">
                 <p>
-                  {error instanceof Error
-                    ? error.message
-                    : 'An error occurred while fetching users. Please try again.'}
+                  {(() => {
+                    const status = (error as { response?: { status?: number } })
+                      ?.response?.status;
+                    if (status === 429) {
+                      return 'Too many requests. The server is temporarily limiting requests. Please wait a minute and try again.';
+                    }
+                    return error instanceof Error
+                      ? error.message
+                      : 'An error occurred while fetching users. Please try again.';
+                  })()}
                 </p>
               </div>
               <div className="mt-4">

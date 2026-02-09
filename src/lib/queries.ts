@@ -1943,6 +1943,10 @@ export function useAdminUsers(filters?: {
       if (status === 401 || status === 403) {
         return false;
       }
+      // Do not retry on 429 (rate limit) — retrying immediately makes it worse
+      if (status === 429) {
+        return false;
+      }
       return failureCount < 2;
     },
   });

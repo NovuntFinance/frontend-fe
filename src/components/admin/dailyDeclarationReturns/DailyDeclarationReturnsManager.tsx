@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { toast } from 'sonner';
-import { RefreshCw, Send } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import type { PoolQualifiersResponse } from '@/types/pool';
 
 const DEFAULT_MAX_ROS = 100;
@@ -136,26 +136,12 @@ export function DailyDeclarationReturnsManager() {
           />
         </div>
 
-        {/* Distribution Status - Full width on mobile/tablet, 1 column on desktop */}
+        {/* Distribution Status + Trigger Test ROS - right column */}
         <div className="xl:col-span-1">
-          <DistributionStatus />
+          <DistributionStatus
+            onTriggerTestROSClick={() => setTestROSModalOpen(true)}
+          />
         </div>
-      </div>
-
-      {/* Trigger Test ROS - separate action, does not replace Declare/Distribute */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setTestROSModalOpen(true)}
-        >
-          <Send className="mr-2 h-4 w-4" />
-          Trigger Test ROS
-        </Button>
-        <span className="text-muted-foreground text-xs">
-          Pays real USDT to earning wallets. Safe to run multiple times. Does
-          not affect daily ROS or stake progress.
-        </span>
       </div>
 
       {/* Declared Returns List - Full width */}
