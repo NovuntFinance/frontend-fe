@@ -35,7 +35,7 @@ export async function checkBackendHealth(): Promise<HealthCheckResult> {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(20000), // 20 second timeout
     });
 
     const responseTime = Date.now() - startTime;
@@ -55,7 +55,8 @@ export async function checkBackendHealth(): Promise<HealthCheckResult> {
     if (error.name === 'AbortError' || error.name === 'TimeoutError') {
       return {
         isHealthy: false,
-        message: 'Backend request timed out (server might be sleeping or slow)',
+        message:
+          'Backend request timed out. Please check your internet connection.',
         responseTime,
         error: 'TIMEOUT',
       };
@@ -67,7 +68,8 @@ export async function checkBackendHealth(): Promise<HealthCheckResult> {
     ) {
       return {
         isHealthy: false,
-        message: 'Cannot reach backend server (might be down or CORS issue)',
+        message:
+          'Cannot reach backend server. Please check your internet connection.',
         responseTime,
         error: 'NETWORK_ERROR',
       };
@@ -106,11 +108,8 @@ export async function diagnoseBackendConnection(): Promise<void> {
     if (health.error === 'NETWORK_ERROR') {
       console.warn('[Backend Health] 💡 Suggestions:');
       console.warn('  1. Check if backend server is running');
-      console.warn(
-        '  2. If using Render free tier, wait 30-60 seconds (server might be sleeping)'
-      );
-      console.warn('  3. Check CORS configuration on backend');
-      console.warn('  4. Verify NEXT_PUBLIC_API_URL in .env.local');
+      console.warn('  2. Check your internet connection');
+      console.warn('  3. Verify NEXT_PUBLIC_API_URL in .env.local');
     }
   }
 }

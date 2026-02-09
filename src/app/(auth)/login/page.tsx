@@ -542,11 +542,6 @@ function LoginPageContent() {
           <AlertCircle className="h-4 w-4 text-orange-400" />
           <AlertDescription className="text-orange-200">
             <strong>Backend Connection Issue:</strong> {backendStatus.message}
-            <br />
-            <span className="mt-1 block text-sm">
-              If using Render free tier, the server might be sleeping. Please
-              wait 30-60 seconds and try again.
-            </span>
           </AlertDescription>
         </Alert>
       )}
