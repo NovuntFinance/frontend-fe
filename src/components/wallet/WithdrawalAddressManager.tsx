@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  Edit2,
+  Edit,
   Loader2,
   Info,
 } from 'lucide-react';
@@ -133,7 +133,7 @@ export function WithdrawalAddressManager() {
                 !canChange && 'cursor-not-allowed opacity-50'
               )}
             >
-              <Edit2 className="mr-2 h-3 w-3" />
+              <Edit className="mr-2 h-3 w-3" />
               Change
             </Button>
           )}

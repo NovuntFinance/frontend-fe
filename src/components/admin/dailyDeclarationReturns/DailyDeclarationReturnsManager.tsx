@@ -9,12 +9,13 @@ import { QualifierCounts } from '@/components/admin/pool/QualifierCounts';
 import { UnifiedDeclarationCalendar } from './UnifiedDeclarationCalendar';
 import { DeclareReturnsModal } from './DeclareReturnsModal';
 import { DeclaredReturnsList } from './DeclaredReturnsList';
+import { TriggerTestROSModal } from './TriggerTestROSModal';
 import { DistributionStatus } from '@/components/admin/dailyProfit/DistributionStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { toast } from 'sonner';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Send } from 'lucide-react';
 import type { PoolQualifiersResponse } from '@/types/pool';
 
 const DEFAULT_MAX_ROS = 100;
@@ -25,6 +26,7 @@ export function DailyDeclarationReturnsManager() {
   >(null);
   const [isLoadingQualifiers, setIsLoadingQualifiers] = useState(true);
   const [declareModalOpen, setDeclareModalOpen] = useState(false);
+  const [testROSModalOpen, setTestROSModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const { promptFor2FA } = use2FA();
 
@@ -140,6 +142,22 @@ export function DailyDeclarationReturnsManager() {
         </div>
       </div>
 
+      {/* Trigger Test ROS - separate action, does not replace Declare/Distribute */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTestROSModalOpen(true)}
+        >
+          <Send className="mr-2 h-4 w-4" />
+          Trigger Test ROS
+        </Button>
+        <span className="text-muted-foreground text-xs">
+          Pays real USDT to earning wallets. Safe to run multiple times. Does
+          not affect daily ROS or stake progress.
+        </span>
+      </div>
+
       {/* Declared Returns List - Full width */}
       <div>
         <DeclaredReturnsList onEdit={handleDateClick} />
@@ -152,6 +170,12 @@ export function DailyDeclarationReturnsManager() {
         initialDate={editingDate || undefined}
         onSuccess={handleDeclareSuccess}
         maxRosPercentage={maxRosPercentage ?? DEFAULT_MAX_ROS}
+      />
+
+      {/* Test ROS Modal */}
+      <TriggerTestROSModal
+        open={testROSModalOpen}
+        onOpenChange={setTestROSModalOpen}
       />
     </div>
   );

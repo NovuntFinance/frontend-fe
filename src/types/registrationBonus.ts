@@ -65,6 +65,27 @@ export interface RegistrationBonusData {
       isVerified: boolean;
     }>;
     firstStakeCompleted: boolean;
+    // Legacy/alias names used by components
+    profileCompletion?: {
+      isCompleted: boolean;
+      completionPercentage?: number;
+      percentage?: number;
+      details?: unknown[];
+    };
+    socialMediaVerification?: {
+      completed: number;
+      total: number;
+      verifiedCount?: number;
+      totalRequired?: number;
+      minimumRequired?: number;
+      platforms?: unknown[];
+      details?: unknown[];
+    };
+    firstStake?: {
+      completed: boolean;
+      amount: number | null;
+      stakeId: string | null;
+    };
   };
 
   // Metadata
@@ -75,6 +96,43 @@ export interface RegistrationBonusData {
   timeRemaining?: number;
   currentStep?: number;
   nextStepDescription?: string;
+  expiresAt?: string;
+  bonusAmount?: number | null;
+  bonus?: {
+    amount?: number;
+    total?: number;
+    remaining?: number;
+    remainingBonus?: number;
+    bonusPaidOut?: number;
+    weeklyPayoutCount?: number;
+    completedAt?: string;
+    payouts?: unknown[];
+  };
+  profile?: {
+    completionPercentage?: number;
+    percentage?: number;
+    details?: unknown[];
+  };
+  profileCompletion?: {
+    isCompleted: boolean;
+    completionPercentage?: number;
+    percentage?: number;
+    details?: unknown[];
+  };
+  socialMedia?: {
+    completed: number;
+    total: number;
+    verifiedCount?: number;
+    totalRequired?: number;
+    minimumRequired?: number;
+    platforms?: unknown[];
+    details?: unknown[];
+  };
+  firstStake?: {
+    completed: boolean;
+    amount: number | null;
+    stakeId: string | null;
+  };
 }
 
 // ============================================

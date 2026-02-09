@@ -20,7 +20,7 @@ import {
   Shield,
   ShieldCheck,
   Wallet,
-  Tv as YoutubeIcon,
+  TrendingUp as YoutubeIcon,
   TrendingUp,
   ArrowRight,
   Clock,

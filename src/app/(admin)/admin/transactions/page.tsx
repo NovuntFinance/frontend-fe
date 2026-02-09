@@ -517,6 +517,8 @@ export default function TransactionsPage() {
               <option value="stake">Stakes</option>
               <option value="unstake">Unstakes</option>
               <option value="reward">Rewards</option>
+              <option value="ros_payout">Daily ROS Payout</option>
+              <option value="test_ros_payout">Test ROS Payout</option>
             </select>
           </div>
 

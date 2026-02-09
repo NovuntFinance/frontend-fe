@@ -148,6 +148,10 @@ export function formatTransactionType(
     return 'Daily ROS Payout';
   }
 
+  if (type === 'test_ros_payout') {
+    return 'Test ROS Payout';
+  }
+
   // Referral bonuses are earnings, not bonuses - display as "Earning"
   if (type === 'referral_bonus') {
     return 'Earning';
@@ -177,6 +181,7 @@ export function formatTransactionType(
     stake: 'Stake',
     unstake: 'Unstake',
     ros_payout: 'Daily ROS Payout',
+    test_ros_payout: 'Test ROS Payout',
     stake_completion: 'Stake Completion',
     stake_pool_payout: 'Stake Pool Payout',
     performance_pool_payout: 'Performance Pool Payout',

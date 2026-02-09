@@ -12,6 +12,7 @@ export type TransactionType =
   | 'stake'
   | 'unstake'
   | 'ros_payout'
+  | 'test_ros_payout'
   | 'stake_completion'
   | 'stake_pool_payout'
   | 'performance_pool_payout'

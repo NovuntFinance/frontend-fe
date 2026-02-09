@@ -265,3 +265,32 @@ export interface DistributeDeclarationResponse {
     };
   };
 }
+
+/**
+ * Trigger Test ROS Request
+ * POST /api/v1/admin/daily-declaration-returns/test-ros
+ */
+export interface TriggerTestROSRequest {
+  percentage: number; // 0–100
+  runId?: string; // Optional label for this run
+  twoFACode?: string; // Required if admin has 2FA enabled
+}
+
+/**
+ * Trigger Test ROS Response
+ * POST /api/v1/admin/daily-declaration-returns/test-ros
+ */
+export interface TriggerTestROSResponse {
+  success: boolean;
+  message: string;
+  data: {
+    runId: string;
+    percentage: number;
+    totalStakes: number;
+    processedStakes: number;
+    totalDistributed: number;
+    userCount: number;
+    processingTimeMs: number;
+    errors: string[] | null;
+  };
+}
