@@ -11,7 +11,7 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react';
-import type { Stake } from '@/lib/queries/stakingQueries';
+import type { Stake, StakingDashboard } from '@/lib/queries/stakingQueries';
 import { Button } from '@/components/ui/button';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
@@ -20,8 +20,6 @@ import { StakingTransactionHistory } from '@/components/stake/StakingTransaction
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 // ✅ Backend now provides todaysProfit and todaysROSPercentage in dashboard response
-// useTodayProfit is kept for backward compatibility fallback only
-import { useTodayProfit } from '@/lib/queries';
 import {
   Card,
   CardContent,
@@ -33,8 +31,39 @@ import { prefersReducedMotion } from '@/lib/accessibility';
 
 export default function StakesPage() {
   const { openModal } = useUIStore();
-  const { data: stakingData, isLoading, error } = useStakeDashboard();
-  const { data: todayProfitData } = useTodayProfit();
+  const { data: stakingData, isLoading, error, refetch } = useStakeDashboard();
+
+  // ✅ Auto-refresh logic: Re-fetch dashboard data at 00:00:00 BIT (1 PM Nigeria Time)
+  // This ensures the UI updates the moment masked "Today's Profit" becomes available
+  React.useEffect(() => {
+    const calculateDelayUntilEOD = () => {
+      const now = new Date();
+      // Target is 13:00:05 (1 PM + 5s buffer) WAT to ensure backend has processed distribution
+      const target = new Date(now);
+      target.setHours(13, 0, 5, 0);
+
+      // If it's already past 1 PM WAT today, set target to 1 PM tomorrow
+      if (now.getTime() >= target.getTime()) {
+        target.setDate(target.getDate() + 1);
+      }
+
+      return target.getTime() - now.getTime();
+    };
+
+    const delay = calculateDelayUntilEOD();
+    console.log(
+      `[Stakes Page] 🕒 Scheduling dashboard re-fetch in ${Math.round(delay / 1000 / 60)} minutes (at EOD transition)`
+    );
+
+    const timer = setTimeout(() => {
+      console.log(
+        '[Stakes Page] 🔄 EOD transition reached. Re-fetching data...'
+      );
+      refetch();
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -62,44 +91,11 @@ export default function StakesPage() {
     );
   }
 
-  // 🔍 DEBUG: Log what we actually received with detailed stake info
-  console.log('[Stakes Page] 🔍 stakingData received:', {
-    fullData: stakingData,
-    activeStakesCount: stakingData?.activeStakes?.length || 0,
-    firstStakeDetails: stakingData?.activeStakes?.[0]
-      ? {
-          _id: stakingData.activeStakes[0]._id,
-          amount: stakingData.activeStakes[0].amount,
-          totalEarned: stakingData.activeStakes[0].totalEarned,
-          progressToTarget: stakingData.activeStakes[0].progressToTarget,
-          remainingToTarget: stakingData.activeStakes[0].remainingToTarget,
-          targetReturn: stakingData.activeStakes[0].targetReturn,
-          status: stakingData.activeStakes[0].status,
-          updatedAt: stakingData.activeStakes[0].updatedAt,
-        }
-      : null,
-    summary: stakingData?.summary,
-  });
-
-  // The query returns the dashboard data directly (already unwrapped by the query function)
-  // Structure: { wallets: {...}, activeStakes: [...], stakeHistory: [...], summary: {...} }
+  // ✅ Strictly using backend fields for summary stats
   const {
     activeStakes = [] as Stake[],
     stakeHistory = [] as Stake[],
-    summary = {} as {
-      totalActiveStakes?: number;
-      totalStakesSinceInception?: number;
-      totalEarnedFromROS?: number;
-      totalEarnedAllTime?: number;
-      targetTotalReturns?: number;
-      progressToTarget?: string;
-      totalActiveAmount?: number;
-      totalAllTimeStaked?: number;
-      todaysProfit?: number; // ✅ NEW: Today's total profit from all active stakes
-      todaysROSPercentage?: number; // ✅ NEW: Today's declared ROS percentage
-      stakingModel?: string;
-      note?: string;
-    } & { todaysProfit?: number; todaysROSPercentage?: number },
+    summary = {} as StakingDashboard['data']['summary'],
     wallets = {
       fundedWallet: 0,
       earningWallet: 0,
@@ -108,75 +104,22 @@ export default function StakesPage() {
         fundedWallet: '',
         earningWallet: '',
       },
-    } as {
-      fundedWallet: number;
-      earningWallet: number;
-      totalAvailableBalance: number;
-      description: {
-        fundedWallet: string;
-        earningWallet: string;
-      };
-    },
+    } as StakingDashboard['data']['wallets'],
   } = stakingData || {};
+
   const hasStakes = activeStakes && activeStakes.length > 0;
 
-  // Total Earned (ROS) - Backend now provides accurate lifetime earnings from ALL stakes
-  // ✅ Backend fixed: summary.totalEarnedFromROS includes active + completed stakes
   const totalEarnedROS = Number(summary?.totalEarnedFromROS || 0);
 
-  // ✅ NEW: Use backend-provided today's profit (calculated from dailyReturnsHistory)
-  // Backend provides todaysProfit (number, defaults to 0 if no profit today)
-  // and todaysROSPercentage (number, defaults to 0 if no declaration today)
-  const summaryWithToday = summary as typeof summary & {
-    todaysProfit?: number;
-    todaysROSPercentage?: number;
-  };
-  const todaysProfit =
-    summaryWithToday?.todaysProfit !== undefined
-      ? Number(summaryWithToday.todaysProfit)
-      : null;
-  const todaysROSPercentage =
-    summaryWithToday?.todaysROSPercentage !== undefined
-      ? Number(summaryWithToday.todaysROSPercentage)
-      : null;
+  // ✅ Strictly rely on API values - no more local fallback calculations
+  const todayProfitAmount = Number(summary?.todaysProfit || 0);
+  const displayROSPercentage = Number(summary?.todaysROSPercentage || 0);
 
-  // Fallback: Only calculate manually if backend fields are not available (backward compatibility)
-  const todayProfitAmount =
-    todaysProfit !== null
-      ? todaysProfit
-      : todayProfitData?.profitPercentage
-        ? activeStakes.reduce((total: number, stake: Stake) => {
-            const stakeAmount = Number(stake?.amount || 0);
-            const stakeProfit =
-              (stakeAmount * (todayProfitData.profitPercentage || 0)) / 100;
-            return total + (isNaN(stakeProfit) ? 0 : stakeProfit);
-          }, 0)
-        : 0;
-
-  // Use backend ROS percentage if available, otherwise fall back to useTodayProfit
-  const displayROSPercentage =
-    todaysROSPercentage !== null
-      ? todaysROSPercentage
-      : todayProfitData?.profitPercentage || 0;
-
-  console.log('[Stakes Page] Extracted data:', {
-    activeStakesCount: activeStakes.length,
-    completedStakesCount: stakeHistory.length,
-    hasWallets: !!wallets,
-    hasSummary: !!summary,
-    todaysProfit:
-      todaysProfit !== null ? todaysProfit : 'not provided by backend',
-    todaysROSPercentage:
-      todaysROSPercentage !== null
-        ? todaysROSPercentage
-        : 'not provided by backend',
+  console.log('[Stakes Page] Summary stats:', {
     todayProfitAmount,
     displayROSPercentage,
-    usingBackendData: todaysProfit !== null,
-    fallbackUsed: todaysProfit === null,
-    totalEarnedROS,
-    summaryTotalEarnedFromROS: summary?.totalEarnedFromROS,
     progressToTarget: summary?.progressToTarget,
+    totalEarnedROS,
   });
 
   const reducedMotion = prefersReducedMotion();

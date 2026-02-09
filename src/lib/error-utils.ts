@@ -17,7 +17,7 @@ export const ERROR_MESSAGES = {
     'Unable to connect to the server. Please check your internet connection.',
   CORS_ERROR:
     'Connection blocked. Please ensure the backend server is running.',
-  TIMEOUT: 'Request timed out. Please try again.',
+  TIMEOUT: 'Backend request timed out. Please check your internet connection.',
 
   // Authentication
   AUTH_REQUIRED: 'Please log in to continue.',

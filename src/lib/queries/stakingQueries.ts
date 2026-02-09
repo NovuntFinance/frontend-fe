@@ -53,8 +53,8 @@ export interface StakingDashboard {
       progressToTarget: string;
       totalActiveAmount?: number;
       totalAllTimeStaked?: number;
-      todaysProfit: number; // ✅ NEW: Today's total profit from all active stakes
-      todaysROSPercentage: number; // ✅ NEW: Today's declared ROS percentage
+      todaysProfit?: number; // ✅ NEW: Today's total profit from all active stakes
+      todaysROSPercentage?: number; // ✅ NEW: Today's declared ROS percentage
       stakingModel: string;
       note: string;
     };
@@ -82,7 +82,7 @@ export const stakingQueryKeys = {
  * Returns full staking dashboard with wallets, active stakes, history, and summary
  */
 export function useStakeDashboard() {
-  return useQuery({
+  return useQuery<StakingDashboard['data']>({
     queryKey: stakingQueryKeys.dashboard,
     queryFn: async () => {
       try {
@@ -107,8 +107,9 @@ export function useStakeDashboard() {
         // Handle both response formats:
         // 1. { success: true, data: {...} } - Standard API response
         // 2. { wallets: {...}, activeStakes: [...] } - Direct data
-        const dashboardData =
-          (responseData as StakingDashboard)?.data || responseData || response;
+        const dashboardData = ((responseData as StakingDashboard)?.data ||
+          responseData ||
+          response) as StakingDashboard['data'];
 
         // 🔍 Map field names if backend uses different field names
         // Backend might use totalReturnsEarned internally, but should return totalEarned

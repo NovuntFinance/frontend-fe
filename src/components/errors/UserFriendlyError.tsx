@@ -7,7 +7,14 @@
 
 import { AlertCircle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -33,7 +40,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
     if (error.message.includes('Network') || error.message.includes('fetch')) {
       return {
         title: 'Connection Problem',
-        description: 'Unable to connect to the server. Please check your internet connection and try again.',
+        description:
+          'Unable to connect to the server. Please check your internet connection and try again.',
         action: {
           label: 'Try Again',
           onClick: () => window.location.reload(),
@@ -48,7 +56,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
     if (error.message.includes('timeout')) {
       return {
         title: 'Request Timed Out',
-        description: 'The request took too long to complete. Please try again.',
+        description:
+          'Backend request timed out. Please check your internet connection.',
         action: {
           label: 'Retry',
           onClick: () => window.location.reload(),
@@ -59,7 +68,9 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
 
   // API errors (Axios)
   if (typeof error === 'object' && error !== null && 'response' in error) {
-    const axiosError = error as { response?: { status?: number; data?: { error?: { message?: string } } } };
+    const axiosError = error as {
+      response?: { status?: number; data?: { error?: { message?: string } } };
+    };
     const status = axiosError.response?.status;
     const message = axiosError.response?.data?.error?.message;
 
@@ -81,7 +92,7 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
       case 403:
         return {
           title: 'Access Denied',
-          description: 'You don\'t have permission to perform this action.',
+          description: "You don't have permission to perform this action.",
           secondaryAction: {
             label: 'Go Back',
             onClick: () => window.history.back(),
@@ -99,7 +110,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
       case 429:
         return {
           title: 'Too Many Requests',
-          description: 'You\'ve made too many requests. Please wait a moment and try again.',
+          description:
+            "You've made too many requests. Please wait a moment and try again.",
           action: {
             label: 'Retry',
             onClick: () => window.location.reload(),
@@ -110,7 +122,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
       case 503:
         return {
           title: 'Server Error',
-          description: 'Something went wrong on our end. We\'re working to fix it. Please try again later.',
+          description:
+            "Something went wrong on our end. We're working to fix it. Please try again later.",
           action: {
             label: 'Try Again',
             onClick: () => window.location.reload(),
@@ -119,7 +132,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
       default:
         return {
           title: 'Something Went Wrong',
-          description: message || 'An unexpected error occurred. Please try again.',
+          description:
+            message || 'An unexpected error occurred. Please try again.',
           action: {
             label: 'Try Again',
             onClick: () => window.location.reload(),
@@ -131,7 +145,8 @@ export function getUserFriendlyError(error: unknown): ErrorInfo {
   // Default error
   return {
     title: 'Unexpected Error',
-    description: 'Something went wrong. Please try again or contact support if the problem persists.',
+    description:
+      'Something went wrong. Please try again or contact support if the problem persists.',
     action: {
       label: 'Try Again',
       onClick: () => window.location.reload(),
@@ -183,7 +198,13 @@ export function UserFriendlyError({
 
   if (variant === 'minimal') {
     return (
-      <div className={cn('flex items-center gap-2 text-sm text-destructive', className)} role="alert">
+      <div
+        className={cn(
+          'text-destructive flex items-center gap-2 text-sm',
+          className
+        )}
+        role="alert"
+      >
         <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{errorInfo.description}</span>
       </div>
@@ -192,12 +213,25 @@ export function UserFriendlyError({
 
   if (variant === 'inline') {
     return (
-      <div className={cn('rounded-lg border border-destructive/50 bg-destructive/10 p-4', className)} role="alert">
+      <div
+        className={cn(
+          'border-destructive/50 bg-destructive/10 rounded-lg border p-4',
+          className
+        )}
+        role="alert"
+      >
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+          <AlertCircle
+            className="text-destructive h-5 w-5 shrink-0"
+            aria-hidden="true"
+          />
           <div className="flex-1">
-            <h3 className="font-semibold text-destructive">{errorInfo.title}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{errorInfo.description}</p>
+            <h3 className="text-destructive font-semibold">
+              {errorInfo.title}
+            </h3>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {errorInfo.description}
+            </p>
             {(errorInfo.action || onRetry) && (
               <div className="mt-3 flex gap-2">
                 {onRetry && (
@@ -219,16 +253,26 @@ export function UserFriendlyError({
     <Card className={cn('border-destructive/50', className)} role="alert">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-            <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+          <div className="bg-destructive/10 flex h-10 w-10 items-center justify-center rounded-full">
+            <AlertCircle
+              className="text-destructive h-5 w-5"
+              aria-hidden="true"
+            />
           </div>
           <div>
-            <CardTitle className="text-destructive">{errorInfo.title}</CardTitle>
-            <CardDescription className="mt-1">{errorInfo.description}</CardDescription>
+            <CardTitle className="text-destructive">
+              {errorInfo.title}
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {errorInfo.description}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
-      {(errorInfo.action || errorInfo.secondaryAction || onRetry || onGoHome) && (
+      {(errorInfo.action ||
+        errorInfo.secondaryAction ||
+        onRetry ||
+        onGoHome) && (
         <CardFooter className="flex gap-2">
           {(errorInfo.action || onRetry) && (
             <Button onClick={handleRetry} variant="default">
@@ -251,7 +295,13 @@ export function UserFriendlyError({
 /**
  * Error Boundary Fallback Component
  */
-export function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
+export function ErrorFallback({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
+}) {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <UserFriendlyError
@@ -276,4 +326,3 @@ export function OfflineError({ onRetry }: { onRetry?: () => void }) {
     />
   );
 }
-
