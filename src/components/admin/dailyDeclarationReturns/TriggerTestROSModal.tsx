@@ -70,9 +70,9 @@ export function TriggerTestROSModal({
           <DialogTitle>Trigger Test ROS</DialogTitle>
           <DialogDescription>
             Run a test ROS distribution. This pays real USDT into users&apos;
-            earning wallets and creates transactions with type &quot;Test ROS
-            Payout&quot;. Safe to run multiple times; it does not affect daily
-            declaration, stake progress, or production ROS.
+            earning wallets and updates stake progress (Total Earned, progress
+            to 200%) like normal ROS. Safe to run multiple times; it does not
+            use the daily declaration or once-per-day lock.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,8 +102,8 @@ export function TriggerTestROSModal({
             />
           </div>
           <p className="text-muted-foreground text-xs">
-            Pays real USDT to all users&apos; earning wallets. Safe to run
-            multiple times. Does not affect daily ROS or stake progress.
+            Pays real USDT to earning wallets and updates the stake card like
+            normal ROS. Safe to run multiple times.
           </p>
           <DialogFooter>
             <Button

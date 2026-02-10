@@ -2,7 +2,13 @@
 // Temporarily disable PWA to debug build issue - will re-enable after fixing
 // import withPWA from 'next-pwa';
 import type { NextConfig } from 'next';
+import type { Configuration } from 'webpack';
 import { securityHeaders } from './src/lib/security-headers';
+
+/** Next.js runtime supports eslint.ignoreDuringBuilds; type may omit it in some versions */
+type NextConfigWithEslint = NextConfig & {
+  eslint?: { ignoreDuringBuilds?: boolean };
+};
 
 // Temporarily disabled PWA config
 // const withPWAConfig = withPWA({
@@ -30,7 +36,7 @@ import { securityHeaders } from './src/lib/security-headers';
 //   ],
 // });
 
-const nextConfig: NextConfig = {
+const nextConfig: NextConfigWithEslint = {
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -61,7 +67,7 @@ const nextConfig: NextConfig = {
   // Turbopack configuration (Next.js 16 default)
   turbopack: {},
   // Keep webpack config for compatibility, but Turbopack will be used
-  webpack: (config, { dev }) => {
+  webpack: (config: Configuration, { dev }: { dev: boolean }) => {
     if (dev) {
       config.watchOptions = {
         poll: false,
@@ -70,9 +76,12 @@ const nextConfig: NextConfig = {
       };
     }
 
-    config.resolve.alias = {
-      ...config.resolve.alias,
-    };
+    const resolve = config.resolve;
+    if (resolve) {
+      resolve.alias = {
+        ...resolve.alias,
+      };
+    }
 
     return config;
   },

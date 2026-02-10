@@ -1,5 +1,9 @@
 # Backend: Include Test ROS Payout in Stake Card (totalEarned & Progress)
 
+**Backend alignment (Feb 2025):** The backend has confirmed in `docs/FRONTEND_TEST_ROS_IMPLEMENTATION.md` that the **Test Trigger** uses the **same logic** as the Normal Trigger: it updates stake progress (`totalReturnsEarned`, `dailyReturnsHistory`), enforces the 200% cap, and the **same Stake Card** is used with no frontend change. This document remains as the **frontend’s technical expectation** (which APIs and fields drive the card) and as a reference if any backend implementation needs to align with it.
+
+---
+
 This document is a **detailed prompt for the backend team** so that when a user receives a **Test ROS payout** (`test_ros_payout`), the **stake card** on the dashboard updates: **Total Earned**, **Progress to 200% ROS**, and **Remaining** should reflect both production ROS and Test ROS payouts for that stake.
 
 ---
@@ -25,16 +29,16 @@ The stake card is driven by the **staking API**:
 
 Each **stake object** used for the card includes (frontend contract):
 
-| Field               | Type   | Description |
-|---------------------|--------|-------------|
-| `_id`               | string | Stake ID    |
-| `amount`            | number | Initial stake amount |
-| `targetReturn`      | number | Target at 200% (e.g. 2 × amount for regular stakes) |
-| **`totalEarned`**   | number | **Sum of all ROS earnings for this stake (should include test_ros_payout)** |
-| **`progressToTarget`** | string | **e.g. "5.00%" = (totalEarned / targetReturn) × 100, capped at 100% or 200%** |
-| **`remainingToTarget`** | number | **targetReturn − totalEarned (or 0 if at/over target)** |
-| `status`            | string | e.g. active, completed, cancelled |
-| (other existing fields) | …   | Leave as-is |
+| Field                   | Type   | Description                                                                   |
+| ----------------------- | ------ | ----------------------------------------------------------------------------- |
+| `_id`                   | string | Stake ID                                                                      |
+| `amount`                | number | Initial stake amount                                                          |
+| `targetReturn`          | number | Target at 200% (e.g. 2 × amount for regular stakes)                           |
+| **`totalEarned`**       | number | **Sum of all ROS earnings for this stake (should include test_ros_payout)**   |
+| **`progressToTarget`**  | string | **e.g. "5.00%" = (totalEarned / targetReturn) × 100, capped at 100% or 200%** |
+| **`remainingToTarget`** | number | **targetReturn − totalEarned (or 0 if at/over target)**                       |
+| `status`                | string | e.g. active, completed, cancelled                                             |
+| (other existing fields) | …      | Leave as-is                                                                   |
 
 The frontend displays:
 
@@ -62,15 +66,15 @@ So: **including Test ROS in the backend’s computation of `totalEarned` (and he
 So conceptually:
 
 - **totalEarned(stakeId)** = sum of:
-  - all **ros_payout** amounts for that stake, plus  
+  - all **ros_payout** amounts for that stake, plus
   - all **test_ros_payout** amounts for that stake  
-  (using whatever link you use today for ros_payout → stake, e.g. transaction metadata or payout records).
+    (using whatever link you use today for ros_payout → stake, e.g. transaction metadata or payout records).
 - **progressToTarget** = (totalEarned / targetReturn) × 100, capped by stake type (e.g. 100% for bonus, 200% for regular).
 - **remainingToTarget** = max(0, targetReturn − totalEarned).
 
 Apply this for both:
 
-- **GET /api/v1/staking/dashboard** (each stake in `activeStakes` and in `stakeHistory` if you expose the same fields), and  
+- **GET /api/v1/staking/dashboard** (each stake in `activeStakes` and in `stakeHistory` if you expose the same fields), and
 - **GET /api/v1/staking/:stakeId**.
 
 Also update **dashboard summary** totals (e.g. `totalEarnedFromROS`, or any “total earned from ROS” aggregate) so they include **test_ros_payout** as well. That way the main dashboard and any summary cards stay consistent with the stake cards.
@@ -98,13 +102,13 @@ Also update **dashboard summary** totals (e.g. `totalEarnedFromROS`, or any “t
 
 ## 6. APIs to update (checklist)
 
-- [ ] **GET /api/v1/staking/dashboard**  
-  - For each stake in `activeStakes` (and `stakeHistory` if applicable):  
-    - `totalEarned` = sum(ros_payout for stake) + sum(test_ros_payout for stake).  
-    - `progressToTarget` and `remainingToTarget` derived from this `totalEarned`.  
+- [ ] **GET /api/v1/staking/dashboard**
+  - For each stake in `activeStakes` (and `stakeHistory` if applicable):
+    - `totalEarned` = sum(ros_payout for stake) + sum(test_ros_payout for stake).
+    - `progressToTarget` and `remainingToTarget` derived from this `totalEarned`.
   - Summary: e.g. `totalEarnedFromROS` (or equivalent) includes test_ros_payout across all stakes.
 
-- [ ] **GET /api/v1/staking/:stakeId**  
+- [ ] **GET /api/v1/staking/:stakeId**
   - Same rule: `totalEarned` includes test_ros_payout for this stake; then `progressToTarget` and `remainingToTarget` from that.
 
 - [ ] **Transaction storage:** Ensure each **test_ros_payout** transaction stores the **stake id** (e.g. `metadata.stakeId`) so the above sums are possible. If Test ROS currently does not write this, add it when creating the test_ros_payout transaction.

@@ -1,19 +1,19 @@
 # Admin Dashboard: Trigger Test ROS – Step-by-Step Guide
 
-This guide explains how to use the **Trigger Test ROS** feature in the Novunt admin dashboard. Use it to run a test ROS distribution that pays real USDT to users’ earning wallets without affecting production daily ROS or stake progress.
+This guide explains how to use the **Trigger Test ROS** feature in the Novunt admin dashboard. Use it to run a test ROS distribution that pays real USDT to users’ earning wallets and **updates stake progress** (Total Earned, progress to 200%) like normal ROS—only the execution frequency differs (Test can run multiple times per day; normal runs once per day).
 
 ---
 
 ## What is Test ROS?
 
-- **Test ROS** is a separate flow from the normal (production) Daily ROS.
-- It pays **real USDT** into users’ **Earning Wallets** and creates **real transactions** with type **“Test ROS Payout”**.
-- It is **safe to run multiple times per day** and does **not** affect:
-  - Daily declaration / Daily ROS
-  - Stake progress toward 200%
-  - Existing Declare or Distribute actions
+- **Test ROS** is the **Test Trigger** for ROS; the **Normal Trigger** is production daily ROS (runs once per day).
+- **Same logic as Normal Trigger:** The backend uses the **same business logic, calculations, and data handling** for both. Test Trigger updates **stake progress** (e.g. total earned, progress to 200%) and enforces the **200% cap** like the Normal Trigger.
+- **Only difference:** Normal runs **once per day**; Test can run **multiple times per day** for testing.
+- It pays **real USDT** into users’ **Earning Wallets** and creates **real transactions** with type **“Test ROS Payout”**. It does not use the daily declaration or the once-per-day distribution lock.
 
-**When to use it:** For example, after seeding data (e.g. 50k deposit + 20k stake), use Test ROS to verify that ROS behaviour and payouts work without waiting for the next calendar-day ROS run.
+**Stake card:** The same Stake Card is used for both triggers. The frontend reads total earned and progress from the API; both triggers update those same fields, so the card updates after a Test ROS run just like after a Normal ROS run.
+
+**When to use it:** For example, after seeding data (e.g. 50k deposit + 20k stake), use Test ROS to verify ROS behaviour and see the stake card update without waiting for the next calendar-day run.
 
 ---
 
@@ -72,8 +72,8 @@ You must be on this page to use Trigger Test ROS.
 
 ## Step 6: Confirm and submit
 
-1. Read the short note in the modal: _“Pays real USDT to all users’ earning wallets. Safe to run multiple times. Does not affect daily ROS or stake progress.”_
-2. Click the **“Trigger Test ROS”** button at the bottom of the modal.
+1. Read the short note in the modal: pays real USDT to earning wallets and updates the stake card like normal ROS; safe to run multiple times.
+2. Click the **"Trigger Test ROS"** button at the bottom of the modal.
 
 ---
 
@@ -141,7 +141,7 @@ You must be on this page to use Trigger Test ROS.
 
 - **Same permissions as Declare/Distribute:** You need the same admin permissions and 2FA as for “Declare” or “Distribute” on Daily Declaration Returns.
 - **Real money:** Test ROS pays **real USDT** into earning wallets. Use it in environments and with percentages you intend.
-- **Idempotent and safe for calendar:** You can run it multiple times; it does not change daily declaration, stake progress, or production ROS.
+- **Same stake card as normal ROS:** Test ROS updates the same stake fields (total earned, progress to 200%) as the daily run. You can run it multiple times; it does not use the daily declaration or once-per-day lock.
 - **Separate from Declare/Distribute:** “Trigger Test ROS” does not replace or run the normal “Declare” or “Distribute” actions; it is an extra, separate action.
 
 ---

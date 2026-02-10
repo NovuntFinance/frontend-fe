@@ -117,8 +117,8 @@ export function DistributionStatus({
               Or run Test ROS (no date)
             </p>
             <p className="mb-3 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-              Pays real USDT to all users&apos; earning wallets. Safe to run
-              multiple times. Does not affect daily ROS or stake progress.
+              Pays real USDT to earning wallets and updates the stake card like
+              normal ROS. Safe to run multiple times.
             </p>
             <Button
               type="button"
