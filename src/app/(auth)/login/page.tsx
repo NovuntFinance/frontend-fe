@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -25,10 +25,6 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
-import {
-  TurnstileWidget,
-  type TurnstileWidgetHandle,
-} from '@/components/auth/TurnstileWidget';
 import Loading from '@/components/ui/loading';
 
 /**
@@ -98,7 +94,6 @@ function LoginPageContent() {
     useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
-  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   const {
     register,
@@ -160,13 +155,11 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
-      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
-
-      // Phase 1 API expects { email?, username?, password }; include Turnstile token when backend expects it
+      // Phase 1 API expects { email?, username?, password }
+      // Strip out rememberMe since it's frontend-only
       const loginPayload = {
         email: data.email.trim().toLowerCase(), // Normalize email
         password: data.password,
-        ...(turnstileToken ? { turnstileToken } : {}),
         // Don't send rememberMe - it's handled client-side
       };
 
@@ -174,7 +167,6 @@ function LoginPageContent() {
         email: loginPayload.email,
         hasPassword: !!loginPayload.password,
         passwordLength: loginPayload.password?.length || 0,
-        hasTurnstileToken: !!turnstileToken,
       });
 
       const result = await loginMutation.mutateAsync(loginPayload);
@@ -292,24 +284,6 @@ function LoginPageContent() {
         // Get status code
         statusCode = err.statusCode || err.response?.status || 401;
 
-        const responseData = err.response?.data || err.responseData;
-
-        // Turnstile verification failed: show message and reset widget so user can retry
-        if (
-          statusCode === 400 &&
-          responseData &&
-          typeof responseData === 'object' &&
-          (responseData as { code?: string }).code === 'TURNSTILE_FAILED'
-        ) {
-          turnstileRef.current?.reset();
-          setError('root', {
-            message:
-              (responseData as { message?: string }).message ||
-              'Security check failed. Please complete the verification and try again.',
-          });
-          return;
-        }
-
         // Try to get backend error message from multiple possible locations
         if (
           err.message &&
@@ -341,6 +315,7 @@ function LoginPageContent() {
         }
 
         // Check for EMAIL_NOT_VERIFIED error code and passwordResetRequired
+        const responseData = err.response?.data || err.responseData;
         if (responseData && typeof responseData === 'object') {
           errorCode = responseData.code || errorCode;
           passwordResetRequired =
@@ -542,6 +517,11 @@ function LoginPageContent() {
           <AlertCircle className="h-4 w-4 text-orange-400" />
           <AlertDescription className="text-orange-200">
             <strong>Backend Connection Issue:</strong> {backendStatus.message}
+            <br />
+            <span className="mt-1 block text-sm">
+              If using Render free tier, the server might be sleeping. Please
+              wait 30-60 seconds and try again.
+            </span>
           </AlertDescription>
         </Alert>
       )}
@@ -731,9 +711,6 @@ function LoginPageContent() {
                 Remember me for 30 days
               </Label>
             </div>
-
-            {/* Cloudflare Turnstile */}
-            <TurnstileWidget widgetRef={turnstileRef} size="normal" />
           </CardContent>
 
           <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">

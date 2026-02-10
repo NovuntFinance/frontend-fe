@@ -6,9 +6,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { registrationBonusApi } from '@/services/registrationBonusApi';
 import { queryKeys } from '@/lib/queries';
-import {
-  RegistrationBonusStatus,
-  type RegistrationBonusStatusResponse,
+import type {
+  RegistrationBonusStatusResponse,
+  ProcessStakeRequest,
+  ProcessStakeResponse,
 } from '@/types/registrationBonus';
 import { toast } from 'sonner';
 
@@ -22,21 +23,19 @@ export function useRegistrationBonus() {
     queryKey: queryKeys.registrationBonusStatus,
     queryFn: () => registrationBonusApi.getStatus(),
     refetchInterval: (query) => {
-      const data = query.state.data as
-        | RegistrationBonusStatusResponse
-        | undefined;
+      const data = query.state.data as RegistrationBonusStatusResponse | undefined;
       const status = data?.data?.status;
-
+      
       // Smart polling based on status
       switch (status) {
-        case RegistrationBonusStatus.PENDING:
-        case RegistrationBonusStatus.REQUIREMENTS_MET:
+        case 'PENDING':
+        case 'REQUIREMENTS_MET':
           return 30000; // 30 seconds - active user
-        case RegistrationBonusStatus.BONUS_ACTIVE:
+        case 'BONUS_ACTIVE':
           return 300000; // 5 minutes - less frequent
-        case RegistrationBonusStatus.EXPIRED:
-        case RegistrationBonusStatus.COMPLETED:
-        case RegistrationBonusStatus.CANCELLED:
+        case 'EXPIRED':
+        case 'COMPLETED':
+        case 'CANCELLED':
           return false; // No polling needed
         default:
           return 60000; // 1 minute default
@@ -55,42 +54,30 @@ export function useRegistrationBonus() {
  */
 export function useProcessStake() {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: ({
-      stakeId,
-      stakeAmount,
-    }: {
-      stakeId: string;
-      stakeAmount: number;
-    }) => registrationBonusApi.processStake(stakeId, stakeAmount),
+    mutationFn: ({ stakeId, stakeAmount }: { stakeId: string; stakeAmount: number }) =>
+      registrationBonusApi.processStake(stakeId, stakeAmount),
     onSuccess: (data) => {
       // Invalidate and refetch bonus status
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.registrationBonusStatus,
-      });
-
+      queryClient.invalidateQueries({ queryKey: queryKeys.registrationBonusStatus });
+      
       // Show success message
       if (data.success && data.bonusAmount) {
         toast.success('Bonus Activated!', {
-          description:
-            data.message || `You received $${data.bonusAmount} bonus stake!`,
+          description: data.message || `You received $${data.bonusAmount} bonus stake!`,
           duration: 5000,
         });
       } else if (data.success) {
         toast.info('Stake Processed', {
-          description:
-            data.message || 'Complete remaining requirements to activate bonus',
+          description: data.message || 'Complete remaining requirements to activate bonus',
           duration: 4000,
         });
       }
     },
     onError: (error: any) => {
       console.error('[useProcessStake] Error:', error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to process stake for bonus';
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to process stake for bonus';
       toast.error('Bonus Processing Failed', {
         description: errorMessage,
         duration: 5000,
@@ -98,3 +85,4 @@ export function useProcessStake() {
     },
   });
 }
+

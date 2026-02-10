@@ -275,11 +275,11 @@ export const teamRankApi = {
           } else if (descriptor.get) {
             try {
               extractedProps[key] = descriptor.get();
-            } catch (e) {
+            } catch {
               extractedProps[key] = '[Getter error]';
             }
           }
-        } catch (e) {
+        } catch {
           // Skip
         }
       });
@@ -401,11 +401,11 @@ export const teamRankApi = {
           } else if (descriptor.get) {
             try {
               extractedProps[key] = descriptor.get();
-            } catch (e) {
+            } catch {
               extractedProps[key] = '[Getter error]';
             }
           }
-        } catch (e) {
+        } catch {
           // Skip
         }
       });
@@ -509,11 +509,11 @@ export const teamRankApi = {
           } else if (descriptor.get) {
             try {
               extractedProps[key] = descriptor.get();
-            } catch (e) {
+            } catch {
               extractedProps[key] = '[Getter error]';
             }
           }
-        } catch (e) {
+        } catch {
           // Skip
         }
       });
@@ -620,11 +620,11 @@ export const teamRankApi = {
           } else if (descriptor.get) {
             try {
               extractedProps[key] = descriptor.get();
-            } catch (e) {
+            } catch {
               extractedProps[key] = '[Getter error]';
             }
           }
-        } catch (e) {
+        } catch {
           // Skip
         }
       });

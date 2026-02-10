@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { DailyDeclarationReturnsManager } from '@/components/admin/dailyDeclarationReturns/DailyDeclarationReturnsManager';
+import { TodayDistributionForm } from '@/components/admin/dailyDeclarationReturns/TodayDistributionForm';
+import { HistoryTable } from '@/components/admin/dailyDeclarationReturns/HistoryTable';
 
 export default function DailyDeclarationReturnsPage() {
   return (
@@ -12,12 +13,22 @@ export default function DailyDeclarationReturnsPage() {
           Daily Declaration Returns
         </h1>
         <p className="text-xs leading-relaxed text-gray-600 sm:text-sm md:text-base dark:text-gray-400">
-          Declare and manage pools + ROS (Returns on Stake) for specific dates
+          Queue, modify, and track ROS & pool distributions for today
         </p>
       </div>
 
-      {/* Main Manager Component */}
-      <DailyDeclarationReturnsManager />
+      {/* Two-Column Layout */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column: Form (60%) */}
+        <div className="lg:col-span-2">
+          <TodayDistributionForm />
+        </div>
+
+        {/* Right Column: History (40%) */}
+        <div className="lg:col-span-1">
+          <HistoryTable />
+        </div>
+      </div>
     </div>
   );
 }

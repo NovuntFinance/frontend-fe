@@ -5,7 +5,6 @@
 
 import dynamic from 'next/dynamic';
 import { ShimmerCard } from '@/components/ui/shimmer';
-import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Loading fallback for modals

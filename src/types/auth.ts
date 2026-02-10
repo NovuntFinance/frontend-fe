@@ -22,16 +22,13 @@ export interface RegisterRequest {
   phoneNumber: string; // ✅ REQUIRED (was optional before)
   countryCode: string; // ✅ REQUIRED (was optional before)
   referralCode?: string; // ✅ Optional (only optional field)
-  /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
-  turnstileToken?: string;
+  turnstileToken?: string; // ✅ Optional Cloudflare Turnstile token for bot protection
 }
 
 export interface LoginRequest {
   email?: string; // Can use email OR username
   username?: string;
   password: string;
-  /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
-  turnstileToken?: string;
 }
 
 export interface VerifyEmailRequest {

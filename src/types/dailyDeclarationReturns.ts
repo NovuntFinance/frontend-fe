@@ -294,3 +294,185 @@ export interface TriggerTestROSResponse {
     errors: string[] | null;
   };
 }
+
+// ==================== TODAY'S DISTRIBUTION (NEW) ====================
+
+/**
+ * Today's Distribution Status Response
+ * GET /api/v1/admin/daily-declaration-returns/today/status
+ */
+export interface TodayStatusResponse {
+  success: boolean;
+  data: {
+    today: string; // YYYY-MM-DD (current date)
+    status: 'EMPTY' | 'PENDING' | 'SCHEDULED' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
+    scheduledFor: string | null; // ISO 8601 timestamp (e.g., "2026-02-10T14:59:59Z")
+    values: {
+      rosPercentage: number;
+      premiumPoolAmount: number;
+      performancePoolAmount: number;
+      description: string;
+    };
+    lastExecution: {
+      status: 'COMPLETED' | 'FAILED' | null;
+      rosStats?: {
+        processedStakes: number;
+        totalDistributed: number;
+      };
+      premiumPoolStats?: {
+        usersReceived: number;
+        totalDistributed: number;
+      };
+      performancePoolStats?: {
+        usersReceived: number;
+        totalDistributed: number;
+      };
+      executionTimeMs?: number;
+      executedAt?: string;
+      error?: string;
+    } | null;
+  };
+}
+
+/**
+ * Queue Distribution Request
+ * POST /api/v1/admin/daily-declaration-returns/today/queue
+ */
+export interface QueueDistributionRequest {
+  rosPercentage: number; // 0-100
+  premiumPoolAmount: number; // >= 0
+  performancePoolAmount: number; // >= 0
+  description?: string;
+  twoFACode?: string; // Required if admin has 2FA enabled
+}
+
+/**
+ * Queue Distribution Response
+ * POST /api/v1/admin/daily-declaration-returns/today/queue
+ */
+export interface QueueDistributionResponse {
+  success: boolean;
+  message: string;
+  data: TodayStatusResponse['data']; // Returns updated status
+}
+
+/**
+ * Modify Distribution Request
+ * PATCH /api/v1/admin/daily-declaration-returns/today/modify
+ */
+export interface ModifyDistributionRequest {
+  rosPercentage?: number;
+  premiumPoolAmount?: number;
+  performancePoolAmount?: number;
+  description?: string;
+  twoFACode?: string;
+}
+
+/**
+ * Modify Distribution Response
+ * PATCH /api/v1/admin/daily-declaration-returns/today/modify
+ */
+export interface ModifyDistributionResponse {
+  success: boolean;
+  message: string;
+  data: TodayStatusResponse['data']; // Returns updated status
+}
+
+/**
+ * Cancel Distribution Request
+ * DELETE /api/v1/admin/daily-declaration-returns/today/cancel
+ */
+export interface CancelDistributionRequest {
+  twoFACode?: string;
+}
+
+/**
+ * Cancel Distribution Response
+ * DELETE /api/v1/admin/daily-declaration-returns/today/cancel
+ */
+export interface CancelDistributionResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * History Entry (from history list)
+ */
+export interface HistoryEntry {
+  date: string; // YYYY-MM-DD
+  status: 'COMPLETED' | 'FAILED';
+  rosPercentage: number;
+  poolsAmount: number;
+  usersCount: number;
+  executedAt: string; // Display format (e.g., "3:59:59 PM")
+  executedAtISO: string; // ISO 8601 timestamp
+  error?: string; // If failed
+}
+
+/**
+ * History Filters
+ * GET /api/v1/admin/daily-declaration-returns/history
+ */
+export interface HistoryFilters {
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  status?: 'COMPLETED' | 'FAILED' | 'ALL'; // Default: 'ALL'
+  queuedBy?: string; // Admin ID/email
+  page?: number; // Default: 1
+  limit?: number; // Default: 50
+}
+
+/**
+ * Get History Response
+ * GET /api/v1/admin/daily-declaration-returns/history
+ */
+export interface GetHistoryResponse {
+  success: boolean;
+  data: {
+    records: HistoryEntry[];
+    totalRecords: number;
+    currentPage: number;
+    pageLimit: number;
+  };
+}
+
+/**
+ * Distribution Details Response
+ * GET /api/v1/admin/daily-declaration-returns/{date}/details
+ */
+export interface DistributionDetailsResponse {
+  success: boolean;
+  data: {
+    date: string;
+    status: 'COMPLETED' | 'FAILED';
+    queuedBy: {
+      _id: string;
+      email: string;
+      username: string;
+    };
+    queuedAt: string;
+    executedAt: string;
+    values: {
+      rosPercentage: number;
+      premiumPoolAmount: number;
+      performancePoolAmount: number;
+      description?: string;
+    };
+    rosDistribution?: {
+      processedStakes: number;
+      totalDistributed: number;
+    };
+    poolDistribution?: {
+      premium: {
+        usersCount: number;
+        totalAmount: number;
+      };
+      performance: {
+        usersCount: number;
+        totalAmount: number;
+      };
+    };
+    executionTimeMs: number;
+    error?: string;
+  };
+}

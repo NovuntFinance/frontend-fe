@@ -13,6 +13,16 @@ import type {
   DistributeDeclarationResponse,
   TriggerTestROSRequest,
   TriggerTestROSResponse,
+  TodayStatusResponse,
+  QueueDistributionRequest,
+  QueueDistributionResponse,
+  ModifyDistributionRequest,
+  ModifyDistributionResponse,
+  CancelDistributionRequest,
+  CancelDistributionResponse,
+  GetHistoryResponse,
+  HistoryFilters,
+  DistributionDetailsResponse,
 } from '@/types/dailyDeclarationReturns';
 
 /**
@@ -176,6 +186,134 @@ class DailyDeclarationReturnsService {
       data
     );
     return response.data;
+  }
+
+  // ==================== TODAY'S DISTRIBUTION (NEW) ====================
+
+  /**
+   * Get today's distribution status
+   * GET /api/v1/admin/daily-declaration-returns/today/status
+   * Note: GET requests do NOT require 2FA
+   */
+  async getTodayStatus(): Promise<TodayStatusResponse> {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const response = await api.get<TodayStatusResponse>(
+      '/admin/daily-declaration-returns/today/status'
+    );
+    return response.data;
+  }
+
+  /**
+   * Queue a distribution for today
+   * POST /api/v1/admin/daily-declaration-returns/today/queue
+   */
+  async queueDistribution(
+    data: QueueDistributionRequest
+  ): Promise<QueueDistributionResponse> {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post<QueueDistributionResponse>(
+      '/admin/daily-declaration-returns/today/queue',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Modify queued distribution for today
+   * PATCH /api/v1/admin/daily-declaration-returns/today/modify
+   */
+  async modifyDistribution(
+    data: ModifyDistributionRequest
+  ): Promise<ModifyDistributionResponse> {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.patch<ModifyDistributionResponse>(
+      '/admin/daily-declaration-returns/today/modify',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Cancel queued distribution for today
+   * DELETE /api/v1/admin/daily-declaration-returns/today/cancel
+   */
+  async cancelDistribution(
+    data: CancelDistributionRequest
+  ): Promise<CancelDistributionResponse> {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.delete<CancelDistributionResponse>(
+      '/admin/daily-declaration-returns/today/cancel',
+      { data }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get distribution history
+   * GET /api/v1/admin/daily-declaration-returns/history
+   * Note: GET requests do NOT require 2FA
+   */
+  async getHistory(filters?: HistoryFilters): Promise<GetHistoryResponse> {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const params: Record<string, string | number> = {};
+
+    if (filters?.startDate) {
+      params.startDate = filters.startDate;
+    }
+    if (filters?.endDate) {
+      params.endDate = filters.endDate;
+    }
+    if (filters?.status && filters.status !== 'ALL') {
+      params.status = filters.status;
+    }
+    if (filters?.queuedBy) {
+      params.queuedBy = filters.queuedBy;
+    }
+    if (filters?.page) {
+      params.page = filters.page;
+    }
+    if (filters?.limit) {
+      params.limit = filters.limit;
+    }
+
+    const response = await api.get<GetHistoryResponse>(
+      '/admin/daily-declaration-returns/history',
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get distribution details for a specific date
+   * GET /api/v1/admin/daily-declaration-returns/{date}/details
+   * Note: GET requests do NOT require 2FA
+   */
+  async getDistributionDetails(
+    date: string
+  ): Promise<DistributionDetailsResponse> {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const response = await api.get<DistributionDetailsResponse>(
+      `/admin/daily-declaration-returns/${date}/details`
+    );
+    return response.data;
+  }
+
+  /**
+   * Export distribution history
+   * GET /api/v1/admin/daily-declaration-returns/history/export
+   * Note: Returns file URL or triggers download
+   */
+  async exportHistory(format: 'csv' | 'pdf'): Promise<string> {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const response = await api.get<{ data: { downloadUrl: string } }>(
+      '/admin/daily-declaration-returns/history/export',
+      { params: { format } }
+    );
+    return response.data.data.downloadUrl;
   }
 }
 

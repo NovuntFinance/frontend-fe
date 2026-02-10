@@ -43,8 +43,6 @@ import {
 import {
   AdminDashboardData,
   AdminDashboardTimeframe,
-  AdminUser,
-  UserFilters,
 } from '@/types/admin';
 import type {
   AdminAnalyticsDashboardData,
@@ -53,7 +51,6 @@ import type {
 import { useAuthStore } from '@/store/authStore';
 import {
   getStakingStreak,
-  type StakingStreakResponse,
 } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
 import { announcementsApi } from '@/services/announcementsApi';
@@ -2239,9 +2236,6 @@ export function useUpdateNotificationSettings() {
 
 import type {
   DeclaredProfitsFilters,
-  GetDeclaredProfitsResponse,
-  TodayProfitResponse,
-  ProfitHistoryResponse,
 } from '@/types/dailyProfit';
 
 /**

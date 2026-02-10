@@ -6,7 +6,6 @@
  */
 
 import {
-  PASSWORD_REGEX,
   EMAIL_REGEX,
   VERIFICATION_CODE_REGEX,
   BackendUser,
