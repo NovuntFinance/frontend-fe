@@ -15,8 +15,12 @@ export interface Stake {
   source: 'funded' | 'earning' | 'both';
   targetReturn: number; // 200% of amount (or 100% for bonus stakes)
   totalEarned: number;
-  progressToTarget: string; // "45.50%"
+  progressToTarget: string; // "45.50%" — % of the way to target (0–100 scale)
   remainingToTarget: number;
+  /** Current ROS as % of stake (e.g. 190 for $38k on $20k). Backend sends this for 0–200% scale label. */
+  currentROSPercent?: number;
+  /** Target ROS % (e.g. 200 for regular stakes, 100 for bonus). */
+  targetROSPercent?: number;
   goal?: string; // Goal for this stake (e.g., "Wedding", "Housing")
   weeklyPayouts: Array<{
     week: number;
@@ -28,6 +32,20 @@ export interface Stake {
   type?: 'regular' | 'registration_bonus' | 'referral_bonus'; // Stake type
   isRegistrationBonus?: boolean; // Flag for bonus stakes
   maxReturnMultiplier?: number; // 2.0 for regular, 1.0 for bonus (100% cap)
+}
+
+/** True when stake has numerically reached the ROS target (totalEarned >= targetReturn or remainingToTarget <= 0). Use for "200% ROS Target Achieved!" banner. */
+export function hasReached200Target(stake: Stake): boolean {
+  if (
+    stake.totalEarned != null &&
+    stake.targetReturn != null &&
+    stake.targetReturn > 0 &&
+    stake.totalEarned >= stake.targetReturn
+  )
+    return true;
+  if (stake.remainingToTarget != null && stake.remainingToTarget <= 0)
+    return true;
+  return false;
 }
 
 export interface StakingDashboard {

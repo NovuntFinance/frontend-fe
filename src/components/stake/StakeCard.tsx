@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
-import { Stake } from '@/lib/queries/stakingQueries';
+import { Stake, hasReached200Target } from '@/lib/queries/stakingQueries';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import {
   Card,
@@ -55,6 +55,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
     ? parseFloat(stake.progressToTarget.replace('%', ''))
     : 0;
   const isCompleted = stake.status === 'completed';
+  const hasReachedTarget = hasReached200Target(stake);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -181,16 +182,19 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         </CardHeader>
 
         <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-          {/* Progress Section */}
+          {/* Progress Section — label makes 0–200% scale explicit (not 0–100%) */}
           <div className="mb-4 space-y-3">
             {/* Progress Bar */}
             <div className="space-y-2">
-              <div className="flex justify-between text-xs sm:text-sm">
+              <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                 <span className="text-muted-foreground">
-                  Progress to {stakingConfig.goalTargetPercentage}% ROS
+                  Progress to {maxReturnCap}% ROS
                 </span>
                 <span className="font-semibold">
-                  {stake.progressToTarget || '0%'}
+                  {typeof stake.currentROSPercent === 'number' &&
+                  typeof stake.targetROSPercent === 'number'
+                    ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% ROS`
+                    : `${stake.progressToTarget || '0%'} of the way to ${maxReturnCap}% ROS`}
                 </span>
               </div>
               <div className="bg-muted h-2 overflow-hidden rounded-full">
@@ -322,11 +326,11 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
             </div>
           )}
 
-          {/* Completed Badge */}
-          {isCompleted && (
+          {/* Completed Badge – show only when stake has actually reached target (totalEarned >= targetReturn or remainingToTarget <= 0) */}
+          {hasReachedTarget && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-100/50 p-2 sm:p-3 dark:border-emerald-800 dark:bg-emerald-900/30">
               <p className="text-center text-xs font-medium text-emerald-900 sm:text-sm dark:text-emerald-100">
-                🎉 {stakingConfig.goalTargetPercentage}% ROS Target Achieved!
+                🎉 {maxReturnCap}% ROS Target Achieved!
               </p>
             </div>
           )}
