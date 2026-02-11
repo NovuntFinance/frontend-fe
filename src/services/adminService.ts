@@ -261,11 +261,18 @@ export const createAdminApi = (
           });
         }
       } else if (status === 401) {
-        // Unauthorized - clear cache
+        // Unauthorized - session expired or invalid token
         console.error(
-          '[AdminService] ❌ 401 Unauthorized - admin token may be invalid or expired'
+          '[AdminService] ❌ 401 Unauthorized - redirecting to login'
         );
         cached2FA = null;
+
+        // Clear auth data and redirect if in browser
+        adminAuthService.logout().then(() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/admin/login?expired=true';
+          }
+        });
       }
 
       return Promise.reject(error);
