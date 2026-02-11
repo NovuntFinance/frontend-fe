@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -25,6 +25,10 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import Loading from '@/components/ui/loading';
 
 /**
@@ -46,6 +50,7 @@ function LoginPageContent() {
     healthy: boolean;
     message: string;
   } | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   // Check backend health on mount
   useEffect(() => {
@@ -156,10 +161,10 @@ function LoginPageContent() {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
       // Phase 1 API expects { email?, username?, password }
-      // Strip out rememberMe since it's frontend-only
       const loginPayload = {
         email: data.email.trim().toLowerCase(), // Normalize email
         password: data.password,
+        turnstileToken: turnstileRef.current?.getToken(),
         // Don't send rememberMe - it's handled client-side
       };
 
@@ -710,6 +715,11 @@ function LoginPageContent() {
               >
                 Remember me for 30 days
               </Label>
+            </div>
+
+            {/* Cloudflare Turnstile */}
+            <div className="flex justify-center">
+              <TurnstileWidget widgetRef={turnstileRef} />
             </div>
           </CardContent>
 
