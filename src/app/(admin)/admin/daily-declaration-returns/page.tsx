@@ -1,34 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TodayDistributionForm } from '@/components/admin/dailyDeclarationReturns/TodayDistributionForm';
 import { HistoryTable } from '@/components/admin/dailyDeclarationReturns/HistoryTable';
+import { DailyDeclarationReturnsManager } from '@/components/admin/dailyDeclarationReturns/DailyDeclarationReturnsManager';
 
 export default function DailyDeclarationReturnsPage() {
+  const [activeTab, setActiveTab] = useState('today');
+
   return (
-    <div className="min-h-screen space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 p-3 sm:space-y-6 sm:p-4 md:p-6 lg:p-8 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <div className="space-y-2 rounded-xl bg-white/50 p-3 backdrop-blur-sm sm:rounded-2xl sm:p-4 md:p-6 dark:bg-gray-800/50">
-        <h1 className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl md:text-3xl lg:text-4xl dark:from-blue-400 dark:to-purple-400">
-          Daily Declaration Returns
-        </h1>
-        <p className="text-xs leading-relaxed text-gray-600 sm:text-sm md:text-base dark:text-gray-400">
-          Queue, modify, and track ROS & pool distributions for today
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Daily Declaration Returns
+          </h1>
+          <p className="text-muted-foreground">
+            Manage daily ROS distributions, premium pools, and performance pools
+          </p>
+        </div>
       </div>
 
-      {/* Two-Column Layout */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Form (60%) */}
-        <div className="lg:col-span-2">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="today">Today&apos;s Distribution</TabsTrigger>
+          <TabsTrigger value="history">Distribution History</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar & Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="today" className="space-y-6">
           <TodayDistributionForm />
-        </div>
+        </TabsContent>
 
-        {/* Right Column: History (40%) */}
-        <div className="lg:col-span-1">
+        <TabsContent value="history" className="space-y-6">
           <HistoryTable />
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-6">
+          <DailyDeclarationReturnsManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
