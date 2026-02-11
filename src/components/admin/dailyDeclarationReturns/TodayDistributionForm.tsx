@@ -33,14 +33,11 @@ const STATUS_MESSAGES: Record<string, string> = {
   FAILED: 'Failed',
 };
 
-const STATUS_ICONS: Record<
-  string,
-  React.ReactNode
-> = {
+const STATUS_ICONS: Record<string, React.ReactNode> = {
   EMPTY: <AlertCircle className="h-5 w-5 text-gray-600" />,
-  PENDING: <Clock className="h-5 w-5 text-blue-600 animate-pulse" />,
+  PENDING: <Clock className="h-5 w-5 animate-pulse text-blue-600" />,
   SCHEDULED: <Clock className="h-5 w-5 text-blue-600" />,
-  EXECUTING: <Loader2 className="h-5 w-5 text-amber-600 animate-spin" />,
+  EXECUTING: <Loader2 className="h-5 w-5 animate-spin text-amber-600" />,
   COMPLETED: <CheckCircle2 className="h-5 w-5 text-green-600" />,
   FAILED: <XCircle className="h-5 w-5 text-red-600" />,
 };
@@ -62,6 +59,7 @@ export function TodayDistributionForm() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [countdown, setCountdown] = useState<string>('');
 
   // Set up 2FA here
   useEffect(() => {
@@ -70,16 +68,32 @@ export function TodayDistributionForm() {
     });
   }, [promptFor2FA]);
 
-  // Fetch today's status
-  const { data: statusData, isLoading, refetch } = useQuery({
+  const {
+    data: statusData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['today-status'],
     queryFn: async () => {
-      const response =
-        await dailyDeclarationReturnsService.getTodayStatus();
+      const response = await dailyDeclarationReturnsService.getTodayStatus();
       return response.data;
     },
-    refetchInterval: POLLING_INTERVAL,
-    staleTime: 10000,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'EXECUTING') return 10000; // 10s while executing
+      if (data?.status === 'PENDING') {
+        const now = new Date();
+        const scheduled = data.scheduledFor
+          ? new Date(data.scheduledFor)
+          : null;
+        if (scheduled) {
+          const diff = scheduled.getTime() - now.getTime();
+          if (diff > 0 && diff < 10 * 60 * 1000) return 10000; // 10s if within 10 mins
+        }
+      }
+      return POLLING_INTERVAL;
+    },
+    staleTime: 5000,
   });
 
   // Auto-update form values from API response
@@ -110,6 +124,39 @@ export function TodayDistributionForm() {
   useEffect(() => {
     localStorage.setItem('dailyDeclarationForm', JSON.stringify(formValues));
   }, [formValues]);
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (statusData?.status !== 'PENDING' || !statusData?.scheduledFor) {
+      setCountdown('');
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const scheduled = new Date(statusData.scheduledFor!);
+      const diff = scheduled.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown('Executing now...');
+        refetch();
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const parts = [];
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+      parts.push(`${seconds}s`);
+
+      setCountdown(parts.join(' '));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [statusData, refetch]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -378,9 +425,7 @@ export function TodayDistributionForm() {
               id="description"
               type="text"
               value={formValues.description}
-              onChange={(e) =>
-                handleInputChange('description', e.target.value)
-              }
+              onChange={(e) => handleInputChange('description', e.target.value)}
               disabled={isFormDisabled && !isEditing}
               placeholder="Optional notes..."
               className="mt-1"
@@ -405,9 +450,11 @@ export function TodayDistributionForm() {
           {STATUS_ICONS[status]}
           <div>
             <p className="font-semibold">{STATUS_MESSAGES[status]}</p>
-            {status === 'PENDING' && statusData?.scheduledFor && (
+            {status === 'PENDING' && (
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Execution in ~6 hours (after 3:59:59 PM Nigeria Time)
+                {countdown
+                  ? `Execution in ${countdown} (at 3:59:59 PM WAT)`
+                  : 'Scheduled for 3:59:59 PM WAT'}
               </p>
             )}
           </div>
@@ -442,7 +489,11 @@ export function TodayDistributionForm() {
                     stakes
                   </p>
                   <p className="text-sm">
-                    ${lastExecution.rosStats.totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    $
+                    {lastExecution.rosStats.totalDistributed.toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 2 }
+                    )}
                   </p>
                 </div>
               )}
@@ -454,8 +505,11 @@ export function TodayDistributionForm() {
                   Premium Pool
                 </p>
                 <p className="text-sm">
-                  {lastExecution.premiumPoolStats.usersReceived} users →{' '}
-                  ${lastExecution.premiumPoolStats.totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  {lastExecution.premiumPoolStats.usersReceived} users → $
+                  {lastExecution.premiumPoolStats.totalDistributed.toLocaleString(
+                    undefined,
+                    { maximumFractionDigits: 2 }
+                  )}
                 </p>
               </div>
             )}
@@ -466,8 +520,11 @@ export function TodayDistributionForm() {
                   Performance Pool
                 </p>
                 <p className="text-sm">
-                  {lastExecution.performancePoolStats.usersReceived} users →{' '}
-                  ${lastExecution.performancePoolStats.totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  {lastExecution.performancePoolStats.usersReceived} users → $
+                  {lastExecution.performancePoolStats.totalDistributed.toLocaleString(
+                    undefined,
+                    { maximumFractionDigits: 2 }
+                  )}
                 </p>
               </div>
             )}
@@ -548,8 +605,7 @@ export function TodayDistributionForm() {
               size="lg"
               className="gap-2"
             >
-              {isCanceling && <Loader2 className="h-4 w-4 animate-spin" />}
-              ❌{' '}
+              {isCanceling && <Loader2 className="h-4 w-4 animate-spin" />}❌{' '}
               {showCancelConfirm ? 'Confirm Cancel' : 'Cancel Distribution'}
             </Button>
             {showCancelConfirm && (
@@ -568,7 +624,7 @@ export function TodayDistributionForm() {
       {showCancelConfirm && status === 'PENDING' && (
         <Card className="border-2 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
           <CardContent className="flex items-start gap-3 pt-6">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
             <div>
               <p className="font-semibold text-red-600 dark:text-red-400">
                 Are you sure?
