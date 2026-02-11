@@ -436,16 +436,22 @@ export function TodayDistributionForm() {
 
       {/* Status Indicator */}
       <Card
-        className={`border-2 ${
+        className={`relative overflow-hidden border-2 transition-all duration-500 ${
           status === 'COMPLETED'
-            ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
+            ? 'border-green-500/30 bg-green-50/50 backdrop-blur-sm dark:bg-green-950/20'
             : status === 'FAILED'
-              ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950'
+              ? 'border-red-500/30 bg-red-50/50 backdrop-blur-sm dark:bg-red-950/20'
               : status === 'PENDING'
-                ? 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950'
-                : 'border-gray-200'
+                ? 'border-blue-500/30 bg-blue-50/50 backdrop-blur-sm dark:bg-blue-950/20'
+                : status === 'EXECUTING'
+                  ? 'border-amber-500/30 bg-amber-50/50 backdrop-blur-sm dark:bg-amber-950/20'
+                  : 'border-gray-200 dark:border-gray-800'
         }`}
       >
+        {/* Animated background glow for active states */}
+        {(status === 'PENDING' || status === 'EXECUTING') && (
+          <div className="animate-shimmer absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        )}
         <CardContent className="flex items-center gap-3 pt-6">
           {STATUS_ICONS[status]}
           <div>
