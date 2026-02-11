@@ -48,7 +48,6 @@ import type {
   UpdateDeclarationRequest,
   DeleteDeclarationRequest,
   DistributeDeclarationRequest,
-  TriggerTestROSRequest,
 } from '@/types/dailyDeclarationReturns';
 
 // ============================================
@@ -1825,47 +1824,5 @@ export function useDistributeDeclaration() {
   });
 }
 
-/**
- * Trigger Test ROS
- * POST /api/v1/admin/daily-declaration-returns/test-ros
- * Pays real USDT to users' earning wallets (test_ros_payout). Same auth/2FA as Declare/Distribute.
- */
-export function useTriggerTestROS() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: TriggerTestROSRequest) => {
-      const { dailyDeclarationReturnsService } = await import(
-        '@/services/dailyDeclarationReturnsService'
-      );
-      return dailyDeclarationReturnsService.triggerTestROS(data);
-    },
-    onSuccess: (data) => {
-      const d = data?.data;
-      if (d) {
-        const timeSec = d.processingTimeMs
-          ? (d.processingTimeMs / 1000).toFixed(1)
-          : '—';
-        toast.success('Test ROS completed', {
-          description: `Distributed ${d.totalDistributed?.toLocaleString() ?? 0} USDT to ${d.userCount ?? 0} users in ${timeSec}s`,
-        });
-      } else {
-        toast.success(data?.message ?? 'Test ROS distribution completed');
-      }
-      queryClient.invalidateQueries({
-        queryKey: ADMIN_DECLARATION_RETURNS_KEY,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ADMIN_DAILY_PROFIT_DECLARED_KEY,
-      });
-    },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to run Test ROS';
-      toast.error(message);
-    },
-  });
-}
+// Test ROS functionality removed - all distributions now run via scheduled production flow only
+// See FRONTEND_UPDATE_TEST_ROS_REMOVED.md for details

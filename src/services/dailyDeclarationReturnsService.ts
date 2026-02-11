@@ -11,8 +11,6 @@ import type {
   DeleteDeclarationResponse,
   DistributeDeclarationRequest,
   DistributeDeclarationResponse,
-  TriggerTestROSRequest,
-  TriggerTestROSResponse,
   TodayStatusResponse,
   QueueDistributionRequest,
   QueueDistributionResponse,
@@ -170,22 +168,6 @@ class DailyDeclarationReturnsService {
       data
     );
     return { data: response.data, status: response.status };
-  }
-
-  /**
-   * Trigger Test ROS – pays real USDT to users' earning wallets (test_ros_payout).
-   * POST /api/v1/admin/daily-declaration-returns/test-ros
-   * Same auth and 2FA as other admin declaration write operations.
-   */
-  async triggerTestROS(
-    data: TriggerTestROSRequest
-  ): Promise<TriggerTestROSResponse> {
-    const api = createAdminApi(this.get2FACode);
-    const response = await api.post<TriggerTestROSResponse>(
-      '/admin/daily-declaration-returns/test-ros',
-      data
-    );
-    return response.data;
   }
 
   // ==================== TODAY'S DISTRIBUTION (NEW) ====================

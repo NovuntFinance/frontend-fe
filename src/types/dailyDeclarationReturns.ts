@@ -266,38 +266,8 @@ export interface DistributeDeclarationResponse {
   };
 }
 
-/**
- * Trigger Test ROS Request
- * POST /api/v1/admin/daily-declaration-returns/test-ros
- */
-export interface TriggerTestROSRequest {
-  rosPercentage: number; // 0–100
-  percentage?: number; // Legacy support (some backend versions use this)
-  profitPercentage?: number; // Legacy support (some backend versions use this)
-  premiumPoolAmount?: number; // Optional for test ROS
-  performancePoolAmount?: number; // Optional for test ROS
-  runId?: string; // Optional label for this run
-  twoFACode?: string; // Required if admin has 2FA enabled
-}
-
-/**
- * Trigger Test ROS Response
- * POST /api/v1/admin/daily-declaration-returns/test-ros
- */
-export interface TriggerTestROSResponse {
-  success: boolean;
-  message: string;
-  data: {
-    runId: string;
-    rosPercentage: number;
-    totalStakes: number;
-    processedStakes: number;
-    totalDistributed: number;
-    userCount: number;
-    processingTimeMs: number;
-    errors: string[] | null;
-  };
-}
+// Test ROS functionality has been removed from backend (see FRONTEND_UPDATE_TEST_ROS_REMOVED.md)
+// All distributions now run via scheduled production flow only
 
 // ==================== TODAY'S DISTRIBUTION (NEW) ====================
 

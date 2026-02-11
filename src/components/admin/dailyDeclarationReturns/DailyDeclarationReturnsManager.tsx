@@ -9,7 +9,6 @@ import { QualifierCounts } from '@/components/admin/pool/QualifierCounts';
 import { UnifiedDeclarationCalendar } from './UnifiedDeclarationCalendar';
 import { DeclareReturnsModal } from './DeclareReturnsModal';
 import { DeclaredReturnsList } from './DeclaredReturnsList';
-import { TriggerTestROSModal } from './TriggerTestROSModal';
 import { DistributionStatus } from '@/components/admin/dailyProfit/DistributionStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ export function DailyDeclarationReturnsManager() {
   >(null);
   const [isLoadingQualifiers, setIsLoadingQualifiers] = useState(true);
   const [declareModalOpen, setDeclareModalOpen] = useState(false);
-  const [testROSModalOpen, setTestROSModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const { promptFor2FA } = use2FA();
 
@@ -136,11 +134,9 @@ export function DailyDeclarationReturnsManager() {
           />
         </div>
 
-        {/* Distribution Status + Trigger Test ROS - right column */}
+        {/* Distribution Status - right column */}
         <div className="xl:col-span-1">
-          <DistributionStatus
-            onTriggerTestROSClick={() => setTestROSModalOpen(true)}
-          />
+          <DistributionStatus />
         </div>
       </div>
 
@@ -156,12 +152,6 @@ export function DailyDeclarationReturnsManager() {
         initialDate={editingDate || undefined}
         onSuccess={handleDeclareSuccess}
         maxRosPercentage={maxRosPercentage ?? DEFAULT_MAX_ROS}
-      />
-
-      {/* Test ROS Modal */}
-      <TriggerTestROSModal
-        open={testROSModalOpen}
-        onOpenChange={setTestROSModalOpen}
       />
     </div>
   );

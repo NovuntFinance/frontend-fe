@@ -1,13 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  ArrowRightLeft,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  Send,
-} from 'lucide-react';
+import { ArrowRightLeft, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,14 +16,9 @@ import { useTestDistributeDailyProfit } from '@/lib/mutations';
 import { toast } from '@/components/ui/enhanced-toast';
 import { utcDayString } from '@/lib/dateUtils';
 
-interface DistributionStatusProps {
-  /** When provided, shows a "Trigger Test ROS" button that opens the Test ROS modal */
-  onTriggerTestROSClick?: () => void;
-}
+interface DistributionStatusProps {}
 
-export function DistributionStatus({
-  onTriggerTestROSClick,
-}: DistributionStatusProps = {}) {
+export function DistributionStatus({}: DistributionStatusProps = {}) {
   const [selectedDate, setSelectedDate] = useState<string>(utcDayString());
   const [isDistributing, setIsDistributing] = useState(false);
   const testDistributeMutation = useTestDistributeDailyProfit();
@@ -109,28 +98,6 @@ export function DistributionStatus({
             </>
           )}
         </Button>
-
-        {/* Trigger Test ROS - pays real USDT to earning wallets (test_ros_payout), separate from date-based distribution */}
-        {onTriggerTestROSClick && (
-          <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-            <p className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-              Or run Test ROS (no date)
-            </p>
-            <p className="mb-3 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-              Pays real USDT to earning wallets and updates the stake card like
-              normal ROS. Safe to run multiple times.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full border-2 border-blue-200 font-semibold text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30"
-              onClick={onTriggerTestROSClick}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Trigger Test ROS
-            </Button>
-          </div>
-        )}
 
         {testDistributeMutation.isSuccess &&
           testDistributeMutation.data?.data && (
