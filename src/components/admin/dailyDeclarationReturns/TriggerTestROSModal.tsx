@@ -56,7 +56,9 @@ export function TriggerTestROSModal({
       }
 
       const response = await triggerMutation.mutateAsync({
-        percentage: pct,
+        rosPercentage: pct,
+        premiumPoolAmount: 0,
+        performancePoolAmount: 0,
         ...(runId.trim() ? { runId: runId.trim() } : {}),
         twoFACode,
       });
@@ -103,7 +105,7 @@ export function TriggerTestROSModal({
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">ROS %</p>
-                  <p className="font-medium">{result.percentage}%</p>
+                  <p className="font-medium">{result.rosPercentage}%</p>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Processed</p>

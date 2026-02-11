@@ -271,7 +271,9 @@ export interface DistributeDeclarationResponse {
  * POST /api/v1/admin/daily-declaration-returns/test-ros
  */
 export interface TriggerTestROSRequest {
-  percentage: number; // 0–100
+  rosPercentage: number; // 0–100
+  premiumPoolAmount?: number; // Optional for test ROS
+  performancePoolAmount?: number; // Optional for test ROS
   runId?: string; // Optional label for this run
   twoFACode?: string; // Required if admin has 2FA enabled
 }
@@ -285,7 +287,7 @@ export interface TriggerTestROSResponse {
   message: string;
   data: {
     runId: string;
-    percentage: number;
+    rosPercentage: number;
     totalStakes: number;
     processedStakes: number;
     totalDistributed: number;
@@ -305,7 +307,13 @@ export interface TodayStatusResponse {
   success: boolean;
   data: {
     today: string; // YYYY-MM-DD (current date)
-    status: 'EMPTY' | 'PENDING' | 'SCHEDULED' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
+    status:
+      | 'EMPTY'
+      | 'PENDING'
+      | 'SCHEDULED'
+      | 'EXECUTING'
+      | 'COMPLETED'
+      | 'FAILED';
     scheduledFor: string | null; // ISO 8601 timestamp (e.g., "2026-02-10T14:59:59Z")
     values: {
       rosPercentage: number;
