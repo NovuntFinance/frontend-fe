@@ -55,13 +55,26 @@ export function TriggerTestROSModal({
         return;
       }
 
+      console.log('🚀 [TriggerTestROSModal] Triggering Test ROS:', {
+        rosPercentage: pct,
+        percentage: pct, // Legacy support
+        profitPercentage: pct, // Legacy support
+        premiumPoolAmount: 0,
+        performancePoolAmount: 0,
+        runId: runId.trim() || undefined,
+      });
+
       const response = await triggerMutation.mutateAsync({
         rosPercentage: pct,
+        percentage: pct, // Include legacy for broad compatibility
+        profitPercentage: pct, // Include legacy for broad compatibility
         premiumPoolAmount: 0,
         performancePoolAmount: 0,
         ...(runId.trim() ? { runId: runId.trim() } : {}),
         twoFACode,
       });
+
+      console.log('✅ [TriggerTestROSModal] Test ROS Result:', response);
 
       if (response.success) {
         setResult(response.data);

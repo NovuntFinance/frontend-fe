@@ -272,6 +272,8 @@ export interface DistributeDeclarationResponse {
  */
 export interface TriggerTestROSRequest {
   rosPercentage: number; // 0–100
+  percentage?: number; // Legacy support (some backend versions use this)
+  profitPercentage?: number; // Legacy support (some backend versions use this)
   premiumPoolAmount?: number; // Optional for test ROS
   performancePoolAmount?: number; // Optional for test ROS
   runId?: string; // Optional label for this run
