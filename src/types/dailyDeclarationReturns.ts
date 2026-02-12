@@ -293,6 +293,8 @@ export interface TodayStatusResponse {
       performancePoolAmount: number;
       description: string;
     };
+    multiSlotEnabled?: boolean; // NEW - Whether multi-slot is enabled
+    distributionSlots?: IDistributionSlot[]; // NEW - Individual slot details
     lastExecution: {
       status: 'COMPLETED' | 'FAILED' | null;
       rosStats?: {
@@ -314,17 +316,70 @@ export interface TodayStatusResponse {
   };
 }
 
+// ==================== MULTI-SLOT DISTRIBUTION ====================
+
 /**
- * Queue Distribution Request
+ * Single distribution slot in declaration
+ */
+export interface IDistributionSlot {
+  slotNumber: number;
+  rosPercentage: number; // 0-100
+  scheduledFor: string; // ISO 8601 timestamp
+  status: 'PENDING' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
+  executionDetails?: {
+    executedAt?: string;
+    rosStats?: {
+      processedStakes: number;
+      totalDistributed: number;
+    };
+    premiumPoolStats?: {
+      usersReceived: number;
+      totalDistributed: number;
+    };
+    performancePoolStats?: {
+      usersReceived: number;
+      totalDistributed: number;
+    };
+    executionTimeMs?: number;
+    error?: string;
+  };
+}
+
+/**
+ * Queue Single-Slot Distribution Request (Legacy - Still Supported)
  * POST /api/v1/admin/daily-declaration-returns/today/queue
  */
-export interface QueueDistributionRequest {
+export interface QueueSingleSlotRequest {
   rosPercentage: number; // 0-100
   premiumPoolAmount: number; // >= 0
   performancePoolAmount: number; // >= 0
   description?: string;
   twoFACode?: string; // Required if admin has 2FA enabled
 }
+
+/**
+ * Queue Multi-Slot Distribution Request (NEW)
+ * POST /api/v1/admin/daily-declaration-returns/today/queue
+ */
+export interface QueueMultiSlotRequest {
+  multiSlotEnabled: true;
+  distributionSlots: {
+    slotNumber: number;
+    rosPercentage: number;
+  }[];
+  rosPercentage: number; // Total ROS (sum of all slots)
+  premiumPoolAmount: number; // Applied to all slots
+  performancePoolAmount: number; // Applied to all slots
+  description?: string;
+  twoFACode?: string;
+}
+
+/**
+ * Union type for queue requests
+ */
+export type QueueDistributionRequest =
+  | QueueSingleSlotRequest
+  | QueueMultiSlotRequest;
 
 /**
  * Queue Distribution Response
@@ -345,6 +400,11 @@ export interface ModifyDistributionRequest {
   premiumPoolAmount?: number;
   performancePoolAmount?: number;
   description?: string;
+  distributionSlots?: {
+    // NEW - For multi-slot modifications
+    slotNumber: number;
+    rosPercentage: number;
+  }[];
   twoFACode?: string;
 }
 

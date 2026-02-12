@@ -83,4 +83,7 @@ declare module 'lucide-react' {
   export const Award: Icon;
   export const Share2: Icon;
   export const Inbox: Icon;
+  export const Settings2: Icon;
+  export const MapPin: Icon;
+  export const Loader: Icon;
 }

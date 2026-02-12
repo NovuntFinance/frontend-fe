@@ -24,6 +24,7 @@ import { SettingTooltip } from './SettingTooltip';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
+import { CronSettingsPage } from '@/components/admin/cronSettings';
 
 /** Setting keys to hide from admin UI; daily distribution is done via Daily Declaration Returns page. */
 const HIDDEN_SETTING_KEYS = new Set<string>(['weekly_return_percentage']);
@@ -228,8 +229,7 @@ interface BundleSettingRowProps {
 
 function BundleSettingRow({ setting, onUpdate }: BundleSettingRowProps) {
   const controlType =
-    setting.ui?.controlType ??
-    (setting.type === 'boolean' ? 'toggle' : 'text');
+    setting.ui?.controlType ?? (setting.type === 'boolean' ? 'toggle' : 'text');
   const normalizedInitial = normalizeSettingValue(
     setting.value,
     controlType,
@@ -258,7 +258,9 @@ function BundleSettingRow({ setting, onUpdate }: BundleSettingRowProps) {
       controlType,
       setting.type
     );
-    setHasChanges(JSON.stringify(newValue) !== JSON.stringify(normalizedBackend));
+    setHasChanges(
+      JSON.stringify(newValue) !== JSON.stringify(normalizedBackend)
+    );
   };
 
   const handleSave = async () => {
@@ -407,6 +409,9 @@ export function SettingsManager({ category }: SettingsManagerProps) {
               {cat.title}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="distribution-schedule">
+            Distribution Schedule
+          </TabsTrigger>
         </TabsList>
         {list.map((cat) => (
           <TabsContent key={cat.key} value={cat.key} className="mt-4">
@@ -431,6 +436,9 @@ export function SettingsManager({ category }: SettingsManagerProps) {
             </Card>
           </TabsContent>
         ))}
+        <TabsContent value="distribution-schedule" className="mt-4">
+          <CronSettingsPage />
+        </TabsContent>
       </Tabs>
     </div>
   );
