@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TodayDistributionForm } from '@/components/admin/dailyDeclarationReturns/TodayDistributionForm';
 import { HistoryTable } from '@/components/admin/dailyDeclarationReturns/HistoryTable';
-import { DailyDeclarationReturnsManager } from '@/components/admin/dailyDeclarationReturns/DailyDeclarationReturnsManager';
 
 export default function DailyDeclarationReturnsPage() {
   const [activeTab, setActiveTab] = useState('today');
@@ -27,10 +26,9 @@ export default function DailyDeclarationReturnsPage() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="today">Today&apos;s Distribution</TabsTrigger>
           <TabsTrigger value="history">Distribution History</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar & Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="today" className="space-y-6">
@@ -39,10 +37,6 @@ export default function DailyDeclarationReturnsPage() {
 
         <TabsContent value="history" className="space-y-6">
           <HistoryTable />
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-6">
-          <DailyDeclarationReturnsManager />
         </TabsContent>
       </Tabs>
     </div>

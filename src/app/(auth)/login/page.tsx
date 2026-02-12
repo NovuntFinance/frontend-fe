@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -25,6 +25,10 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import Loading from '@/components/ui/loading';
 
 /**
@@ -94,6 +98,7 @@ function LoginPageContent() {
     useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   const {
     register,
@@ -155,11 +160,15 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
+      // Get Turnstile token if available
+      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
       const loginPayload = {
         email: data.email.trim().toLowerCase(), // Normalize email
         password: data.password,
+        ...(turnstileToken ? { turnstileToken } : {}),
         // Don't send rememberMe - it's handled client-side
       };
 
@@ -277,12 +286,24 @@ function LoginPageContent() {
       let statusCode = 401;
       let errorCode: string | undefined;
       let passwordResetRequired = false;
+      let turnstileFailed = false;
 
       if (typeof error === 'object' && error !== null) {
         const err = error as any;
 
         // Get status code
         statusCode = err.statusCode || err.response?.status || 401;
+
+        // Check for Turnstile failure
+        errorCode = err.code || err.response?.data?.code;
+        if (statusCode === 400 && errorCode === 'TURNSTILE_FAILED') {
+          turnstileFailed = true;
+          backendMessage =
+            err.message ||
+            'Verification failed. Please complete the security check and try again.';
+          // Reset Turnstile widget
+          turnstileRef.current?.reset();
+        }
 
         // Try to get backend error message from multiple possible locations
         if (
@@ -697,6 +718,7 @@ function LoginPageContent() {
             </div>
 
             {/* Remember Me */}
+            {/* Remember Me */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -711,6 +733,9 @@ function LoginPageContent() {
                 Remember me for 30 days
               </Label>
             </div>
+
+            {/* Cloudflare Turnstile */}
+            <TurnstileWidget widgetRef={turnstileRef} size="normal" />
           </CardContent>
 
           <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">

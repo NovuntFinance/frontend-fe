@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { dailyDeclarationReturnsService } from '@/services/dailyDeclarationReturnsService';
+import { poolService } from '@/services/poolService';
 import { use2FA } from '@/contexts/TwoFAContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { QualifierCounts } from '@/components/admin/pool/QualifierCounts';
+import { ShimmerCard } from '@/components/ui/shimmer';
 import { toast } from 'sonner';
 import {
   AlertCircle,
@@ -22,6 +25,7 @@ import type {
   QueueDistributionRequest,
   ModifyDistributionRequest,
 } from '@/types/dailyDeclarationReturns';
+import type { PoolQualifiersResponse } from '@/types/pool';
 
 const POLLING_INTERVAL = 30000; // 30 seconds
 const STATUS_MESSAGES: Record<string, string> = {
@@ -66,7 +70,24 @@ export function TodayDistributionForm() {
     dailyDeclarationReturnsService.set2FACodeGetter(async () => {
       return await promptFor2FA();
     });
+    poolService.set2FACodeGetter(async () => {
+      return await promptFor2FA();
+    });
   }, [promptFor2FA]);
+
+  // Fetch qualifier counts
+  const {
+    data: qualifiersData,
+    isLoading: isLoadingQualifiers,
+    refetch: refetchQualifiers,
+  } = useQuery({
+    queryKey: ['pool-qualifiers'],
+    queryFn: async () => {
+      const response = await poolService.getQualifiers();
+      return response.data;
+    },
+    staleTime: 60000, // 1 minute
+  });
 
   const {
     data: statusData,
@@ -310,6 +331,40 @@ export function TodayDistributionForm() {
 
   return (
     <div className="space-y-6">
+      {/* Qualifier Counts */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Qualifier Counts</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchQualifiers()}
+              disabled={isLoadingQualifiers}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${isLoadingQualifiers ? 'animate-spin' : ''}`}
+              />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingQualifiers ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <ShimmerCard className="h-32" />
+              <ShimmerCard className="h-32" />
+            </div>
+          ) : qualifiersData ? (
+            <QualifierCounts qualifiers={qualifiersData} />
+          ) : (
+            <p className="text-muted-foreground py-8 text-center">
+              Failed to load qualifier counts
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Header */}
       <Card>
         <CardHeader>

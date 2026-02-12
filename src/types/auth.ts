@@ -29,6 +29,7 @@ export interface LoginRequest {
   email?: string; // Can use email OR username
   username?: string;
   password: string;
+  turnstileToken?: string; // ✅ Optional Cloudflare Turnstile token for bot protection
 }
 
 export interface VerifyEmailRequest {
