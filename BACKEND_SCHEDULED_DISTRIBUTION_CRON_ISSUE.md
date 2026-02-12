@@ -12,6 +12,7 @@
 The scheduled distribution system is not executing distributions at their scheduled times. Distributions queued via the `/api/v1/admin/daily-declaration-returns/today/queue` endpoint remain in **PENDING** status indefinitely, even after their scheduled execution time has passed.
 
 **Impact:**
+
 - Admins queue distributions expecting automatic execution at scheduled times
 - Users do not receive their daily ROS (Return on Stake) profits
 - Pool distributions (Premium/Performance) are not processed
@@ -32,6 +33,7 @@ The scheduled distribution system is not executing distributions at their schedu
 2. Frontend calls: `POST /api/v1/admin/daily-declaration-returns/today/queue`
 
 3. Backend responds with:
+
    ```json
    {
      "success": true,
@@ -79,6 +81,7 @@ The scheduled distribution system is not executing distributions at their schedu
    - Records execution stats (processedStakes, totalDistributed, etc.)
 
 4. Frontend polls status and sees:
+
    ```json
    {
      "status": "COMPLETED",
@@ -109,6 +112,7 @@ The scheduled distribution system is not executing distributions at their schedu
 The scheduled distribution system requires:
 
 1. **Persistent Storage** (Database)
+
    ```
    Collection: DailyDeclarationReturns or similar
    Document Structure:
@@ -137,40 +141,41 @@ The scheduled distribution system requires:
    ```
 
 2. **Cron Job / Background Scheduler**
+
    ```javascript
    // Example using node-cron or similar
-   
+
    // Run every minute
    cron.schedule('* * * * *', async () => {
      try {
        console.log('[Cron] Checking for pending distributions...');
-       
+
        const now = new Date();
        const todayStr = now.toISOString().split('T')[0];
-       
+
        // Find distributions scheduled for execution
        const pendingDistributions = await DailyDeclarationReturns.find({
          date: todayStr,
          status: { $in: ['PENDING', 'SCHEDULED'] },
-         scheduledFor: { $lte: now }
+         scheduledFor: { $lte: now },
        });
-       
+
        if (pendingDistributions.length === 0) {
          console.log('[Cron] No pending distributions found');
          return;
        }
-       
+
        for (const distribution of pendingDistributions) {
          console.log(`[Cron] Executing distribution for ${distribution.date}`);
-         
+
          // Update status to EXECUTING
          distribution.status = 'EXECUTING';
          await distribution.save();
-         
+
          try {
            // Execute the distribution
            const result = await executeDistribution(distribution);
-           
+
            // Update to COMPLETED
            distribution.status = 'COMPLETED';
            distribution.lastExecution = {
@@ -179,22 +184,27 @@ The scheduled distribution system requires:
              premiumPoolStats: result.premiumPoolStats,
              performancePoolStats: result.performancePoolStats,
              executedAt: new Date(),
-             executionTimeMs: result.executionTimeMs
+             executionTimeMs: result.executionTimeMs,
            };
            await distribution.save();
-           
-           console.log(`[Cron] Distribution completed for ${distribution.date}`);
+
+           console.log(
+             `[Cron] Distribution completed for ${distribution.date}`
+           );
          } catch (error) {
            // Update to FAILED
            distribution.status = 'FAILED';
            distribution.lastExecution = {
              status: 'FAILED',
              error: error.message,
-             executedAt: new Date()
+             executedAt: new Date(),
            };
            await distribution.save();
-           
-           console.error(`[Cron] Distribution failed for ${distribution.date}:`, error);
+
+           console.error(
+             `[Cron] Distribution failed for ${distribution.date}:`,
+             error
+           );
          }
        }
      } catch (error) {
@@ -221,11 +231,13 @@ The scheduled distribution system requires:
 **Question:** Is there a cron job or background scheduler configured for daily distributions?
 
 **Where to check:**
+
 - Main server entry point (app.js, server.js, index.js)
 - Separate cron service file (e.g., `cron/distributionScheduler.js`)
 - Background job queue (Bull, Agenda, etc.)
 
 **What to look for:**
+
 ```javascript
 // Should see something like this
 const distributionCron = require('./cron/distributionScheduler');
@@ -233,6 +245,7 @@ distributionCron.start();
 ```
 
 **Test:** Add logging to verify cron is running:
+
 ```javascript
 console.log('[Cron] Distribution scheduler started at', new Date());
 ```
@@ -240,6 +253,7 @@ console.log('[Cron] Distribution scheduler started at', new Date());
 ### 2. Check Environment Variables
 
 **Required variables:**
+
 ```env
 CRON_ENABLED=true
 DISTRIBUTION_CRON_ENABLED=true
@@ -247,6 +261,7 @@ DISTRIBUTION_CRON_ENABLED=true
 ```
 
 **Verify:**
+
 ```javascript
 if (process.env.CRON_ENABLED !== 'true') {
   console.warn('[Cron] Cron jobs are DISABLED by environment variable');
@@ -260,11 +275,13 @@ if (process.env.CRON_ENABLED !== 'true') {
 **Frontend sends:** ISO 8601 UTC timestamp: `"2026-02-12T14:30:00.000Z"`
 
 **Backend should:**
+
 - Store as UTC Date object
 - Compare using UTC time: `new Date() >= scheduledFor`
 - NOT convert to local server timezone
 
 **Common mistake:**
+
 ```javascript
 // ❌ Wrong - compares local server time to UTC
 const now = new Date(); // Local time
@@ -282,6 +299,7 @@ if (nowUTC >= scheduledUTC) { ... } // Correct!
 **Issue:** Query might not find pending distributions
 
 **Test query directly:**
+
 ```javascript
 // In MongoDB shell or application
 const now = new Date();
@@ -290,13 +308,14 @@ const todayStr = now.toISOString().split('T')[0];
 db.dailyDeclarationReturns.find({
   date: todayStr,
   status: { $in: ['PENDING', 'SCHEDULED'] },
-  scheduledFor: { $lte: now }
+  scheduledFor: { $lte: now },
 });
 
 // Should return the queued distribution
 ```
 
 **Check indexes:**
+
 ```javascript
 // Ensure indexes exist for performance
 db.dailyDeclarationReturns.createIndex({ date: 1, status: 1, scheduledFor: 1 });
@@ -307,6 +326,7 @@ db.dailyDeclarationReturns.createIndex({ date: 1, status: 1, scheduledFor: 1 });
 **Issue:** Cron job might be throwing errors silently
 
 **Add comprehensive error handling:**
+
 ```javascript
 cron.schedule('* * * * *', async () => {
   try {
@@ -314,7 +334,7 @@ cron.schedule('* * * * *', async () => {
   } catch (error) {
     console.error('[Cron] CRITICAL ERROR in distribution scheduler:', error);
     console.error('[Cron] Stack trace:', error.stack);
-    
+
     // Optional: Send alert to monitoring service
     // alerting.critical('Distribution cron failed', error);
   }
@@ -326,11 +346,13 @@ cron.schedule('* * * * *', async () => {
 **Issue:** Cron might not survive server restarts or crashes
 
 **Verify:**
+
 - Does cron restart when server restarts?
 - Is cron initialized after database connection is established?
 - Are there any unhandled promise rejections killing the process?
 
 **Recommended:**
+
 ```javascript
 // Don't start cron until DB is ready
 await connectToDatabase();
@@ -345,6 +367,7 @@ console.log('[Server] Distribution cron started successfully');
 ### Test Case 1: Queue Distribution for Near-Future Time
 
 **Setup:**
+
 1. Note current UTC time: `14:25:00`
 2. Queue distribution for: `14:27:00` (2 minutes from now)
 3. Use test values:
@@ -357,6 +380,7 @@ console.log('[Server] Distribution cron started successfully');
    ```
 
 **Expected Results:**
+
 - `14:25:00` - Distribution queued, status = PENDING ✅
 - `14:26:00` - Still PENDING (before scheduled time) ✅
 - `14:27:00` - Status changes to EXECUTING ✅
@@ -364,6 +388,7 @@ console.log('[Server] Distribution cron started successfully');
 - Stakes processed, transactions created ✅
 
 **How to verify:**
+
 ```bash
 # Check backend logs at 14:27
 # Should see:
@@ -377,6 +402,7 @@ console.log('[Server] Distribution cron started successfully');
 ### Test Case 2: Multiple Distributions (Multi-Slot)
 
 If multi-slot scheduling is implemented:
+
 ```json
 {
   "multiSlotEnabled": true,
@@ -390,6 +416,7 @@ If multi-slot scheduling is implemented:
 ```
 
 **Expected:**
+
 - 14:00 - Slot 1 executes (0.5% ROS only)
 - 18:00 - Slot 2 executes (0.5% ROS + pools)
 - Each slot tracked independently
@@ -399,11 +426,13 @@ If multi-slot scheduling is implemented:
 ## API Endpoints Involved
 
 ### 1. Queue Distribution (Already Working)
+
 ```
 POST /api/v1/admin/daily-declaration-returns/today/queue
 ```
 
 **Request:**
+
 ```json
 {
   "rosPercentage": 1,
@@ -415,6 +444,7 @@ POST /api/v1/admin/daily-declaration-returns/today/queue
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -429,11 +459,13 @@ POST /api/v1/admin/daily-declaration-returns/today/queue
 ```
 
 ### 2. Get Today's Status (Working, but shows stale data)
+
 ```
 GET /api/v1/admin/daily-declaration-returns/today/status
 ```
 
 **Response Should Update After Execution:**
+
 ```json
 {
   "success": true,
@@ -468,6 +500,7 @@ GET /api/v1/admin/daily-declaration-returns/today/status
 ```
 
 ### 3. Manual Distribution (Workaround - Currently Working)
+
 ```
 POST /api/v1/admin/daily-declaration-returns/:date/distribute
 ```
@@ -479,6 +512,7 @@ POST /api/v1/admin/daily-declaration-returns/:date/distribute
 ## Recommended Implementation
 
 ### File Structure
+
 ```
 backend/
 ├── src/
@@ -492,6 +526,7 @@ backend/
 ```
 
 ### distributionScheduler.js (Recommended)
+
 ```javascript
 const cron = require('node-cron');
 const DailyDeclarationReturn = require('../models/DailyDeclarationReturn');
@@ -533,7 +568,7 @@ class DistributionScheduler {
       const pendingDistributions = await DailyDeclarationReturn.find({
         date: todayStr,
         status: { $in: ['PENDING', 'SCHEDULED'] },
-        scheduledFor: { $lte: now }
+        scheduledFor: { $lte: now },
       });
 
       if (pendingDistributions.length === 0) {
@@ -541,7 +576,9 @@ class DistributionScheduler {
         return;
       }
 
-      console.log(`[DistributionCron] Found ${pendingDistributions.length} distributions to execute`);
+      console.log(
+        `[DistributionCron] Found ${pendingDistributions.length} distributions to execute`
+      );
 
       // Execute each distribution
       for (const distribution of pendingDistributions) {
@@ -555,10 +592,12 @@ class DistributionScheduler {
 
   async executeDistribution(distribution) {
     const startTime = Date.now();
-    
+
     try {
-      console.log(`[DistributionCron] Executing distribution for ${distribution.date}`);
-      
+      console.log(
+        `[DistributionCron] Executing distribution for ${distribution.date}`
+      );
+
       // Update status
       distribution.status = 'EXECUTING';
       await distribution.save();
@@ -570,7 +609,10 @@ class DistributionScheduler {
         premiumPoolAmount: distribution.values.premiumPoolAmount,
         performancePoolAmount: distribution.values.performancePoolAmount,
         distributeROS: distribution.values.rosPercentage > 0,
-        distributePools: (distribution.values.premiumPoolAmount + distribution.values.performancePoolAmount) > 0
+        distributePools:
+          distribution.values.premiumPoolAmount +
+            distribution.values.performancePoolAmount >
+          0,
       });
 
       // Update to COMPLETED
@@ -582,22 +624,24 @@ class DistributionScheduler {
         premiumPoolStats: result.premiumPoolStats,
         performancePoolStats: result.performancePoolStats,
         executedAt: new Date(),
-        executionTimeMs
+        executionTimeMs,
       };
       await distribution.save();
 
       console.log(`[DistributionCron] Completed in ${executionTimeMs}ms`);
-      console.log(`[DistributionCron] ROS: ${result.rosStats?.totalDistributed || 0} distributed to ${result.rosStats?.processedStakes || 0} stakes`);
+      console.log(
+        `[DistributionCron] ROS: ${result.rosStats?.totalDistributed || 0} distributed to ${result.rosStats?.processedStakes || 0} stakes`
+      );
     } catch (error) {
       console.error(`[DistributionCron] Failed:`, error);
-      
+
       // Update to FAILED
       distribution.status = 'FAILED';
       distribution.lastExecution = {
         status: 'FAILED',
         error: error.message,
         executedAt: new Date(),
-        executionTimeMs: Date.now() - startTime
+        executionTimeMs: Date.now() - startTime,
       };
       await distribution.save();
     }
@@ -617,18 +661,19 @@ module.exports = new DistributionScheduler();
 ```
 
 ### Initialize in server startup
+
 ```javascript
 // server.js or app.js
 const distributionScheduler = require('./cron/distributionScheduler');
 
 async function startServer() {
   await connectDatabase();
-  
+
   // Start distribution scheduler
   if (process.env.CRON_ENABLED === 'true') {
     distributionScheduler.start();
   }
-  
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
@@ -657,12 +702,14 @@ startServer();
 ## Expected Timeline
 
 **Immediate Fix (1-2 hours):**
+
 1. Verify cron service exists and is running
 2. Add comprehensive logging
 3. Test with near-future scheduled time
 4. Deploy fix
 
 **Long-term Improvements:**
+
 - Add health check endpoint: `GET /api/v1/admin/cron/status`
 - Add monitoring/alerting for failed distributions
 - Add admin UI control: pause/resume scheduler
@@ -677,6 +724,7 @@ startServer();
 **Expected Result:** After 1% distribution, should see 1 USDT profit
 
 **Questions to Answer:**
+
 1. Does the cron service exist in the backend codebase?
 2. Is CRON_ENABLED set to true in production environment?
 3. What do the backend logs show at the scheduled execution time?

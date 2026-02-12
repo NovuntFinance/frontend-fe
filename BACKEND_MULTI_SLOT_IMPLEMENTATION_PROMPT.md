@@ -46,6 +46,7 @@ We need to implement a **Multi-Slot Distribution System** that allows the admin 
 ## 🗄️ Database Schema
 
 ### Table 1: `cron_distribution_settings`
+
 Stores the main cron configuration (one active record at a time).
 
 ```sql
@@ -63,11 +64,13 @@ CREATE TABLE cron_distribution_settings (
 ```
 
 **Notes:**
+
 - Only keep the most recent record (or use single-row table pattern)
 - `number_of_slots` dictates how many schedule entries exist
 - `is_enabled` controls whether cron jobs run
 
 ### Table 2: `cron_distribution_schedules`
+
 Stores individual slot time configurations.
 
 ```sql
@@ -86,12 +89,14 @@ CREATE TABLE cron_distribution_schedules (
 ```
 
 **Notes:**
+
 - One record per slot
 - `slot_number` starts at 1 (not 0)
 - Time is stored as separate hour/minute/second integers
 - Cascade delete when settings are updated
 
 ### Table 3: `distribution_slot_executions`
+
 Tracks daily distribution execution per slot (for status monitoring).
 
 ```sql
@@ -119,6 +124,7 @@ CREATE TABLE distribution_slot_executions (
 ```
 
 **Notes:**
+
 - One record per slot per day
 - Created when admin queues distribution
 - Updated by cron job during execution
@@ -136,6 +142,7 @@ CREATE TABLE distribution_slot_executions (
 **Description:** Returns list of supported timezones
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -190,6 +197,7 @@ CREATE TABLE distribution_slot_executions (
 ```
 
 **Implementation Notes:**
+
 - Can be static data (hardcoded array)
 - Include at least 60+ common timezones
 - Group by region for frontend display
@@ -204,6 +212,7 @@ CREATE TABLE distribution_slot_executions (
 **Description:** Returns current cron configuration
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -242,6 +251,7 @@ CREATE TABLE distribution_slot_executions (
 ```
 
 **Response (No Schedule Configured):**
+
 ```json
 {
   "success": false,
@@ -251,6 +261,7 @@ CREATE TABLE distribution_slot_executions (
 ```
 
 **Implementation Logic:**
+
 1. Query `cron_distribution_settings` for most recent enabled record
 2. Join with `cron_distribution_schedules` to get slot times
 3. Order schedules by `slot_number ASC`
@@ -266,6 +277,7 @@ CREATE TABLE distribution_slot_executions (
 **Description:** Updates cron configuration and restarts cron jobs
 
 **Request Headers:**
+
 ```
 Authorization: Bearer <admin_token>
 X-2FA-Code: 123456
@@ -273,6 +285,7 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "numberOfSlots": 3,
@@ -304,6 +317,7 @@ Content-Type: application/json
 ```
 
 **Validation Rules:**
+
 - `numberOfSlots`: Integer between 1-10
 - `timezone`: Must be valid IANA timezone
 - `schedules`: Array length must equal `numberOfSlots`
@@ -317,6 +331,7 @@ Content-Type: application/json
 - No duplicate times (each slot must have unique time)
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -325,13 +340,16 @@ Content-Type: application/json
     "numberOfSlots": 3,
     "timezone": "Africa/Lagos",
     "isEnabled": true,
-    "schedules": [ /* same as GET response */ ],
+    "schedules": [
+      /* same as GET response */
+    ],
     "nextExecution": "2026-02-11T09:00:00Z"
   }
 }
 ```
 
 **Response (Validation Error):**
+
 ```json
 {
   "success": false,
@@ -346,6 +364,7 @@ Content-Type: application/json
 ```
 
 **Response (2FA Error):**
+
 ```json
 {
   "success": false,
@@ -355,6 +374,7 @@ Content-Type: application/json
 ```
 
 **Implementation Logic:**
+
 1. Validate admin token
 2. **Validate 2FA code** (if admin has 2FA enabled)
 3. Validate request body (see validation rules above)
@@ -375,6 +395,7 @@ Content-Type: application/json
 **Description:** Enables or disables automatic cron execution
 
 **Request Headers:**
+
 ```
 Authorization: Bearer <admin_token>
 X-2FA-Code: 123456
@@ -382,6 +403,7 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "isEnabled": true
@@ -389,6 +411,7 @@ Content-Type: application/json
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -401,6 +424,7 @@ Content-Type: application/json
 ```
 
 **Implementation Logic:**
+
 1. Validate admin token
 2. **Validate 2FA code**
 3. Update `is_enabled` field in `cron_distribution_settings`
@@ -417,6 +441,7 @@ Content-Type: application/json
 **Description:** Returns current cron job status
 
 **Response:**
+
 ```json
 {
   "isEnabled": true,
@@ -427,6 +452,7 @@ Content-Type: application/json
 ```
 
 **Implementation Logic:**
+
 1. Query `cron_distribution_settings` for active configuration
 2. Calculate next execution time across all slots
 3. Return public info (no sensitive data)
@@ -442,6 +468,7 @@ Content-Type: application/json
 **IMPORTANT:** This endpoint already exists. You need to **modify it** to support multi-slot mode while keeping single-slot mode working.
 
 **Request Body (Single-Slot - Legacy):**
+
 ```json
 {
   "mode": "single",
@@ -453,6 +480,7 @@ Content-Type: application/json
 ```
 
 **Request Body (Multi-Slot - NEW):**
+
 ```json
 {
   "mode": "multi",
@@ -480,6 +508,7 @@ Content-Type: application/json
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -517,12 +546,14 @@ Content-Type: application/json
 **Implementation Logic:**
 
 **For Single-Slot Mode (keep existing logic):**
+
 1. Validate 2FA
 2. Create one distribution record with status PENDING
 3. Schedule execution for 3:59:59 PM Nigeria Time
 4. Return confirmation
 
 **For Multi-Slot Mode (NEW):**
+
 1. Validate 2FA
 2. Validate that `slots.length` matches configured `numberOfSlots`
 3. For each slot in request:
@@ -542,6 +573,7 @@ Content-Type: application/json
 5. Cron jobs will auto-execute at scheduled times
 
 **Validation:**
+
 - Can only queue once per day (check if records already exist for today)
 - Slot count must match cron configuration
 - Slot times must match cron configuration
@@ -558,6 +590,7 @@ Content-Type: application/json
 **IMPORTANT:** This endpoint already exists. You need to **modify it** to return per-slot status for multi-slot distributions.
 
 **Response (Single-Slot - Legacy):**
+
 ```json
 {
   "success": true,
@@ -576,11 +609,12 @@ Content-Type: application/json
 ```
 
 **Response (Multi-Slot - NEW):**
+
 ```json
 {
   "success": true,
   "data": {
-    "status": "PENDING",  // Overall: PENDING if any slot pending, EXECUTING if any executing, COMPLETED if all completed
+    "status": "PENDING", // Overall: PENDING if any slot pending, EXECUTING if any executing, COMPLETED if all completed
     "multiSlotEnabled": true,
     "distributionDate": "2026-02-11",
     "distributionSlots": [
@@ -592,9 +626,9 @@ Content-Type: application/json
         "scheduledFor": "2026-02-11T09:00:00Z",
         "executionDetails": {
           "executionTime": "2026-02-11T09:00:03Z",
-          "basicPoolAmount": 12000.50,
-          "premiumPoolAmount": 1200.00,
-          "totalDistributed": 13200.50,
+          "basicPoolAmount": 12000.5,
+          "premiumPoolAmount": 1200.0,
+          "totalDistributed": 13200.5,
           "totalUsersProcessed": 150,
           "message": "Distribution completed successfully"
         }
@@ -628,6 +662,7 @@ Content-Type: application/json
 ```
 
 **Response (Failed Slot):**
+
 ```json
 {
   "slotNumber": 2,
@@ -644,6 +679,7 @@ Content-Type: application/json
 ```
 
 **Implementation Logic:**
+
 1. Query `distribution_slot_executions` for today's date
 2. If no records found, check legacy single-slot table
 3. For each slot execution record:
@@ -652,7 +688,7 @@ Content-Type: application/json
    - Join execution times, amounts, error messages
 4. Calculate overall status:
    - If any slot is EXECUTING → overall EXECUTING
-   - If any slot is FAILED → overall FAILED  
+   - If any slot is FAILED → overall FAILED
    - If all slots are COMPLETED → overall COMPLETED
    - Otherwise → overall PENDING
 5. Return complete status object
@@ -680,35 +716,35 @@ Content-Type: application/json
 // Pseudo-code for each slot's cron job
 async function executeSlot(slotNumber, scheduledTime) {
   const today = moment().format('YYYY-MM-DD');
-  
+
   // 1. Check if distribution is queued for this slot today
   const execution = await DistributionSlotExecution.findOne({
     where: {
       distribution_date: today,
       slot_number: slotNumber,
-      status: 'PENDING'
-    }
+      status: 'PENDING',
+    },
   });
-  
+
   if (!execution) {
     console.log(`No distribution queued for slot ${slotNumber} today`);
     return;
   }
-  
+
   try {
     // 2. Update status to EXECUTING
     await execution.update({
       status: 'EXECUTING',
-      execution_started_at: new Date()
+      execution_started_at: new Date(),
     });
-    
+
     // 3. Perform distribution calculation
     const totalStakes = await calculateTotalActiveStakes();
     const basicPoolAmount = (totalStakes * execution.ros_percentage) / 100;
-    const premiumPoolAmount = execution.premium_pool_percentage 
-      ? (totalStakes * execution.premium_pool_percentage) / 100 
+    const premiumPoolAmount = execution.premium_pool_percentage
+      ? (totalStakes * execution.premium_pool_percentage) / 100
       : 0;
-    
+
     // 4. Execute distribution to users
     const distributionResult = await distributeToUsers({
       basicPoolAmount,
@@ -716,36 +752,35 @@ async function executeSlot(slotNumber, scheduledTime) {
       performancePoolAmount: execution.performance_pool_amount,
       rosPercentage: execution.ros_percentage,
       date: today,
-      slotNumber: slotNumber
+      slotNumber: slotNumber,
     });
-    
+
     // 5. Update status to COMPLETED
     await execution.update({
       status: 'COMPLETED',
       basic_pool_amount: distributionResult.basicPoolAmount,
       premium_pool_amount_distributed: distributionResult.premiumPoolAmount,
       total_users_processed: distributionResult.usersProcessed,
-      execution_completed_at: new Date()
+      execution_completed_at: new Date(),
     });
-    
+
     console.log(`Slot ${slotNumber} distribution completed successfully`);
-    
   } catch (error) {
     // 6. Update status to FAILED
     await execution.update({
       status: 'FAILED',
       error_message: error.message,
-      execution_completed_at: new Date()
+      execution_completed_at: new Date(),
     });
-    
+
     console.error(`Slot ${slotNumber} distribution failed:`, error);
-    
+
     // Optional: Send alert to admins
     await sendAdminAlert({
       type: 'DISTRIBUTION_FAILED',
       slotNumber,
       error: error.message,
-      date: today
+      date: today,
     });
   }
 }
@@ -764,39 +799,49 @@ let activeCronJobs = [];
 async function startCronJobs() {
   // Stop existing jobs first
   stopCronJobs();
-  
+
   // Load settings from database
   const settings = await CronDistributionSettings.findOne({
     where: { is_enabled: true },
-    include: [{ model: CronDistributionSchedule, as: 'schedules' }]
+    include: [{ model: CronDistributionSchedule, as: 'schedules' }],
   });
-  
+
   if (!settings) {
     console.log('No cron settings configured');
     return;
   }
-  
-  console.log(`Starting ${settings.schedules.length} cron jobs in ${settings.timezone}`);
-  
+
+  console.log(
+    `Starting ${settings.schedules.length} cron jobs in ${settings.timezone}`
+  );
+
   // Create cron job for each slot
-  settings.schedules.forEach(schedule => {
+  settings.schedules.forEach((schedule) => {
     const cronExpression = `${schedule.second} ${schedule.minute} ${schedule.hour} * * *`;
-    
-    const job = cron.schedule(cronExpression, async () => {
-      console.log(`Executing slot ${schedule.slot_number} at ${schedule.hour}:${schedule.minute}:${schedule.second}`);
-      await executeSlot(schedule.slot_number, schedule);
-    }, {
-      scheduled: true,
-      timezone: settings.timezone
-    });
-    
+
+    const job = cron.schedule(
+      cronExpression,
+      async () => {
+        console.log(
+          `Executing slot ${schedule.slot_number} at ${schedule.hour}:${schedule.minute}:${schedule.second}`
+        );
+        await executeSlot(schedule.slot_number, schedule);
+      },
+      {
+        scheduled: true,
+        timezone: settings.timezone,
+      }
+    );
+
     activeCronJobs.push({
       slotNumber: schedule.slot_number,
       job: job,
-      schedule: cronExpression
+      schedule: cronExpression,
     });
-    
-    console.log(`Cron job registered for slot ${schedule.slot_number}: ${cronExpression} (${settings.timezone})`);
+
+    console.log(
+      `Cron job registered for slot ${schedule.slot_number}: ${cronExpression} (${settings.timezone})`
+    );
   });
 }
 
@@ -855,38 +900,42 @@ describe('PATCH /api/cron/distribution-schedule', () => {
         timezone: 'Africa/Lagos',
         schedules: [
           { slotNumber: 1, hour: 10, minute: 0, second: 0 },
-          { slotNumber: 2, hour: 16, minute: 0, second: 0 }
-        ]
+          { slotNumber: 2, hour: 16, minute: 0, second: 0 },
+        ],
       });
-    
+
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.data.numberOfSlots).toBe(2);
   });
-  
+
   it('should reject invalid 2FA code', async () => {
     const response = await request(app)
       .patch('/api/cron/distribution-schedule')
       .set('Authorization', `Bearer ${adminToken}`)
       .set('X-2FA-Code', 'wrong')
-      .send({ /* valid payload */ });
-    
+      .send({
+        /* valid payload */
+      });
+
     expect(response.status).toBe(401);
   });
-  
+
   it('should validate numberOfSlots range', async () => {
     const response = await request(app)
       .patch('/api/cron/distribution-schedule')
       .set('Authorization', `Bearer ${adminToken}`)
       .set('X-2FA-Code', '123456')
       .send({
-        numberOfSlots: 15,  // Invalid: > 10
+        numberOfSlots: 15, // Invalid: > 10
         timezone: 'Africa/Lagos',
-        schedules: []
+        schedules: [],
       });
-    
+
     expect(response.status).toBe(400);
-    expect(response.body.errors).toContain('numberOfSlots must be between 1 and 10');
+    expect(response.body.errors).toContain(
+      'numberOfSlots must be between 1 and 10'
+    );
   });
 });
 
@@ -901,15 +950,15 @@ describe('POST /api/daily-declaration-returns/queue-distribution', () => {
         mode: 'multi',
         slots: [
           { slotNumber: 1, slotTime: '09:00:00', ros: 1.5 },
-          { slotNumber: 2, slotTime: '15:00:00', ros: 2.0 }
+          { slotNumber: 2, slotTime: '15:00:00', ros: 2.0 },
         ],
-        premiumPoolPercentage: 10
+        premiumPoolPercentage: 10,
       });
-    
+
     expect(response.status).toBe(201);
     expect(response.body.data.slots).toHaveLength(2);
   });
-  
+
   it('should maintain backward compatibility with single-slot', async () => {
     const response = await request(app)
       .post('/api/daily-declaration-returns/queue-distribution')
@@ -918,9 +967,9 @@ describe('POST /api/daily-declaration-returns/queue-distribution', () => {
       .send({
         mode: 'single',
         ros: 2.5,
-        premiumPoolPercentage: 10
+        premiumPoolPercentage: 10,
       });
-    
+
     expect(response.status).toBe(201);
   });
 });
@@ -1046,6 +1095,7 @@ Frontend implementation is complete. Review these files in the frontend repo:
 - **TESTING_READY_SUMMARY.md** - Quick reference guide
 
 All TypeScript types and API contracts are defined in:
+
 - `src/types/cronSettings.ts`
 - `src/types/dailyDeclarationReturns.ts`
 - `src/services/cronSettingsService.ts`
@@ -1057,6 +1107,7 @@ All TypeScript types and API contracts are defined in:
 **Total Estimated Time: 3-5 days** (for experienced backend developer)
 
 Breakdown:
+
 - Database schema & models: 4-6 hours
 - Timezone endpoint: 1 hour (static data)
 - Get schedule endpoint: 2-3 hours
@@ -1100,6 +1151,7 @@ Breakdown:
 ## 📞 Support
 
 **Questions?** Contact frontend developer with:
+
 - Endpoint specification questions
 - Response format clarifications
 - Integration testing coordination

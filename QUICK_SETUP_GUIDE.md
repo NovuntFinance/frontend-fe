@@ -11,6 +11,7 @@ Follow these steps to complete the integration:
 ### Option A: If using Next.js App Router (app/ directory)
 
 Create this file:
+
 ```
 app/admin/settings/distribution-schedule/page.tsx
 ```
@@ -20,11 +21,13 @@ Copy the contents from `EXAMPLE_ROUTE_PAGE.tsx` in the root directory.
 ### Option B: If using Next.js Pages Router (pages/ directory)
 
 Create this file:
+
 ```
 pages/admin/settings/distribution-schedule.tsx
 ```
 
 Use this code:
+
 ```tsx
 import { CronSettingsPage } from '@/components/admin/cronSettings';
 
@@ -53,6 +56,7 @@ import { Clock } from 'lucide-react';
 ```
 
 **Example locations to look for:**
+
 - `src/components/admin/AdminSidebar.tsx`
 - `src/components/navigation/AdminNav.tsx`
 - `src/config/navigation.ts`
@@ -66,16 +70,17 @@ Open your browser console and run:
 ```javascript
 // Test backend health
 fetch('https://api.novunt.com/health')
-  .then(r => r.json())
+  .then((r) => r.json())
   .then(console.log);
 
 // Test cron status (no auth needed)
 fetch('https://api.novunt.com/cron-status')
-  .then(r => r.json())
+  .then((r) => r.json())
   .then(console.log);
 ```
 
 Expected responses:
+
 ```json
 // Health check
 {"status":"ok","uptime":123456,"timestamp":"2026-02-11T..."}
@@ -131,12 +136,14 @@ yarn dev
 ### Issue: "Cannot find module '@/components/admin/cronSettings'"
 
 **Solution**: Make sure you created all the files. Check:
+
 - `src/components/admin/cronSettings/CronSettingsPage.tsx`
 - `src/components/admin/cronSettings/index.ts`
 
 ### Issue: "Cannot find module '@/types/cronSettings'"
 
 **Solution**: Make sure you created:
+
 - `src/types/cronSettings.ts`
 
 ### Issue: "2FA modal doesn't appear"
@@ -145,7 +152,8 @@ yarn dev
 
 ### Issue: "API returns 401 Unauthorized"
 
-**Solution**: 
+**Solution**:
+
 1. Make sure you're logged in as an admin
 2. Check your admin token is valid
 3. Verify you have the required permissions
@@ -153,6 +161,7 @@ yarn dev
 ### Issue: "Cron settings not loading"
 
 **Solution**:
+
 1. Check backend is running: `curl https://api.novunt.com/health`
 2. Check cron settings exist: `curl https://api.novunt.com/cron-status`
 3. Check browser console for errors
@@ -164,6 +173,7 @@ yarn dev
 After setup, verify these work:
 
 **Cron Settings Page:**
+
 - [ ] Page loads without errors
 - [ ] Shows current schedule (if exists)
 - [ ] Timezone dropdown has 60+ options
@@ -175,6 +185,7 @@ After setup, verify these work:
 - [ ] Toggle enable/disable works
 
 **Declaration Form:**
+
 - [ ] Mode toggle visible
 - [ ] Can switch between Single/Multi
 - [ ] Single mode: works as before
@@ -185,6 +196,7 @@ After setup, verify these work:
 - [ ] Can queue multi-slot distribution
 
 **Status Dashboard:**
+
 - [ ] Single-slot status shows (legacy mode)
 - [ ] Multi-slot status cards show
 - [ ] Slot cards expand/collapse
@@ -210,6 +222,7 @@ Or the API URL is correctly configured in your services.
 ### Add TypeScript Path Alias (if not already set)
 
 In `tsconfig.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -223,6 +236,7 @@ In `tsconfig.json`:
 ### Add UI Components (if missing)
 
 Make sure you have these shadcn/ui components installed:
+
 - Card
 - Button
 - Input
@@ -234,6 +248,7 @@ Make sure you have these shadcn/ui components installed:
 - Switch
 
 If missing, install them:
+
 ```bash
 npx shadcn-ui@latest add card button input label select alert badge switch
 ```
@@ -276,7 +291,8 @@ After successful setup:
 
 **Difficulty**: Easy ⭐
 
-**Prerequisites**: 
+**Prerequisites**:
+
 - Admin account with settings.update permission
 - Backend running and accessible
 - Basic Next.js knowledge
