@@ -22,7 +22,10 @@ import {
   Loader2,
   Eye,
 } from 'lucide-react';
-import type { HistoryFilters, HistoryEntry } from '@/types/dailyDeclarationReturns';
+import type {
+  HistoryFilters,
+  HistoryEntry,
+} from '@/types/dailyDeclarationReturns';
 import { DistributionDetailsModal } from './DistributionDetailsModal';
 
 const PAGE_LIMIT = 50;
@@ -40,7 +43,12 @@ export function HistoryTable() {
   const [isExporting, setIsExporting] = useState(false);
 
   // Fetch history
-  const { data: historyData, isLoading } = useQuery({
+  const {
+    data: historyData,
+    isLoading,
+    error,
+    isError,
+  } = useQuery({
     queryKey: ['distribution-history', filters],
     queryFn: async () => {
       return await dailyDeclarationReturnsService.getHistory({
@@ -49,6 +57,7 @@ export function HistoryTable() {
       });
     },
     staleTime: 30000,
+    retry: 2,
   });
 
   // Handle filter changes
@@ -74,7 +83,7 @@ export function HistoryTable() {
       setIsExporting(true);
       const downloadUrl =
         await dailyDeclarationReturnsService.exportHistory(format);
-      
+
       // Open download link
       window.open(downloadUrl, '_blank');
       toast.success(`Export started: ${format.toUpperCase()}`);
@@ -91,7 +100,7 @@ export function HistoryTable() {
 
   const records = historyData?.data?.records || [];
   const totalRecords = historyData?.data?.totalRecords || 0;
-  const totalPages = Math.ceil(totalRecords / PAGE_LIMIT);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_LIMIT));
 
   return (
     <div className="space-y-6">
@@ -202,7 +211,42 @@ export function HistoryTable() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6">
-          {isLoading && records.length === 0 ? (
+          {isError ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-12">
+              <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/20">
+                <svg
+                  className="h-6 w-6 text-red-600 dark:text-red-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Failed to Load History
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  {error instanceof Error
+                    ? error.message
+                    : 'Unable to fetch distribution history. The endpoint may not be implemented yet.'}
+                </p>
+              </div>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                size="sm"
+              >
+                Try Again
+              </Button>
+            </div>
+          ) : isLoading && records.length === 0 ? (
             <div className="flex h-32 items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
             </div>
@@ -216,14 +260,18 @@ export function HistoryTable() {
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
                     <th className="px-4 py-2 text-left font-semibold">Date</th>
-                    <th className="px-4 py-2 text-left font-semibold">Status</th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Status
+                    </th>
                     <th className="px-4 py-2 text-right font-semibold">
                       ROS %
                     </th>
                     <th className="px-4 py-2 text-right font-semibold">
                       Pools $
                     </th>
-                    <th className="px-4 py-2 text-right font-semibold">Users</th>
+                    <th className="px-4 py-2 text-right font-semibold">
+                      Users
+                    </th>
                     <th className="px-4 py-2 text-left font-semibold">
                       Executed At
                     </th>
@@ -233,46 +281,59 @@ export function HistoryTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record: HistoryEntry) => (
-                    <tr
-                      key={record.date}
-                      className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/50"
-                    >
-                      <td className="px-4 py-3 font-medium">{record.date}</td>
-                      <td className="px-4 py-3">
-                        {record.status === 'COMPLETED' ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-100">
-                            ✅ Completed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-100">
-                            ❌ Failed
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {record.rosPercentage.toFixed(2)}%
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        ${record.poolsAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {record.usersCount}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                        {record.executedAt}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setSelectedDate(record.date)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {records.map((record: HistoryEntry) => {
+                    // Defensive checks for record data
+                    const rosPercent = record?.rosPercentage ?? 0;
+                    const poolsAmount = record?.poolsAmount ?? 0;
+                    const usersCount = record?.usersCount ?? 0;
+
+                    return (
+                      <tr
+                        key={record?.date || `record-${Math.random()}`}
+                        className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/50"
+                      >
+                        <td className="px-4 py-3 font-medium">
+                          {record?.date || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {record?.status === 'COMPLETED' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-100">
+                              ✅ Completed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-100">
+                              ❌ Failed
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {rosPercent.toFixed(2)}%
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          $
+                          {poolsAmount.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-right">{usersCount}</td>
+                        <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                          {record?.executedAt || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              record?.date && setSelectedDate(record.date)
+                            }
+                            disabled={!record?.date}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -298,9 +359,7 @@ export function HistoryTable() {
               </Button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page =
-                  currentPage <= 3
-                    ? i + 1
-                    : Math.max(1, currentPage - 2 + i);
+                  currentPage <= 3 ? i + 1 : Math.max(1, currentPage - 2 + i);
                 return page <= totalPages ? (
                   <Button
                     key={page}
@@ -315,7 +374,9 @@ export function HistoryTable() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
