@@ -284,7 +284,9 @@ export function HistoryTable() {
                   {records.map((record: HistoryEntry) => {
                     // Defensive checks for record data
                     const rosPercent = record?.rosPercentage ?? 0;
-                    const poolsAmount = record?.poolsAmount ?? 0;
+                    // Use totalPoolAmount (backend field) with fallback to poolsAmount (deprecated)
+                    const poolsAmount =
+                      record?.totalPoolAmount ?? record?.poolsAmount ?? 0;
                     const usersCount = record?.usersCount ?? 0;
 
                     return (

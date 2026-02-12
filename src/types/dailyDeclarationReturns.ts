@@ -442,7 +442,8 @@ export interface HistoryEntry {
   date: string; // YYYY-MM-DD
   status: 'COMPLETED' | 'FAILED';
   rosPercentage: number;
-  poolsAmount: number;
+  totalPoolAmount: number; // Changed from poolsAmount - matches backend field
+  poolsAmount?: number; // Deprecated - kept for backwards compatibility
   usersCount: number;
   executedAt: string; // Display format (e.g., "3:59:59 PM")
   executedAtISO: string; // ISO 8601 timestamp
