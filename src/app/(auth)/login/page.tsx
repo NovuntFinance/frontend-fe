@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -102,6 +102,17 @@ function LoginPageContent() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
   const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+
+  // Stable callbacks for Turnstile to prevent widget remounting
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+    setTurnstileError(null);
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+    setTurnstileError('Verification failed. Please try again.');
+  }, []);
 
   const {
     register,
@@ -748,14 +759,8 @@ function LoginPageContent() {
             <TurnstileWidget
               widgetRef={turnstileRef}
               size="normal"
-              onToken={(token) => {
-                setTurnstileToken(token);
-                setTurnstileError(null);
-              }}
-              onError={() => {
-                setTurnstileToken(null);
-                setTurnstileError('Verification failed. Please try again.');
-              }}
+              onToken={handleTurnstileToken}
+              onError={handleTurnstileError}
             />
             {turnstileEnabled && turnstileError && (
               <p className="text-destructive text-sm">{turnstileError}</p>
