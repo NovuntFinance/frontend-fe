@@ -73,12 +73,25 @@ export function TurnstileWidget({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const { resolvedTheme } = useTheme();
 
-  const theme =
-    resolvedTheme === 'dark'
-      ? 'dark'
-      : resolvedTheme === 'light'
-        ? 'light'
-        : 'auto';
+  // Use refs to prevent re-renders when callbacks change
+  const onTokenRef = useRef(onToken);
+  const onErrorRef = useRef(onError);
+
+  // Keep refs in sync
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  // Capture theme at mount time - don't remount if it changes during verification
+  const initialThemeRef = useRef<'light' | 'dark' | 'auto'>(
+    resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'
+  );
+
+  const theme = initialThemeRef.current;
 
   const getToken = useCallback((): string | null => {
     if (typeof window === 'undefined' || !window.turnstile || !widgetId) {
@@ -149,13 +162,13 @@ export function TurnstileWidget({
       theme,
       size,
       callback: (token) => {
-        onToken?.(token);
+        onTokenRef.current?.(token);
       },
       'error-callback': () => {
-        onError?.();
+        onErrorRef.current?.();
       },
       'expired-callback': () => {
-        onError?.();
+        onErrorRef.current?.();
       },
     });
     setWidgetId(id);
@@ -170,7 +183,9 @@ export function TurnstileWidget({
       }
       setWidgetId(null);
     };
-  }, [scriptLoaded, theme, size, onToken, onError]);
+    // Only re-render on script load or size change
+    // Theme is captured at mount, callbacks use refs - prevents remounting during verification
+  }, [scriptLoaded, size]);
 
   // No site key: widget not configured (e.g. missing NEXT_PUBLIC_TURNSTILE_SITE_KEY in production build)
   if (!SITE_KEY) {
