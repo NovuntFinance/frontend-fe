@@ -406,9 +406,12 @@ export function TodayDistributionForm() {
     }
   };
 
+  // Form is disabled only when there's a PENDING or EXECUTING distribution (not COMPLETED)
+  // COMPLETED distributions should allow queueing new distributions
   const isFormDisabled =
     !isEditing &&
     statusData?.status !== 'EMPTY' &&
+    statusData?.status !== 'COMPLETED' && // Allow editing after completion
     statusData?.status !== undefined;
   const isLoading_ =
     isLoading || queueMutation.isPending || modifyMutation.isPending;
@@ -486,6 +489,25 @@ export function TodayDistributionForm() {
           <CardTitle>Distribution Parameters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Completed Distribution Info */}
+          {status === 'COMPLETED' && (
+            <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    ✅ Today&apos;s distribution has completed
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    All slots have executed successfully. You can queue a new
+                    distribution by entering values below and clicking
+                    &quot;Queue Distribution&quot;.
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Multi-Slot Schedule Info */}
           {cronSettings && (
             <Alert>
