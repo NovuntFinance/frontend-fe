@@ -436,11 +436,295 @@ Please confirm:
 
 ---
 
+## Complete Endpoint List That Needs Fixing
+
+All these endpoints must use **Africa/Lagos timezone** for date calculations:
+
+| Endpoint                                                | Method | Issue                                                | Priority |
+| ------------------------------------------------------- | ------ | ---------------------------------------------------- | -------- |
+| `/api/v1/admin/daily-declaration-returns/today/status`  | GET    | Returns 2026-02-12 instead of 2026-02-13             | 🔴 P0    |
+| `/api/v1/admin/daily-declaration-returns/today/queue`   | POST   | Rejects queue with 409 (thinks already executed)     | 🔴 P0    |
+| `/api/v1/admin/daily-declaration-returns/today/modify`  | POST   | Same date issue as queue                             | 🔴 P0    |
+| `/api/v1/admin/daily-declaration-returns/today/execute` | POST   | Cron job might not execute correctly with wrong date | 🔴 P0    |
+| `/api/v1/admin/daily-declaration-returns/history`       | GET    | Might filter by wrong date                           | 🟠 P1    |
+| Cron job: Distribution executor                         | N/A    | Uses wrong timezone for scheduling                   | 🔴 P0    |
+
+---
+
+## Database Verification Steps
+
+SSH into backend and verify MongoDB data:
+
+```bash
+# Connect to MongoDB
+mongosh mongodb://localhost:27017
+
+# Switch to your database
+use novunt_db
+
+# Check what date is stored for today's distribution
+db.dailyDistributions.findOne({ date: "2026-02-12" })
+
+# Should return empty if timezone is fixed:
+db.dailyDistributions.findOne({ date: "2026-02-13" })
+
+# Check all distributions for Feb 12-13
+db.dailyDistributions.find({ date: { $in: ["2026-02-12", "2026-02-13"] } })
+
+# Expected output if CORRECT:
+# 2026-02-12: Yesterday's distribution (status: COMPLETED)
+# 2026-02-13: Today's distribution (status: PENDING or EXECUTING or COMPLETED)
+
+# If you see only 2026-02-12 for today, that's the bug!
+```
+
+---
+
+## Environment Variables Checklist
+
+Check these on the backend server:
+
+```bash
+# 1. Timezone environment variable
+echo $TZ
+# Expected: Africa/Lagos (or empty if system timezone is set correctly)
+
+# 2. Node environment
+echo $NODE_ENV
+# Expected: production
+
+# 3. All date-related env vars
+env | grep -i tz
+env | grep -i time
+env | grep -i date
+
+# 4. System timezone (the source of truth)
+date
+# Expected: Thu Feb 13 11:xx:xx WAT 2026
+
+# 5. Check timezone file
+cat /etc/timezone
+# Expected: Africa/Lagos
+
+# 6. Check Docker container variables (if using Docker)
+docker inspect backend-container | grep -i tz
+docker exec backend-container date
+docker exec backend-container echo $TZ
+```
+
+---
+
+## Expected Console Output Examples
+
+### Before Fix (WRONG)
+
+```bash
+$ date
+Thu Feb 13 10:30:00 UTC 2026
+
+$ echo $TZ
+(empty)
+
+$ curl http://13.60.171.166:5001/health
+Backend is healthy
+
+$ # But API returns wrong date!
+```
+
+### After Fix (CORRECT)
+
+```bash
+$ date
+Thu Feb 13 11:30:00 WAT 2026
+
+$ echo $TZ
+Africa/Lagos
+
+$ cat /etc/timezone
+Africa/Lagos
+
+$ curl http://13.60.171.166:5001/health
+Backend is healthy
+```
+
+---
+
+## Logs to Check
+
+SSH and check these log files:
+
+```bash
+# 1. Backend application logs
+tail -f /var/log/backend/app.log
+
+# 2. If using PM2
+pm2 logs
+
+# 3. If using Docker
+docker logs -f backend-container
+
+# 4. System logs (may show timezone change)
+sudo journalctl -xe
+
+# 5. Cron job logs
+cat /var/log/syslog | grep cron
+
+# Look for:
+# ❌ WRONG: "Today's date: 2026-02-12" (when it should be 2026-02-13)
+# ✅ CORRECT: "Today's date: 2026-02-13"
+# ❌ WRONG: Distribution execution ERROR at wrong time
+# ✅ CORRECT: Distribution executing at 11:46:59 and 12:59:59
+```
+
+---
+
+## Complete Required Dependencies
+
+Verify backend has these packages for timezone handling:
+
+```bash
+# Check package.json
+cat package.json | grep -E "moment-timezone|date-fns|luxon|dayjs"
+
+# Should have at least ONE of:
+"moment-timezone": "^0.5.x"    # Recommended
+"date-fns-tz": "^2.x"          # Alternative
+"luxon": "^3.x"                # Alternative
+"dayjs": "^1.x"                # Alternative (with tz plugin)
+
+# If NONE are installed, that's a problem - date calculations won't work correctly!
+npm install moment-timezone  # or your preferred package
+```
+
+---
+
+## Success Criteria
+
+The fix is complete when ALL of these are true:
+
+- [ ] `date` command on backend shows Africa/Lagos timezone (WAT)
+- [ ] `echo $TZ` shows `Africa/Lagos`
+- [ ] `/etc/timezone` contains `Africa/Lagos`
+- [ ] `/today/status` API returns `"date": "2026-02-13"` (not 2026-02-12)
+- [ ] `/today/queue` POST request returns 201/200 (not 409)
+- [ ] Cron job executes at correct times (11:46:59, 12:59:59 WAT)
+- [ ] Slots show status: PENDING → EXECUTING → COMPLETED
+- [ ] Users can queue multiple distributions per day
+- [ ] ROS distributions reach users' accounts
+- [ ] No 409 conflicts when queuing today's distribution
+- [ ] Database shows `"date": "2026-02-13"` for today's distribution
+- [ ] Each slot executes independently at its scheduled time
+- [ ] Per-slot status changes correctly during execution
+
+---
+
+## Potential Related Issues to Check
+
+While fixing the timezone, also check:
+
+1. **Cron Job Timezone:** Is the cron job also using the correct timezone?
+2. **Database Timestamps:** Are MongoDB timestamps storing with correct timezone?
+3. **Other Time-based Features:**
+   - User registration dates
+   - Transaction timestamps
+   - Login/logout timestamps
+   - Any other date comparisons
+4. **API Response Timestamps:** Ensure all timestamps in responses use correct timezone
+
+---
+
+## Package Information to Provide
+
+Backend team should confirm:
+
+```bash
+# Get Node.js version
+node --version
+# Should be: v16.x, v18.x, or v20.x
+
+# Get npm/pnpm version
+npm --version
+# or
+pnpm --version
+
+# Get relevant package versions
+npm list moment-timezone
+npm list date-fns
+npm list luxon
+
+# Check backend code for timezone usage
+grep -r "toISOString\|getTimezoneOffset\|America\/\|Europe\/\|UTC" src/
+```
+
+---
+
+## Workaround (Temporary)
+
+While waiting for backend fix, users can:
+
+1. ❌ Cannot queue distributions - backend rejects all requests
+2. ❌ No workaround available - this requires backend fix
+3. ⏸️ All distributions on hold until backend timezone is corrected
+
+---
+
+## Rollback Plan
+
+If the timezone fix breaks something:
+
+```bash
+# 1. Check what changed
+git log --oneline -5
+
+# 2. Rollback to previous state
+git revert <commit-hash>
+
+# 3. Or manually change timezone back
+sudo timedatectl set-timezone UTC
+
+# 4. Restart backend
+pm2 restart all
+
+# 5. Verify it works
+curl http://13.60.171.166:5001/health
+```
+
+---
+
+## Deployment Verification Steps
+
+After restarting:
+
+```bash
+# 1. Check backend is running
+curl -v http://13.60.171.166:5001/health
+
+# 2. Check API responds with correct date
+curl -H "Authorization: Bearer TOKEN" \
+  https://api.novunt.com/api/v1/admin/daily-declaration-returns/today/status
+
+# 3. Verify response includes correct date
+# Should show: "date": "2026-02-13"
+
+# 4. Check no error logs
+tail -f /var/log/backend/app.log | grep -i error
+
+# 5. Monitor cron execution
+# Wait until 11:46:59 to see if Slot 1 executes
+watch -n 1 'curl -H "Authorization: Bearer TOKEN" https://api.novunt.com/api/v1/admin/daily-declaration-returns/today/status'
+```
+
+---
+
 **Please respond with:**
 
-1. Timezone investigation results
-2. Root cause found
-3. Fix applied
-4. Backend restart completed
-5. Verification that API returns correct date
-6. Confirmation users can now queue distributions
+1. Timezone investigation results (output of `date`, `echo $TZ`, etc.)
+2. Root cause found (which of the 4 causes)
+3. Fix applied (code changes made)
+4. Backend restart completed (PM2 restarted, Docker restarted, etc.)
+5. Verification that API returns correct date (JSON response showing 2026-02-13)
+6. Database verification (MongoDB shows correct date)
+7. Confirmation users can now queue distributions (successful 200 response)
+8. Confirmation slots execute at scheduled times (see execution logs)
+9. Per-slot status shows PENDING → EXECUTING → COMPLETED
+10. Users receive ROS distributions in their accounts
