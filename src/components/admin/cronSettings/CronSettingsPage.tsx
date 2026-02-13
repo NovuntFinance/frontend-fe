@@ -26,7 +26,6 @@ import { ShimmerCard } from '@/components/ui/shimmer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 
 // Maximum number of distribution slots allowed per day
 const MAX_SLOTS = 100;
@@ -188,17 +187,9 @@ export function CronSettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex flex-col items-end">
-            <Label
-              htmlFor="enabled-toggle"
-              className="mb-1 text-sm font-medium"
-            >
-              {isEnabled ? 'Enabled' : 'Disabled'}
-            </Label>
-            <Badge variant={isEnabled ? 'default' : 'secondary'}>
-              {cronSettings?.mode}
-            </Badge>
-          </div>
+          <Label htmlFor="enabled-toggle" className="text-sm font-medium">
+            {isEnabled ? 'Enabled' : 'Disabled'}
+          </Label>
           <Switch
             id="enabled-toggle"
             checked={isEnabled}
@@ -219,19 +210,19 @@ export function CronSettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground text-sm">Mode</Label>
-                  <p className="font-medium">{cronSettings.mode}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">
-                    Number of Slots
-                  </Label>
-                  <p className="font-medium">
-                    {cronSettings.slots?.length || 0}
-                  </p>
-                </div>
+              <div>
+                <Label className="text-muted-foreground text-sm">
+                  Distribution Slots
+                </Label>
+                <p className="text-2xl font-medium">
+                  {cronSettings.slots?.length || 0}{' '}
+                  {cronSettings.slots?.length === 1 ? 'slot' : 'slots'}{' '}
+                  configured
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Daily distributions execute at{' '}
+                  {cronSettings.slots?.length || 0} different times
+                </p>
               </div>
 
               <div>
