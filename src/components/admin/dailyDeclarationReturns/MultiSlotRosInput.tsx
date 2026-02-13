@@ -1,13 +1,23 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AlertCircle, Clock, TrendingUp, Copy, Trash } from 'lucide-react';
+import {
+  AlertCircle,
+  Clock,
+  TrendingUp,
+  Copy,
+  Trash,
+  Lock,
+  CheckCircle,
+} from 'lucide-react';
 import type { DistributionSlot } from '@/types/cronSettings';
+import type { IDistributionSlot } from '@/types/dailyDeclarationReturns';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   slots: DistributionSlot[];
@@ -15,6 +25,7 @@ interface Props {
   onChange: (slotNumber: number, value: number) => void;
   disabled?: boolean;
   currentTotalStakes?: number; // For estimation
+  slotStatuses?: IDistributionSlot[]; // Per-slot status from backend
 }
 
 export function MultiSlotRosInput({
@@ -23,8 +34,23 @@ export function MultiSlotRosInput({
   onChange,
   disabled,
   currentTotalStakes = 0,
+  slotStatuses,
 }: Props) {
   const [bulkValue, setBulkValue] = useState<string>('');
+
+  // Helper to check if a specific slot is locked (completed or failed)
+  const isSlotLocked = (slotNumber: number): boolean => {
+    if (!slotStatuses) return false;
+    const slotStatus = slotStatuses.find((s) => s.slotNumber === slotNumber);
+    return (
+      slotStatus?.status === 'COMPLETED' || slotStatus?.status === 'FAILED'
+    );
+  };
+
+  // Get slot status info
+  const getSlotStatus = (slotNumber: number): IDistributionSlot | undefined => {
+    return slotStatuses?.find((s) => s.slotNumber === slotNumber);
+  };
 
   // Calculate total ROS
   const totalRos = useMemo(() => {
@@ -34,21 +60,27 @@ export function MultiSlotRosInput({
   // Check if total exceeds 100%
   const exceedsLimit = totalRos > 100;
 
-  // Bulk operations
+  // Bulk operations (skip locked slots)
   const handleSetAll = () => {
     const value = parseFloat(bulkValue);
     if (isNaN(value) || value < 0 || value > 100) {
       return;
     }
     slots.forEach((_, index) => {
-      onChange(index + 1, value);
+      const slotNumber = index + 1;
+      if (!isSlotLocked(slotNumber)) {
+        onChange(slotNumber, value);
+      }
     });
     setBulkValue('');
   };
 
   const handleClearAll = () => {
     slots.forEach((_, index) => {
-      onChange(index + 1, 0);
+      const slotNumber = index + 1;
+      if (!isSlotLocked(slotNumber)) {
+        onChange(slotNumber, 0);
+      }
     });
   };
 
@@ -147,21 +179,49 @@ export function MultiSlotRosInput({
           const slotNumber = index + 1; // 1-indexed
           const rosValue = rosValues[slotNumber] || 0;
           const estimatedAmount = getEstimatedAmount(rosValue);
+          const slotStatus = getSlotStatus(slotNumber);
+          const locked = isSlotLocked(slotNumber);
 
           return (
-            <Card key={index} className="transition-shadow hover:shadow-sm">
+            <Card
+              key={index}
+              className={`transition-shadow hover:shadow-sm ${
+                locked ? 'bg-muted/30 opacity-70' : ''
+              }`}
+            >
               <CardContent className="p-3">
                 <div className="space-y-2">
                   {/* Slot header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Clock className="text-muted-foreground h-3 w-3" />
+                      {locked ? (
+                        <Lock className="text-muted-foreground h-3 w-3" />
+                      ) : (
+                        <Clock className="text-muted-foreground h-3 w-3" />
+                      )}
                       <span className="text-sm font-medium">
                         Slot {slotNumber}
                       </span>
                       <span className="text-muted-foreground font-mono text-xs">
                         {slot.time}
                       </span>
+                      {slotStatus?.status === 'COMPLETED' && (
+                        <Badge
+                          variant="outline"
+                          className="h-5 gap-1 border-green-200 bg-green-50 text-xs text-green-700"
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                          Completed
+                        </Badge>
+                      )}
+                      {slotStatus?.status === 'FAILED' && (
+                        <Badge
+                          variant="outline"
+                          className="h-5 border-red-200 bg-red-50 text-xs text-red-700"
+                        >
+                          Failed
+                        </Badge>
+                      )}
                     </div>
                     {slot.label && (
                       <span className="bg-muted rounded px-2 py-0.5 text-xs">
@@ -194,8 +254,8 @@ export function MultiSlotRosInput({
                               Math.min(100, Math.max(0, value))
                             );
                           }}
-                          disabled={disabled}
-                          placeholder="0.00"
+                          disabled={disabled || locked}
+                          placeholder={locked ? 'Completed' : '0.00'}
                           className="h-9 pr-8 text-sm"
                         />
                         <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-xs">

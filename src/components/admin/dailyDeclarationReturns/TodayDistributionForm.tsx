@@ -406,12 +406,15 @@ export function TodayDistributionForm() {
     }
   };
 
-  // Form is disabled only when there's a PENDING or EXECUTING distribution (not COMPLETED)
-  // COMPLETED distributions should allow queueing new distributions
+  // Form is disabled only when:
+  // 1. There's a PENDING distribution (queued but not started)
+  // 2. There's an EXECUTING distribution (currently running)
+  // 3. NOT disabled when COMPLETED (individual slots handle their own locking)
+  // 4. NOT disabled when EMPTY (no distribution yet)
   const isFormDisabled =
     !isEditing &&
     statusData?.status !== 'EMPTY' &&
-    statusData?.status !== 'COMPLETED' && // Allow editing after completion
+    statusData?.status !== 'COMPLETED' && // Allow form when completed (slots lock individually)
     statusData?.status !== undefined;
   const isLoading_ =
     isLoading || queueMutation.isPending || modifyMutation.isPending;
@@ -496,12 +499,12 @@ export function TodayDistributionForm() {
               <AlertDescription>
                 <div className="space-y-2">
                   <p className="text-sm font-medium">
-                    ✅ Today&apos;s distribution has completed
+                    ✅ Some or all slots have completed
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    All slots have executed successfully. You can queue a new
-                    distribution by entering values below and clicking
-                    &quot;Queue Distribution&quot;.
+                    Completed slots are locked (shown with 🔒). You can still
+                    edit pending slots or queue new distributions by modifying
+                    unlocked slots.
                   </p>
                 </div>
               </AlertDescription>
@@ -567,6 +570,7 @@ export function TodayDistributionForm() {
                   }));
                 }}
                 disabled={isFormDisabled && !isEditing}
+                slotStatuses={statusData?.distributionSlots}
               />
             ) : (
               <Alert variant="destructive">
