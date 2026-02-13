@@ -9,6 +9,8 @@ import {
   Trash,
   Lock,
   CheckCircle,
+  Loader2,
+  XCircle,
 } from 'lucide-react';
 import type { DistributionSlot } from '@/types/cronSettings';
 import type { IDistributionSlot } from '@/types/dailyDeclarationReturns';
@@ -205,6 +207,24 @@ export function MultiSlotRosInput({
                       <span className="text-muted-foreground font-mono text-xs">
                         {slot.time}
                       </span>
+                      {slotStatus?.status === 'PENDING' && (
+                        <Badge
+                          variant="outline"
+                          className="h-5 gap-1 border-blue-200 bg-blue-50 text-xs text-blue-700"
+                        >
+                          <Clock className="h-3 w-3" />
+                          Pending
+                        </Badge>
+                      )}
+                      {slotStatus?.status === 'EXECUTING' && (
+                        <Badge
+                          variant="outline"
+                          className="h-5 gap-1 border-amber-200 bg-amber-50 text-xs text-amber-700"
+                        >
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Executing
+                        </Badge>
+                      )}
                       {slotStatus?.status === 'COMPLETED' && (
                         <Badge
                           variant="outline"
@@ -217,8 +237,9 @@ export function MultiSlotRosInput({
                       {slotStatus?.status === 'FAILED' && (
                         <Badge
                           variant="outline"
-                          className="h-5 border-red-200 bg-red-50 text-xs text-red-700"
+                          className="h-5 gap-1 border-red-200 bg-red-50 text-xs text-red-700"
                         >
+                          <XCircle className="h-3 w-3" />
                           Failed
                         </Badge>
                       )}
