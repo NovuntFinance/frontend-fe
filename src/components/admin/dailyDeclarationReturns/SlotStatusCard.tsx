@@ -24,36 +24,36 @@ interface Props {
   onToggle?: () => void;
 }
 
-const STATUS_COLORS = {
+const STATUS_CONFIG = {
   PENDING: {
-    bg: '#FEF3C7',
-    text: '#92400E',
-    border: '#FDE68A',
+    bgClass: 'bg-amber-100',
+    textClass: 'text-amber-800',
+    borderClass: 'border-amber-300',
     icon: Clock,
   },
   EXECUTING: {
-    bg: '#FEF3C7',
-    text: '#92400E',
-    border: '#FCD34D',
+    bgClass: 'bg-amber-100',
+    textClass: 'text-amber-800',
+    borderClass: 'border-amber-400',
     icon: Loader2,
   },
   COMPLETED: {
-    bg: '#D1FAE5',
-    text: '#065F46',
-    border: '#A7F3D0',
+    bgClass: 'bg-green-100',
+    textClass: 'text-green-800',
+    borderClass: 'border-green-300',
     icon: CheckCircle2,
   },
   FAILED: {
-    bg: '#FEE2E2',
-    text: '#991B1B',
-    border: '#FECACA',
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-800',
+    borderClass: 'border-red-300',
     icon: XCircle,
   },
 };
 
 export function SlotStatusCard({ slot, isExpanded = false, onToggle }: Props) {
   const [expanded, setExpanded] = useState(isExpanded);
-  const statusConfig = STATUS_COLORS[slot.status];
+  const statusConfig = STATUS_CONFIG[slot.status];
   const StatusIcon = statusConfig.icon;
 
   const toggleExpand = () => {
@@ -91,21 +91,16 @@ export function SlotStatusCard({ slot, isExpanded = false, onToggle }: Props) {
     slot.executionDetails && Object.keys(slot.executionDetails).length > 0;
 
   return (
-    <Card
-      className="border-2 transition-all"
-      style={{ borderColor: statusConfig.border }}
-    >
+    <Card className={`border-2 transition-all ${statusConfig.borderClass}`}>
       <CardContent className="p-4">
         {/* Header */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: statusConfig.bg }}
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${statusConfig.bgClass}`}
             >
               <StatusIcon
-                className={`h-5 w-5 ${slot.status === 'EXECUTING' ? 'animate-spin' : ''}`}
-                style={{ color: statusConfig.text }}
+                className={`h-5 w-5 ${statusConfig.textClass} ${slot.status === 'EXECUTING' ? 'animate-spin' : ''}`}
               />
             </div>
             <div>
@@ -129,11 +124,7 @@ export function SlotStatusCard({ slot, isExpanded = false, onToggle }: Props) {
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              style={{
-                backgroundColor: statusConfig.bg,
-                color: statusConfig.text,
-                borderColor: statusConfig.border,
-              }}
+              className={`${statusConfig.bgClass} ${statusConfig.textClass} ${statusConfig.borderClass}`}
             >
               {slot.status}
             </Badge>

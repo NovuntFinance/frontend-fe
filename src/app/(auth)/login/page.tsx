@@ -286,7 +286,6 @@ function LoginPageContent() {
       let statusCode = 401;
       let errorCode: string | undefined;
       let passwordResetRequired = false;
-      let turnstileFailed = false;
 
       if (typeof error === 'object' && error !== null) {
         const err = error as any;
@@ -297,7 +296,6 @@ function LoginPageContent() {
         // Check for Turnstile failure
         errorCode = err.code || err.response?.data?.code;
         if (statusCode === 400 && errorCode === 'TURNSTILE_FAILED') {
-          turnstileFailed = true;
           backendMessage =
             err.message ||
             'Verification failed. Please complete the security check and try again.';
