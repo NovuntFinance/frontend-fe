@@ -57,7 +57,7 @@ export function SchedulePreview({ timezone, slots }: SchedulePreviewProps) {
           Upcoming Executions
         </CardTitle>
         <CardDescription>
-          Next 5 scheduled distributions in {preview.timezone}
+          Next 5 scheduled distributions (UTC - Platform Time)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -95,7 +95,7 @@ export function SchedulePreview({ timezone, slots }: SchedulePreviewProps) {
           ))}
         </div>
         <p className="text-muted-foreground mt-4 text-center text-xs">
-          Current time: {new Date(preview.currentTime).toLocaleString()}
+          Platform time (UTC): {new Date(preview.currentTime).toUTCString()}
         </p>
       </CardContent>
     </Card>

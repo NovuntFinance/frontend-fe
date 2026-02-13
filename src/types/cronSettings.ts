@@ -3,24 +3,47 @@
  *
  * Types for Multi-Slot Distribution Cron Configuration
  * Aligned with backend API v1.0 (February 2026)
+ *
+ * ============================================================
+ * PLATFORM TIME SYSTEM - SINGLE SOURCE OF TRUTH
+ * ============================================================
+ *
+ * The platform uses a unified UTC-based time system controlled by
+ * the `platform_day_start_utc` backend setting. This is the ONLY
+ * time system used across the entire platform.
+ *
+ * Key Principles:
+ * - All slot times are in UTC (HH:MM:SS format)
+ * - No timezone conversions or local time logic
+ * - Platform day boundaries defined by `platform_day_start_utc`
+ * - Single source of truth for all timing operations
+ *
+ * Legacy timezone fields are kept for backward compatibility only.
+ * ============================================================
  */
 
 /**
  * Single distribution slot with time and optional label
+ *
+ * @property time - Slot execution time in UTC (HH:MM:SS format, 24-hour)
+ * @property label - Optional human-readable label for the slot
  */
 export interface DistributionSlot {
-  time: string; // HH:MM:SS format (24-hour)
+  time: string; // HH:MM:SS format in UTC (e.g., "12:00:00" = noon UTC)
   label?: string; // Optional label like "Morning Distribution"
 }
 
 /**
  * Complete distribution schedule configuration
+ *
+ * @property timezone - @deprecated Legacy field. Always "UTC" in platform time system.
+ * @property timezoneOffset - @deprecated Legacy field. Always "+00:00" in platform time system.
  */
 export interface DistributionSchedule {
   isEnabled: boolean;
   mode: 'SINGLE_SLOT' | 'MULTI_SLOT';
-  timezone: string; // IANA timezone name
-  timezoneOffset: string; // "+01:00" format
+  timezone: string; // @deprecated Always "UTC" - kept for backward compatibility
+  timezoneOffset: string; // @deprecated Always "+00:00" - kept for backward compatibility
   slots: DistributionSlot[];
   cronExpressions?: string[]; // Generated cron expressions
   createdAt: string;
@@ -29,6 +52,8 @@ export interface DistributionSchedule {
 
 /**
  * Timezone option for selection
+ * @deprecated The platform time system uses UTC exclusively.
+ * This type is kept for legacy API compatibility only.
  */
 export interface Timezone {
   name: string; // IANA timezone name "Africa/Lagos"
@@ -41,27 +66,31 @@ export interface Timezone {
  */
 export interface NextExecution {
   slotNumber: number;
-  slotTime: string; // HH:MM:SS format
+  slotTime: string; // HH:MM:SS format in UTC
   label: string;
   nextRun: string; // ISO 8601 timestamp (UTC)
-  localTime: string; // ISO 8601 timestamp with timezone
+  localTime: string; // ISO 8601 timestamp (for display purposes)
   timeUntil: string; // Human-readable duration "29 minutes"
 }
 
 /**
  * Schedule execution preview
+ *
+ * @property timezone - Should always be "UTC" in platform time system
  */
 export interface SchedulePreview {
-  currentTime: string; // ISO 8601 timestamp
-  timezone: string;
+  currentTime: string; // ISO 8601 timestamp (UTC)
+  timezone: string; // Always "UTC" in platform time system
   nextExecutions: NextExecution[];
 }
 
 /**
  * Update distribution schedule request
+ *
+ * @property timezone - Should always be "UTC". Legacy field kept for API compatibility.
  */
 export interface UpdateScheduleRequest {
-  timezone: string;
+  timezone: string; // Always "UTC" - platform time system
   slots: DistributionSlot[];
 }
 

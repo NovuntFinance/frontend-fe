@@ -227,13 +227,13 @@ export const rosApi = {
         const now = new Date();
         const weekStart = new Date(now);
         // Calculate days since Monday (Monday = 0, Sunday = 6)
-        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
         const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday-based (0-6)
-        weekStart.setDate(now.getDate() - daysSinceMonday);
-        weekStart.setHours(0, 0, 0, 0); // Start of Monday
+        weekStart.setUTCDate(now.getUTCDate() - daysSinceMonday);
+        weekStart.setUTCHours(0, 0, 0, 0); // Start of Monday
         const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6); // End of Sunday
-        weekEnd.setHours(23, 59, 59, 999); // End of Sunday
+        weekEnd.setUTCDate(weekEnd.getUTCDate() + 6); // End of Sunday
+        weekEnd.setUTCHours(23, 59, 59, 999); // End of Sunday
 
         // Calculate week number
         const yearStart = new Date(now.getFullYear(), 0, 1);

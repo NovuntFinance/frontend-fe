@@ -40,18 +40,13 @@ import {
   BonusPayoutHistoryResponse,
   RegistrationBonusStatus,
 } from '@/types/registrationBonus';
-import {
-  AdminDashboardData,
-  AdminDashboardTimeframe,
-} from '@/types/admin';
+import { AdminDashboardData, AdminDashboardTimeframe } from '@/types/admin';
 import type {
   AdminAnalyticsDashboardData,
   AdminAnalyticsTimeframe,
 } from '@/types/adminAnalytics';
 import { useAuthStore } from '@/store/authStore';
-import {
-  getStakingStreak,
-} from '@/services/stakingStreakApi';
+import { getStakingStreak } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
 import { announcementsApi } from '@/services/announcementsApi';
 import type { Announcement } from '@/types/announcement';
@@ -665,14 +660,14 @@ export function useWeeklyROSSummary() {
         if (err?.statusCode === 404 || err?.response?.status === 404) {
           // Return empty data structure matching WeeklySummaryData interface
           const now = new Date();
-          const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+          const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
           const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
           const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - daysSinceMonday);
-          weekStart.setHours(0, 0, 0, 0);
+          weekStart.setUTCDate(now.getUTCDate() - daysSinceMonday);
+          weekStart.setUTCHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-          weekEnd.setHours(23, 59, 59, 999);
+          weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+          weekEnd.setUTCHours(23, 59, 59, 999);
 
           const yearStart = new Date(now.getFullYear(), 0, 1);
           const weekNumber = Math.ceil(
@@ -704,14 +699,14 @@ export function useWeeklyROSSummary() {
           );
           // Return same empty structure as 404
           const now = new Date();
-          const dayOfWeek = now.getDay();
+          const dayOfWeek = now.getUTCDay();
           const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
           const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - daysSinceMonday);
-          weekStart.setHours(0, 0, 0, 0);
+          weekStart.setUTCDate(now.getUTCDate() - daysSinceMonday);
+          weekStart.setUTCHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-          weekEnd.setHours(23, 59, 59, 999);
+          weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+          weekEnd.setUTCHours(23, 59, 59, 999);
 
           const yearStart = new Date(now.getFullYear(), 0, 1);
           const weekNumber = Math.ceil(
@@ -2234,9 +2229,7 @@ export function useUpdateNotificationSettings() {
 // DAILY PROFIT QUERIES
 // ============================================
 
-import type {
-  DeclaredProfitsFilters,
-} from '@/types/dailyProfit';
+import type { DeclaredProfitsFilters } from '@/types/dailyProfit';
 
 /**
  * Get all declared daily profits (Admin only)

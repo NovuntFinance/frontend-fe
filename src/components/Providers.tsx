@@ -12,6 +12,7 @@ import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
 import { CommandPalette } from '@/components/search/CommandPalette';
+import { initializePlatformSettings } from '@/services/platformSettingsService';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Debug logging at app initialization
@@ -20,6 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     logger.info('Frontend initialized', {
       apiBaseURL: apiBaseURL || 'NOT SET',
       environment: process.env.NODE_ENV,
+    });
+
+    // Initialize platform settings (fetch platform day start)
+    initializePlatformSettings().catch((error) => {
+      logger.error('Failed to initialize platform settings', { error });
     });
 
     if (!apiBaseURL) {

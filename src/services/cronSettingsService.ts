@@ -6,12 +6,6 @@ import type {
   ToggleScheduleRequest,
   SchedulePreviewResponse,
   CronStatus,
-  // Legacy types for backward compatibility
-  ICronSettingsResponse,
-  ITimezonesResponse,
-  IUpdateCronSettingsRequest,
-  IToggleCronSettingsRequest,
-  ICronStatus,
 } from '@/types/cronSettings';
 
 /**
@@ -80,8 +74,8 @@ class CronSettingsService {
         mode: (rawData.numberOfSlots === 1 ? 'SINGLE_SLOT' : 'MULTI_SLOT') as
           | 'SINGLE_SLOT'
           | 'MULTI_SLOT',
-        timezone: rawData.timezone || 'Africa/Lagos',
-        timezoneOffset: rawData.timezoneOffset || '+01:00',
+        timezone: 'UTC', // Platform time system: all times are UTC-based
+        timezoneOffset: '+00:00', // Platform time system: UTC offset
         slots: (rawData.schedules || []).map((slot: any) => ({
           time: `${String(slot.hour).padStart(2, '0')}:${String(slot.minute).padStart(2, '0')}:${String(slot.second).padStart(2, '0')}`,
           label: slot.label || '',
@@ -115,8 +109,9 @@ class CronSettingsService {
     const api = createAdminApi(this.get2FACode);
 
     // Transform new format (slots) to old backend format (schedules, numberOfSlots)
+    // Platform time system: Always use UTC, ignore any timezone in request
     const transformedData = {
-      timezone: data.timezone,
+      timezone: 'UTC',
       numberOfSlots: data.slots.length,
       schedules: data.slots.map((slot, index) => {
         // Parse time string "HH:MM:SS" back to hour, minute, second
@@ -172,7 +167,7 @@ class CronSettingsService {
       JSON.stringify(transformedData, null, 2)
     );
 
-    const response = await api.put<any>(
+    await api.put<any>(
       '/admin/cron-settings/distribution-schedule',
       transformedData
     );

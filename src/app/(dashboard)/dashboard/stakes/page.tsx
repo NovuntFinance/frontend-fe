@@ -39,13 +39,14 @@ export default function StakesPage() {
   React.useEffect(() => {
     const calculateDelayUntilEOD = () => {
       const now = new Date();
-      // Target is 13:00:05 (1 PM + 5s buffer) WAT to ensure backend has processed distribution
+      // Target is 13:00:05 UTC (with 5s buffer) to ensure backend has processed distribution
+      // Note: Actual distribution times are configured in admin distribution schedule
       const target = new Date(now);
-      target.setHours(13, 0, 5, 0);
+      target.setUTCHours(13, 0, 5, 0);
 
-      // If it's already past 1 PM WAT today, set target to 1 PM tomorrow
+      // If it's already past 1 PM UTC today, set target to 1 PM tomorrow
       if (now.getTime() >= target.getTime()) {
-        target.setDate(target.getDate() + 1);
+        target.setUTCDate(target.getUTCDate() + 1);
       }
 
       return target.getTime() - now.getTime();

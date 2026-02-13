@@ -33,23 +33,6 @@ import type {
 } from '@/types/dailyDeclarationReturns';
 
 const POLLING_INTERVAL = 30000; // 30 seconds
-const STATUS_MESSAGES: Record<string, string> = {
-  EMPTY: 'No distribution queued for today',
-  PENDING: 'Distribution Scheduled',
-  SCHEDULED: 'System recognized (internal state)',
-  EXECUTING: 'Distribution is running...',
-  COMPLETED: 'Completed',
-  FAILED: 'Failed',
-};
-
-const STATUS_ICONS: Record<string, React.ReactNode> = {
-  EMPTY: <AlertCircle className="h-5 w-5 text-gray-600" />,
-  PENDING: <Clock className="h-5 w-5 animate-pulse text-blue-600" />,
-  SCHEDULED: <Clock className="h-5 w-5 text-blue-600" />,
-  EXECUTING: <Loader2 className="h-5 w-5 animate-spin text-amber-600" />,
-  COMPLETED: <CheckCircle2 className="h-5 w-5 text-green-600" />,
-  FAILED: <XCircle className="h-5 w-5 text-red-600" />,
-};
 
 interface FormValues {
   premiumPoolAmount: number | '';
@@ -69,7 +52,6 @@ export function TodayDistributionForm() {
   >({});
   const [isEditing, setIsEditing] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [countdown, setCountdown] = useState<string>('');
 
   // Set up 2FA here
   useEffect(() => {
@@ -211,48 +193,6 @@ export function TodayDistributionForm() {
   useEffect(() => {
     localStorage.setItem('dailyDeclarationForm', JSON.stringify(formValues));
   }, [formValues]);
-
-  // Countdown timer logic
-  useEffect(() => {
-    if (statusData?.status !== 'PENDING' || !statusData?.scheduledFor) {
-      setCountdown('');
-      return;
-    }
-
-    const timer = setInterval(() => {
-      const now = new Date();
-      const scheduled = new Date(statusData.scheduledFor!);
-      const diff = scheduled.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        // If more than 2 minutes past scheduled time, show warning
-        if (Math.abs(diff) > 120000) {
-          setCountdown('⚠️ Past execution time - Check status');
-          // Force refetch every 10 seconds when overdue
-          if (Math.abs(diff / 1000) % 10 === 0) {
-            refetch();
-          }
-        } else {
-          setCountdown('Executing now...');
-          refetch();
-        }
-        return;
-      }
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const parts = [];
-      if (hours > 0) parts.push(`${hours}h`);
-      if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
-      parts.push(`${seconds}s`);
-
-      setCountdown(parts.join(' '));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [statusData, refetch]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -538,16 +478,20 @@ export function TodayDistributionForm() {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                <strong>Multi-Slot Distribution Schedule:</strong>{' '}
+                <strong>Distribution Schedule (Platform Time - UTC):</strong>{' '}
                 {cronSettings.slots.length} slot
                 {cronSettings.slots.length > 1 ? 's' : ''} configured at{' '}
                 {cronSettings.slots.map((slot, idx) => (
                   <span key={idx}>
-                    {slot.time}
+                    {slot.time} UTC
                     {idx < cronSettings.slots.length - 1 ? ', ' : ''}
                   </span>
-                ))}{' '}
-                ({cronSettings.timezone})
+                ))}
+                <br />
+                <span className="text-muted-foreground">
+                  All times use the platform time system (UTC). Daily reset
+                  occurs at platform_day_start_utc.
+                </span>
                 <br />
                 <a
                   href="/admin/settings/distribution-schedule"

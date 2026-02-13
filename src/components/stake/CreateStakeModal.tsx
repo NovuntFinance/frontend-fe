@@ -57,7 +57,6 @@ export function CreateStakeModal() {
       setSource('both');
       setGoal('');
       setGoalTitle('');
-      setGoalDescription('');
       setTwoFactorCode('');
       setError(null);
       closeModal('create-stake');

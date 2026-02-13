@@ -4,8 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Plus, Clock, RefreshCw } from 'lucide-react';
 import { use2FA } from '@/contexts/TwoFAContext';
-import { useCronSettings, useTimezones } from '@/hooks/useCronSettings';
-import { TimezoneSelector } from './TimezoneSelector';
+import { useCronSettings } from '@/hooks/useCronSettings';
+// TimezoneSelector removed - platform time system uses UTC exclusively
 import { SlotTimeInput } from './SlotTimeInput';
 import { SchedulePreview } from './SchedulePreview';
 import { cronSettingsService } from '@/services/cronSettingsService';
@@ -41,10 +41,10 @@ export function CronSettingsPage() {
     isUpdating,
     isToggling,
   } = useCronSettings();
-  const { timezones, isLoading: isLoadingTimezones } = useTimezones();
+  // useTimezones removed - platform time system uses UTC exclusively
 
   const [formData, setFormData] = useState<UpdateScheduleRequest>({
-    timezone: '',
+    timezone: 'UTC', // Platform time system: UTC is the single source of truth
     slots: [],
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -61,7 +61,7 @@ export function CronSettingsPage() {
   useEffect(() => {
     if (cronSettings) {
       setFormData({
-        timezone: cronSettings.timezone,
+        timezone: 'UTC', // Platform time system: always UTC
         slots: cronSettings.slots || [],
       });
       setIsEnabled(cronSettings.isEnabled);
@@ -107,9 +107,7 @@ export function CronSettingsPage() {
   const validationErrors = useMemo(() => {
     const errors: string[] = [];
 
-    if (!formData.timezone) {
-      errors.push('Timezone is required');
-    }
+    // Platform time system: timezone validation removed (always UTC)
 
     if (formData.slots.length < 1 || formData.slots.length > MAX_SLOTS) {
       errors.push(`Number of slots must be between 1 and ${MAX_SLOTS}`);
@@ -158,7 +156,7 @@ export function CronSettingsPage() {
     }
   };
 
-  if (isLoading || isLoadingTimezones) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <ShimmerCard />
@@ -183,7 +181,7 @@ export function CronSettingsPage() {
           </Button>
           <h1 className="text-3xl font-bold">Distribution Schedule</h1>
           <p className="text-muted-foreground mt-1">
-            Configure when daily distributions execute
+            Configure when daily distributions execute (all times in UTC)
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -227,11 +225,12 @@ export function CronSettingsPage() {
 
               <div>
                 <Label className="text-muted-foreground text-sm">
-                  Timezone
+                  Platform Time
                 </Label>
-                <p className="font-medium">{cronSettings.timezone}</p>
+                <p className="font-medium">UTC (Coordinated Universal Time)</p>
                 <p className="text-muted-foreground text-xs">
-                  {cronSettings.timezoneOffset}
+                  All distribution times are in UTC, aligned with platform day
+                  boundaries
                 </p>
               </div>
 
@@ -282,7 +281,8 @@ export function CronSettingsPage() {
             <CardHeader>
               <CardTitle>Edit Schedule</CardTitle>
               <CardDescription>
-                Update distribution times and timezone
+                Configure distribution slot times (UTC). All times are relative
+                to platform day boundaries.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -299,17 +299,15 @@ export function CronSettingsPage() {
                 </Alert>
               )}
 
-              {/* Timezone Selector */}
-              <TimezoneSelector
-                value={formData.timezone}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, timezone: value }))
-                }
-                timezones={timezones}
-                disabled={isUpdating}
-              />
-
-              <hr />
+              {/* Platform Time Info */}
+              <Alert>
+                <AlertDescription className="text-sm">
+                  <strong>Platform Time System:</strong> All times are in UTC.
+                  The platform day resets according to the{' '}
+                  <code>platform_day_start_utc</code> setting (default: 00:00:00
+                  UTC).
+                </AlertDescription>
+              </Alert>
 
               {/* Slot Time Inputs */}
               <div className="space-y-4">
