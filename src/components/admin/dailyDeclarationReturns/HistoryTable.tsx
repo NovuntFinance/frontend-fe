@@ -27,6 +27,7 @@ import type {
   HistoryEntry,
 } from '@/types/dailyDeclarationReturns';
 import { DistributionDetailsModal } from './DistributionDetailsModal';
+import { pct4 } from '@/utils/formatters';
 
 const PAGE_LIMIT = 50;
 
@@ -309,7 +310,7 @@ export function HistoryTable() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {rosPercent.toFixed(2)}%
+                          {pct4(rosPercent)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           $

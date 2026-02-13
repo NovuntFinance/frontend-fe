@@ -16,6 +16,7 @@ import { useProfitHistory } from '@/lib/queries';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
 import { hoverAnimation } from '@/design-system/animations';
+import { pct4 } from '@/utils/formatters';
 
 type TimeRange = '7D' | '30D' | '100D';
 
@@ -194,9 +195,8 @@ export function DailyROSPerformance() {
                 <>
                   <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
                     {isNaN(averagePercentage) || !isFinite(averagePercentage)
-                      ? '0.00'
-                      : averagePercentage.toFixed(2)}
-                    %
+                      ? '0.0000'
+                      : pct4(averagePercentage)}
                   </h2>
                   <span className="text-muted-foreground text-xs sm:text-sm">
                     avg in {selectedRange}
@@ -349,7 +349,7 @@ export function DailyROSPerformance() {
                                     ROS Percentage
                                   </span>
                                   <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
-                                    {percentage.toFixed(2)}%
+                                    {pct4(percentage)}
                                   </span>
                                 </div>
                                 {(isToday || isYesterday) && (

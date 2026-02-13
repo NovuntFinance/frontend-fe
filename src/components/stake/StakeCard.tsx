@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import { fmt4 } from '@/utils/formatters';
 
 interface StakeCardProps {
   stake: Stake;
@@ -147,7 +147,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
                 <CardTitle
                   className={`bg-gradient-to-r ${gradientColors.textGradient} bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg`}
                 >
-                  {isRegistrationBonus && '🎁 '}${stake.amount.toFixed(2)} USDT
+                  {isRegistrationBonus && '🎁 '}${fmt4(stake.amount)} USDT
                 </CardTitle>
                 <CardDescription className="text-[10px] sm:text-xs">
                   {isRegistrationBonus
@@ -242,7 +242,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
                       : 'text-emerald-900 dark:text-emerald-100'
                   }`}
                 >
-                  ${(stake.totalEarned || 0).toFixed(2)}
+                  ${fmt4(stake.totalEarned)}
                 </p>
               </div>
 
@@ -281,7 +281,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
                       : 'text-blue-900 dark:text-blue-100'
                   }`}
                 >
-                  ${(stake.targetReturn || 0).toFixed(2)}
+                  ${fmt4(stake.targetReturn)}
                 </p>
               </div>
             </div>
@@ -312,7 +312,7 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
                 Remaining
               </span>
               <span className="font-semibold">
-                ${(stake.remainingToTarget || 0).toFixed(2)}
+                ${fmt4(stake.remainingToTarget)}
               </span>
             </div>
           )}

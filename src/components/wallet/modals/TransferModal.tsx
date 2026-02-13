@@ -21,10 +21,11 @@ import { toast } from 'sonner';
 import { useWalletBalance } from '@/lib/queries';
 import { useDebounce } from '@/hooks/useDebounce';
 import { transferApi } from '@/services/transferApi';
-import type { TransferResponse, UserSearchResult } from '@/types/transfer';
+import type { TransferResponse } from '@/types/transfer';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queries';
 import { useTransferLimits } from '@/hooks/useTransferLimits';
+import { fmt4 } from '@/utils/formatters';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -488,7 +489,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       />
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">
-                          Available: ${availableBalance.toFixed(2)}
+                          Available: ${fmt4(availableBalance)}
                         </span>
                         <Button
                           variant="link"
@@ -532,7 +533,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               Amount:
                             </span>
                             <span className="font-semibold">
-                              ${parseFloat(amount).toFixed(2)}
+                              ${fmt4(parseFloat(amount))}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -547,7 +548,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               Recipient receives:
                             </span>
                             <span className="text-success text-lg font-bold">
-                              ${parseFloat(amount).toFixed(2)}
+                              ${fmt4(parseFloat(amount))}
                             </span>
                           </div>
                         </div>
@@ -602,7 +603,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               $
                             </span>
                             <p className="text-foreground text-5xl font-bold">
-                              {parseFloat(amount).toFixed(2)}
+                              {fmt4(parseFloat(amount))}
                             </p>
                           </div>
                           <p className="text-muted-foreground mt-2 text-lg font-medium">
@@ -785,7 +786,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         Transfer Successful!
                       </h3>
                       <p className="text-muted-foreground text-lg">
-                        ${parseFloat(amount).toFixed(2)} sent to{' '}
+                        ${fmt4(parseFloat(amount))} sent to{' '}
                         {selectedUser.email && selectedUser.email.includes('@')
                           ? selectedUser.email
                           : `@${selectedUser.username}`}
@@ -796,7 +797,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Amount:</span>
                         <span className="font-semibold">
-                          ${parseFloat(amount).toFixed(2)}
+                          ${fmt4(parseFloat(amount))}
                         </span>
                       </div>
                       <div className="flex justify-between">

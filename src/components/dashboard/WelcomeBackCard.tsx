@@ -28,6 +28,7 @@ import {
 import { motion } from 'framer-motion';
 import { hoverAnimation } from '@/design-system/animations';
 import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
+import { pct4 } from '@/utils/formatters';
 import { SiTiktok } from 'react-icons/si';
 import { openShareModal } from '@/store/shareModalStore';
 
@@ -192,7 +193,7 @@ export function WelcomeBackCard({
                 />
                 <span className="font-bold">
                   {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
-                  {(lastWeekProfitChange ?? 0).toFixed(2)}%
+                  {pct4(lastWeekProfitChange ?? 0)}
                 </span>
               </Badge>
             </div>

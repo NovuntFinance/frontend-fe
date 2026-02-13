@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
+import { fmt4, pct4 } from '@/utils/formatters';
 
 interface DistributionDetailsModalProps {
   date: string;
@@ -35,9 +36,7 @@ export function DistributionDetailsModal({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            📋 Distribution Details - {date}
-          </DialogTitle>
+          <DialogTitle>📋 Distribution Details - {date}</DialogTitle>
           <DialogDescription>
             Detailed information about this distribution execution
           </DialogDescription>
@@ -56,7 +55,8 @@ export function DistributionDetailsModal({
                   Status
                 </p>
                 <p className="mt-1 text-lg">
-                  {details.status === 'COMPLETED' ? '✅' : '❌'} {details.status}
+                  {details.status === 'COMPLETED' ? '✅' : '❌'}{' '}
+                  {details.status}
                 </p>
               </div>
               <div>
@@ -91,15 +91,15 @@ export function DistributionDetailsModal({
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                     ROS Percentage
                   </p>
-                  <p className="mt-1 text-lg font-mono">
-                    {details.values.rosPercentage.toFixed(2)}%
+                  <p className="mt-1 font-mono text-lg">
+                    {pct4(details.values.rosPercentage)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                     Execution Time
                   </p>
-                  <p className="mt-1 text-lg font-mono">
+                  <p className="mt-1 font-mono text-lg">
                     {(details.executionTimeMs / 1000).toFixed(1)}s
                   </p>
                 </div>
@@ -108,7 +108,11 @@ export function DistributionDetailsModal({
                     Premium Pool Amount
                   </p>
                   <p className="mt-1 font-mono">
-                    ${details.values.premiumPoolAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    $
+                    {details.values.premiumPoolAmount.toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 2 }
+                    )}
                   </p>
                 </div>
                 <div>
@@ -116,7 +120,11 @@ export function DistributionDetailsModal({
                     Performance Pool Amount
                   </p>
                   <p className="mt-1 font-mono">
-                    ${details.values.performancePoolAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    $
+                    {details.values.performancePoolAmount.toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 2 }
+                    )}
                   </p>
                 </div>
               </div>
@@ -141,7 +149,7 @@ export function DistributionDetailsModal({
                     <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
                       Processed Stakes
                     </p>
-                    <p className="mt-1 text-lg font-mono">
+                    <p className="mt-1 font-mono text-lg">
                       {details.rosDistribution.processedStakes.toLocaleString()}
                     </p>
                   </div>
@@ -150,7 +158,11 @@ export function DistributionDetailsModal({
                       Total Distributed
                     </p>
                     <p className="mt-1 font-mono">
-                      ${details.rosDistribution.totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      $
+                      {details.rosDistribution.totalDistributed.toLocaleString(
+                        undefined,
+                        { maximumFractionDigits: 2 }
+                      )}
                     </p>
                   </div>
                 </div>
@@ -170,7 +182,7 @@ export function DistributionDetailsModal({
                         Premium Pool
                       </p>
                       <p className="mt-1">
-                        <span className="text-lg font-mono">
+                        <span className="font-mono text-lg">
                           {details.poolDistribution.premium.usersCount}
                         </span>{' '}
                         <span className="text-xs text-gray-600 dark:text-gray-400">
@@ -178,7 +190,11 @@ export function DistributionDetailsModal({
                         </span>
                       </p>
                       <p className="mt-1 font-mono">
-                        ${details.poolDistribution.premium.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        $
+                        {details.poolDistribution.premium.totalAmount.toLocaleString(
+                          undefined,
+                          { maximumFractionDigits: 2 }
+                        )}
                       </p>
                     </div>
                     <div className="rounded bg-white p-3 dark:bg-gray-900">
@@ -186,7 +202,7 @@ export function DistributionDetailsModal({
                         Performance Pool
                       </p>
                       <p className="mt-1">
-                        <span className="text-lg font-mono">
+                        <span className="font-mono text-lg">
                           {details.poolDistribution.performance.usersCount}
                         </span>{' '}
                         <span className="text-xs text-gray-600 dark:text-gray-400">
@@ -194,7 +210,11 @@ export function DistributionDetailsModal({
                         </span>
                       </p>
                       <p className="mt-1 font-mono">
-                        ${details.poolDistribution.performance.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        $
+                        {details.poolDistribution.performance.totalAmount.toLocaleString(
+                          undefined,
+                          { maximumFractionDigits: 2 }
+                        )}
                       </p>
                     </div>
                   </div>
@@ -209,8 +229,8 @@ export function DistributionDetailsModal({
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Duration
                 </p>
-                <p className="mt-1 text-lg font-mono">
-                  {(details.executionTimeMs / 1000).toFixed(2)}s
+                <p className="mt-1 font-mono text-lg">
+                  {fmt4(details.executionTimeMs / 1000)}s
                 </p>
               </div>
               <div className="mt-3">

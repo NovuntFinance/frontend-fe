@@ -14,6 +14,7 @@ import type { IDistributionSlot } from '@/types/dailyDeclarationReturns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { fmt4 } from '@/utils/formatters';
 
 interface Props {
   slot: IDistributionSlot & {
@@ -246,7 +247,7 @@ export function SlotStatusCard({ slot, isExpanded = false, onToggle }: Props) {
               <div className="text-sm">
                 <span className="text-muted-foreground">Execution Time:</span>{' '}
                 <span className="font-medium">
-                  {(slot.executionDetails.executionTimeMs / 1000).toFixed(2)}s
+                  {fmt4(slot.executionDetails.executionTimeMs / 1000)}s
                 </span>
               </div>
             )}

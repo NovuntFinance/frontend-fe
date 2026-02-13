@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Clock, CalendarClock } from 'lucide-react';
+import { Clock, Calendar } from 'lucide-react';
 import { useSchedulePreview } from '@/hooks/useCronSettings';
 import type { DistributionSlot } from '@/types/cronSettings';
 import {
@@ -53,7 +53,7 @@ export function SchedulePreview({ timezone, slots }: SchedulePreviewProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CalendarClock className="h-5 w-5" />
+          <Calendar className="h-5 w-5" />
           Upcoming Executions
         </CardTitle>
         <CardDescription>

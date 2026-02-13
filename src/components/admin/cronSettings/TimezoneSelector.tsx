@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Globe, Search } from 'lucide-react';
+import { MapPin, Search } from 'lucide-react';
 import type { Timezone } from '@/types/cronSettings';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,7 @@ export function TimezoneSelector({
   return (
     <div className="space-y-2">
       <Label htmlFor="timezone">
-        <Globe className="mr-1 inline h-4 w-4" />
+        <MapPin className="mr-1 inline h-4 w-4" />
         Timezone *
       </Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>

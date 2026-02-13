@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { pct4 } from '@/utils/formatters';
 
 export function TodayROSCard() {
   const { data, isLoading: loading, error, refetch } = useTodayProfit();
@@ -127,14 +128,6 @@ export function TodayROSCard() {
     year: 'numeric',
   });
 
-  // Get day name from date
-  const dayName = new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long',
-  });
-
-  // Format percentage with 2 decimal places
-  const formattedPercentage = profitPercentage.toFixed(2);
-
   return (
     <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
       {/* Animated Gradient Background */}
@@ -213,7 +206,7 @@ export function TodayROSCard() {
             transition={{ duration: 0.5 }}
             className="text-4xl font-bold text-purple-600 dark:text-purple-400"
           >
-            {rosPercentage.toFixed(2)}%
+            {pct4(rosPercentage)}
           </motion.div>
           <span className="text-sm text-purple-500/70">Daily ROS</span>
         </div>

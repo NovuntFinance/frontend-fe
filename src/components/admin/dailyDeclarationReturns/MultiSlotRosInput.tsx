@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { pct4 } from '@/utils/formatters';
 
 interface Props {
   slots: DistributionSlot[];
@@ -125,7 +126,7 @@ export function MultiSlotRosInput({
               exceedsLimit ? 'font-bold text-orange-600' : 'text-primary'
             }
           >
-            {totalRos.toFixed(2)}%
+            {pct4(totalRos)}
           </span>
         </div>
       </div>

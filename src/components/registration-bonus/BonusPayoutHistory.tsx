@@ -8,20 +8,21 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  TrendingUp, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  TrendingUp,
   DollarSign,
   Clock,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { useBonusPayoutHistory } from '@/lib/queries';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyStates } from '@/components/EmptyStates';
+import { pct4 } from '@/utils/formatters';
 
 interface BonusPayoutHistoryProps {
   /** Initial page number */
@@ -34,13 +35,16 @@ interface BonusPayoutHistoryProps {
  * Bonus Payout History Component
  * Shows weekly bonus payouts with pagination
  */
-export function BonusPayoutHistory({ 
-  initialPage = 1, 
-  pageSize = 10 
+export function BonusPayoutHistory({
+  initialPage = 1,
+  pageSize = 10,
 }: BonusPayoutHistoryProps) {
   const [currentPage, setCurrentPage] = React.useState(initialPage);
 
-  const { data, isLoading, error } = useBonusPayoutHistory(currentPage, pageSize);
+  const { data, isLoading, error } = useBonusPayoutHistory(
+    currentPage,
+    pageSize
+  );
 
   // Handle pagination
   const handlePrevPage = () => {
@@ -68,8 +72,8 @@ export function BonusPayoutHistory({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-emerald-600" />
           </div>
         </CardContent>
       </Card>
@@ -83,7 +87,9 @@ export function BonusPayoutHistory({
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-red-600">
             <AlertCircle className="h-5 w-5" />
-            <p className="text-sm">Failed to load payout history. Please try again later.</p>
+            <p className="text-sm">
+              Failed to load payout history. Please try again later.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -127,26 +133,31 @@ export function BonusPayoutHistory({
             <Clock className="h-5 w-5 text-emerald-600" />
             Payout History
           </CardTitle>
-          <p className="text-sm text-gray-600 mt-1">
-            Track how your registration bonus is paid out weekly with ROS earnings
+          <p className="mt-1 text-sm text-gray-600">
+            Track how your registration bonus is paid out weekly with ROS
+            earnings
           </p>
         </CardHeader>
         <CardContent>
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-              <div className="flex items-center gap-2 mb-1">
+          <div className="mb-6 grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+              <div className="mb-1 flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-emerald-600" />
-                <p className="text-xs text-emerald-700 font-medium">Total Paid Out</p>
+                <p className="text-xs font-medium text-emerald-700">
+                  Total Paid Out
+                </p>
               </div>
               <p className="text-lg font-bold text-emerald-900">
                 {formatCurrency(totalPaidOut)}
               </p>
             </div>
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex items-center gap-2 mb-1">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <div className="mb-1 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-blue-600" />
-                <p className="text-xs text-blue-700 font-medium">Remaining Balance</p>
+                <p className="text-xs font-medium text-blue-700">
+                  Remaining Balance
+                </p>
               </div>
               <p className="text-lg font-bold text-blue-900">
                 {formatCurrency(totalRemaining)}
@@ -159,11 +170,21 @@ export function BonusPayoutHistory({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Week</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">ROS %</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Amount Paid</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Balance After</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                    Week
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-700">
+                    ROS %
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-700">
+                    Amount Paid
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-700">
+                    Balance After
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -173,37 +194,37 @@ export function BonusPayoutHistory({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    className="border-b border-gray-100 transition-colors hover:bg-gray-50"
                   >
-                    <td className="py-3 px-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
                           <span className="text-xs font-bold text-emerald-700">
                             {payout.weekNumber}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="h-4 w-4" />
                         <span>{formatDate(payout.paidAt)}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <TrendingUp className="h-4 w-4 text-emerald-600" />
                         <span className="font-medium text-emerald-700">
-                          {payout.rosPercentage.toFixed(2)}%
+                          {pct4(payout.rosPercentage)}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="px-4 py-3 text-right">
                       <span className="font-semibold text-gray-900">
                         {formatCurrency(payout.amountPaid)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="px-4 py-3 text-right">
                       <span className="text-gray-600">
                         {formatCurrency(payout.remainingBalance)}
                       </span>
@@ -218,7 +239,7 @@ export function BonusPayoutHistory({
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                Page {pagination.currentPage} of {totalPages} 
+                Page {pagination.currentPage} of {totalPages}
                 <span className="ml-2 text-gray-400">
                   ({pagination.totalItems} total payouts)
                 </span>
@@ -233,7 +254,7 @@ export function BonusPayoutHistory({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                
+
                 {/* Page numbers */}
                 <div className="flex gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -247,11 +268,13 @@ export function BonusPayoutHistory({
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <Button
                         key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
+                        variant={
+                          currentPage === pageNum ? 'default' : 'outline'
+                        }
                         size="sm"
                         onClick={() => handlePageClick(pageNum)}
                         className="h-8 w-8 p-0"
@@ -276,11 +299,12 @@ export function BonusPayoutHistory({
           )}
 
           {/* Info Note */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+          <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
             <p className="text-xs text-blue-700">
-              <strong>How it works:</strong> Your registration bonus is paid out gradually. 
-              Each week, when you earn ROS from your stakes, a percentage of your bonus is paid out. 
-              For example, if you earn 5% ROS, you receive 5% of your remaining bonus.
+              <strong>How it works:</strong> Your registration bonus is paid out
+              gradually. Each week, when you earn ROS from your stakes, a
+              percentage of your bonus is paid out. For example, if you earn 5%
+              ROS, you receive 5% of your remaining bonus.
             </p>
           </div>
         </CardContent>

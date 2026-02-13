@@ -28,6 +28,7 @@ import {
   getPremiumPoolProgressHelperText,
   correctPremiumPoolTask,
 } from '@/lib/utils/premiumPoolUtils';
+import { pct4 } from '@/utils/formatters';
 import {
   Card,
   CardContent,
@@ -1081,8 +1082,7 @@ export default function PoolsPage() {
                                 )}
                               </span>
                               <span>
-                                Share:{' '}
-                                {(distribution.userShare * 100).toFixed(2)}%
+                                Share: {pct4(distribution.userShare * 100)}
                               </span>
                             </div>
                           </div>

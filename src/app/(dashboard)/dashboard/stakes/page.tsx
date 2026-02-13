@@ -19,6 +19,7 @@ import { StakeCard } from '@/components/stake/StakeCard';
 import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
+import { fmt4, pct4 } from '@/utils/formatters';
 // ✅ Backend now provides todaysProfit and todaysROSPercentage in dashboard response
 import {
   Card,
@@ -229,7 +230,7 @@ export default function StakesPage() {
             </CardHeader>
             <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
-                ${totalEarnedROS.toFixed(2)}
+                ${fmt4(totalEarnedROS)}
               </p>
             </CardContent>
           </Card>
@@ -279,12 +280,12 @@ export default function StakesPage() {
             <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
                 $
-                {activeStakes
-                  .reduce((sum: number, stake: Stake) => {
+                {fmt4(
+                  activeStakes.reduce((sum: number, stake: Stake) => {
                     const amount = Number(stake?.amount || 0);
                     return sum + (isNaN(amount) ? 0 : amount);
                   }, 0)
-                  .toFixed(2)}
+                )}
               </p>
             </CardContent>
           </Card>
@@ -333,11 +334,11 @@ export default function StakesPage() {
             </CardHeader>
             <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl">
-                ${todayProfitAmount.toFixed(2)}
+                ${fmt4(todayProfitAmount)}
               </p>
               {displayROSPercentage > 0 && (
                 <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                  {displayROSPercentage.toFixed(2)}% ROS
+                  {pct4(displayROSPercentage)}
                 </p>
               )}
             </CardContent>
@@ -392,7 +393,7 @@ export default function StakesPage() {
               {summary?.targetTotalReturns &&
                 summary.targetTotalReturns > 0 && (
                   <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                    Target: ${summary.targetTotalReturns.toFixed(2)}
+                    Target: ${fmt4(summary.targetTotalReturns)}
                   </p>
                 )}
             </CardContent>
@@ -449,7 +450,7 @@ export default function StakesPage() {
                     Deposit Wallet
                   </p>
                   <p className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${(Number(wallets.fundedWallet) || 0).toFixed(2)}
+                    ${fmt4(Number(wallets.fundedWallet) || 0)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                     {wallets.description?.fundedWallet}
@@ -460,7 +461,7 @@ export default function StakesPage() {
                     Earnings Wallet
                   </p>
                   <p className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${(Number(wallets.earningWallet) || 0).toFixed(2)}
+                    ${fmt4(Number(wallets.earningWallet) || 0)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-[10px] sm:text-xs">
                     {wallets.description?.earningWallet}
@@ -471,7 +472,7 @@ export default function StakesPage() {
                     Total Available
                   </p>
                   <p className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                    ${(Number(wallets.totalAvailableBalance) || 0).toFixed(2)}
+                    ${fmt4(Number(wallets.totalAvailableBalance) || 0)}
                   </p>
                   <Button
                     onClick={() => openModal('create-stake')}

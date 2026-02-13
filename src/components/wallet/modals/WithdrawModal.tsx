@@ -15,6 +15,7 @@ import { useInitiateWithdrawal } from '@/lib/mutations/transactionMutations';
 import { LargeWithdrawalDialog } from '@/components/dialogs/LargeWithdrawalDialog';
 import { DailyLimitDialog } from '@/components/dialogs/DailyLimitDialog';
 import { useWithdrawalConfig } from '@/hooks/useWithdrawalConfig';
+import { fmt4 } from '@/utils/formatters';
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -48,8 +49,6 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [showLargeWithdrawalDialog, setShowLargeWithdrawalDialog] =
     useState(false);
   const [showDailyLimitDialog, setShowDailyLimitDialog] = useState(false);
-  const [pendingWithdrawal, setPendingWithdrawal] = useState(false);
-
   // Get withdrawal config from dynamic config system
   const withdrawalConfig = useWithdrawalConfig();
   const MIN_WITHDRAWAL = withdrawalConfig.minAmount;
@@ -353,7 +352,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               Amount:
                             </span>
                             <span className="font-semibold">
-                              ${amount.toFixed(2)}
+                              ${fmt4(amount)}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -361,7 +360,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               Fee ({FEE_PERCENTAGE}%):
                             </span>
                             <span className="text-destructive font-semibold">
-                              -${fee.toFixed(2)}
+                              -${fmt4(fee)}
                             </span>
                           </div>
                           <div className="bg-border my-2 h-px" />
@@ -370,7 +369,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               You&apos;ll receive:
                             </span>
                             <span className="text-success text-lg font-bold">
-                              ${youReceive.toFixed(2)}
+                              ${fmt4(youReceive)}
                             </span>
                           </div>
                         </div>
@@ -425,7 +424,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               Amount
                             </p>
                             <p className="text-2xl font-bold">
-                              ${amount.toFixed(2)} USDT
+                              ${fmt4(amount)} USDT
                             </p>
                           </div>
 
@@ -454,7 +453,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               Fee ({FEE_PERCENTAGE}%)
                             </span>
                             <span className="text-destructive font-semibold">
-                              -${fee.toFixed(2)}
+                              -${fmt4(fee)}
                             </span>
                           </div>
 
@@ -463,7 +462,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               You&apos;ll receive
                             </span>
                             <span className="text-success text-xl font-bold">
-                              ${youReceive.toFixed(2)}
+                              ${fmt4(youReceive)}
                             </span>
                           </div>
                         </div>
@@ -532,7 +531,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Amount:</span>
                           <span className="font-semibold">
-                            ${youReceive.toFixed(2)} USDT
+                            ${fmt4(youReceive)} USDT
                           </span>
                         </div>
                         <div className="flex justify-between">

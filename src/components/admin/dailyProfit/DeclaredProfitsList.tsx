@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { pct4 } from '@/utils/formatters';
 import {
   Select,
   SelectContent,
@@ -226,7 +227,7 @@ export function DeclaredProfitsList() {
                         })}
                       </TableCell>
                       <TableCell className="font-semibold text-purple-600">
-                        {profit.rosPercentage.toFixed(2)}%
+                        {pct4(profit.rosPercentage)}
                       </TableCell>
                       <TableCell className="font-bold text-gray-900 dark:text-gray-100">
                         $

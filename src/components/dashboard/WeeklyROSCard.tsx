@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useWeeklyROSSummary } from '@/lib/queries';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { fmt4, pct4 } from '@/utils/formatters';
 
 export function WeeklyROSCard() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -95,14 +96,14 @@ export function WeeklyROSCard() {
               transition={{ delay: 0.9 }}
               className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-5xl font-black text-transparent"
             >
-              {data?.weeklyRos?.toFixed(2) || 0}%
+              {pct4(data?.weeklyRos || 0)}
             </motion.span>
           )}
 
           {!loading && data && (
             <Badge className="border-none bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl">
               <DollarSign className="mr-1 h-3 w-3" />
-              {data.totalEarnings.toFixed(2)}
+              {fmt4(data.totalEarnings)}
             </Badge>
           )}
         </div>
@@ -136,12 +137,12 @@ export function WeeklyROSCard() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground text-xs">
-                          {day.ros.toFixed(2)}%
+                          {pct4(day.ros)}
                         </span>
                         <span
                           className={`font-bold text-green-600 dark:text-green-400`}
                         >
-                          ${day.earnings.toFixed(2)}
+                          ${fmt4(day.earnings)}
                         </span>
                       </div>
                     </div>

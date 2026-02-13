@@ -3,16 +3,26 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { pct4 } from '@/utils/formatters';
 
 type TimeRange = '4W' | '8W' | '12W' | '1Y';
 
 const timeRanges: TimeRange[] = ['4W', '8W', '12W', '1Y'];
 
 // Mock weekly ROS percentage data - in production, this would come from your staking API
-const mockWeeklyROSData: Record<TimeRange, { ros: number; week: string; date: string }[]> = {
+const mockWeeklyROSData: Record<
+  TimeRange,
+  { ros: number; week: string; date: string }[]
+> = {
   '4W': [
     { ros: 2.5, week: 'Week 1', date: 'Nov 1' },
     { ros: 3.2, week: 'Week 2', date: 'Nov 8' },
@@ -72,17 +82,17 @@ export function PortfolioChart() {
   const currentROS = data[data.length - 1].ros;
   const previousROS = data[0].ros;
   const change = currentROS - previousROS;
-  const changePercent = previousROS !== 0 ? ((change / previousROS) * 100).toFixed(2) : '0.00';
+  const changePercent = previousROS !== 0 ? (change / previousROS) * 100 : 0;
   const isPositive = change >= 0;
-  const averageROS = (data.reduce((sum, d) => sum + d.ros, 0) / data.length).toFixed(2);
+  const averageROS = data.reduce((sum, d) => sum + d.ros, 0) / data.length;
 
   // Calculate chart dimensions with better scaling for visibility
   const maxROS = Math.max(...data.map((d) => d.ros));
   const minROS = Math.min(...data.map((d) => d.ros));
   const rosRange = maxROS - minROS || 1;
-  
+
   // Use a baseline slightly below min to show variations better
-  const chartBaseline = Math.max(0, minROS - (rosRange * 0.3));
+  const chartBaseline = Math.max(0, minROS - rosRange * 0.3);
   const chartScale = maxROS - chartBaseline;
 
   // Generate bar chart data
@@ -93,24 +103,34 @@ export function PortfolioChart() {
   const actualBarWidth = barWidth - barSpacing;
 
   return (
-    <Card className="relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-card/50 backdrop-blur-sm">
+    <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
       {/* Gradient Background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${
-        isPositive ? 'from-green-500/10 via-green-500/5' : 'from-red-500/10 via-red-500/5'
-      } to-transparent`} />
-      
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${
+          isPositive
+            ? 'from-green-500/10 via-green-500/5'
+            : 'from-red-500/10 via-red-500/5'
+        } to-transparent`}
+      />
+
       <CardHeader className="relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-xl ${
-              isPositive ? 'bg-green-500/10' : 'bg-red-500/10'
-            }`}>
-              <TrendingUp className={`h-6 w-6 ${
-                isPositive ? 'text-green-500' : 'text-red-500'
-              }`} />
+            <div
+              className={`rounded-xl p-3 ${
+                isPositive ? 'bg-green-500/10' : 'bg-red-500/10'
+              }`}
+            >
+              <TrendingUp
+                className={`h-6 w-6 ${
+                  isPositive ? 'text-green-500' : 'text-red-500'
+                }`}
+              />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold">Weekly ROS Performance</CardTitle>
+              <CardTitle className="text-xl font-bold">
+                Weekly ROS Performance
+              </CardTitle>
               <CardDescription>
                 Track your weekly Return on Stake percentages
               </CardDescription>
@@ -118,7 +138,7 @@ export function PortfolioChart() {
           </div>
 
           {/* Time range selector */}
-          <div className="flex gap-1 bg-muted/50 p-1 rounded-xl border-0">
+          <div className="bg-muted/50 flex gap-1 rounded-xl border-0 p-1">
             {timeRanges.map((range) => (
               <Button
                 key={range}
@@ -134,42 +154,43 @@ export function PortfolioChart() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="bg-muted/30 rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-1">Current Week</p>
+            <p className="text-muted-foreground mb-1 text-xs">Current Week</p>
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {currentROS.toFixed(2)}%
+              {pct4(currentROS)}
             </p>
           </div>
           <div className="bg-muted/30 rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-1">Average ROS</p>
-            <p className="text-2xl font-bold">
-              {averageROS}%
-            </p>
+            <p className="text-muted-foreground mb-1 text-xs">Average ROS</p>
+            <p className="text-2xl font-bold">{pct4(averageROS)}</p>
           </div>
           <div className="bg-muted/30 rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-1">Change</p>
+            <p className="text-muted-foreground mb-1 text-xs">Change</p>
             <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {isPositive ? '+' : ''}{change.toFixed(2)}%
+              <p
+                className={`text-2xl font-bold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+              >
+                {isPositive ? '+' : ''}
+                {pct4(change)}
               </p>
               <Badge
                 variant={isPositive ? 'default' : 'destructive'}
                 className="text-xs"
               >
                 {isPositive ? (
-                  <TrendingUp className="h-3 w-3 mr-1" />
+                  <TrendingUp className="mr-1 h-3 w-3" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 mr-1" />
+                  <TrendingDown className="mr-1 h-3 w-3" />
                 )}
                 {changePercent}%
               </Badge>
             </div>
           </div>
           <div className="bg-muted/30 rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-1">Period</p>
+            <p className="text-muted-foreground mb-1 text-xs">Period</p>
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="text-muted-foreground h-4 w-4" />
               <p className="text-lg font-semibold">
                 {data.length} {selectedRange === '1Y' ? 'months' : 'weeks'}
               </p>
@@ -180,16 +201,20 @@ export function PortfolioChart() {
 
       <CardContent className="relative z-10">
         {/* Chart */}
-        <div className="relative h-64 mt-4">
+        <div className="relative mt-4 h-64">
           <div className="absolute inset-0 flex items-end justify-between gap-1 px-2">
             {data.map((weekData, index) => {
               // Calculate bar height with better scaling for visibility
-              const barHeight = ((weekData.ros - chartBaseline) / chartScale) * 100;
+              const barHeight =
+                ((weekData.ros - chartBaseline) / chartScale) * 100;
               const isHovered = hoveredWeek === index;
               const isCurrent = index === data.length - 1;
-              
+
               return (
-                <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                <div
+                  key={index}
+                  className="flex flex-1 flex-col items-center gap-2"
+                >
                   {/* Bar */}
                   <motion.div
                     initial={{ scaleY: 0 }}
@@ -197,17 +222,14 @@ export function PortfolioChart() {
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     onHoverStart={() => setHoveredWeek(index)}
                     onHoverEnd={() => setHoveredWeek(null)}
-                    className={`
-                      relative w-full rounded-t-lg cursor-pointer transition-all duration-200
-                      ${isCurrent 
-                        ? 'bg-gradient-to-t from-green-500 to-green-400' 
+                    className={`relative w-full cursor-pointer rounded-t-lg transition-all duration-200 ${
+                      isCurrent
+                        ? 'bg-gradient-to-t from-green-500 to-green-400'
                         : 'bg-gradient-to-t from-blue-500/70 to-blue-400/70 hover:from-blue-500 hover:to-blue-400'
-                      }
-                      ${isHovered ? 'opacity-100 scale-105' : 'opacity-90'}
-                    `}
-                    style={{ 
+                    } ${isHovered ? 'scale-105 opacity-100' : 'opacity-90'} `}
+                    style={{
                       height: `${barHeight}%`,
-                      transformOrigin: 'bottom'
+                      transformOrigin: 'bottom',
                     }}
                   >
                     {/* Tooltip on hover */}
@@ -215,25 +237,35 @@ export function PortfolioChart() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute -top-16 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground px-3 py-2 rounded-lg shadow-lg border z-10 whitespace-nowrap"
+                        className="bg-popover text-popover-foreground absolute -top-16 left-1/2 z-10 -translate-x-1/2 rounded-lg border px-3 py-2 whitespace-nowrap shadow-lg"
                       >
                         <p className="text-xs font-semibold">{weekData.week}</p>
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400">{weekData.ros.toFixed(2)}%</p>
-                        <p className="text-xs text-muted-foreground">{weekData.date}</p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                          {pct4(weekData.ros)}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {weekData.date}
+                        </p>
                       </motion.div>
                     )}
-                    
+
                     {/* Current week indicator */}
                     {isCurrent && (
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-green-500 rounded-full ring-2 ring-background" />
+                      <div className="ring-background absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-green-500 ring-2" />
                     )}
                   </motion.div>
-                  
+
                   {/* Week label */}
-                  <p className={`text-xs font-medium text-center truncate w-full ${
-                    isCurrent ? 'text-green-600 dark:text-green-400 font-bold' : 'text-muted-foreground'
-                  }`}>
-                    {data.length > 12 ? weekData.week.split(' ')[1] || weekData.week : weekData.week.replace('Week ', 'W')}
+                  <p
+                    className={`w-full truncate text-center text-xs font-medium ${
+                      isCurrent
+                        ? 'font-bold text-green-600 dark:text-green-400'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {data.length > 12
+                      ? weekData.week.split(' ')[1] || weekData.week
+                      : weekData.week.replace('Week ', 'W')}
                   </p>
                 </div>
               );
@@ -242,13 +274,15 @@ export function PortfolioChart() {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t">
+        <div className="mt-6 flex items-center justify-center gap-6 border-t pt-4">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-gradient-to-t from-blue-500/70 to-blue-400/70" />
-            <span className="text-sm text-muted-foreground">Previous Weeks</span>
+            <div className="h-4 w-4 rounded bg-gradient-to-t from-blue-500/70 to-blue-400/70" />
+            <span className="text-muted-foreground text-sm">
+              Previous Weeks
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-gradient-to-t from-green-500 to-green-400" />
+            <div className="h-4 w-4 rounded bg-gradient-to-t from-green-500 to-green-400" />
             <span className="text-sm font-semibold">Current Week</span>
           </div>
         </div>

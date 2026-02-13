@@ -348,9 +348,9 @@ const fetchMetalsPrices = async (): Promise<MarketInstrument[]> => {
   const addVariation = (base: number, percent: number) => {
     const variation = base * percent;
     return {
-      high: parseFloat((base + variation).toFixed(2)),
-      low: parseFloat((base - variation).toFixed(2)),
-      current: parseFloat(base.toFixed(2)),
+      high: parseFloat((base + variation).toFixed(4)),
+      low: parseFloat((base - variation).toFixed(4)),
+      current: parseFloat(base.toFixed(4)),
     };
   };
 

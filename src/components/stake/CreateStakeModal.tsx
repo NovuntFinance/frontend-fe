@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { slideUp, fadeIn } from '@/design-system/animations';
 import {
   X,
   CheckCircle2,
@@ -18,6 +17,7 @@ import { useWalletBalance } from '@/lib/queries';
 import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
+import { fmt4 } from '@/utils/formatters';
 
 export function CreateStakeModal() {
   const { isModalOpen, closeModal } = useUIStore();
@@ -28,7 +28,6 @@ export function CreateStakeModal() {
   const [source, setSource] = useState<'funded' | 'earning' | 'both'>('both');
   const [goal, setGoal] = useState<string>('');
   const [goalTitle, setGoalTitle] = useState('');
-  const [goalDescription, setGoalDescription] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -85,7 +84,7 @@ export function CreateStakeModal() {
 
     if (amountNum > availableBalance) {
       setError(
-        `Insufficient balance. You have $${availableBalance.toFixed(2)} available.`
+        `Insufficient balance. You have $${fmt4(availableBalance)} available.`
       );
       return;
     }
@@ -166,7 +165,7 @@ export function CreateStakeModal() {
         errorMessage.includes('insufficient') ||
         errorMessage.includes('balance')
       ) {
-        errorMessage = `Insufficient funds. You need $${amountNum.toFixed(2)} but have $${availableBalance.toFixed(2)} available.`;
+        errorMessage = `Insufficient funds. You need $${fmt4(amountNum)} but have $${fmt4(availableBalance)} available.`;
       } else if (errorMessage.includes('Failed to create stake')) {
         errorMessage =
           'Unable to create stake. This may be a server issue. Please check your wallet balance and try again.';
@@ -298,12 +297,12 @@ export function CreateStakeModal() {
                         <span className="text-gray-500 dark:text-gray-400">
                           Available:{' '}
                           <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            ${availableBalance.toFixed(2)}
+                            ${fmt4(availableBalance)}
                           </span>
                         </span>
                         {amountNum > 0 && !error && (
                           <span className="font-medium text-blue-600 dark:text-blue-400">
-                            Target Return: ${targetReturn.toFixed(2)}
+                            Target Return: ${fmt4(targetReturn)}
                           </span>
                         )}
                       </div>
@@ -438,7 +437,7 @@ export function CreateStakeModal() {
                           Amount
                         </span>
                         <span className="text-lg font-bold text-gray-900 dark:text-white">
-                          ${amountNum.toFixed(2)}
+                          ${fmt4(amountNum)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
@@ -446,7 +445,7 @@ export function CreateStakeModal() {
                           Target Return
                         </span>
                         <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                          ${targetReturn.toFixed(2)}
+                          ${fmt4(targetReturn)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
@@ -525,7 +524,7 @@ export function CreateStakeModal() {
                     <p className="mb-6 text-gray-600 dark:text-gray-400">
                       You’ve successfully staked{' '}
                       <span className="font-bold text-gray-900 dark:text-white">
-                        ${amountNum.toFixed(2)}
+                        ${fmt4(amountNum)}
                       </span>
                       {goalTitle && (
                         <span>
@@ -542,7 +541,7 @@ export function CreateStakeModal() {
                           Total Target Return
                         </span>
                         <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                          ${targetReturn.toFixed(2)}
+                          ${fmt4(targetReturn)}
                         </span>
                       </div>
                       <p className="text-left text-xs text-gray-500 dark:text-gray-500">
