@@ -753,66 +753,6 @@ export function TodayDistributionForm() {
           </Card>
         )}
 
-      {/* Legacy Single Status Indicator (for non-multi-slot) */}
-      {(!statusData?.multiSlotEnabled ||
-        !statusData?.distributionSlots ||
-        statusData.distributionSlots.length === 0) && (
-        <Card
-          className={`relative overflow-hidden border-2 transition-all duration-500 ${
-            status === 'COMPLETED'
-              ? 'border-green-500/30 bg-green-50/50 backdrop-blur-sm dark:bg-green-950/20'
-              : status === 'FAILED'
-                ? 'border-red-500/30 bg-red-50/50 backdrop-blur-sm dark:bg-red-950/20'
-                : status === 'PENDING'
-                  ? 'border-blue-500/30 bg-blue-50/50 backdrop-blur-sm dark:bg-blue-950/20'
-                  : status === 'EXECUTING'
-                    ? 'border-amber-500/30 bg-amber-50/50 backdrop-blur-sm dark:bg-amber-950/20'
-                    : 'border-gray-200 dark:border-gray-800'
-          }`}
-        >
-          {/* Animated background glow for active states */}
-          {(status === 'PENDING' || status === 'EXECUTING') && (
-            <div className="animate-shimmer absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          )}
-          <CardContent className="flex items-center gap-3 pt-6">
-            {STATUS_ICONS[status]}
-            <div>
-              <p className="font-semibold">
-                {status === 'PENDING'
-                  ? statusData?.multiSlotEnabled
-                    ? 'Distribution Scheduled (Multi-Slot)'
-                    : cronSettings?.slots[0]?.time
-                      ? `Distribution scheduled for ${new Date(`2000-01-01T${cronSettings.slots[0].time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })} ${cronSettings.timezoneOffset || ''}`
-                      : STATUS_MESSAGES[status]
-                  : STATUS_MESSAGES[status]}
-              </p>
-              {status === 'PENDING' && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {countdown ? (
-                    <>
-                      {countdown.startsWith('⚠️') ||
-                      countdown.startsWith('Executing')
-                        ? countdown
-                        : `Execution in ${countdown}`}
-                      {statusData?.multiSlotEnabled
-                        ? ''
-                        : cronSettings?.slots[0]?.time &&
-                          ` (at ${new Date(`2000-01-01T${cronSettings.slots[0].time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })})`}
-                    </>
-                  ) : statusData?.multiSlotEnabled ? (
-                    'Check slot status below'
-                  ) : cronSettings?.slots[0]?.time ? (
-                    `Scheduled for ${new Date(`2000-01-01T${cronSettings.slots[0].time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}`
-                  ) : (
-                    'Scheduled for later today'
-                  )}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Multi-Slot Status Cards */}
       {statusData?.multiSlotEnabled && statusData?.distributionSlots && (
         <Card>
