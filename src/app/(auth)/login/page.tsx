@@ -99,6 +99,9 @@ function LoginPageContent() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   const {
     register,
@@ -160,8 +163,13 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
-      // Get Turnstile token if available
-      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+      // Require Turnstile token when configured
+      if (turnstileEnabled && !turnstileToken) {
+        setTurnstileError(
+          'Please complete the security verification and try again.'
+        );
+        return;
+      }
 
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
@@ -301,6 +309,10 @@ function LoginPageContent() {
             'Verification failed. Please complete the security check and try again.';
           // Reset Turnstile widget
           turnstileRef.current?.reset();
+          setTurnstileToken(null);
+          setTurnstileError(
+            'Verification failed. Please complete the security check again.'
+          );
         }
 
         // Try to get backend error message from multiple possible locations
@@ -733,7 +745,21 @@ function LoginPageContent() {
             </div>
 
             {/* Cloudflare Turnstile */}
-            <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+            <TurnstileWidget
+              widgetRef={turnstileRef}
+              size="normal"
+              onToken={(token) => {
+                setTurnstileToken(token);
+                setTurnstileError(null);
+              }}
+              onError={() => {
+                setTurnstileToken(null);
+                setTurnstileError('Verification failed. Please try again.');
+              }}
+            />
+            {turnstileEnabled && turnstileError && (
+              <p className="text-destructive text-sm">{turnstileError}</p>
+            )}
           </CardContent>
 
           <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">
