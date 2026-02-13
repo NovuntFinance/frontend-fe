@@ -870,7 +870,7 @@ export function TodayDistributionForm() {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        {status === 'EMPTY' && !isEditing && (
+        {(status === 'EMPTY' || status === 'COMPLETED') && !isEditing && (
           <Button
             onClick={() => setIsEditing(true)}
             disabled={isLoading_}
@@ -878,7 +878,9 @@ export function TodayDistributionForm() {
             className="gap-2"
           >
             {isLoading_ && <Loader2 className="h-4 w-4 animate-spin" />}
-            🚀 Queue Distribution
+            {status === 'COMPLETED'
+              ? '🚀 Queue New Distribution'
+              : '🚀 Queue Distribution'}
           </Button>
         )}
 
@@ -891,7 +893,11 @@ export function TodayDistributionForm() {
               className="gap-2"
             >
               {isLoading_ && <Loader2 className="h-4 w-4 animate-spin" />}
-              {status === 'EMPTY' ? '✏️ Queue' : '💾 Save Changes'}
+              {status === 'EMPTY'
+                ? '✏️ Queue'
+                : status === 'COMPLETED'
+                  ? '🚀 Queue Distribution'
+                  : '💾 Save Changes'}
             </Button>
             <Button
               onClick={() => setIsEditing(false)}
