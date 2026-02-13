@@ -407,6 +407,16 @@ export function TodayDistributionForm() {
         performancePoolAmount: performance,
         description: formValues.description,
       });
+    } else if (statusData?.status === 'COMPLETED' && isEditing) {
+      // Queue new distribution after previous one completed
+      queueMutation.mutate({
+        multiSlotEnabled: true,
+        distributionSlots,
+        rosPercentage: totalRos,
+        premiumPoolAmount: premium,
+        performancePoolAmount: performance,
+        description: formValues.description,
+      } as QueueMultiSlotRequest);
     }
   };
 
