@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { AlertCircle, Clock, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AlertCircle, Clock, TrendingUp, Copy, Trash } from 'lucide-react';
 import type { DistributionSlot } from '@/types/cronSettings';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -23,6 +24,8 @@ export function MultiSlotRosInput({
   disabled,
   currentTotalStakes = 0,
 }: Props) {
+  const [bulkValue, setBulkValue] = useState<string>('');
+
   // Calculate total ROS
   const totalRos = useMemo(() => {
     return Object.values(rosValues).reduce((sum, val) => sum + (val || 0), 0);
@@ -30,6 +33,24 @@ export function MultiSlotRosInput({
 
   // Check if total exceeds 100%
   const exceedsLimit = totalRos > 100;
+
+  // Bulk operations
+  const handleSetAll = () => {
+    const value = parseFloat(bulkValue);
+    if (isNaN(value) || value < 0 || value > 100) {
+      return;
+    }
+    slots.forEach((_, index) => {
+      onChange(index + 1, value);
+    });
+    setBulkValue('');
+  };
+
+  const handleClearAll = () => {
+    slots.forEach((_, index) => {
+      onChange(index + 1, 0);
+    });
+  };
 
   // Calculate estimated distribution per slot
   const getEstimatedAmount = (rosPercentage: number) => {
@@ -51,7 +72,7 @@ export function MultiSlotRosInput({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label className="text-lg font-semibold">
-          ROS Distribution by Slot
+          ROS Distribution by Slot ({slots.length} slots)
         </Label>
         <div className="text-sm font-medium">
           Total:{' '}
@@ -65,6 +86,51 @@ export function MultiSlotRosInput({
         </div>
       </div>
 
+      {/* Bulk Operations */}
+      <Card className="bg-muted/50">
+        <CardContent className="p-3">
+          <Label className="text-xs font-semibold">Quick Fill Operations</Label>
+          <div className="mt-2 flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={bulkValue}
+                onChange={(e) => setBulkValue(e.target.value)}
+                placeholder="Enter ROS % to apply to all slots"
+                disabled={disabled}
+                className="h-9 pr-8 text-sm"
+              />
+              <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                %
+              </span>
+            </div>
+            <Button
+              onClick={handleSetAll}
+              disabled={disabled || !bulkValue}
+              size="sm"
+              variant="outline"
+              className="h-9"
+            >
+              <Copy className="mr-1 h-3 w-3" />
+              Set All
+            </Button>
+            <Button
+              onClick={handleClearAll}
+              disabled={disabled}
+              size="sm"
+              variant="outline"
+              className="h-9"
+            >
+              <Trash className="mr-1 h-3 w-3" />
+              Clear
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {exceedsLimit && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -75,40 +141,43 @@ export function MultiSlotRosInput({
         </Alert>
       )}
 
-      <div className="space-y-3">
+      {/* Scrollable slot inputs - optimized for up to 20+ slots */}
+      <div className="max-h-[600px] space-y-2 overflow-y-auto rounded-md border p-3">
         {slots.map((slot, index) => {
           const slotNumber = index + 1; // 1-indexed
           const rosValue = rosValues[slotNumber] || 0;
           const estimatedAmount = getEstimatedAmount(rosValue);
 
           return (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="space-y-3">
+            <Card key={index} className="transition-shadow hover:shadow-sm">
+              <CardContent className="p-3">
+                <div className="space-y-2">
                   {/* Slot header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Clock className="text-muted-foreground h-4 w-4" />
-                      <span className="font-medium">Slot {slotNumber}</span>
-                      <span className="text-muted-foreground font-mono text-sm">
-                        ({slot.time})
+                      <Clock className="text-muted-foreground h-3 w-3" />
+                      <span className="text-sm font-medium">
+                        Slot {slotNumber}
+                      </span>
+                      <span className="text-muted-foreground font-mono text-xs">
+                        {slot.time}
                       </span>
                     </div>
                     {slot.label && (
-                      <span className="bg-muted rounded px-2 py-1 text-xs">
+                      <span className="bg-muted rounded px-2 py-0.5 text-xs">
                         {slot.label}
                       </span>
                     )}
                   </div>
 
                   {/* ROS input */}
-                  <div className="flex items-end gap-3">
+                  <div className="flex items-end gap-2">
                     <div className="flex-1">
                       <Label
                         htmlFor={`ros-slot-${slotNumber}`}
                         className="text-xs"
                       >
-                        ROS Percentage
+                        ROS %
                       </Label>
                       <div className="relative mt-1">
                         <Input
@@ -127,9 +196,9 @@ export function MultiSlotRosInput({
                           }}
                           disabled={disabled}
                           placeholder="0.00"
-                          className="pr-8"
+                          className="h-9 pr-8 text-sm"
                         />
-                        <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                        <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-xs">
                           %
                         </span>
                       </div>
@@ -139,11 +208,11 @@ export function MultiSlotRosInput({
                     {currentTotalStakes > 0 && (
                       <div className="flex-1">
                         <Label className="text-muted-foreground text-xs">
-                          Estimated Distribution
+                          Est. Dist.
                         </Label>
-                        <div className="bg-muted/50 mt-1 flex items-center gap-2 rounded-md border px-3 py-2">
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium">
+                        <div className="bg-muted/50 mt-1 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
+                          <TrendingUp className="h-3 w-3 text-green-600" />
+                          <span className="text-xs font-medium">
                             {formatCurrency(estimatedAmount)}
                           </span>
                         </div>

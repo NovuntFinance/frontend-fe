@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import type {
   QueueDistributionRequest,
-  QueueSingleSlotRequest,
   QueueMultiSlotRequest,
   ModifyDistributionRequest,
 } from '@/types/dailyDeclarationReturns';
@@ -53,23 +52,18 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 };
 
 interface FormValues {
-  rosPercentage: number | '';
   premiumPoolAmount: number | '';
   performancePoolAmount: number | '';
   description: string;
 }
 
-type DistributionMode = 'single' | 'multi';
-
 export function TodayDistributionForm() {
   const { promptFor2FA } = use2FA();
   const [formValues, setFormValues] = useState<FormValues>({
-    rosPercentage: '',
     premiumPoolAmount: '',
     performancePoolAmount: '',
     description: '',
   });
-  const [mode, setMode] = useState<DistributionMode>('single');
   const [multiSlotRosValues, setMultiSlotRosValues] = useState<
     Record<number, number>
   >({});
@@ -162,46 +156,32 @@ export function TodayDistributionForm() {
   useEffect(() => {
     if (statusData?.values) {
       setFormValues({
-        rosPercentage: statusData.values.rosPercentage || '',
         premiumPoolAmount: statusData.values.premiumPoolAmount || '',
         performancePoolAmount: statusData.values.performancePoolAmount || '',
         description: statusData.values.description || '',
       });
 
-      // Only set mode based on API data when there's an actual distribution
-      // (not EMPTY status). This allows users to freely toggle when no distribution is queued.
-      if (statusData.status !== 'EMPTY') {
-        if (statusData.multiSlotEnabled) {
-          setMode('multi');
-          // Initialize multi-slot ROS values
-          if (statusData.distributionSlots) {
-            const rosVals: Record<number, number> = {};
-            statusData.distributionSlots.forEach((slot) => {
-              rosVals[slot.slotNumber] = slot.rosPercentage;
-            });
-            setMultiSlotRosValues(rosVals);
-          }
-        } else {
-          setMode('single');
-        }
+      // Initialize multi-slot ROS values from API
+      if (statusData.multiSlotEnabled && statusData.distributionSlots) {
+        const rosVals: Record<number, number> = {};
+        statusData.distributionSlots.forEach((slot) => {
+          rosVals[slot.slotNumber] = slot.rosPercentage;
+        });
+        setMultiSlotRosValues(rosVals);
       }
     }
   }, [statusData]);
 
-  // Initialize multi-slot ROS values when cron settings load and mode is multi
+  // Initialize multi-slot ROS values when cron settings load
   useEffect(() => {
-    if (
-      cronSettings &&
-      mode === 'multi' &&
-      Object.keys(multiSlotRosValues).length === 0
-    ) {
+    if (cronSettings && Object.keys(multiSlotRosValues).length === 0) {
       const initialValues: Record<number, number> = {};
       cronSettings.slots.forEach((slot, index) => {
         initialValues[index + 1] = 0;
       });
       setMultiSlotRosValues(initialValues);
     }
-  }, [cronSettings, mode, multiSlotRosValues]);
+  }, [cronSettings, multiSlotRosValues]);
 
   // Load form from localStorage on mount
   useEffect(() => {
@@ -286,41 +266,29 @@ export function TodayDistributionForm() {
       return 'Performance pool amount must be 0 or greater';
     }
 
-    if (mode === 'single') {
-      const ros = Number(formValues.rosPercentage);
+    // Multi-slot validation
+    if (!cronSettings) {
+      return 'Cron settings not loaded. Please configure Distribution Schedule first.';
+    }
 
-      if (isNaN(ros) || ros < 0 || ros > 100) {
-        return 'ROS percentage must be between 0 and 100';
-      }
+    const slotCount = Object.keys(multiSlotRosValues).length;
+    if (slotCount !== cronSettings.slots.length) {
+      return `Number of slots (${slotCount}) must match cron settings (${cronSettings.slots.length})`;
+    }
 
-      if (ros === 0 && premium === 0 && performance === 0) {
-        return 'At least one value must be greater than 0';
+    // Validate each slot percentage
+    for (const [slotNumber, rosValue] of Object.entries(multiSlotRosValues)) {
+      if (isNaN(rosValue) || rosValue < 0 || rosValue > 100) {
+        return `Slot ${slotNumber}: ROS percentage must be between 0 and 100`;
       }
-    } else {
-      // Multi-slot validation
-      if (!cronSettings) {
-        return 'Cron settings not loaded. Please try again.';
-      }
+    }
 
-      const slotCount = Object.keys(multiSlotRosValues).length;
-      if (slotCount !== cronSettings.slots.length) {
-        return `Number of slots (${slotCount}) must match cron settings (${cronSettings.slots.length})`;
-      }
-
-      // Validate each slot percentage
-      for (const [slotNumber, rosValue] of Object.entries(multiSlotRosValues)) {
-        if (isNaN(rosValue) || rosValue < 0 || rosValue > 100) {
-          return `Slot ${slotNumber}: ROS percentage must be between 0 and 100`;
-        }
-      }
-
-      const totalRos = Object.values(multiSlotRosValues).reduce(
-        (sum, val) => sum + val,
-        0
-      );
-      if (totalRos === 0 && premium === 0 && performance === 0) {
-        return 'At least one value must be greater than 0';
-      }
+    const totalRos = Object.values(multiSlotRosValues).reduce(
+      (sum, val) => sum + val,
+      0
+    );
+    if (totalRos === 0 && premium === 0 && performance === 0) {
+      return 'At least one value must be greater than 0';
     }
 
     return null;
@@ -396,69 +364,37 @@ export function TodayDistributionForm() {
     const premium = Number(formValues.premiumPoolAmount) || 0;
     const performance = Number(formValues.performancePoolAmount) || 0;
 
+    // Calculate multi-slot values
+    const totalRos = Object.values(multiSlotRosValues).reduce(
+      (sum, val) => sum + val,
+      0
+    );
+    const distributionSlots = Object.entries(multiSlotRosValues).map(
+      ([slotNum, rosVal]) => ({
+        slotNumber: parseInt(slotNum),
+        rosPercentage: rosVal,
+      })
+    );
+
     if (statusData?.status === 'EMPTY') {
-      // Queue new distribution
-      if (mode === 'single') {
-        const ros = Number(formValues.rosPercentage) || 0;
-        queueMutation.mutate({
-          rosPercentage: ros,
-          premiumPoolAmount: premium,
-          performancePoolAmount: performance,
-          description: formValues.description,
-        } as QueueSingleSlotRequest);
-      } else {
-        // Multi-slot mode
-        const totalRos = Object.values(multiSlotRosValues).reduce(
-          (sum, val) => sum + val,
-          0
-        );
-        const distributionSlots = Object.entries(multiSlotRosValues).map(
-          ([slotNum, rosVal]) => ({
-            slotNumber: parseInt(slotNum),
-            rosPercentage: rosVal,
-          })
-        );
-
-        queueMutation.mutate({
-          multiSlotEnabled: true,
-          distributionSlots,
-          rosPercentage: totalRos,
-          premiumPoolAmount: premium,
-          performancePoolAmount: performance,
-          description: formValues.description,
-        } as QueueMultiSlotRequest);
-      }
+      // Queue new multi-slot distribution
+      queueMutation.mutate({
+        multiSlotEnabled: true,
+        distributionSlots,
+        rosPercentage: totalRos,
+        premiumPoolAmount: premium,
+        performancePoolAmount: performance,
+        description: formValues.description,
+      } as QueueMultiSlotRequest);
     } else if (statusData?.status === 'PENDING' && isEditing) {
-      // Modify existing distribution
-      if (mode === 'single') {
-        const ros = Number(formValues.rosPercentage) || 0;
-        modifyMutation.mutate({
-          rosPercentage: ros,
-          premiumPoolAmount: premium,
-          performancePoolAmount: performance,
-          description: formValues.description,
-        });
-      } else {
-        // Multi-slot modification
-        const distributionSlots = Object.entries(multiSlotRosValues).map(
-          ([slotNum, rosVal]) => ({
-            slotNumber: parseInt(slotNum),
-            rosPercentage: rosVal,
-          })
-        );
-        const totalRos = Object.values(multiSlotRosValues).reduce(
-          (sum, val) => sum + val,
-          0
-        );
-
-        modifyMutation.mutate({
-          distributionSlots,
-          rosPercentage: totalRos,
-          premiumPoolAmount: premium,
-          performancePoolAmount: performance,
-          description: formValues.description,
-        });
-      }
+      // Modify existing multi-slot distribution
+      modifyMutation.mutate({
+        distributionSlots,
+        rosPercentage: totalRos,
+        premiumPoolAmount: premium,
+        performancePoolAmount: performance,
+        description: formValues.description,
+      });
     }
   };
 
@@ -550,163 +486,83 @@ export function TodayDistributionForm() {
           <CardTitle>Distribution Parameters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Mode Toggle */}
-          <div className="space-y-3 border-b pb-4">
-            <Label className="font-semibold">Distribution Mode</Label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('Single-Slot button clicked');
-                  setMode('single');
-                }}
-                disabled={status !== 'EMPTY' && !isEditing}
-                className={`flex items-center space-x-2 rounded px-4 py-2 transition-all ${
-                  mode === 'single'
-                    ? 'border-2 border-blue-600 bg-blue-100 dark:bg-blue-900'
-                    : 'border-2 border-gray-300 bg-gray-100 dark:bg-gray-700'
-                } ${status !== 'EMPTY' && !isEditing ? 'cursor-not-allowed opacity-50' : 'hover:bg-opacity-80 cursor-pointer'}`}
-              >
-                <div
-                  className={`h-4 w-4 rounded-full border-2 ${
-                    mode === 'single' ? 'border-blue-600' : 'border-gray-400'
-                  }`}
+          {/* Multi-Slot Schedule Info */}
+          {cronSettings && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Multi-Slot Distribution Schedule:</strong>{' '}
+                {cronSettings.slots.length} slot
+                {cronSettings.slots.length > 1 ? 's' : ''} configured at{' '}
+                {cronSettings.slots.map((slot, idx) => (
+                  <span key={idx}>
+                    {slot.time}
+                    {idx < cronSettings.slots.length - 1 ? ', ' : ''}
+                  </span>
+                ))}{' '}
+                ({cronSettings.timezone})
+                <br />
+                <a
+                  href="/admin/settings/distribution-schedule"
+                  className="mt-1 inline-block text-blue-600 underline hover:text-blue-800"
                 >
-                  {mode === 'single' && (
-                    <div className="mx-auto mt-0.5 h-2 w-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span className="font-medium">Single-Slot (Legacy)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('Multi-Slot button clicked');
-                  setMode('multi');
-                  if (cronSettings) {
-                    const initialValues: Record<number, number> = {};
-                    cronSettings.slots.forEach((slot, index) => {
-                      const slotNumber = index + 1;
-                      initialValues[slotNumber] =
-                        multiSlotRosValues[slotNumber] || 0;
-                    });
-                    setMultiSlotRosValues(initialValues);
-                  }
+                  Configure Schedule →
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Multi-Slot ROS Inputs */}
+          <div>
+            {isLoadingCronSettings ? (
+              <ShimmerCard className="h-40" />
+            ) : cronSettingsError ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Distribution Schedule Not Available</strong>
+                  <br />
+                  Failed to load cron settings from the backend. Please verify
+                  the backend endpoint is working:
+                  <ul className="mt-2 ml-4 list-disc text-xs">
+                    <li>GET /api/v1/admin/cron-settings/timezones</li>
+                    <li>
+                      GET /api/v1/admin/cron-settings/distribution-schedule
+                    </li>
+                  </ul>
+                  <br />
+                  Contact the backend team to resolve this issue.
+                </AlertDescription>
+              </Alert>
+            ) : cronSettings ? (
+              <MultiSlotRosInput
+                slots={cronSettings.slots}
+                rosValues={multiSlotRosValues}
+                onChange={(slotNumber, value) => {
+                  setMultiSlotRosValues((prev) => ({
+                    ...prev,
+                    [slotNumber]: value,
+                  }));
                 }}
-                disabled={status !== 'EMPTY' && !isEditing}
-                className={`flex items-center space-x-2 rounded px-4 py-2 transition-all ${
-                  mode === 'multi'
-                    ? 'border-2 border-blue-600 bg-blue-100 dark:bg-blue-900'
-                    : 'border-2 border-gray-300 bg-gray-100 dark:bg-gray-700'
-                } ${status !== 'EMPTY' && !isEditing ? 'cursor-not-allowed opacity-50' : 'hover:bg-opacity-80 cursor-pointer'}`}
-              >
-                <div
-                  className={`h-4 w-4 rounded-full border-2 ${
-                    mode === 'multi' ? 'border-blue-600' : 'border-gray-400'
-                  }`}
-                >
-                  {mode === 'multi' && (
-                    <div className="mx-auto mt-0.5 h-2 w-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span className="font-medium">Multi-Slot</span>
-              </button>
-            </div>
-            {mode === 'multi' && cronSettings && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  Current schedule: {cronSettings.slots.length} slot
-                  {cronSettings.slots.length > 1 ? 's' : ''} at{' '}
-                  {cronSettings.slots.map((slot, idx) => (
-                    <span key={idx}>
-                      {slot.time}
-                      {idx < cronSettings.slots.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}{' '}
-                  ({cronSettings.timezone})
+                disabled={isFormDisabled && !isEditing}
+              />
+            ) : (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to load cron settings. Please configure the
+                  Distribution Schedule first:
+                  <br />
+                  <a
+                    href="/admin/settings/distribution-schedule"
+                    className="mt-1 inline-block text-blue-600 underline"
+                  >
+                    Configure Distribution Schedule →
+                  </a>
                 </AlertDescription>
               </Alert>
             )}
           </div>
-
-          {/* ROS Section - Single or Multi */}
-          {mode === 'single' ? (
-            <div>
-              <Label htmlFor="ros" className="flex items-center gap-2">
-                ROS Percentage (%)
-                {isFormDisabled && !isEditing && (
-                  <Lock className="h-4 w-4 text-gray-500" />
-                )}
-              </Label>
-              <Input
-                id="ros"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={formValues.rosPercentage}
-                onChange={(e) =>
-                  handleInputChange('rosPercentage', e.target.value)
-                }
-                disabled={isFormDisabled && !isEditing}
-                placeholder="Max: 100%"
-                className="mt-1"
-              />
-            </div>
-          ) : (
-            <div>
-              {isLoadingCronSettings ? (
-                <ShimmerCard className="h-40" />
-              ) : cronSettingsError ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Multi-Slot Distribution Not Available</strong>
-                    <br />
-                    Failed to load cron settings from the backend. Please verify
-                    the backend endpoint is working:
-                    <ul className="mt-2 ml-4 list-disc text-xs">
-                      <li>GET /api/v1/admin/cron-settings/timezones</li>
-                      <li>
-                        GET /api/v1/admin/cron-settings/distribution-schedule
-                      </li>
-                    </ul>
-                    <br />
-                    Use <strong>Single-Slot mode</strong> for now or contact the
-                    backend team.
-                  </AlertDescription>
-                </Alert>
-              ) : cronSettings ? (
-                <MultiSlotRosInput
-                  slots={cronSettings.slots}
-                  rosValues={multiSlotRosValues}
-                  onChange={(slotNumber, value) => {
-                    setMultiSlotRosValues((prev) => ({
-                      ...prev,
-                      [slotNumber]: value,
-                    }));
-                  }}
-                  disabled={isFormDisabled && !isEditing}
-                />
-              ) : (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Failed to load cron settings. Please configure the
-                    Distribution Schedule first:
-                    <br />
-                    <a
-                      href="/admin/settings"
-                      className="mt-1 inline-block text-blue-600 underline"
-                    >
-                      Settings → Distribution Schedule Tab
-                    </a>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
 
           {/* Premium Pool Amount */}
           <div>
