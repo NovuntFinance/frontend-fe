@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   AlertCircle,
   Clock,
@@ -39,6 +39,16 @@ export function MultiSlotRosInput({
   slotStatuses,
 }: Props) {
   const [bulkValue, setBulkValue] = useState<string>('');
+
+  // Debug slot statuses
+  useEffect(() => {
+    console.log('🎯 MultiSlotRosInput - Slot Statuses:', {
+      hasStatuses: !!slotStatuses,
+      statusesCount: slotStatuses?.length,
+      statuses: slotStatuses,
+      slotsCount: slots.length,
+    });
+  }, [slotStatuses, slots]);
 
   // Helper to check if a specific slot is locked (completed or failed)
   const isSlotLocked = (slotNumber: number): boolean => {

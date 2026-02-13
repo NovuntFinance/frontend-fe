@@ -152,6 +152,18 @@ export function TodayDistributionForm() {
     staleTime: 5000,
   });
 
+  // Debug status data
+  useEffect(() => {
+    console.log('📊 Status Data:', {
+      exists: !!statusData,
+      status: statusData?.status,
+      multiSlotEnabled: statusData?.multiSlotEnabled,
+      hasSlots: !!statusData?.distributionSlots,
+      slotsCount: statusData?.distributionSlots?.length,
+      slots: statusData?.distributionSlots,
+    });
+  }, [statusData]);
+
   // Auto-update form values from API response
   useEffect(() => {
     if (statusData?.values) {
