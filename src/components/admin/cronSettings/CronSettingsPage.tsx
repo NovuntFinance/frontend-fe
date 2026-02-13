@@ -28,6 +28,9 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
+// Maximum number of distribution slots allowed per day
+const MAX_SLOTS = 100;
+
 export function CronSettingsPage() {
   const router = useRouter();
   const { promptFor2FA } = use2FA();
@@ -68,8 +71,8 @@ export function CronSettingsPage() {
 
   // Handle slot addition
   const handleAddSlot = () => {
-    if (formData.slots.length >= 4) {
-      toast.error('Maximum 4 slots allowed');
+    if (formData.slots.length >= MAX_SLOTS) {
+      toast.error(`Maximum ${MAX_SLOTS} slots allowed`);
       return;
     }
 
@@ -109,8 +112,8 @@ export function CronSettingsPage() {
       errors.push('Timezone is required');
     }
 
-    if (formData.slots.length < 1 || formData.slots.length > 4) {
-      errors.push('Number of slots must be between 1 and 4');
+    if (formData.slots.length < 1 || formData.slots.length > MAX_SLOTS) {
+      errors.push(`Number of slots must be between 1 and ${MAX_SLOTS}`);
     }
 
     formData.slots.forEach((slot, idx) => {
@@ -321,32 +324,35 @@ export function CronSettingsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-lg font-semibold">
-                    Time Slots ({formData.slots.length}/4)
+                    Time Slots ({formData.slots.length}/{MAX_SLOTS})
                   </Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleAddSlot}
-                    disabled={formData.slots.length >= 4 || isUpdating}
+                    disabled={formData.slots.length >= MAX_SLOTS || isUpdating}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Slot
                   </Button>
                 </div>
 
-                {formData.slots.map((slot, idx) => (
-                  <SlotTimeInput
-                    key={idx}
-                    slot={{ ...slot, index: idx }}
-                    onChange={(updatedSlot) =>
-                      handleSlotChange(idx, updatedSlot)
-                    }
-                    onRemove={() => handleSlotRemove(idx)}
-                    disabled={isUpdating}
-                    canRemove={formData.slots.length > 1}
-                  />
-                ))}
+                {/* Scrollable container for many slots */}
+                <div className="max-h-[600px] space-y-3 overflow-y-auto pr-2">
+                  {formData.slots.map((slot, idx) => (
+                    <SlotTimeInput
+                      key={idx}
+                      slot={{ ...slot, index: idx }}
+                      onChange={(updatedSlot) =>
+                        handleSlotChange(idx, updatedSlot)
+                      }
+                      onRemove={() => handleSlotRemove(idx)}
+                      disabled={isUpdating}
+                      canRemove={formData.slots.length > 1}
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Actions */}
