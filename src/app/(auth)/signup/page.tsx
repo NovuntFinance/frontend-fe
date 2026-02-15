@@ -75,6 +75,7 @@ function SignupPageContent() {
     canResetPassword: false,
   });
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   const {
     register,
@@ -796,8 +797,10 @@ function SignupPageContent() {
                     )}
                   </div>
 
-                  {/* Cloudflare Turnstile - only on final step */}
-                  <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+                  {/* Cloudflare Turnstile - only on final step and only if configured */}
+                  {turnstileEnabled && (
+                    <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

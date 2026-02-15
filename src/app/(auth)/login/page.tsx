@@ -755,15 +755,19 @@ function LoginPageContent() {
               </Label>
             </div>
 
-            {/* Cloudflare Turnstile */}
-            <TurnstileWidget
-              widgetRef={turnstileRef}
-              size="normal"
-              onToken={handleTurnstileToken}
-              onError={handleTurnstileError}
-            />
-            {turnstileEnabled && turnstileError && (
-              <p className="text-destructive text-sm">{turnstileError}</p>
+            {/* Cloudflare Turnstile - Only show if configured */}
+            {turnstileEnabled && (
+              <>
+                <TurnstileWidget
+                  widgetRef={turnstileRef}
+                  size="normal"
+                  onToken={handleTurnstileToken}
+                  onError={handleTurnstileError}
+                />
+                {turnstileError && (
+                  <p className="text-destructive text-sm">{turnstileError}</p>
+                )}
+              </>
             )}
           </CardContent>
 
