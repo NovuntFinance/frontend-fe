@@ -12,6 +12,7 @@ import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
 import { CommandPalette } from '@/components/search/CommandPalette';
+import { AuthSessionHandler } from '@/components/auth/AuthSessionHandler';
 import { initializePlatformSettings } from '@/services/platformSettingsService';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -145,6 +146,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <TwoFAProvider>
             <ConfigProvider>
               <GlobalModalsProvider>
+                <AuthSessionHandler />
                 {children}
                 <Toaster position="top-right" richColors />
 

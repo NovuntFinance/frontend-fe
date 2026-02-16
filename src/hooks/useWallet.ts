@@ -9,6 +9,7 @@ import { walletApi, type TransactionFilters } from '@/services/walletApi';
 import { queryKeys } from '@/lib/queries';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils/wallet';
+import { useAuthStore } from '@/store/authStore';
 
 import type { WalletBalance } from '@/types/wallet';
 import type { UserWallet } from '@/services/walletApi';
@@ -26,9 +27,10 @@ export function useWallet(): {
   error: Error | null;
   refetch: () => void;
 } {
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const queryResult = useQuery({
     queryKey: queryKeys.walletInfo,
-    enabled: typeof window !== 'undefined', // Only run on client side
+    enabled: typeof window !== 'undefined' && !!isAuthenticated && _hasHydrated,
     queryFn: async () => {
       try {
         const response = await walletApi.getWalletInfo();
@@ -541,8 +543,10 @@ export function useCreateWithdrawal() {
  * Returns the full enhanced transaction history response including summary and category breakdown
  */
 export function useTransactionHistory(filters: TransactionHistoryParams = {}) {
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   return useQuery({
     queryKey: queryKeys.transactions(filters as any),
+    enabled: !!isAuthenticated && _hasHydrated,
     queryFn: async () => {
       try {
         if (process.env.NODE_ENV === 'development') {

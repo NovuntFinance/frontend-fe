@@ -1,6 +1,12 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -43,6 +49,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const loginMutation = useLogin();
   const verifyMFAMutation = useVerify2FA();
   const [backendStatus, setBackendStatus] = useState<{
@@ -140,35 +147,40 @@ function LoginPageContent() {
     }
   }, [searchParams, setValue]);
 
-  // Redirect if already authenticated (with loop prevention)
+  // Redirect if already authenticated (handoff: never redirect while isLoading)
   useEffect(() => {
-    if (isAuthenticated && !hasRedirected) {
-      const redirectTo = searchParams?.get('redirect') || '/dashboard';
-      console.log(
-        '[Login Page] useEffect detected authentication, redirecting to:',
-        redirectTo
-      );
-      console.log('[Login Page] Auth state:', {
-        isAuthenticated,
-        hasRedirected,
-        redirectTo,
-      });
-      setHasRedirected(true);
+    if (!hasHydrated || !isAuthenticated || hasRedirected) return;
 
-      // Use replace instead of push to avoid back button issues
-      // Small delay to ensure all state updates are complete
-      const redirectTimer = setTimeout(() => {
-        console.log(
-          '[Login Page] Executing redirect via replace to:',
-          redirectTo
-        );
-        router.replace(redirectTo);
-      }, 100);
-
-      return () => clearTimeout(redirectTimer);
+    // CRITICAL: Don't redirect if we just arrived from an auth redirect
+    // This prevents login/dashboard redirect loops
+    const reason = searchParams?.get('reason');
+    if (reason === 'auth_required' || reason === 'session_expired') {
+      const lastAuthRedirect = sessionStorage.getItem('auth_redirect_at');
+      const now = Date.now();
+      if (lastAuthRedirect) {
+        const elapsed = now - parseInt(lastAuthRedirect, 10);
+        if (elapsed < 2000) {
+          // Within 2s of auth redirect - don't auto-redirect, let user re-login
+          return;
+        }
+      }
+      sessionStorage.setItem('auth_redirect_at', String(now));
     }
-    return undefined;
-  }, [isAuthenticated, hasRedirected, router, searchParams]);
+
+    const redirectTo = searchParams?.get('redirect') || '/dashboard';
+    console.log(
+      '[Login Page] useEffect detected authentication, redirecting to:',
+      redirectTo
+    );
+    setHasRedirected(true);
+
+    // Delay to ensure cookie sync from rehydration completes (middleware reads cookies)
+    const redirectTimer = setTimeout(() => {
+      router.replace(redirectTo);
+    }, 300);
+
+    return () => clearTimeout(redirectTimer);
+  }, [hasHydrated, isAuthenticated, hasRedirected, router, searchParams]);
 
   // Handle login submission
   const onSubmit = async (data: LoginFormData) => {
@@ -236,27 +248,21 @@ function LoginPageContent() {
         console.log('[Login Page] Will redirect to:', redirectTo);
 
         // Wait for auth state to be fully updated before redirecting
-        // Check auth state in a loop to ensure it's updated
-        const checkAuthAndRedirect = () => {
+        // Mutation onSuccess runs synchronously; allow time for React + persist to settle
+        const checkAuthAndRedirect = (attempt = 0) => {
           const authState = useAuthStore.getState();
           if (authState.isAuthenticated && authState.token) {
-            console.log(
-              '[Login Page] Auth state confirmed, redirecting to:',
-              redirectTo
-            );
-            router.replace(redirectTo);
-          } else {
-            console.log('[Login Page] Auth state not ready yet, retrying...', {
-              isAuthenticated: authState.isAuthenticated,
-              hasToken: !!authState.token,
-            });
-            // Retry after a short delay
-            setTimeout(checkAuthAndRedirect, 100);
+            // Extra delay so cookies are definitely set before nav (middleware reads them)
+            setTimeout(() => {
+              router.replace(redirectTo);
+            }, 400);
+          } else if (attempt < 30) {
+            setTimeout(() => checkAuthAndRedirect(attempt + 1), 100);
           }
         };
 
-        // Start checking after a brief delay to allow state update
-        setTimeout(checkAuthAndRedirect, 200);
+        // Start after delay - onSuccess sets state, allow React to process
+        setTimeout(() => checkAuthAndRedirect(0), 500);
       }
     } catch (error: unknown) {
       // Better error serialization

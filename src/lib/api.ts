@@ -10,6 +10,7 @@ import axios, {
   type AxiosRequestConfig,
 } from 'axios';
 import { ApiError, ApiResponse } from '@/types/api';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Get API base URL from environment
@@ -79,6 +80,9 @@ const apiClient: AxiosInstance = axios.create({
 const TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
+// Track last token set time - used to avoid redirect loop right after login
+let lastTokenSetTime = 0;
+
 export const tokenManager = {
   getToken: (): string | null => {
     if (typeof window === 'undefined') return null;
@@ -103,6 +107,7 @@ export const tokenManager = {
   setToken: (token: string): void => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TOKEN_KEY, token);
+    lastTokenSetTime = Date.now();
   },
 
   getRefreshToken: (): string | null => {
@@ -224,17 +229,22 @@ apiClient.interceptors.request.use(
         console.warn('[API] Failed to attach Authorization header', attachErr);
       }
     } else {
-      // Always warn for profile updates if no token
-      if (config.url?.includes('/users/profile')) {
+      // Public endpoints don't need auth - skip warning
+      const isPublicEndpoint =
+        config.url?.includes('/settings/public') ||
+        config.url?.includes('/health') ||
+        config.url?.includes('/better-auth/login') ||
+        config.url?.includes('/auth/register');
+      if (isPublicEndpoint) {
+        // Expected - no warning needed
+      } else if (config.url?.includes('/users/profile')) {
         console.error(
           '[API Interceptor] ❌ NO TOKEN FOUND for profile update! Request will fail.'
         );
-        console.error(
-          '[API Interceptor] Check localStorage for accessToken or novunt-auth-storage'
-        );
       } else if (process.env.NODE_ENV === 'development') {
         console.warn(
-          '[API Interceptor] ⚠️ NO TOKEN FOUND - Request will be sent without auth!'
+          '[API Interceptor] ⚠️ NO TOKEN FOUND - Request will be sent without auth!',
+          config.url
         );
       }
     }
@@ -313,9 +323,8 @@ apiClient.interceptors.response.use(
         console.error('[API] Refresh token failed, clearing all auth data');
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = '/login';
+          useAuthStore.getState().clearAuth();
+          window.dispatchEvent(new Event('auth:session-lost'));
         }
         return Promise.reject(error);
       }
@@ -340,12 +349,26 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       const refreshToken = tokenManager.getRefreshToken();
+      const hadToken = tokenManager.getToken();
 
       if (!refreshToken) {
-        // No refresh token, redirect to login
+        // Grace period: if we just set tokens (e.g. right after login), don't redirect
+        const msSinceTokenSet = Date.now() - lastTokenSetTime;
+        if (msSinceTokenSet < 3000) {
+          console.warn(
+            '[API] 401 but token was just set - skipping redirect to prevent loop'
+          );
+          return Promise.reject(error);
+        }
+        // Only redirect when we HAD a session that was lost - not on first visit
+        // Visiting / (home) with no token should not force redirect to login
+        if (!hadToken) {
+          return Promise.reject(error);
+        }
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          useAuthStore.getState().clearAuth();
+          window.dispatchEvent(new Event('auth:session-lost'));
         }
         return Promise.reject(error);
       }
@@ -433,17 +456,21 @@ apiClient.interceptors.response.use(
 
         processQueue(refreshError);
 
-        // Restore original logic: clear auth and redirect to login
+        // Grace period: if we just logged in, don't redirect - prevents loop
+        const msSinceTokenSet = Date.now() - lastTokenSetTime;
+        if (msSinceTokenSet < 3000) {
+          console.warn(
+            '[API] Refresh failed but token was just set - skipping redirect'
+          );
+          return Promise.reject(refreshError);
+        }
+
+        // Clear auth and dispatch event - AuthSessionHandler uses router.replace (handoff doc)
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           const { useAuthStore } = await import('@/store/authStore');
-          const store = useAuthStore.getState();
-          store.clearAuth();
-
-          // Redirect to login with error message
-          const errorMessage =
-            refreshError?.response?.data?.message || 'Session expired';
-          window.location.href = `/login?error=session_expired&message=${encodeURIComponent(errorMessage)}`;
+          useAuthStore.getState().clearAuth();
+          window.dispatchEvent(new Event('auth:session-lost'));
         }
         return Promise.reject(refreshError);
       } finally {

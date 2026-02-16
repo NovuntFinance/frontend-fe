@@ -177,7 +177,7 @@ export const useAuthStore = create<AuthState>()(
       }),
       onRehydrateStorage: () => (state) => {
         console.log('[AuthStore] 🔄 Rehydrating auth state...');
-        
+
         if (typeof window === 'undefined') {
           state?.setHasHydrated(true);
           return;
@@ -189,11 +189,16 @@ export const useAuthStore = create<AuthState>()(
             const payload = JSON.parse(atob(token.split('.')[1]));
             const isExpired = Date.now() >= payload.exp * 1000;
             if (isExpired) {
-              console.log('[AuthStore] ⏰ Token expired at:', new Date(payload.exp * 1000).toISOString());
+              console.log(
+                '[AuthStore] ⏰ Token expired at:',
+                new Date(payload.exp * 1000).toISOString()
+              );
             }
             return isExpired;
           } catch {
-            console.log('[AuthStore] ❌ Token decode failed - treating as expired');
+            console.log(
+              '[AuthStore] ❌ Token decode failed - treating as expired'
+            );
             return true;
           }
         };
@@ -203,35 +208,41 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] Checking token from state/localStorage...');
           if (isTokenExpired(state.token)) {
             console.log('[AuthStore] ⚠️ AccessToken expired');
-            
+
             // Check if we have a refreshToken
             if (state.refreshToken) {
-              console.log('[AuthStore] ✅ RefreshToken exists - keeping it for token refresh');
+              console.log(
+                '[AuthStore] ✅ RefreshToken exists - keeping it for token refresh'
+              );
               // Don't clear refreshToken! Keep it so axios interceptor can use it
               // Just clear the expired accessToken and set isAuthenticated=false temporarily
               state.token = null;
               state.isAuthenticated = false;
-              
+
               // Clear only the expired accessToken from localStorage and cookies
               localStorage.removeItem('accessToken');
               document.cookie = 'auth_token=; path=/; max-age=0';
               document.cookie = 'authToken=; path=/; max-age=0';
-              
+
               // Keep refreshToken, user data - axios interceptor will attempt refresh
-              console.log('[AuthStore] Kept refreshToken for automatic refresh attempt');
+              console.log(
+                '[AuthStore] Kept refreshToken for automatic refresh attempt'
+              );
             } else {
-              console.log('[AuthStore] ❌ No refreshToken - clearing all auth data');
+              console.log(
+                '[AuthStore] ❌ No refreshToken - clearing all auth data'
+              );
               // No refreshToken means we can't refresh - clear everything
               state.token = null;
               state.refreshToken = null;
               state.user = null;
               state.isAuthenticated = false;
-              
+
               // Clear localStorage completely
               localStorage.removeItem('accessToken');
               localStorage.removeItem('refreshToken');
               localStorage.removeItem('user');
-              
+
               // Clear all cookies
               document.cookie = 'auth_token=; path=/; max-age=0';
               document.cookie = 'authToken=; path=/; max-age=0';
@@ -239,6 +250,24 @@ export const useAuthStore = create<AuthState>()(
             }
           } else {
             console.log('[AuthStore] ✅ Token from state is valid');
+            // CRITICAL: Sync token to cookies so middleware can read it
+            // Middleware only reads cookies - without this, redirect loop occurs
+            if (state.token && typeof document !== 'undefined') {
+              const maxAge = 7 * 24 * 60 * 60;
+              const secureFlag =
+                typeof window !== 'undefined' &&
+                window.location?.protocol === 'https:'
+                  ? '; Secure'
+                  : '';
+              document.cookie = `auth_token=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+              document.cookie = `authToken=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+              if (state.refreshToken) {
+                document.cookie = `refreshToken=${state.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+              }
+              console.log(
+                '[AuthStore] ✅ Synced token to cookies for middleware'
+              );
+            }
           }
         }
 
@@ -258,13 +287,17 @@ export const useAuthStore = create<AuthState>()(
           const cookieRefreshToken = cookies['refreshToken'];
 
           if (cookieToken && cookieRefreshToken) {
-            console.log('[AuthStore] Found tokens in cookies, checking expiry...');
-            
+            console.log(
+              '[AuthStore] Found tokens in cookies, checking expiry...'
+            );
+
             if (!isTokenExpired(cookieToken)) {
-              console.log('[AuthStore] ✅ Cookie token valid, restoring auth state');
+              console.log(
+                '[AuthStore] ✅ Cookie token valid, restoring auth state'
+              );
               try {
                 const payload = JSON.parse(atob(cookieToken.split('.')[1]));
-                
+
                 localStorage.setItem('accessToken', cookieToken);
                 localStorage.setItem('refreshToken', cookieRefreshToken);
 
@@ -287,26 +320,35 @@ export const useAuthStore = create<AuthState>()(
                 state.user = user as User;
                 state.isAuthenticated = true;
               } catch (e) {
-                console.error('[AuthStore] ❌ Error restoring from cookies:', e);
+                console.error(
+                  '[AuthStore] ❌ Error restoring from cookies:',
+                  e
+                );
               }
             } else {
               console.log('[AuthStore] ⚠️ Cookie accessToken expired');
-              
+
               // Check if we have a refreshToken cookie
               if (cookieRefreshToken) {
-                console.log('[AuthStore] ✅ Cookie refreshToken exists - keeping it for token refresh');
+                console.log(
+                  '[AuthStore] ✅ Cookie refreshToken exists - keeping it for token refresh'
+                );
                 // Keep the refreshToken cookie, only clear expired accessToken
                 document.cookie = 'auth_token=; path=/; max-age=0';
                 document.cookie = 'authToken=; path=/; max-age=0';
-                
+
                 // Store refreshToken in state for axios interceptor
                 state.refreshToken = cookieRefreshToken;
                 localStorage.setItem('refreshToken', cookieRefreshToken);
                 state.isAuthenticated = false;
-                
-                console.log('[AuthStore] Kept cookie refreshToken for automatic refresh attempt');
+
+                console.log(
+                  '[AuthStore] Kept cookie refreshToken for automatic refresh attempt'
+                );
               } else {
-                console.log('[AuthStore] ❌ No cookie refreshToken - clearing all cookies');
+                console.log(
+                  '[AuthStore] ❌ No cookie refreshToken - clearing all cookies'
+                );
                 document.cookie = 'auth_token=; path=/; max-age=0';
                 document.cookie = 'authToken=; path=/; max-age=0';
                 document.cookie = 'refreshToken=; path=/; max-age=0';
@@ -317,7 +359,10 @@ export const useAuthStore = create<AuthState>()(
           }
         }
 
-        console.log('[AuthStore] ✅ Rehydration complete. isAuthenticated:', state?.isAuthenticated);
+        console.log(
+          '[AuthStore] ✅ Rehydration complete. isAuthenticated:',
+          state?.isAuthenticated
+        );
         state?.setHasHydrated(true);
       },
     }

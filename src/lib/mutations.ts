@@ -78,11 +78,15 @@ export function useLogin() {
         response && typeof response === 'object' ? Object.keys(response) : 'N/A'
       );
 
-      // Unwrap response if nested
+      // Backend returns { success, message, data: { token, refreshToken, user } }
+      // apiRequest unwraps one level; fallback for data.data if double-nested
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
-        data = (response as any).data;
-        console.log('[useLogin] Unwrapped nested response data');
+        const inner = (response as any).data;
+        data =
+          inner?.data && typeof inner.data === 'object' && 'token' in inner.data
+            ? inner.data
+            : inner;
       }
 
       console.log('[useLogin] Processing data:', {
@@ -144,12 +148,17 @@ export function useLogin() {
         const refreshToken = (data as any).refreshToken;
 
         if (!refreshToken) {
-          console.error('[useLogin] ⚠️ WARNING: Backend did not return refreshToken!');
-          console.error('[useLogin] This will cause issues with token refresh.');
+          console.error(
+            '[useLogin] ⚠️ WARNING: Backend did not return refreshToken!'
+          );
+          console.error(
+            '[useLogin] This will cause issues with token refresh.'
+          );
           console.error('[useLogin] Response data:', data);
-          
+
           toast.warning('Login successful but incomplete', {
-            description: 'Token refresh may not work. Contact support if you experience issues.',
+            description:
+              'Token refresh may not work. Contact support if you experience issues.',
           });
         } else {
           console.log('[useLogin] ✅ RefreshToken received from backend');

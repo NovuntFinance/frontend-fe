@@ -499,8 +499,10 @@ export function useDepositAddress() {
 // ============================================
 
 export function useDashboardOverview() {
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   return useQuery({
     queryKey: queryKeys.dashboardOverview,
+    enabled: !!isAuthenticated && _hasHydrated, // Wait for auth - prevents 401 loop
     queryFn: async () => {
       try {
         return await api.get<DashboardOverview>('/staking/dashboard');
@@ -538,8 +540,10 @@ export function useDashboardOverview() {
 // ============================================
 
 export function useActiveStakes() {
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   return useQuery({
     queryKey: queryKeys.activeStakes,
+    enabled: !!isAuthenticated && _hasHydrated, // Wait for auth - prevents 401 loop
     queryFn: async () => {
       try {
         return await api.get<StakeWithGoal[]>('/staking/dashboard');
@@ -576,8 +580,10 @@ export function useActiveStakes() {
  * Get user's staking streak information
  */
 export function useStakingStreak() {
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   return useQuery({
     queryKey: queryKeys.stakingStreak,
+    enabled: !!isAuthenticated && _hasHydrated,
     queryFn: async () => {
       try {
         const response = await getStakingStreak();

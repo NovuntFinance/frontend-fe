@@ -103,6 +103,16 @@ export function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
+    // CRITICAL FIX: Skip middleware auth redirect on localhost
+    // Cookies may not be reliably sent with RSC fetches during client nav
+    // Let DashboardGuard handle auth - prevents login loop
+    const isLocalhost =
+      request.nextUrl.hostname === 'localhost' ||
+      request.nextUrl.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return NextResponse.next();
+    }
+
     // Regular protected routes (dashboard, profile, etc.)
     // No token - redirect to login
     if (!token) {
@@ -117,14 +127,18 @@ export function middleware(request: NextRequest) {
     // This prevents the redirect loop between middleware and frontend
     if (isTokenExpired(token)) {
       const refreshToken = request.cookies.get('refreshToken')?.value;
-      
+
       if (refreshToken) {
         // Has refresh token - let the page load and axios will refresh
-        console.log('[Middleware] Token expired but has refreshToken - allowing page load for client-side refresh');
+        console.log(
+          '[Middleware] Token expired but has refreshToken - allowing page load for client-side refresh'
+        );
         return NextResponse.next();
       } else {
         // No refresh token - must redirect to login
-        console.log('[Middleware] Token expired and no refreshToken - redirecting to login');
+        console.log(
+          '[Middleware] Token expired and no refreshToken - redirecting to login'
+        );
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         loginUrl.searchParams.set('reason', 'session_expired');
@@ -147,7 +161,7 @@ export function middleware(request: NextRequest) {
   // Let the frontend (login page) handle the redirect based on actual auth state
   // The middleware can't reliably determine if a user is truly authenticated
   // (token might be valid but user data missing, or token valid but refresh needed)
-  
+
   // Just allow access to all public routes including auth routes
   // Frontend will handle redirecting authenticated users from login to dashboard
   return NextResponse.next();

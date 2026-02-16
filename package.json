@@ -27,6 +27,7 @@
     "security-audit": "npm audit --audit-level=high",
     "check": "node scripts/security-scan.js && tsc --noEmit",
     "test:api": "bash scripts/test-api-endpoints.sh",
+    "test:auth": "node scripts/test-auth-flow.js",
     "prepare": "husky install || true"
   },
   "dependencies": {
