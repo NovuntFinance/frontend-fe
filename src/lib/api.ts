@@ -47,14 +47,16 @@ const getAPIBaseURL = (): string => {
     return baseURL;
   }
 
-  // Fallback based on environment (should not be needed if .env.local is set)
+  // Fallback based on environment (should not be needed if env vars are set)
   const fallback =
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:5000/api/v1'
-      : 'https://novunt-backend-uw3z.onrender.com/api/v1';
+      : 'https://api.novunt.com/api/v1';
 
   console.warn('⚠️ NEXT_PUBLIC_API_URL not set! Using fallback:', fallback);
-  console.warn('⚠️ Please set NEXT_PUBLIC_API_URL in .env.local');
+  console.warn(
+    '⚠️ Set NEXT_PUBLIC_API_URL in .env.local (local) or hosting dashboard (production)'
+  );
 
   if (typeof window !== 'undefined') {
     (window as any).__NOVUNT_API_URL__ = fallback;

@@ -55,7 +55,7 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
       hasRedirected.current = false;
       isWaitingForRefresh.current = false;
     }
-  }, [isAuthenticated, hasHydrated, user, refreshToken, router, pathname]);
+  }, [isAuthenticated, hasHydrated, refreshToken, router, pathname]);
 
   // Show loading while checking authentication
   if (!hasHydrated) {

@@ -65,9 +65,12 @@ export const useAuthStore = create<AuthState>()(
 
         if (typeof window !== 'undefined' && typeof document !== 'undefined') {
           const maxAge = 7 * 24 * 60 * 60; // 7 days
-          document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-          document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-          document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          // CRITICAL: Secure flag required for HTTPS (production) - cookies without it may not persist
+          const secureFlag =
+            window.location?.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+          document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+          document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
         }
 
         set({

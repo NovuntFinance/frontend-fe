@@ -174,10 +174,10 @@ function LoginPageContent() {
     );
     setHasRedirected(true);
 
-    // Delay to ensure cookie sync from rehydration completes (middleware reads cookies)
+    // Use full page nav so cookies are in request (production fix for login loop)
     const redirectTimer = setTimeout(() => {
-      router.replace(redirectTo);
-    }, 300);
+      window.location.replace(redirectTo);
+    }, 400);
 
     return () => clearTimeout(redirectTimer);
   }, [hasHydrated, isAuthenticated, hasRedirected, router, searchParams]);
@@ -252,17 +252,19 @@ function LoginPageContent() {
         const checkAuthAndRedirect = (attempt = 0) => {
           const authState = useAuthStore.getState();
           if (authState.isAuthenticated && authState.token) {
-            // Extra delay so cookies are definitely set before nav (middleware reads them)
+            // CRITICAL: Use full page navigation so cookies are guaranteed in the request.
+            // router.replace() does client-side nav - middleware may not receive cookies on first load.
+            // window.location.replace forces a full request where browser sends all cookies.
             setTimeout(() => {
-              router.replace(redirectTo);
-            }, 400);
+              window.location.replace(redirectTo);
+            }, 500);
           } else if (attempt < 30) {
             setTimeout(() => checkAuthAndRedirect(attempt + 1), 100);
           }
         };
 
         // Start after delay - onSuccess sets state, allow React to process
-        setTimeout(() => checkAuthAndRedirect(0), 500);
+        setTimeout(() => checkAuthAndRedirect(0), 300);
       }
     } catch (error: unknown) {
       // Better error serialization
@@ -500,7 +502,8 @@ function LoginPageContent() {
         token: code, // Phase 1 expects 'token' not 'verificationCode'
       });
       const redirectTo = searchParams?.get('redirect') || '/dashboard';
-      router.push(redirectTo);
+      // Full page nav ensures cookies reach middleware (production login loop fix)
+      setTimeout(() => window.location.replace(redirectTo), 400);
     } catch (error: unknown) {
       setError('root', {
         message: getErrorMessage(error, 'Invalid verification code'),
