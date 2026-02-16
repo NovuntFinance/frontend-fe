@@ -142,24 +142,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If accessing an auth route (login/signup) with a valid token
-  if (isAuthRoute && token && !isTokenExpired(token)) {
-    // Allow access if explicitly requested (e.g., ?allow=true for testing or creating additional accounts)
-    const allowAccess = request.nextUrl.searchParams.get('allow') === 'true';
-    if (allowAccess) {
-      return NextResponse.next();
-    }
-
-    // Check if there's a redirect parameter
-    const redirectTo = request.nextUrl.searchParams.get('redirect');
-    if (redirectTo && redirectTo.startsWith('/')) {
-      return NextResponse.redirect(new URL(redirectTo, request.url));
-    }
-    // Default redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  // Allow access to public routes
+  // CRITICAL FIX: Don't redirect authenticated users from login page
+  // This was causing a loop with the dashboard redirect
+  // Let the frontend (login page) handle the redirect based on actual auth state
+  // The middleware can't reliably determine if a user is truly authenticated
+  // (token might be valid but user data missing, or token valid but refresh needed)
+  
+  // Just allow access to all public routes including auth routes
+  // Frontend will handle redirecting authenticated users from login to dashboard
   return NextResponse.next();
 }
 
