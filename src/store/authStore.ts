@@ -176,8 +176,56 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        // After Zustand rehydrates, check if tokens exist in cookies but not in store
-        if (state && !state.token && typeof window !== 'undefined') {
+        console.log('[AuthStore] 🔄 Rehydrating auth state...');
+        
+        if (typeof window === 'undefined') {
+          state?.setHasHydrated(true);
+          return;
+        }
+
+        // Helper function to check if token is expired
+        const isTokenExpired = (token: string): boolean => {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const isExpired = Date.now() >= payload.exp * 1000;
+            if (isExpired) {
+              console.log('[AuthStore] ⏰ Token expired at:', new Date(payload.exp * 1000).toISOString());
+            }
+            return isExpired;
+          } catch {
+            console.log('[AuthStore] ❌ Token decode failed - treating as expired');
+            return true;
+          }
+        };
+
+        // Step 1: Check if tokens in state (from localStorage persistence) are expired
+        if (state && state.token) {
+          console.log('[AuthStore] Checking token from state/localStorage...');
+          if (isTokenExpired(state.token)) {
+            console.log('[AuthStore] 🧹 Clearing EXPIRED token from state');
+            // Clear everything - expired token should not set isAuthenticated
+            state.token = null;
+            state.refreshToken = null;
+            state.user = null;
+            state.isAuthenticated = false;
+            
+            // Clear localStorage too
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            // Clear cookies
+            document.cookie = 'auth_token=; path=/; max-age=0';
+            document.cookie = 'authToken=; path=/; max-age=0';
+            document.cookie = 'refreshToken=; path=/; max-age=0';
+          } else {
+            console.log('[AuthStore] ✅ Token from state is valid');
+          }
+        }
+
+        // Step 2: If no token in state, check cookies as fallback
+        if (state && !state.token) {
+          console.log('[AuthStore] No token in state, checking cookies...');
           const cookies = document.cookie.split(';').reduce(
             (acc, cookie) => {
               const [key, value] = cookie.trim().split('=');
@@ -191,11 +239,13 @@ export const useAuthStore = create<AuthState>()(
           const cookieRefreshToken = cookies['refreshToken'];
 
           if (cookieToken && cookieRefreshToken) {
-            try {
-              const payload = JSON.parse(atob(cookieToken.split('.')[1]));
-              const isExpired = Date.now() >= payload.exp * 1000;
-
-              if (!isExpired) {
+            console.log('[AuthStore] Found tokens in cookies, checking expiry...');
+            
+            if (!isTokenExpired(cookieToken)) {
+              console.log('[AuthStore] ✅ Cookie token valid, restoring auth state');
+              try {
+                const payload = JSON.parse(atob(cookieToken.split('.')[1]));
+                
                 localStorage.setItem('accessToken', cookieToken);
                 localStorage.setItem('refreshToken', cookieRefreshToken);
 
@@ -217,17 +267,21 @@ export const useAuthStore = create<AuthState>()(
                 state.refreshToken = cookieRefreshToken;
                 state.user = user as User;
                 state.isAuthenticated = true;
-              } else {
-                document.cookie = 'auth_token=; path=/; max-age=0';
-                document.cookie = 'authToken=; path=/; max-age=0';
-                document.cookie = 'refreshToken=; path=/; max-age=0';
+              } catch (e) {
+                console.error('[AuthStore] ❌ Error restoring from cookies:', e);
               }
-            } catch {
-              // Token decode failed; ignore — user will need to log in
+            } else {
+              console.log('[AuthStore] 🧹 Cookie token expired, clearing cookies');
+              document.cookie = 'auth_token=; path=/; max-age=0';
+              document.cookie = 'authToken=; path=/; max-age=0';
+              document.cookie = 'refreshToken=; path=/; max-age=0';
             }
+          } else {
+            console.log('[AuthStore] No tokens in cookies');
           }
         }
 
+        console.log('[AuthStore] ✅ Rehydration complete. isAuthenticated:', state?.isAuthenticated);
         state?.setHasHydrated(true);
       },
     }

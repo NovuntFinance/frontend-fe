@@ -134,16 +134,29 @@ export function useLogin() {
         console.log(
           '[useLogin] Normal login successful, setting user and tokens'
         );
+        console.log('[useLogin] Response data keys:', Object.keys(data));
+        console.log('[useLogin] Has refreshToken:', 'refreshToken' in data);
 
         // Normalize user (fname/lname to firstName/lastName)
         const normalizedUser = normalizeUser(user);
 
-        // Phase 1 login may not return refreshToken
-        // Use empty string for now, will be populated by refresh endpoint if needed
-        const refreshToken = (data as any).refreshToken || '';
+        // Get refreshToken from response - backend should return this
+        const refreshToken = (data as any).refreshToken;
+
+        if (!refreshToken) {
+          console.error('[useLogin] ⚠️ WARNING: Backend did not return refreshToken!');
+          console.error('[useLogin] This will cause issues with token refresh.');
+          console.error('[useLogin] Response data:', data);
+          
+          toast.warning('Login successful but incomplete', {
+            description: 'Token refresh may not work. Contact support if you experience issues.',
+          });
+        } else {
+          console.log('[useLogin] ✅ RefreshToken received from backend');
+        }
 
         setUser(normalizedUser as User);
-        setTokens(token, refreshToken);
+        setTokens(token, refreshToken || ''); // Fallback to empty string but log warning
 
         toast.success('Welcome back!', {
           description: `Logged in as ${user.fname} ${user.lname}`,
