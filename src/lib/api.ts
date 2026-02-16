@@ -310,13 +310,17 @@ apiClient.interceptors.response.use(
 
       // Don't try to refresh if this IS the refresh endpoint
       if (originalRequest.url?.includes('/refresh-token')) {
-        console.log('[API] Refresh token failed, clearing all auth data');
+        console.error('⚠️ [API] Refresh token endpoint failed (emergency fix: NOT redirecting)');
+        console.error('⚠️ [API] Backend needs to fix /better-auth/refresh-token endpoint');
+        // 🔥 EMERGENCY FIX: Don't clear auth or redirect - prevents loop
+        /* DISABLED:
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           localStorage.clear();
           sessionStorage.clear();
           window.location.href = '/login';
         }
+        */
         return Promise.reject(error);
       }
 
@@ -343,10 +347,15 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken) {
         // No refresh token, redirect to login
+        console.error('⚠️ [API] No refresh token found (emergency fix: NOT redirecting)');
+        console.error('⚠️ [API] User may need to manually re-login');
+        // 🔥 EMERGENCY FIX: Don't clear auth or redirect - prevents loop
+        /* DISABLED:
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
+        */
         return Promise.reject(error);
       }
 
