@@ -5,11 +5,6 @@ import type { NextConfig } from 'next';
 import type { Configuration } from 'webpack';
 import { securityHeaders } from './src/lib/security-headers';
 
-/** Next.js runtime supports eslint.ignoreDuringBuilds; type may omit it in some versions */
-type NextConfigWithEslint = NextConfig & {
-  eslint?: { ignoreDuringBuilds?: boolean };
-};
-
 // Temporarily disabled PWA config
 // const withPWAConfig = withPWA({
 //   dest: 'public',
@@ -36,14 +31,11 @@ type NextConfigWithEslint = NextConfig & {
 //   ],
 // });
 
-const nextConfig: NextConfigWithEslint = {
+const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Allow Vercel deploy: do not fail build on ESLint (fix warnings locally over time)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Note: Next.js 16+ eslint config moved to next lint - run `npm run lint` locally
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
