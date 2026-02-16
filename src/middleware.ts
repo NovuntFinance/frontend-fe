@@ -112,18 +112,30 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Token expired - redirect to login
+    // CRITICAL FIX: Don't redirect on expired token if refresh token exists
+    // Let the frontend's axios interceptor handle token refresh
+    // This prevents the redirect loop between middleware and frontend
     if (isTokenExpired(token)) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      loginUrl.searchParams.set('reason', 'session_expired');
+      const refreshToken = request.cookies.get('refreshToken')?.value;
+      
+      if (refreshToken) {
+        // Has refresh token - let the page load and axios will refresh
+        console.log('[Middleware] Token expired but has refreshToken - allowing page load for client-side refresh');
+        return NextResponse.next();
+      } else {
+        // No refresh token - must redirect to login
+        console.log('[Middleware] Token expired and no refreshToken - redirecting to login');
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        loginUrl.searchParams.set('reason', 'session_expired');
 
-      // Clear the expired token
-      const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete('authToken');
-      response.cookies.delete('refreshToken');
+        // Clear the expired token
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete('authToken');
+        response.cookies.delete('refreshToken');
 
-      return response;
+        return response;
+      }
     }
 
     // Token valid - allow access
