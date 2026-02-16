@@ -116,20 +116,16 @@ export async function refreshAccessToken(): Promise<string | null> {
     return accessToken;
   } catch (error) {
     console.error('[Token Refresh] Failed to refresh token:', error);
-    console.error('⚠️ [Token Refresh] Emergency fix active - NOT clearing auth or redirecting');
-    console.error('⚠️ [Token Refresh] Backend needs to fix refresh endpoints');
     isRefreshing = false;
     refreshSubscribers = [];
 
-    // 🔥 EMERGENCY FIX: Don't clear tokens or redirect - prevents loop
-    /* DISABLED:
+    // Restore original logic: clear tokens and redirect to login
     clearTokens();
 
     // Redirect to login if in browser
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
-    */
 
     return null;
   }

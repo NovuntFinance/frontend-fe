@@ -310,17 +310,13 @@ apiClient.interceptors.response.use(
 
       // Don't try to refresh if this IS the refresh endpoint
       if (originalRequest.url?.includes('/refresh-token')) {
-        console.error('⚠️ [API] Refresh token endpoint failed (emergency fix: NOT redirecting)');
-        console.error('⚠️ [API] Backend needs to fix /better-auth/refresh-token endpoint');
-        // 🔥 EMERGENCY FIX: Don't clear auth or redirect - prevents loop
-        /* DISABLED:
+        console.error('[API] Refresh token failed, clearing all auth data');
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           localStorage.clear();
           sessionStorage.clear();
           window.location.href = '/login';
         }
-        */
         return Promise.reject(error);
       }
 
@@ -347,15 +343,10 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken) {
         // No refresh token, redirect to login
-        console.error('⚠️ [API] No refresh token found (emergency fix: NOT redirecting)');
-        console.error('⚠️ [API] User may need to manually re-login');
-        // 🔥 EMERGENCY FIX: Don't clear auth or redirect - prevents loop
-        /* DISABLED:
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
-        */
         return Promise.reject(error);
       }
 
@@ -442,17 +433,7 @@ apiClient.interceptors.response.use(
 
         processQueue(refreshError);
 
-        // 🔥 EMERGENCY FIX: Disabled auto-clear to prevent infinite redirect loop
-        // Issue: Dashboard queries return 401 immediately after login, causing
-        // this handler to clear auth and redirect back to login repeatedly
-        // TODO: Investigate why dashboard endpoints return 401 with valid tokens
-        // TODO: Implement proper retry logic with backoff instead of immediate logout
-        
-        console.error('⚠️ [API] 401 detected but NOT clearing auth (emergency fix active)');
-        console.error('⚠️ [API] If you see this, backend needs to investigate 401 responses');
-        console.error('⚠️ [API] Dashboard may show errors - this prevents the login loop');
-        
-        /* DISABLED - Causing infinite redirect loop
+        // Restore original logic: clear auth and redirect to login
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           const { useAuthStore } = await import('@/store/authStore');
@@ -464,8 +445,6 @@ apiClient.interceptors.response.use(
             refreshError?.response?.data?.message || 'Session expired';
           window.location.href = `/login?error=session_expired&message=${encodeURIComponent(errorMessage)}`;
         }
-        */
-
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
