@@ -381,11 +381,36 @@ export default function TransactionsPage() {
         icon =
           'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
         break;
+      case 'ros_payout':
+      case 'test_ros_payout':
+        bgColor = 'bg-emerald-100 dark:bg-emerald-900/30';
+        textColor = 'text-emerald-800 dark:text-emerald-400';
+        icon =
+          'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+        break;
+      case 'stake_pool_payout':
+      case 'performance_pool_payout':
+      case 'premium_pool_payout':
+        bgColor = 'bg-amber-100 dark:bg-amber-900/30';
+        textColor = 'text-amber-800 dark:text-amber-400';
+        icon =
+          'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+        break;
       default:
         bgColor = 'bg-gray-100 dark:bg-gray-700';
         textColor = 'text-gray-800 dark:text-gray-300';
         icon = 'M9 5l7 7-7 7';
     }
+
+    const typeLabels: Record<string, string> = {
+      ros_payout: 'Daily ROS Payout',
+      test_ros_payout: 'Test ROS Payout',
+      stake_pool_payout: 'Stake Pool Payout',
+      performance_pool_payout: 'Performance Pool Payout',
+      premium_pool_payout: 'Premium Pool Payout',
+    };
+    const label =
+      typeLabels[type] ?? type.charAt(0).toUpperCase() + type.slice(1);
 
     return (
       <span
@@ -402,7 +427,7 @@ export default function TransactionsPage() {
         >
           <path d={icon}></path>
         </svg>
-        {type.charAt(0).toUpperCase() + type.slice(1)}
+        {label}
       </span>
     );
   };
@@ -519,6 +544,11 @@ export default function TransactionsPage() {
               <option value="reward">Rewards</option>
               <option value="ros_payout">Daily ROS Payout</option>
               <option value="test_ros_payout">Test ROS Payout</option>
+              <option value="stake_pool_payout">Stake Pool Payout</option>
+              <option value="performance_pool_payout">
+                Performance Pool Payout
+              </option>
+              <option value="premium_pool_payout">Premium Pool Payout</option>
             </select>
           </div>
 

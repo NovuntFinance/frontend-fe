@@ -66,6 +66,7 @@ import {
 } from '@/lib/utils/wallet';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { listItemAnimation } from '@/design-system/animations';
+import { sanitizeDescriptionByType } from '@/utils/sanitizeTransactionDescription';
 import type {
   TransactionHistoryParams,
   Transaction,
@@ -1403,7 +1404,7 @@ function TransactionItem({
       );
       console.log('Metadata:', {
         stakeId: transaction.metadata?.stakeId || '❌ MISSING',
-        stakeAmount: transaction.metadata?.stakeAmount || '❌ MISSING',
+        // stakeAmount removed - sanitized by backend
         origin: transaction.metadata?.origin || '❌ MISSING',
         trigger: transaction.metadata?.trigger,
         level: transaction.metadata?.level,
@@ -1454,7 +1455,10 @@ function TransactionItem({
               )}
             </div>
             <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
-              {transaction.description}
+              {sanitizeDescriptionByType(
+                transaction.description,
+                transaction.type
+              )}
               {/* 🔍 DEBUG: Highlight incorrect referral bonus descriptions (remove after verification) */}
               {process.env.NODE_ENV === 'development' &&
                 transaction.type === 'referral_bonus' &&
@@ -1529,19 +1533,7 @@ function TransactionItem({
                       {transaction.metadata.rosPercentage}% ROS
                     </span>
                   )}
-                  {transaction.metadata?.stakeAmount && (
-                    <span className="text-xs">
-                      Stake:{' '}
-                      {formatCurrency(transaction.metadata.stakeAmount, {
-                        showCurrency: false,
-                      })}
-                    </span>
-                  )}
-                  {transaction.metadata?.poolSharePercentage && (
-                    <span className="text-xs">
-                      Pool Share: {transaction.metadata.poolSharePercentage}%
-                    </span>
-                  )}
+                  {/* Removed stakeAmount and poolSharePercentage - not available in sanitized metadata */}
                   {transaction.metadata?.daysActive && (
                     <span className="text-xs">
                       {transaction.metadata.daysActive} day
@@ -1697,10 +1689,8 @@ function receiptDescriptionWithoutPoolAmount(
   description: string | undefined
 ): string {
   if (!description || typeof description !== 'string') return description ?? '';
-  return description
-    .replace(/\s*-\s*\$\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
-    .replace(/\s*-\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
-    .trim();
+  // Use comprehensive sanitization function
+  return sanitizeDescriptionByType(description, '');
 }
 
 /**
@@ -2179,20 +2169,7 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                     value={`${transaction.metadata.rosPercentage}%`}
                   />
                 )}
-                {transaction.metadata?.stakeAmount && (
-                  <DetailRow
-                    label="Original Stake Amount"
-                    value={formatCurrency(transaction.metadata.stakeAmount, {
-                      showCurrency: true,
-                    })}
-                  />
-                )}
-                {transaction.metadata?.poolSharePercentage && (
-                  <DetailRow
-                    label="Pool Share"
-                    value={`${transaction.metadata.poolSharePercentage}%`}
-                  />
-                )}
+                {/* Removed stakeAmount and poolSharePercentage - not available in sanitized metadata */}
                 {transaction.metadata?.daysActive && (
                   <DetailRow
                     label="Days Active"
@@ -2286,14 +2263,19 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                         'network',
                         'weekNumber',
                         'rosPercentage',
-                        'stakeAmount',
-                        'poolSharePercentage',
+                        'stakeAmount', // Removed - sanitized
+                        'poolSharePercentage', // Removed - sanitized
                         'daysActive',
                         'stakeId',
                         'bonusType',
                         'relatedUserId',
-                        'totalPoolAmount',
-                        'total_pool_amount',
+                        'totalPoolAmount', // Removed - sanitized
+                        'total_pool_amount', // Removed - sanitized
+                        'premiumPoolAmount', // Removed - sanitized
+                        'performancePoolAmount', // Removed - sanitized
+                        'referredUserName', // Removed - sanitized
+                        'referredUserId', // Removed - sanitized
+                        'qualifierCount', // Removed - sanitized
                       ];
                       const keyNorm = key.replace(/_/g, '').toLowerCase();
                       const isPoolTotal =

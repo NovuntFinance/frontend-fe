@@ -16,6 +16,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { Badge } from '@/components/ui/badge';
+import { sanitizeDescriptionByType } from '@/utils/sanitizeTransactionDescription';
 
 interface Transaction {
   id: string;
@@ -206,7 +207,10 @@ export function ActivityFeed() {
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex items-center gap-2">
                     <p className="text-foreground truncate text-sm font-medium">
-                      {transaction.description}
+                      {sanitizeDescriptionByType(
+                        transaction.description,
+                        transaction.type
+                      )}
                     </p>
                     {getStatusIcon(transaction.status)}
                   </div>
