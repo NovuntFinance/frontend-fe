@@ -322,9 +322,9 @@ function SignupPageContent() {
   const isLoading = isSubmitting || signupMutation.isPending;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* ── Step Progress ── */}
-      <div className={`${styles.neuStepBar} mb-5 flex items-center`}>
+      <div className={`${styles.neuStepBar} flex items-center`}>
         {STEPS.map((step, idx) => (
           <React.Fragment key={step.id}>
             <div className="flex flex-1 flex-col items-center">
@@ -366,7 +366,7 @@ function SignupPageContent() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className={styles.neuErrorAlert}
+          className={`${styles.neuErrorAlert} mb-2`}
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
           <span>{errors.root.message}</span>
@@ -374,7 +374,7 @@ function SignupPageContent() {
       )}
 
       {/* ── Form Card ── */}
-      <div className={`${styles.neuAuthCard} p-6 sm:p-8`}>
+      <div className={`${styles.neuAuthCard} p-5 sm:p-6`}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <AnimatePresence mode="wait">
@@ -483,7 +483,7 @@ function SignupPageContent() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15, duration: 0.3 }}
-                    className="space-y-1.5"
+                    className="space-y-2"
                   >
                     <div
                       className={`${styles.neuPhoneWrapper} ${errors.phoneNumber ? styles.neuInputError : ''}`}
@@ -550,7 +550,7 @@ function SignupPageContent() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05, duration: 0.3 }}
-                    className={`${styles.neuTermsSurface} space-y-3`}
+                    className={`${styles.neuTermsSurface} space-y-4`}
                   >
                     <div className="flex items-start space-x-3">
                       <input
@@ -589,21 +589,15 @@ function SignupPageContent() {
           </div>
 
           {/* ── Navigation Buttons ── */}
-          <div className="mt-8 flex gap-3">
+          <div className="mt-6 flex gap-3">
             {currentStep > 1 && (
               <button
                 type="button"
                 onClick={handlePrevious}
-                className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 py-3.5`}
+                className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
               >
-                <ArrowLeft
-                  className="h-4 w-4"
-                  style={{ color: 'var(--neu-text)' }}
-                />
-                <span
-                  className="text-sm font-semibold tracking-wider uppercase"
-                  style={{ color: 'var(--neu-text)' }}
-                >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm font-semibold tracking-wider uppercase">
                   Back
                 </span>
               </button>
@@ -613,7 +607,7 @@ function SignupPageContent() {
               <button
                 type="button"
                 onClick={handleNext}
-                className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 py-3.5`}
+                className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
               >
                 <span className="text-sm font-bold tracking-wider text-white uppercase">
                   Continue
@@ -624,7 +618,7 @@ function SignupPageContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 py-3.5 ${isLoading ? styles.neuBtnDisabled : ''}`}
+                className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 ${isLoading ? styles.neuBtnDisabled : ''}`}
               >
                 {isLoading && <NovuntSpinner size="sm" className="mr-1" />}
                 <span className="text-sm font-bold tracking-wider text-white uppercase">
@@ -637,7 +631,7 @@ function SignupPageContent() {
       </div>
 
       {/* Sign In Link */}
-      <div className={`${styles.neuBottomLink} text-sm`}>
+      <div className={`${styles.neuBottomLink} mt-4 text-sm`}>
         <span className={styles.neuTextMuted}>Already have an account? </span>
         <Link href="/login" className={styles.neuLink}>
           Sign in

@@ -3,9 +3,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff } from 'lucide-react';
+import type { FieldValues, Path, UseFormRegister } from 'react-hook-form';
 import styles from '@/styles/auth.module.css';
 
-export interface NeuFieldProps {
+export interface NeuFieldProps<T extends FieldValues = FieldValues> {
   id: string;
   label: string;
   icon: React.ElementType;
@@ -13,14 +14,14 @@ export interface NeuFieldProps {
   placeholder?: string;
   autoComplete?: string;
   error?: { message?: string };
-  register: ReturnType<typeof import('react-hook-form').useForm>['register'];
-  registerName: string;
+  register: UseFormRegister<T>;
+  registerName: Path<T>;
   delay?: number;
   children?: React.ReactNode;
   hint?: string;
 }
 
-export function NeuField({
+export function NeuField<T extends FieldValues = FieldValues>({
   id,
   label,
   icon: Icon,
@@ -32,13 +33,13 @@ export function NeuField({
   delay = 0,
   children,
   hint,
-}: NeuFieldProps) {
+}: NeuFieldProps<T>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3, ease: 'easeOut' }}
-      className="space-y-1.5"
+      className="space-y-2"
     >
       <div className={styles.neuInputIconWrap}>
         <Icon className={styles.neuInputIcon} />
@@ -50,37 +51,37 @@ export function NeuField({
           className={`${styles.neuInput} ${error ? styles.neuInputError : ''}`}
           aria-invalid={error ? 'true' : 'false'}
           aria-label={label}
-          {...register(registerName)}
+          {...register(registerName as Path<T>)}
         />
         {children}
       </div>
       {error?.message && (
         <p className={styles.neuFieldError}>{error.message}</p>
       )}
-      {hint && <p className={`text-xs ${styles.neuTextMuted}`}>{hint}</p>}
+      {hint && <p className={`mt-1 text-xs ${styles.neuTextMuted}`}>{hint}</p>}
     </motion.div>
   );
 }
 
-export interface NeuPasswordFieldProps
-  extends Omit<NeuFieldProps, 'icon' | 'type' | 'children'> {
+export interface NeuPasswordFieldProps<T extends FieldValues = FieldValues>
+  extends Omit<NeuFieldProps<T>, 'icon' | 'type' | 'children'> {
   showPassword: boolean;
   onToggle: () => void;
   strengthIndicator?: React.ReactNode;
 }
 
-export function NeuPasswordField({
+export function NeuPasswordField<T extends FieldValues = FieldValues>({
   showPassword,
   onToggle,
   strengthIndicator,
   ...rest
-}: NeuPasswordFieldProps) {
+}: NeuPasswordFieldProps<T>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rest.delay || 0, duration: 0.3, ease: 'easeOut' }}
-      className="space-y-1.5"
+      className="space-y-2"
     >
       <NeuField {...rest} icon={Lock} type={showPassword ? 'text' : 'password'}>
         <button
@@ -96,7 +97,7 @@ export function NeuPasswordField({
           )}
         </button>
       </NeuField>
-      {strengthIndicator}
+      {strengthIndicator && <div className="mt-2">{strengthIndicator}</div>}
     </motion.div>
   );
 }

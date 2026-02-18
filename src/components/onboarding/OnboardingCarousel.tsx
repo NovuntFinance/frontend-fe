@@ -228,13 +228,10 @@ export default function OnboardingCarousel({
           onMouseLeave={() => setIsPressed(false)}
           onTouchStart={() => setIsPressed(true)}
           onTouchEnd={() => setIsPressed(false)}
-          className={`flex w-full cursor-pointer items-center justify-center rounded-2xl py-5 transition-all duration-150 ${isPressed ? styles.neuBtnActive : styles.neuBtn} `}
+          className={`flex w-full cursor-pointer items-center justify-center rounded-xl py-5 transition-all duration-150 ${isPressed ? styles.neuBtnActive : styles.neuBtn} `}
           id="onboarding-get-started"
         >
-          <span
-            className="text-sm font-black tracking-[0.25em] uppercase"
-            style={{ color: 'var(--neu-text)' }}
-          >
+          <span className="text-sm font-black tracking-[0.25em] uppercase">
             {isLastSlide ? 'Get Started' : 'Continue'}
           </span>
         </button>
