@@ -5,28 +5,19 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
 import { useLogin, useVerify2FA } from '@/lib/mutations';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { checkBackendHealth } from '@/lib/backendHealthCheck';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 // Turnstile disabled for login - import removed
 import Loading from '@/components/ui/loading';
+import styles from '@/styles/auth.module.css';
 
 /**
  * Login Page - BetterAuth Aligned
@@ -476,13 +467,13 @@ function LoginPageContent() {
     return (
       <div className="space-y-6">
         <div className="space-y-2 text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20 backdrop-blur-sm">
-            <Lock className="h-8 w-8 text-indigo-400" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: 'var(--neu-text)' }}
+          >
             Multi-Factor Authentication
           </h1>
-          <p className="text-white/70">
+          <p className={styles.neuTextSecondary}>
             Enter the 6-digit code from your authenticator app
             {loginData?.email ? ` for ${loginData.email}` : ''}
           </p>
@@ -495,276 +486,169 @@ function LoginPageContent() {
         />
 
         <div className="text-center">
-          <Button
-            variant="ghost"
+          <button
+            type="button"
             onClick={() => {
               setRequiresMFA(false);
               setUserID(null);
               setLoginData(null);
             }}
+            className={`${styles.neuBtnBack} rounded-xl px-6 py-3`}
           >
             Back to login
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="mb-8 space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          Welcome back
-        </h1>
-        <p className="text-white/70">
-          Sign in to your account to continue your staking journey
-        </p>
-      </div>
-
+    <div className="space-y-5">
       {/* Backend Status Alert */}
       {backendStatus && !backendStatus.healthy && (
-        <Alert className="border-orange-500/50 bg-orange-500/10 backdrop-blur-sm">
-          <AlertCircle className="h-4 w-4 text-orange-400" />
-          <AlertDescription className="text-orange-200">
-            <strong>Backend Connection Issue:</strong> {backendStatus.message}
-            <br />
-            <span className="mt-1 block text-sm">
-              If using Render free tier, the server might be sleeping. Please
-              wait 30-60 seconds and try again.
+        <div className={styles.neuErrorAlert}>
+          <AlertCircle className="h-4 w-4 flex-shrink-0 text-orange-400" />
+          <div>
+            <strong>Backend connection issue:</strong> {backendStatus.message}
+            <span className="mt-1 block text-sm opacity-90">
+              If using Render free tier, wait 30-60 seconds and try again.
             </span>
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
       )}
 
       {/* Success message (if redirected from email verification) */}
       {searchParams?.get('verified') === 'true' && (
-        <Alert className="border-green-500/50 bg-green-500/10 backdrop-blur-sm">
-          <AlertCircle className="h-4 w-4 text-green-400" />
-          <AlertDescription className="text-green-200">
-            Email verified successfully! You can now login.
-          </AlertDescription>
-        </Alert>
+        <div
+          className={`${styles.neuErrorAlert} border-green-500/30`}
+          style={{ color: '#86efac' }}
+        >
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>Email verified successfully! You can now login.</span>
+        </div>
       )}
 
       {/* Error Alert */}
       {errors.root && (
-        <Alert
-          variant={
-            requiresEmailVerification || requiresPasswordReset
-              ? 'default'
-              : 'destructive'
-          }
-          className={
-            requiresEmailVerification
-              ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950'
-              : requiresPasswordReset
-                ? 'border-orange-500 bg-orange-50 dark:bg-orange-950'
-                : ''
-          }
-        >
-          <AlertCircle
-            className={`h-4 w-4 ${
-              requiresEmailVerification
-                ? 'text-yellow-600'
-                : requiresPasswordReset
-                  ? 'text-orange-600'
-                  : ''
-            }`}
-          />
-          <AlertDescription
-            className={
-              requiresEmailVerification
-                ? 'text-yellow-800 dark:text-yellow-200'
-                : requiresPasswordReset
-                  ? 'text-orange-800 dark:text-orange-200'
-                  : ''
-            }
-          >
-            {errors.root.message}
-
-            {/* Email Verification Actions */}
+        <div className={styles.neuErrorAlert}>
+          <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
+          <div>
+            <span>{errors.root.message}</span>
             {requiresEmailVerification && unverifiedEmail && (
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <Link
                   href={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
-                  className="focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md bg-yellow-600 px-4 text-sm font-medium text-white transition-colors hover:bg-yellow-700 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className={styles.neuLink}
                 >
                   Verify Email Now
                 </Link>
                 <Link
                   href={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium text-yellow-700 transition-colors hover:underline dark:text-yellow-300"
+                  className={styles.neuLink}
                 >
                   Or resend verification code →
                 </Link>
               </div>
             )}
-
-            {/* Password Reset Actions */}
             {requiresPasswordReset && emailValue && (
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <Link
                   href={`/forgot-password?email=${encodeURIComponent(emailValue)}`}
-                  className="focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md bg-orange-600 px-4 text-sm font-medium text-white transition-colors hover:bg-orange-700 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className={styles.neuLink}
                 >
                   Reset Password Now
                 </Link>
                 <Link
                   href={`/forgot-password?email=${encodeURIComponent(emailValue)}`}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium text-orange-700 transition-colors hover:underline dark:text-orange-300"
+                  className={styles.neuLink}
                 >
                   Need help? Contact Support →
                 </Link>
               </div>
             )}
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
       )}
 
       {/* Login Form */}
-      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
-        {/* Gradient Background */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl font-bold text-white">
-            Sign In
-          </CardTitle>
-          <CardDescription className="text-white/70">
-            Enter your email and password to access your account
-          </CardDescription>
-        </CardHeader>
-
+      <div className={`${styles.neuAuthCard} p-6 sm:p-8`}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="relative z-10 space-y-4">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/90">
-                Email
-              </Label>
-              <div className="relative">
-                <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="border-white/20 bg-white/10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
-                  autoComplete="email"
-                  autoFocus
-                  {...register('email')}
-                  aria-invalid={errors.email ? 'true' : 'false'}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-destructive text-sm">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-white/90">
-                  Password
-                </Label>
+          <div className="space-y-4">
+            <NeuField
+              id="email"
+              label="Email Address"
+              icon={Mail}
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              error={errors.email}
+              register={register}
+              registerName="email"
+            />
+            <div className="space-y-1.5">
+              <div className="flex justify-end">
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-indigo-400 hover:text-indigo-300 hover:underline"
+                  className={`text-sm ${styles.neuLink}`}
                 >
                   Forgot password?
                 </Link>
               </div>
-              <div className="relative">
-                <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
-                  autoComplete="current-password"
-                  {...register('password')}
-                  aria-invalid={errors.password ? 'true' : 'false'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-destructive text-sm">
-                  {errors.password.message}
-                </p>
-              )}
+              <NeuPasswordField
+                id="password"
+                label="Password"
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                error={errors.password}
+                register={register}
+                registerName="password"
+                showPassword={showPassword}
+                onToggle={() => setShowPassword(!showPassword)}
+              />
             </div>
 
-            {/* Remember Me */}
-            {/* Remember Me */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 id="rememberMe"
-                className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                className={styles.neuCheckbox}
                 {...register('rememberMe')}
               />
-              <Label
+              <label
                 htmlFor="rememberMe"
-                className="cursor-pointer text-sm font-normal text-white/90"
+                className={`cursor-pointer text-sm ${styles.neuTextSecondary}`}
               >
                 Remember me for 30 days
-              </Label>
+              </label>
             </div>
 
             {/* Turnstile disabled for login - removed widget */}
-          </CardContent>
+          </div>
 
-          <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">
-            {/* Submit Button */}
-            <Button
+          <div className="mt-6">
+            <button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
-              size="lg"
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || loginMutation.isPending ? styles.neuBtnDisabled : ''}`}
               disabled={isSubmitting || loginMutation.isPending}
             >
               {(isSubmitting || loginMutation.isPending) && (
                 <NovuntSpinner size="sm" className="mr-2" />
               )}
-              Sign In
-            </Button>
-          </CardFooter>
+              <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Sign In
+              </span>
+            </button>
+          </div>
         </form>
-      </Card>
+      </div>
 
       {/* Sign Up Link */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm backdrop-blur-sm">
-        <span className="text-white/70">Don&apos;t have an account? </span>
-        <Link
-          href="/signup"
-          className="group inline-flex items-center gap-1 font-semibold text-indigo-400 hover:text-indigo-300 hover:underline"
-        >
+      <div className={`${styles.neuBottomLink} text-sm`}>
+        <span className={styles.neuTextMuted}>
+          Don&apos;t have an account?{' '}
+        </span>
+        <Link href="/signup" className={styles.neuLink}>
           Sign up for free
-          <svg
-            className="h-4 w-4 transition-transform group-hover:translate-x-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
         </Link>
       </div>
     </div>

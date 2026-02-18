@@ -8,11 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail,
-  Lock,
   User,
   Gift,
-  Eye,
-  EyeOff,
   AlertCircle,
   Check,
   ArrowRight,
@@ -29,35 +26,25 @@ import {
   calculatePasswordStrength,
 } from '@/lib/validation';
 import { useSignup } from '@/lib/mutations';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
 // Turnstile disabled for signup - import removed
 import { toast } from '@/components/ui/enhanced-toast';
+import styles from '@/styles/auth.module.css';
 
 // Disable static generation
 export const dynamic = 'force-dynamic';
 
 const STEPS = [
-  { id: 1, title: 'Account Details', description: 'Create your account' },
+  { id: 1, title: 'Account Details', description: 'Set up your credentials' },
   { id: 2, title: 'Personal Info', description: 'Tell us about yourself' },
-  { id: 3, title: 'Referral & Terms', description: 'Almost done!' },
+  { id: 3, title: 'Referral & Terms', description: 'Almost there!' },
 ];
 
 /**
  * Signup Page Component (wrapped in Suspense)
- * Multi-step registration form with validation
+ * Multi-step registration form with neumorphic design
  */
 function SignupPageContent() {
   const router = useRouter();
@@ -98,26 +85,20 @@ function SignupPageContent() {
     },
   });
 
-  // Auto-populate referral code from URL parameter
+  // Auto-populate referral code from URL
   useEffect(() => {
-    const refCode = searchParams.get('ref');
-    if (refCode && refCode.trim()) {
-      const trimmedCode = refCode.trim();
-      const currentValue = watch('referralCode');
+    const refCode = searchParams.get('ref')?.trim();
+    if (!refCode) return;
 
-      // Only set if the field is empty or matches the URL parameter (user hasn't manually changed it)
-      if (!currentValue || currentValue === trimmedCode) {
-        console.log('[SignupPage] Found referral code in URL:', trimmedCode);
-        setValue('referralCode', trimmedCode, { shouldValidate: false });
+    const currentValue = watch('referralCode');
+    if (!currentValue || currentValue === refCode) {
+      setValue('referralCode', refCode, { shouldValidate: false });
 
-        // Show toast only once (check if we've already shown it)
-        const hasShownToast = sessionStorage.getItem('referralCodeToastShown');
-        if (!hasShownToast) {
-          toast.success('Referral code applied!', {
-            description: `The referrer will receive bonus rewards when you complete signup with code: ${trimmedCode}`,
-          });
-          sessionStorage.setItem('referralCodeToastShown', 'true');
-        }
+      if (!sessionStorage.getItem('referralCodeToastShown')) {
+        toast.success('Referral code applied!', {
+          description: `Code ${refCode} — your referrer earns bonus rewards on signup.`,
+        });
+        sessionStorage.setItem('referralCodeToastShown', 'true');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,22 +109,13 @@ function SignupPageContent() {
     ? calculatePasswordStrength(password)
     : null;
 
-  // Handle next step
   const handleNext = async () => {
-    const fieldsToValidate = getFieldsForStep(currentStep);
-    const isValid = await trigger(fieldsToValidate);
-
-    if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
-    }
+    const valid = await trigger(getFieldsForStep(currentStep));
+    if (valid) setCurrentStep((s) => Math.min(s + 1, STEPS.length));
   };
 
-  // Handle previous step
-  const handlePrevious = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-  };
+  const handlePrevious = () => setCurrentStep((s) => Math.max(s - 1, 1));
 
-  // Get fields to validate for current step
   function getFieldsForStep(step: number): (keyof SignupFormData)[] {
     switch (step) {
       case 1:
@@ -157,37 +129,35 @@ function SignupPageContent() {
     }
   }
 
+  const closeEmailDialog = () =>
+    setEmailExistsDialog({ open: false, email: '', canResetPassword: false });
+
   // Handle form submission
   const onSubmit = async (data: SignupFormData) => {
     try {
-      // Parse phone number to extract country code
       let countryCode = '';
       let nationalNumber = '';
 
       try {
         const phoneNumberObj = parsePhoneNumber(data.phoneNumber);
-        if (phoneNumberObj && phoneNumberObj.isValid()) {
+        if (phoneNumberObj?.isValid()) {
           countryCode = phoneNumberObj.countryCallingCode;
           nationalNumber = phoneNumberObj.nationalNumber;
         } else {
-          // If invalid, try manual extraction
           const match = data.phoneNumber.match(/^\+?(\d{1,3})(.+)$/);
           if (match) {
             countryCode = match[1];
             nationalNumber = match[2].replace(/\D/g, '');
           }
         }
-      } catch (error) {
-        console.error('Failed to parse phone number:', error);
-        // If parsing fails, try to extract manually
+      } catch {
         const match = data.phoneNumber.match(/^\+?(\d{1,3})(.+)$/);
         if (match) {
           countryCode = match[1];
-          nationalNumber = match[2].replace(/\D/g, ''); // Remove non-digits
+          nationalNumber = match[2].replace(/\D/g, '');
         }
       }
 
-      // Validate phone number is not empty
       const finalPhoneNumber =
         nationalNumber || data.phoneNumber.replace(/\D/g, '');
       if (!finalPhoneNumber || finalPhoneNumber.length < 5) {
@@ -198,51 +168,29 @@ function SignupPageContent() {
         return;
       }
 
-      // Ensure country code is set
-      const finalCountryCode = countryCode ? `+${countryCode}` : '+1';
-
-      // Build cleaned payload: trim strings and omit empty optional fields
-      const payload: {
-        email: string;
-        password: string;
-        confirmPassword: string;
-        firstName: string;
-        lastName: string;
-        username: string;
-        phoneNumber: string;
-        countryCode: string;
-        referralCode?: string;
-      } = {
+      const payload = {
         email: data.email.trim().toLowerCase(),
         password: data.password,
         confirmPassword: data.confirmPassword,
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         username: data.username.trim().toLowerCase(),
-        phoneNumber: finalPhoneNumber, // National number without country code
-        countryCode: finalCountryCode, // Phase 1 expects "+1" format, not "1"
+        phoneNumber: finalPhoneNumber,
+        countryCode: countryCode ? `+${countryCode}` : '+1',
         ...(data.referralCode?.trim()
           ? { referralCode: data.referralCode.trim() }
           : {}),
       };
 
-      // Final validation: ensure no empty required fields
-      if (
-        !payload.firstName ||
-        !payload.lastName ||
-        !payload.email ||
-        !payload.username ||
-        !payload.phoneNumber ||
-        !payload.countryCode
-      ) {
-        console.error('[Signup] Missing required fields:', {
-          hasFirstName: !!payload.firstName,
-          hasLastName: !!payload.lastName,
-          hasEmail: !!payload.email,
-          hasUsername: !!payload.username,
-          hasPhoneNumber: !!payload.phoneNumber,
-          hasCountryCode: !!payload.countryCode,
-        });
+      const required = [
+        'firstName',
+        'lastName',
+        'email',
+        'username',
+        'phoneNumber',
+        'countryCode',
+      ] as const;
+      if (required.some((k) => !payload[k])) {
         toast.error('Validation Error', {
           description: 'Please fill in all required fields',
         });
@@ -263,402 +211,259 @@ function SignupPageContent() {
         localStorage.setItem(
           'novunt_new_user',
           JSON.stringify({
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            email: payload.email,
             timestamp: Date.now(),
           })
         );
       }
-
-      // Success - redirect to email verification
-      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
     } catch (error: unknown) {
       console.error('[Signup Error]', error);
 
       // Turnstile disabled for signup - removed error handling
 
-      // Extract error response from backend
-      // API client wraps errors in ApiError format, which includes field, action, canResetPassword
+      // Extract structured error
       let errorResponse: {
         message?: string;
         field?: string;
         action?: string;
         canResetPassword?: boolean;
       } = {};
-
       if (typeof error === 'object' && error !== null) {
-        const err = error as {
+        const e = error as {
           response?: { data?: unknown };
           message?: unknown;
           field?: string;
           action?: string;
           canResetPassword?: boolean;
         };
-
-        // Check if error has direct fields (from ApiError wrapper)
-        if (err.field || err.action) {
+        if (e.field || e.action) {
           errorResponse = {
-            message: typeof err.message === 'string' ? err.message : undefined,
-            field: err.field,
-            action: err.action,
-            canResetPassword: err.canResetPassword,
+            message: typeof e.message === 'string' ? e.message : undefined,
+            field: e.field,
+            action: e.action,
+            canResetPassword: e.canResetPassword,
           };
-        }
-        // Try to get error data from nested response
-        else if (err.response?.data && typeof err.response.data === 'object') {
-          errorResponse = err.response.data as typeof errorResponse;
-        }
-        // Fallback to direct message
-        else if (typeof err.message === 'string') {
-          errorResponse.message = err.message;
+        } else if (e.response?.data && typeof e.response.data === 'object') {
+          errorResponse = e.response.data as typeof errorResponse;
+        } else if (typeof e.message === 'string') {
+          errorResponse.message = e.message;
         }
       }
 
       const message = errorResponse.message || 'Failed to create account';
-      const field = errorResponse.field;
-      const action = errorResponse.action;
-      const canResetPassword = errorResponse.canResetPassword || false;
+      const msgLower = message.toLowerCase();
 
-      // Handle email already exists - show dialog
-      if (action === 'login' && field === 'email') {
+      if (errorResponse.action === 'login' && errorResponse.field === 'email') {
         setEmailExistsDialog({
           open: true,
           email: data.email,
-          canResetPassword,
+          canResetPassword: errorResponse.canResetPassword || false,
         });
         return;
       }
 
-      // Handle username already taken - highlight field
       if (
-        (action === 'change_username' ||
-          field === 'username' ||
-          message.toLowerCase().includes('username')) &&
-        (message.toLowerCase().includes('username') ||
-          message.toLowerCase().includes('taken') ||
-          message.toLowerCase().includes('exists'))
+        (errorResponse.field === 'username' ||
+          errorResponse.action === 'change_username' ||
+          msgLower.includes('username')) &&
+        (msgLower.includes('taken') || msgLower.includes('exists'))
       ) {
         setError('username', {
           type: 'manual',
-          message:
-            'This username is already taken. Please choose a different one.',
+          message: 'This username is already taken.',
         });
-        toast.error('Username already taken', {
-          description:
-            'This username is already in use. Please choose another.',
-        });
+        toast.error('Username already taken');
         return;
       }
 
-      // Handle phone number already taken - highlight field
       if (
-        (field === 'phoneNumber' || message.toLowerCase().includes('phone')) &&
-        (message.toLowerCase().includes('phone') ||
-          message.toLowerCase().includes('taken') ||
-          message.toLowerCase().includes('exists'))
+        (errorResponse.field === 'phoneNumber' || msgLower.includes('phone')) &&
+        (msgLower.includes('taken') || msgLower.includes('exists'))
       ) {
         setError('phoneNumber', {
           type: 'manual',
-          message:
-            'This phone number is already registered. Please use a different number.',
+          message: 'This phone number is already registered.',
         });
-        toast.error('Phone number already registered', {
-          description:
-            'This phone number is already in use. Please use a different number.',
-        });
+        toast.error('Phone number already registered');
         return;
       }
 
-      // Handle other errors
-      setError('root', {
-        message,
-      });
+      setError('root', { message });
       toast.error(message);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="mb-8 space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          Create your account
-        </h1>
-        <p className="text-white/70">
-          Join thousands of stakeholders and start earning today
-        </p>
-      </div>
+  const isLoading = isSubmitting || signupMutation.isPending;
 
-      {/* Progress Steps */}
-      <div className="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 bg-gradient-to-r p-6 shadow-lg backdrop-blur-sm">
-        {STEPS.map((step, index) => (
-          <div key={step.id} className="flex flex-1 items-center">
+  return (
+    <div className="space-y-4">
+      {/* ── Step Progress ── */}
+      <div className={`${styles.neuStepBar} flex items-center`}>
+        {STEPS.map((step, idx) => (
+          <React.Fragment key={step.id}>
             <div className="flex flex-1 flex-col items-center">
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: currentStep === step.id ? 1.1 : 1 }}
+                animate={{ scale: currentStep === step.id ? 1.05 : 1 }}
                 transition={{ duration: 0.3 }}
-                className={`flex h-12 w-12 items-center justify-center rounded-full font-bold shadow-lg transition-all duration-300 ${
-                  currentStep > step.id
-                    ? 'bg-emerald-600 text-white dark:bg-emerald-500'
-                    : currentStep === step.id
-                      ? 'bg-blue-600 text-white ring-4 ring-blue-600/30 dark:bg-blue-500 dark:ring-blue-500/30'
-                      : 'bg-muted text-muted-foreground'
-                } `}
+                className={`${styles.neuStepCircle} ${currentStep === step.id ? styles.neuStepActive : ''} ${currentStep > step.id ? styles.neuStepComplete : ''}`}
               >
                 {currentStep > step.id ? (
-                  <Check className="h-6 w-6 text-white" />
+                  <Check
+                    className={`h-4 w-4 text-white ${styles.neuStepCheckIcon}`}
+                  />
                 ) : (
                   step.id
                 )}
               </motion.div>
-              <p className="mt-2 hidden text-center text-xs font-medium sm:block">
+              <p
+                className={`${styles.neuStepLabel} ${currentStep >= step.id ? styles.neuStepLabelActive : ''} hidden sm:block`}
+              >
                 {step.title}
               </p>
             </div>
-            {index < STEPS.length - 1 && (
-              <div className="bg-muted relative mx-2 h-2 flex-1 overflow-hidden rounded-full">
+            {idx < STEPS.length - 1 && (
+              <div className={styles.neuStepConnector}>
                 <motion.div
                   initial={{ width: '0%' }}
                   animate={{ width: currentStep > step.id ? '100%' : '0%' }}
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
-                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-emerald-600 dark:from-blue-500 dark:to-emerald-500"
+                  className={`${styles.neuStepConnectorFill} ${currentStep === step.id + 1 ? styles.neuStepConnectorFillActive : ''}`}
                 />
               </div>
             )}
-          </div>
+          </React.Fragment>
         ))}
       </div>
 
-      {/* Error Alert */}
+      {/* Root Error */}
       {errors.root && (
-        <Alert className="mb-6 border-red-500/50 bg-red-500/10 backdrop-blur-sm">
-          <AlertCircle className="h-4 w-4 text-red-400" />
-          <AlertDescription className="text-red-200">
-            {errors.root.message}
-          </AlertDescription>
-        </Alert>
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`${styles.neuErrorAlert} mb-2`}
+        >
+          <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
+          <span>{errors.root.message}</span>
+        </motion.div>
       )}
 
-      {/* Form Card */}
-      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
-        {/* Gradient Background */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl font-bold text-white">
-            {STEPS[currentStep - 1].title}
-          </CardTitle>
-          <CardDescription className="text-white/70">
-            {STEPS[currentStep - 1].description}
-          </CardDescription>
-        </CardHeader>
-
+      {/* ── Form Card ── */}
+      <div className={`${styles.neuAuthCard} p-5 sm:p-6`}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="relative z-10 space-y-4">
+          <div className="space-y-4">
             <AnimatePresence mode="wait">
-              {/* Step 1: Account Details */}
+              {/* ═══ Step 1 ═══ */}
               {currentStep === 1 && (
                 <motion.div
                   key="step1"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  {/* Email */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white/90">
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        className="pl-10"
-                        autoComplete="email"
-                        {...register('email')}
-                        aria-invalid={errors.email ? 'true' : 'false'}
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="text-destructive text-sm">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Password */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-white/90">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a strong password"
-                        className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
-                        autoComplete="new-password"
-                        {...register('password')}
-                        aria-invalid={errors.password ? 'true' : 'false'}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <p className="text-destructive text-sm">
-                        {errors.password.message}
-                      </p>
-                    )}
-                    {password && passwordStrength && (
-                      <PasswordStrengthIndicator strength={passwordStrength} />
-                    )}
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-white/90">
-                      Confirm Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm your password"
-                        className="border-white/20 bg-white/10 pr-10 pl-10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
-                        autoComplete="new-password"
-                        {...register('confirmPassword')}
-                        aria-invalid={errors.confirmPassword ? 'true' : 'false'}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                    {errors.confirmPassword && (
-                      <p className="text-destructive text-sm">
-                        {errors.confirmPassword.message}
-                      </p>
-                    )}
-                  </div>
+                  <NeuField
+                    id="email"
+                    label="Email Address"
+                    icon={Mail}
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    error={errors.email}
+                    register={register}
+                    registerName="email"
+                    delay={0}
+                  />
+                  <NeuPasswordField
+                    id="password"
+                    label="Password"
+                    placeholder="Create a strong password"
+                    autoComplete="new-password"
+                    error={errors.password}
+                    register={register}
+                    registerName="password"
+                    delay={0.05}
+                    showPassword={showPassword}
+                    onToggle={() => setShowPassword((p) => !p)}
+                    strengthIndicator={
+                      password && passwordStrength ? (
+                        <PasswordStrengthIndicator
+                          strength={passwordStrength}
+                        />
+                      ) : null
+                    }
+                  />
+                  <NeuPasswordField
+                    id="confirmPassword"
+                    label="Confirm Password"
+                    placeholder="Re-enter your password"
+                    autoComplete="new-password"
+                    error={errors.confirmPassword}
+                    register={register}
+                    registerName="confirmPassword"
+                    delay={0.1}
+                    showPassword={showConfirmPassword}
+                    onToggle={() => setShowConfirmPassword((p) => !p)}
+                  />
                 </motion.div>
               )}
 
-              {/* Step 2: Personal Info */}
+              {/* ═══ Step 2 ═══ */}
               {currentStep === 2 && (
                 <motion.div
                   key="step2"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  {/* Username */}
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-white/90">
-                      Username
-                    </Label>
-                    <div className="relative">
-                      <AtSign className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="username"
-                        type="text"
-                        placeholder="johndoe"
-                        className="pl-10"
-                        autoComplete="username"
-                        {...register('username')}
-                        aria-invalid={errors.username ? 'true' : 'false'}
-                      />
-                    </div>
-                    {errors.username && (
-                      <p className="text-destructive text-sm">
-                        {errors.username.message}
-                      </p>
-                    )}
-                  </div>
+                  <NeuField
+                    id="username"
+                    label="Username"
+                    icon={AtSign}
+                    placeholder="johndoe"
+                    autoComplete="username"
+                    error={errors.username}
+                    register={register}
+                    registerName="username"
+                    delay={0}
+                  />
+                  <NeuField
+                    id="firstName"
+                    label="First Name"
+                    icon={User}
+                    placeholder="John"
+                    autoComplete="given-name"
+                    error={errors.firstName}
+                    register={register}
+                    registerName="firstName"
+                    delay={0.05}
+                  />
+                  <NeuField
+                    id="lastName"
+                    label="Last Name"
+                    icon={User}
+                    placeholder="Doe"
+                    autoComplete="family-name"
+                    error={errors.lastName}
+                    register={register}
+                    registerName="lastName"
+                    delay={0.1}
+                  />
 
-                  {/* First Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-white/90">
-                      First Name
-                    </Label>
-                    <div className="relative">
-                      <User className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="firstName"
-                        type="text"
-                        placeholder="John"
-                        className="pl-10"
-                        autoComplete="given-name"
-                        {...register('firstName')}
-                        aria-invalid={errors.firstName ? 'true' : 'false'}
-                      />
-                    </div>
-                    {errors.firstName && (
-                      <p className="text-destructive text-sm">
-                        {errors.firstName.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Last Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-white/90">
-                      Last Name
-                    </Label>
-                    <div className="relative">
-                      <User className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="lastName"
-                        type="text"
-                        placeholder="Doe"
-                        className="pl-10"
-                        autoComplete="family-name"
-                        {...register('lastName')}
-                        aria-invalid={errors.lastName ? 'true' : 'false'}
-                      />
-                    </div>
-                    {errors.lastName && (
-                      <p className="text-destructive text-sm">
-                        {errors.lastName.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Phone Number (Required) */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="phoneNumber"
-                      className="flex items-center gap-1 text-white/90"
-                    >
-                      Phone Number <span className="text-destructive">*</span>
-                    </Label>
+                  {/* Phone — unique layout, stays inline */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.3 }}
+                    className="space-y-2"
+                  >
                     <div
-                      className={`bg-background ring-offset-background focus-within:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-all focus-within:ring-2 focus-within:ring-offset-2 ${errors.phoneNumber ? 'border-destructive' : 'border-input'} `}
+                      className={`${styles.neuPhoneWrapper} ${errors.phoneNumber ? styles.neuInputError : ''}`}
                     >
                       <Controller
                         name="phoneNumber"
@@ -666,164 +471,144 @@ function SignupPageContent() {
                         render={({ field }) => (
                           <PhoneInput
                             id="phoneNumber"
-                            placeholder="Enter phone number"
+                            placeholder="Phone Number"
                             value={field.value}
                             onChange={field.onChange}
-                            countries={getCountries().filter(
-                              (country) => country !== 'US'
-                            )}
+                            countries={getCountries().filter((c) => c !== 'US')}
                             defaultCountry="GB"
                             international
                             countryCallingCodeEditable={false}
-                            limitMaxLength={true}
-                            smartCaret={true}
+                            limitMaxLength
+                            smartCaret
+                            aria-label="Phone Number"
                           />
                         )}
                       />
                     </div>
-                    {errors.phoneNumber && (
-                      <p className="text-destructive text-sm">
+                    {errors.phoneNumber?.message && (
+                      <p className={styles.neuFieldError}>
                         {errors.phoneNumber.message}
                       </p>
                     )}
-                    <p className="text-muted-foreground text-xs">
-                      Required for account verification and security
+                    <p className={`text-xs ${styles.neuTextMuted}`}>
+                      Required for account verification
                     </p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               )}
 
-              {/* Step 3: Referral & Terms */}
+              {/* ═══ Step 3 ═══ */}
               {currentStep === 3 && (
                 <motion.div
                   key="step3"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  {/* Referral Code (Optional) */}
-                  <div className="space-y-2">
-                    <Label htmlFor="referralCode" className="text-white/90">
-                      Referral Code{' '}
-                      <span className="text-white/60">(Optional)</span>
-                    </Label>
-                    <div className="relative">
-                      <Gift className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                      <Input
-                        id="referralCode"
-                        type="text"
-                        placeholder="Enter referral code"
-                        className="pl-10"
-                        {...register('referralCode')}
-                        aria-invalid={errors.referralCode ? 'true' : 'false'}
-                      />
-                    </div>
-                    {errors.referralCode && (
-                      <p className="text-destructive text-sm">
-                        {errors.referralCode.message}
-                      </p>
-                    )}
-                    <p className="text-muted-foreground text-sm">
-                      {searchParams.get('ref')
-                        ? `Referral code from link: ${searchParams.get('ref')} - The referrer will receive bonus rewards when you complete signup!`
-                        : 'Have a referral code? Enter it to support your referrer!'}
-                    </p>
-                  </div>
+                  <NeuField
+                    id="referralCode"
+                    label="Referral Code"
+                    icon={Gift}
+                    placeholder="Enter referral code"
+                    error={errors.referralCode}
+                    register={register}
+                    registerName="referralCode"
+                    delay={0}
+                    hint={
+                      searchParams.get('ref')
+                        ? `Code "${searchParams.get('ref')}" applied — your referrer earns bonus rewards!`
+                        : 'Have a code? Enter it to support your referrer.'
+                    }
+                  />
 
-                  {/* Terms & Conditions */}
-                  <div className="bg-muted/50 space-y-3 rounded-lg border p-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05, duration: 0.3 }}
+                    className={`${styles.neuTermsSurface} space-y-4`}
+                  >
                     <div className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         id="acceptedTerms"
-                        className="text-primary focus:ring-primary mt-1 h-4 w-4 rounded border-gray-300"
+                        className={`${styles.neuCheckbox} mt-1`}
                         {...register('acceptedTerms')}
                       />
-                      <Label
+                      <label
                         htmlFor="acceptedTerms"
-                        className="cursor-pointer text-sm leading-relaxed font-normal"
+                        className={`cursor-pointer text-sm leading-relaxed ${styles.neuTextSecondary}`}
                       >
                         I agree to the{' '}
-                        <Link
-                          href="/terms"
-                          className="text-primary font-medium hover:underline"
-                        >
+                        <Link href="/terms" className={styles.neuLink}>
                           Terms of Service
                         </Link>{' '}
                         and{' '}
-                        <Link
-                          href="/privacy"
-                          className="text-primary font-medium hover:underline"
-                        >
+                        <Link href="/privacy" className={styles.neuLink}>
                           Privacy Policy
                         </Link>
-                      </Label>
+                      </label>
                     </div>
-                    {errors.acceptedTerms && (
-                      <p className="text-destructive text-sm">
+                    {errors.acceptedTerms?.message && (
+                      <p className={styles.neuFieldError}>
                         {errors.acceptedTerms.message}
                       </p>
                     )}
-                  </div>
+                  </motion.div>
 
                   {/* Turnstile disabled for signup - removed widget */}
                 </motion.div>
               )}
             </AnimatePresence>
-          </CardContent>
+          </div>
 
-          <CardFooter className="relative z-10 flex flex-col space-y-3 pt-8">
-            {/* Navigation Buttons */}
-            <div className="flex w-full gap-3">
-              {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevious}
-                  className="flex-1 border-white/20 bg-white/5 text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-white/30 hover:bg-white/10"
-                  size="lg"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+          {/* ── Navigation Buttons ── */}
+          <div className="mt-6 flex gap-3">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevious}
+                className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm font-semibold tracking-wider uppercase">
                   Back
-                </Button>
-              )}
+                </span>
+              </button>
+            )}
 
-              {currentStep < STEPS.length ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
-                  size="lg"
-                >
+            {currentStep < STEPS.length ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
+              >
+                <span className="text-sm font-bold tracking-wider text-white uppercase">
                   Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 font-bold text-white shadow-lg shadow-emerald-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/70 active:scale-[0.98]"
-                  size="lg"
-                  disabled={isSubmitting || signupMutation.isPending}
-                >
-                  {(isSubmitting || signupMutation.isPending) && (
-                    <NovuntSpinner size="sm" className="mr-2" />
-                  )}
+                </span>
+                <ArrowRight className="h-4 w-4 text-white" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 ${isLoading ? styles.neuBtnDisabled : ''}`}
+              >
+                {isLoading && <NovuntSpinner size="sm" className="mr-1" />}
+                <span className="text-sm font-bold tracking-wider text-white uppercase">
                   Create Account
-                </Button>
-              )}
-            </div>
-          </CardFooter>
+                </span>
+              </button>
+            )}
+          </div>
         </form>
-      </Card>
+      </div>
 
       {/* Sign In Link */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm backdrop-blur-sm">
-        <span className="text-white/70">Already have an account? </span>
-        <Link
-          href="/login"
-          className="font-semibold text-indigo-400 hover:text-indigo-300 hover:underline"
-        >
+      <div className={`${styles.neuBottomLink} mt-4 text-sm`}>
+        <span className={styles.neuTextMuted}>Already have an account? </span>
+        <Link href="/login" className={styles.neuLink}>
           Sign in
         </Link>
       </div>
@@ -831,34 +616,20 @@ function SignupPageContent() {
       {/* Email Exists Dialog */}
       <EmailExistsDialog
         open={emailExistsDialog.open}
-        onClose={() =>
-          setEmailExistsDialog({
-            open: false,
-            email: '',
-            canResetPassword: false,
-          })
-        }
+        onClose={closeEmailDialog}
         email={emailExistsDialog.email}
         canResetPassword={emailExistsDialog.canResetPassword}
         onLogin={() => {
           router.push(
             `/login?email=${encodeURIComponent(emailExistsDialog.email)}`
           );
-          setEmailExistsDialog({
-            open: false,
-            email: '',
-            canResetPassword: false,
-          });
+          closeEmailDialog();
         }}
         onResetPassword={() => {
           router.push(
             `/forgot-password?email=${encodeURIComponent(emailExistsDialog.email)}`
           );
-          setEmailExistsDialog({
-            open: false,
-            email: '',
-            canResetPassword: false,
-          });
+          closeEmailDialog();
         }}
       />
     </div>
@@ -866,7 +637,7 @@ function SignupPageContent() {
 }
 
 /**
- * Signup Page - Wrapped with Suspense for useSearchParams
+ * Signup Page — wrapped with Suspense for useSearchParams
  */
 export default function SignupPage() {
   return (

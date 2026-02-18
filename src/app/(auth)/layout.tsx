@@ -3,122 +3,127 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { useTheme } from 'next-themes';
-import { Sun, Moon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
+import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
+import { SiTiktok } from 'react-icons/si';
+import styles from '@/styles/auth.module.css';
 
 // Disable static generation
 export const dynamic = 'force-dynamic';
 
-function GradientBlob({ className = '' }: { className?: string }) {
-  return (
-    <div
-      className={`pointer-events-none absolute rounded-full opacity-60 blur-3xl ${className}`}
-    />
-  );
-}
-
 /**
- * Auth Layout - Premium Design matching home page
- * Full-screen with animated gradients and glassmorphism
+ * Auth Layout — Dark Neumorphic Design
+ * Matches the onboarding Soft UI system
  */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-950 text-white dark:from-slate-950 dark:via-indigo-950 dark:to-slate-950">
-      {/* Animated Background */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <GradientBlob className="top-[-20%] left-[-10%] h-[80vh] w-[80vw] animate-pulse bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500" />
-        <GradientBlob className="top-[40%] right-[-10%] h-[60vh] w-[60vw] bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-500" />
-        <GradientBlob className="bottom-[-10%] left-[20%] h-[50vh] w-[50vw] bg-gradient-to-tr from-emerald-400 via-teal-500 to-cyan-500" />
-      </div>
+    <main
+      className={`${styles.neuAuthBase} relative flex h-screen flex-col overflow-hidden`}
+    >
+      {/* Subtle ambient glow */}
+      <div
+        className={`${styles.ambientGlow} pointer-events-none absolute top-[-30%] left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full opacity-[0.04] blur-[160px]`}
+      />
 
-      {/* Navigation */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="relative z-50 mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6"
-      >
-        <Link href="/" className="group">
-          <Image
-            src="/icons/novunt.png"
-            alt="Novunt"
-            width={140}
-            height={40}
-            className="h-8 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105 sm:h-10"
-            priority
-          />
-        </Link>
-        <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white/80 hover:bg-white/10 hover:text-white"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label="Toggle theme"
-          >
-            <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-            <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          </Button>
-          <Link
-            href="/login"
-            className="text-sm font-medium text-white/80 transition-colors hover:text-white"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/50 active:scale-95"
-          >
-            Get Started
-          </Link>
-        </div>
-      </motion.nav>
+      {/* Noise texture overlay */}
+      <div className={styles.neuNoiseOverlay} />
 
-      {/* Form Container */}
-      <div className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-md"
-        >
-          {children}
-        </motion.div>
-      </div>
+      {/* Main Content Area */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex w-full max-w-md flex-col justify-center">
+          {/* Single Unified Card - No overlapping divs */}
+          <div className={styles.neuUnifiedCard}>
+            {/* Logo Flow */}
+            <Link href="/" className={styles.neuLogoFlowContainer}>
+              {/* Inset Icon Socket - Directly in unified card, no wrapper div */}
+              <div className={styles.neuLogoSocket}>
+                <Image
+                  src="/icons/novunt_short.png"
+                  alt="Novunt"
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                  style={{
+                    filter:
+                      'brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(2000%) hue-rotate(183deg) brightness(1.05) contrast(1.1)',
+                  }}
+                  priority
+                />
+              </div>
+              {/* Text */}
+              <div className="flex flex-col items-center gap-1">
+                <h1 className={styles.neuLogoTitle}>
+                  {isLoginPage ? 'GOOD TO SEE YOU AGAIN' : 'HELLO, FRIEND!'}
+                </h1>
+                <p className={styles.neuLogoSubtitle}>
+                  {isLoginPage
+                    ? 'Continue Your Financial Journey'
+                    : 'Start Growing Your Funds'}
+                </p>
+              </div>
+            </Link>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-black/20 py-6 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-            <p className="text-sm text-white/60">
-              © {new Date().getFullYear()} Novunt — No limits to value, net
-              worth and growth.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <Link
-                href="/privacy"
-                className="text-white/60 transition-colors hover:text-white"
+            {/* Form Content - Directly in unified card, no wrapper div */}
+            {children}
+
+            {/* Social Media Icons - Directly in unified card, no separate footer div */}
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <a
+                href="https://www.facebook.com/share/16oLeHcQkH/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className={styles.neuFooterSocialBtn}
               >
-                Privacy
-              </Link>
-              <Link
-                href="/terms"
-                className="text-white/60 transition-colors hover:text-white"
+                <FaFacebook className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.instagram.com/novunt_hq?igsh=bGxoaGV3d3B0MWd5"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className={styles.neuFooterSocialBtn}
               >
-                Terms
-              </Link>
+                <FaInstagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@novuntofficial?_t=ZS-8ymrJsyJBk9&_r=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className={styles.neuFooterSocialBtn}
+              >
+                <SiTiktok className="h-5 w-5" />
+              </a>
+              <a
+                href="https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                className={styles.neuFooterSocialBtn}
+              >
+                <FaYoutube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://t.me/novunt"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+                className={styles.neuFooterSocialBtn}
+              >
+                <FaTelegram className="h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>
-      </footer>
+      </div>
     </main>
   );
 }

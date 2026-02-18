@@ -1,0 +1,902 @@
+/* ═══════════════════════════════════════════════════════════
+   Neumorphic Auth — Dark Theme (Enhanced)
+   Background: #0D162C  ·  Accent: #009BF2
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Keyframe Animations ─────────────────────────────────── */
+@keyframes neuBreathing {
+  0%,
+  100% {
+    opacity: 0.04;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.07;
+    transform: translate(-50%, -3%) scale(1.05);
+  }
+}
+
+@keyframes neuStepPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 15px rgba(0, 155, 242, 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      0 0 0 4px rgba(0, 155, 242, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 4px 20px rgba(0, 155, 242, 0.5),
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      0 0 0 6px rgba(0, 155, 242, 0.18);
+  }
+}
+
+@keyframes neuShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes neuLogoRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes neuPopIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Screen base ──────────────────────────────────────────── */
+.neuAuthBase {
+  background: radial-gradient(
+    ellipse at 50% 30%,
+    #152244 0%,
+    #0d162c 50%,
+    #0a1122 100%
+  );
+  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  color: var(--neu-text, #e2e8f0);
+}
+
+/* ── Noise texture overlay ────────────────────────────────── */
+.neuNoiseOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ── Ambient glow (breathing) ─────────────────────────────── */
+.ambientGlow {
+  background-color: #009bf2;
+  animation: neuBreathing 6s ease-in-out infinite;
+}
+
+/* ── Logo header ──────────────────────────────────────────── */
+.neuLogoContainer {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  box-shadow:
+    6px 6px 16px rgba(4, 8, 18, 0.7),
+    -6px -6px 16px rgba(25, 40, 72, 0.5),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.05),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.neuLogoSocket {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35);
+}
+
+/* ── Auth card — neumorphic inset style ─────────────────── */
+.neuAuthCard {
+  background: transparent;
+  border-radius: 1.75rem;
+  /* Removed border and outer shadows - card blends with background */
+}
+
+/* ── Single unified card for all auth content ─────────────── */
+.neuUnifiedCard {
+  background: transparent;
+  padding: 1.5rem 1.25rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .neuUnifiedCard {
+    padding: 1.75rem 1.75rem;
+    gap: 1.25rem;
+  }
+}
+
+/* ── Inset input field (with micro-interactions) ──────────── */
+.neuInput {
+  background: linear-gradient(145deg, #0c1528, #111d38);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.875rem;
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35);
+  color: var(--neu-text, #e2e8f0);
+  font-size: 0.875rem;
+  padding: 0.875rem 2.75rem 0.875rem 2.75rem;
+  width: 100%;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 3rem;
+}
+
+.neuInput::placeholder {
+  color: rgba(226, 232, 240, 0.3);
+  transition: color 0.3s ease;
+}
+
+.neuInput:focus {
+  border-color: rgba(0, 155, 242, 0.4);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35),
+    0 0 0 3px rgba(0, 155, 242, 0.15),
+    0 4px 12px rgba(0, 155, 242, 0.08);
+}
+
+.neuInput:focus::placeholder {
+  color: rgba(226, 232, 240, 0.2);
+}
+
+.neuInputError {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35),
+    0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+/* ── Input icons (focus-aware) ────────────────────────────── */
+.neuInputIconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.neuInputIconWrap .neuInputIcon {
+  transition:
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.neuInputIconWrap:focus-within .neuInputIcon {
+  color: rgba(0, 155, 242, 0.8);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.neuInputIcon {
+  color: rgba(226, 232, 240, 0.35);
+  position: absolute;
+  top: 50%;
+  left: 0.875rem;
+  transform: translateY(-50%);
+  width: 1.125rem;
+  height: 1.125rem;
+  pointer-events: none;
+}
+
+.neuInputToggle {
+  color: rgba(226, 232, 240, 0.35);
+  position: absolute;
+  top: 50%;
+  right: 0.875rem;
+  transform: translateY(-50%);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  transition: color 0.25s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  pointer-events: auto;
+}
+
+.neuInputToggle:hover {
+  color: rgba(0, 155, 242, 0.7);
+}
+
+/* ── Step indicator ───────────────────────────────────────── */
+.neuStepBar {
+  /* Removed box styling - steps appear without container */
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.neuStepCircle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  color: rgba(226, 232, 240, 0.5);
+  box-shadow:
+    4px 4px 10px rgba(4, 8, 18, 0.6),
+    -4px -4px 10px rgba(25, 40, 72, 0.4),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neuStepActive {
+  color: #fff;
+  background: #009bf2;
+  animation: neuStepPulse 2.5s ease-in-out infinite;
+}
+
+.neuStepComplete {
+  color: #fff;
+  background: linear-gradient(145deg, #059669, #10b981);
+  box-shadow:
+    0 4px 12px rgba(16, 185, 129, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.neuStepCheckIcon {
+  animation: neuPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.neuStepConnector {
+  flex: 0 1 auto;
+  height: 3px;
+  width: 2rem;
+  border-radius: 2px;
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  box-shadow:
+    inset 1px 1px 3px rgba(4, 8, 18, 0.5),
+    inset -1px -1px 3px rgba(25, 40, 72, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+.neuStepConnectorFill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #10b981, #009bf2);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.neuStepConnectorFillActive {
+  background: linear-gradient(90deg, #10b981, #009bf2, #10b981);
+  background-size: 200% 100%;
+  animation: neuShimmer 2s linear infinite;
+}
+
+/* ── Step labels ──────────────────────────────────────────── */
+.neuStepLabel {
+  margin-top: 0.375rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.4);
+  text-align: center;
+  transition: color 0.3s ease;
+  line-height: 1.2;
+}
+
+.neuStepLabelActive {
+  color: rgba(226, 232, 240, 0.9);
+}
+
+/* ── CTA Button — base raised ─────────────────────────────── */
+.neuBtn {
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  box-shadow:
+    8px 8px 24px rgba(4, 8, 18, 0.7),
+    -8px -8px 24px rgba(25, 40, 72, 0.5),
+    3px 3px 8px rgba(4, 8, 18, 0.4),
+    -3px -3px 8px rgba(25, 40, 72, 0.3),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.05),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neuBtn:active,
+.neuBtnActive {
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transform: scale(0.98);
+  box-shadow:
+    inset 6px 6px 16px rgba(4, 8, 18, 0.7),
+    inset -6px -6px 16px rgba(25, 40, 72, 0.5),
+    inset 2px 2px 6px rgba(4, 8, 18, 0.3),
+    inset -2px -2px 6px rgba(25, 40, 72, 0.2);
+}
+
+/* Primary accent CTA — matches onboarding Continue (#0D162C) */
+.neuBtnPrimary {
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #0d162c;
+  border: 1px solid #009bf2;
+  box-shadow:
+    8px 8px 24px rgba(4, 8, 18, 0.7),
+    -8px -8px 24px rgba(25, 40, 72, 0.5),
+    0 0 18px rgba(0, 155, 242, 0.35),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.neuBtnPrimary span,
+.neuBtnPrimary svg {
+  color: #009bf2 !important;
+}
+
+.neuBtnPrimary:hover {
+  background: #009bf2;
+  border-color: #0d162c;
+  transform: translateY(-1px);
+  box-shadow:
+    8px 8px 24px rgba(4, 8, 18, 0.7),
+    -8px -8px 24px rgba(25, 40, 72, 0.5),
+    0 0 14px rgba(0, 155, 242, 0.25),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.neuBtnPrimary:hover span,
+.neuBtnPrimary:hover svg {
+  color: #0d162c !important;
+}
+
+.neuBtnPrimary:active {
+  transform: scale(0.98);
+  background: linear-gradient(145deg, #0d162c, #152244);
+  box-shadow:
+    inset 6px 6px 16px rgba(4, 8, 18, 0.7),
+    inset -6px -6px 16px rgba(25, 40, 72, 0.5),
+    inset 2px 2px 6px rgba(4, 8, 18, 0.3),
+    inset -2px -2px 6px rgba(25, 40, 72, 0.2);
+}
+
+/* Submit / success CTA */
+.neuBtnSuccess {
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #0d162c;
+  border: 1px solid #009bf2;
+  box-shadow:
+    6px 6px 18px rgba(4, 8, 18, 0.6),
+    -6px -6px 18px rgba(25, 40, 72, 0.4),
+    0 0 18px rgba(0, 155, 242, 0.35),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.neuBtnSuccess span,
+.neuBtnSuccess svg {
+  color: #009bf2 !important;
+}
+
+.neuBtnSuccess:hover {
+  background: #009bf2;
+  border-color: #0d162c;
+  transform: translateY(-1px);
+  box-shadow:
+    6px 6px 18px rgba(4, 8, 18, 0.6),
+    -6px -6px 18px rgba(25, 40, 72, 0.4),
+    0 0 14px rgba(0, 155, 242, 0.25),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.neuBtnSuccess:hover span,
+.neuBtnSuccess:hover svg {
+  color: #0d162c !important;
+}
+
+.neuBtnSuccess:active {
+  transform: scale(0.98);
+  background: linear-gradient(145deg, #047857, #059669);
+  box-shadow:
+    inset 4px 4px 12px rgba(4, 50, 35, 0.5),
+    inset -4px -4px 12px rgba(16, 255, 180, 0.1);
+}
+
+/* Back / outline button */
+.neuBtnBack {
+  background: #0d162c;
+  border: 1px solid #009bf2;
+  border-radius: 1rem;
+  box-shadow:
+    8px 8px 24px rgba(4, 8, 18, 0.7),
+    -8px -8px 24px rgba(25, 40, 72, 0.5),
+    0 0 18px rgba(0, 155, 242, 0.35),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neuBtnBack span,
+.neuBtnBack svg {
+  color: #009bf2 !important;
+}
+
+.neuBtnBack:hover {
+  background: #009bf2;
+  border-color: #0d162c;
+  transform: translateY(-1px);
+  box-shadow:
+    8px 8px 24px rgba(4, 8, 18, 0.7),
+    -8px -8px 24px rgba(25, 40, 72, 0.5),
+    0 0 14px rgba(0, 155, 242, 0.25),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.neuBtnBack:hover span,
+.neuBtnBack:hover svg {
+  color: #0d162c !important;
+}
+
+.neuBtnBack:active {
+  transform: scale(0.98);
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 6px 6px 16px rgba(4, 8, 18, 0.7),
+    inset -6px -6px 16px rgba(25, 40, 72, 0.5),
+    inset 2px 2px 6px rgba(4, 8, 18, 0.3),
+    inset -2px -2px 6px rgba(25, 40, 72, 0.2);
+}
+
+/* ── Error alert ──────────────────────────────────────────── */
+.neuErrorAlert {
+  background: linear-gradient(145deg, #1a1020, #140c1c);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 0.875rem;
+  box-shadow:
+    inset 3px 3px 8px rgba(4, 8, 18, 0.5),
+    inset -3px -3px 8px rgba(25, 20, 30, 0.3);
+  padding: 1rem 1.25rem;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ── Checkbox ─────────────────────────────────────────────── */
+.neuCheckbox {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.375rem;
+  background: linear-gradient(145deg, #0c1528, #111d38);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 2px 2px 5px rgba(4, 8, 18, 0.5),
+    inset -2px -2px 5px rgba(25, 40, 72, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neuCheckbox:checked {
+  background: linear-gradient(145deg, #0a7ac4, #009bf2);
+  border-color: rgba(0, 155, 242, 0.3);
+  box-shadow:
+    0 2px 10px rgba(0, 155, 242, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.neuCheckbox:checked::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  animation: neuPopIn 0.3s ease forwards;
+}
+
+.neuCheckbox:focus-visible {
+  outline: 2px solid rgba(0, 155, 242, 0.4);
+  outline-offset: 2px;
+}
+
+/* ── Terms surface ────────────────────────────────────────── */
+.neuTermsSurface {
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.875rem;
+  box-shadow:
+    inset 3px 3px 8px rgba(4, 8, 18, 0.4),
+    inset -3px -3px 8px rgba(25, 40, 72, 0.25);
+  padding: 1.25rem 1.5rem;
+}
+
+/* ── Label ────────────────────────────────────────────────── */
+.neuLabel {
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.3s ease;
+}
+
+/* ── Helper / link text ───────────────────────────────────── */
+.neuTextMuted {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.neuTextSecondary {
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.neuLink {
+  color: #009bf2;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.neuLink:hover {
+  color: #d8effd;
+  text-decoration: underline;
+}
+
+/* ── Error text ───────────────────────────────────────────── */
+.neuFieldError {
+  color: #f87171;
+  font-size: 0.8125rem;
+  margin-top: 0.375rem;
+}
+
+/* ── Nav bar ──────────────────────────────────────────────── */
+.neuNav {
+  background: transparent;
+}
+
+.neuNavLink {
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.neuNavLink:hover {
+  color: #e2e8f0;
+}
+
+.neuNavBtn {
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  color: var(--neu-text, #e2e8f0);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    4px 4px 12px rgba(4, 8, 18, 0.6),
+    -4px -4px 12px rgba(25, 40, 72, 0.4),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.neuNavBtn:hover {
+  box-shadow:
+    4px 4px 12px rgba(4, 8, 18, 0.6),
+    -4px -4px 12px rgba(25, 40, 72, 0.4),
+    0 0 14px rgba(0, 155, 242, 0.25),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Footer Social Button ───────────────────────────────────── */
+.neuFooterSocialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(226, 232, 240, 0.7);
+  cursor: pointer;
+  box-shadow:
+    4px 4px 10px rgba(4, 8, 18, 0.6),
+    -4px -4px 10px rgba(25, 40, 72, 0.4),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.neuFooterSocialBtn:hover {
+  color: rgba(226, 232, 240, 0.95);
+  transform: translateY(-1px);
+  box-shadow:
+    4px 4px 10px rgba(4, 8, 18, 0.6),
+    -4px -4px 10px rgba(25, 40, 72, 0.4),
+    0 0 12px rgba(0, 155, 242, 0.2),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.neuFooterSocialBtn:active {
+  transform: scale(0.98);
+  box-shadow:
+    inset 3px 3px 8px rgba(4, 8, 18, 0.6),
+    inset -3px -3px 8px rgba(25, 40, 72, 0.35);
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.neuFooter {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(13, 22, 44, 0.6);
+  flex-shrink: 0;
+}
+
+/* ── Phone input wrapper ──────────────────────────────────── */
+.neuPhoneWrapper {
+  background: linear-gradient(145deg, #0c1528, #111d38);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.875rem;
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35);
+  color: var(--neu-text, #e2e8f0);
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.neuPhoneWrapper:focus-within {
+  border-color: rgba(0, 155, 242, 0.4);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35),
+    0 0 0 3px rgba(0, 155, 242, 0.15),
+    0 4px 12px rgba(0, 155, 242, 0.08);
+}
+
+/* ── Neumorphic password strength ─────────────────────────── */
+.neuPasswordTrack {
+  height: 0.375rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(145deg, #0c1528, #111d38);
+  box-shadow:
+    inset 2px 2px 4px rgba(4, 8, 18, 0.5),
+    inset -2px -2px 4px rgba(25, 40, 72, 0.3);
+  overflow: hidden;
+}
+
+.neuPasswordFill {
+  height: 100%;
+  border-radius: 0.25rem;
+  transition:
+    width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.35s ease;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ── Bottom link ──────────────────────────────────────────── */
+.neuBottomLink {
+  text-align: center;
+  padding: 0;
+  /* Removed button-like styling - now appears as plain text */
+}
+
+/* ── Disabled state ───────────────────────────────────────── */
+.neuBtnDisabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Section divider ──────────────────────────────────────── */
+.neuDivider {
+  height: 1px;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 30%,
+    rgba(0, 155, 242, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 70%,
+    transparent 100%
+  );
+  margin: 0.5rem 0;
+}
+
+/* ── Logo container ──────────────────────────────────────── */
+.neuLogoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.neuLogoSocket {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    6px 6px 16px rgba(4, 8, 18, 0.65),
+    -6px -6px 16px rgba(25, 40, 72, 0.4),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Input icon wrapper ──────────────────────────────────── */
+.neuInputIconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.neuInputIconWrap:focus-within .neuInputIcon {
+  color: rgba(0, 155, 242, 0.85);
+}
+
+/* ── Step check icon (pop-in animation) ──────────────────── */
+.neuStepCheckIcon {
+  animation: neuPopIn 0.35s ease-out forwards;
+}
+
+/* ── Step connector fill (shimmer on active) ─────────────── */
+.neuStepConnectorFillActive {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 155, 242, 0.6) 0%,
+    rgba(0, 155, 242, 1) 40%,
+    rgba(216, 239, 253, 0.8) 50%,
+    rgba(0, 155, 242, 1) 60%,
+    rgba(0, 155, 242, 0.6) 100%
+  ) !important;
+  background-size: 200% 100%;
+  animation: neuShimmer 2s infinite;
+}
+
+/* ── Password strength trough & fill ─────────────────────── */
+.neuStrengthTrough {
+  flex: 1;
+  height: 0.375rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(145deg, #0c1528, #111d38);
+  box-shadow:
+    inset 2px 2px 4px rgba(4, 8, 18, 0.5),
+    inset -2px -2px 4px rgba(25, 40, 72, 0.3);
+  overflow: hidden;
+}
+
+.neuStrengthFill {
+  height: 100%;
+  border-radius: 0.25rem;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ── Logo Flow (from onboarding, smaller for auth) ───────────── */
+.neuLogoFlowContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.neuLogoCardRaised {
+  background: linear-gradient(145deg, #152244, #0f1a34);
+  box-shadow:
+    6px 6px 16px rgba(4, 8, 18, 0.7),
+    -6px -6px 16px rgba(25, 40, 72, 0.5);
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+}
+
+.neuLogoSocket {
+  background: linear-gradient(145deg, #0f1a34, #152244);
+  box-shadow:
+    inset 4px 4px 10px rgba(4, 8, 18, 0.6),
+    inset -4px -4px 10px rgba(25, 40, 72, 0.35);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.neuLogoSocket img {
+  animation: neuLogoRotate 8s linear infinite;
+}
+
+.neuLogoTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--neu-text, #e2e8f0);
+  text-align: center;
+}
+
+.neuLogoSubtitle {
+  font-size: 0.75rem;
+  color: var(--neu-text-secondary, rgba(226, 232, 240, 0.75));
+  text-align: center;
+  line-height: 1.4;
+}
