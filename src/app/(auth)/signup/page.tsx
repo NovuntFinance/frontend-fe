@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,10 +29,7 @@ import { useSignup } from '@/lib/mutations';
 import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
-import {
-  TurnstileWidget,
-  type TurnstileWidgetHandle,
-} from '@/components/auth/TurnstileWidget';
+// Turnstile disabled for signup - import removed
 import { toast } from '@/components/ui/enhanced-toast';
 import styles from '@/styles/auth.module.css';
 
@@ -61,8 +58,7 @@ function SignupPageContent() {
     email: '',
     canResetPassword: false,
   });
-  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
-  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  // Turnstile disabled for signup - removed all Turnstile-related code
 
   const {
     register,
@@ -201,51 +197,32 @@ function SignupPageContent() {
         return;
       }
 
-      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
-      const finalPayload = {
+      // Turnstile disabled for signup - removed token
+      console.log('[Signup] Sending payload:', {
         ...payload,
-        ...(turnstileToken ? { turnstileToken } : {}),
-      };
+        password: '***',
+        confirmPassword: '***',
+      });
 
-      await signupMutation.mutateAsync(finalPayload);
+      await signupMutation.mutateAsync(payload);
 
+      // Store user info for welcome modal after verification
       if (typeof window !== 'undefined') {
         localStorage.setItem(
           'novunt_new_user',
           JSON.stringify({
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            email: payload.email,
             timestamp: Date.now(),
           })
         );
       }
-      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
     } catch (error: unknown) {
       console.error('[Signup Error]', error);
 
-      // Turnstile failure
-      const err = error as {
-        statusCode?: number;
-        response?: { status?: number; data?: unknown };
-        responseData?: unknown;
-      };
-      const statusCode = err.statusCode ?? err.response?.status;
-      const responseData = err.response?.data ?? err.responseData;
-      if (
-        statusCode === 400 &&
-        responseData &&
-        typeof responseData === 'object' &&
-        (responseData as { code?: string }).code === 'TURNSTILE_FAILED'
-      ) {
-        turnstileRef.current?.reset();
-        const msg =
-          (responseData as { message?: string }).message ??
-          'Security check failed. Please try again.';
-        setError('root', { message: msg });
-        toast.error('Security check failed', { description: msg });
-        return;
-      }
+      // Turnstile disabled for signup - removed error handling
 
       // Extract structured error
       let errorResponse: {
@@ -580,9 +557,7 @@ function SignupPageContent() {
                     )}
                   </motion.div>
 
-                  {turnstileEnabled && (
-                    <TurnstileWidget widgetRef={turnstileRef} size="normal" />
-                  )}
+                  {/* Turnstile disabled for signup - removed widget */}
                 </motion.div>
               )}
             </AnimatePresence>
