@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -31,10 +25,7 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
-import {
-  TurnstileWidget,
-  type TurnstileWidgetHandle,
-} from '@/components/auth/TurnstileWidget';
+// Turnstile disabled for login - import removed
 import Loading from '@/components/ui/loading';
 
 /**
@@ -105,21 +96,7 @@ function LoginPageContent() {
     useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
-  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileError, setTurnstileError] = useState<string | null>(null);
-  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-
-  // Stable callbacks for Turnstile to prevent widget remounting
-  const handleTurnstileToken = useCallback((token: string) => {
-    setTurnstileToken(token);
-    setTurnstileError(null);
-  }, []);
-
-  const handleTurnstileError = useCallback(() => {
-    setTurnstileToken(null);
-    setTurnstileError('Verification failed. Please try again.');
-  }, []);
+  // Turnstile disabled for login - removed all Turnstile-related code
 
   const {
     register,
@@ -186,20 +163,13 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
-      // Require Turnstile token when configured
-      if (turnstileEnabled && !turnstileToken) {
-        setTurnstileError(
-          'Please complete the security verification and try again.'
-        );
-        return;
-      }
-
+      // Turnstile disabled for login - removed token requirement
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
       const loginPayload = {
         email: data.email.trim().toLowerCase(), // Normalize email
         password: data.password,
-        ...(turnstileToken ? { turnstileToken } : {}),
+        // Turnstile token removed - disabled for login
         // Don't send rememberMe - it's handled client-side
       };
 
@@ -322,17 +292,7 @@ function LoginPageContent() {
 
         // Check for Turnstile failure
         errorCode = err.code || err.response?.data?.code;
-        if (statusCode === 400 && errorCode === 'TURNSTILE_FAILED') {
-          backendMessage =
-            err.message ||
-            'Verification failed. Please complete the security check and try again.';
-          // Reset Turnstile widget
-          turnstileRef.current?.reset();
-          setTurnstileToken(null);
-          setTurnstileError(
-            'Verification failed. Please complete the security check again.'
-          );
-        }
+        // Turnstile disabled for login - removed error handling
 
         // Try to get backend error message from multiple possible locations
         if (
@@ -764,20 +724,7 @@ function LoginPageContent() {
               </Label>
             </div>
 
-            {/* Cloudflare Turnstile - Only show if configured */}
-            {turnstileEnabled && (
-              <>
-                <TurnstileWidget
-                  widgetRef={turnstileRef}
-                  size="normal"
-                  onToken={handleTurnstileToken}
-                  onError={handleTurnstileError}
-                />
-                {turnstileError && (
-                  <p className="text-destructive text-sm">{turnstileError}</p>
-                )}
-              </>
-            )}
+            {/* Turnstile disabled for login - removed widget */}
           </CardContent>
 
           <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">
