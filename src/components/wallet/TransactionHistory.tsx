@@ -66,6 +66,7 @@ import {
 } from '@/lib/utils/wallet';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { listItemAnimation } from '@/design-system/animations';
+import { sanitizeDescriptionByType } from '@/utils/sanitizeTransactionDescription';
 import type {
   TransactionHistoryParams,
   Transaction,
@@ -1454,7 +1455,10 @@ function TransactionItem({
               )}
             </div>
             <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
-              {transaction.description}
+              {sanitizeDescriptionByType(
+                transaction.description,
+                transaction.type
+              )}
               {/* 🔍 DEBUG: Highlight incorrect referral bonus descriptions (remove after verification) */}
               {process.env.NODE_ENV === 'development' &&
                 transaction.type === 'referral_bonus' &&
@@ -1685,10 +1689,8 @@ function receiptDescriptionWithoutPoolAmount(
   description: string | undefined
 ): string {
   if (!description || typeof description !== 'string') return description ?? '';
-  return description
-    .replace(/\s*-\s*\$\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
-    .replace(/\s*-\s*[\d,]+(\.\d+)?\s+total\s+pool\s*$/i, '')
-    .trim();
+  // Use comprehensive sanitization function
+  return sanitizeDescriptionByType(description, '');
 }
 
 /**
