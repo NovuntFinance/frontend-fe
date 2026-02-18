@@ -13,7 +13,8 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
+  /* text-sm */
   line-height: 1.25rem;
   color: hsl(var(--foreground));
   padding: 0;
@@ -43,7 +44,7 @@
   appearance: auto;
   -webkit-appearance: menulist;
   -moz-appearance: menulist;
-  
+
   border: 1px solid hsl(var(--border));
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
@@ -93,7 +94,7 @@
 
 /* Separator between country and number */
 .PhoneInputCountry::after {
-  content: "";
+  content: '';
   width: 1px;
   height: 1.5rem;
   background-color: hsl(var(--border));
@@ -140,3 +141,34 @@
   position: relative;
 }
 
+/* ── Neumorphic auth context overrides ────────────────────── */
+/* When phone input sits inside the neumorphic auth surface   */
+
+[class*='neuPhoneWrapper'] .PhoneInputInput {
+  color: #e2e8f0;
+  background: transparent;
+}
+
+[class*='neuPhoneWrapper'] .PhoneInputInput::placeholder {
+  color: rgba(226, 232, 240, 0.35);
+}
+
+[class*='neuPhoneWrapper'] .PhoneInputCountrySelect {
+  background-color: rgba(15, 26, 52, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+[class*='neuPhoneWrapper'] .PhoneInputCountrySelect:hover {
+  background-color: rgba(21, 34, 68, 0.9);
+  border-color: rgba(0, 155, 242, 0.3);
+}
+
+[class*='neuPhoneWrapper'] .PhoneInputCountrySelect:focus {
+  outline-color: rgba(0, 155, 242, 0.3);
+  border-color: rgba(0, 155, 242, 0.3);
+}
+
+[class*='neuPhoneWrapper'] .PhoneInputCountry::after {
+  background-color: rgba(255, 255, 255, 0.08);
+}

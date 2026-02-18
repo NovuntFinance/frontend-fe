@@ -12,17 +12,8 @@ import {
   useCompleteRegistration,
   useResendVerification,
 } from '@/lib/mutations';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
+import styles from '@/styles/auth.module.css';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -252,16 +243,18 @@ function VerifyEmailContent() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', duration: 0.5 }}
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
         >
-          <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+          <CheckCircle2 className="h-8 w-8 text-green-400" />
         </motion.div>
-
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: 'var(--neu-text)' }}
+          >
             Email Verified!
           </h1>
-          <p className="text-white/70">
+          <p className={styles.neuTextSecondary}>
             Your email has been successfully verified. Redirecting to login...
           </p>
         </div>
@@ -270,71 +263,51 @@ function VerifyEmailContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
       <div className="space-y-2 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20 backdrop-blur-sm">
-          <Mail className="h-8 w-8 text-indigo-400" />
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
+        <h1
+          className="text-2xl font-bold tracking-tight"
+          style={{ color: 'var(--neu-text)' }}
+        >
           Verify your email
         </h1>
-        <p className="text-white/70">
+        <p className={styles.neuTextSecondary}>
           We&apos;ve sent a 6-digit verification code to
           <br />
-          <span className="text-foreground font-medium">{email}</span>
+          <span className="font-medium" style={{ color: 'var(--neu-text)' }}>
+            {email}
+          </span>
         </p>
       </div>
 
-      {/* Error Alert */}
       {errors.root && (
-        <Alert className="mb-6 border-red-500/50 bg-red-500/10 backdrop-blur-sm">
-          <AlertCircle className="h-4 w-4 text-red-400" />
-          <AlertDescription className="text-red-200">
-            {errors.root.message}
-          </AlertDescription>
-        </Alert>
+        <div className={styles.neuErrorAlert}>
+          <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
+          <span>{errors.root.message}</span>
+        </div>
       )}
 
-      {/* Resend Success Alert */}
       {resendMutation.isSuccess && (
-        <Alert>
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>
-            Verification code resent successfully! Check your email.
-          </AlertDescription>
-        </Alert>
+        <div
+          className={styles.neuErrorAlert}
+          style={{ borderColor: 'rgba(52, 211, 153, 0.3)', color: '#86efac' }}
+        >
+          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+          <span>Verification code resent successfully! Check your email.</span>
+        </div>
       )}
 
-      {/* Verification Form */}
-      <Card className="relative overflow-hidden border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
-        {/* Gradient Background */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent" />
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-2xl font-bold text-white">
-            Enter Verification Code
-          </CardTitle>
-          <CardDescription className="text-white/70">
-            Please enter the 6-digit code we sent to your email
-          </CardDescription>
-        </CardHeader>
-
+      <div className={`${styles.neuAuthCard} p-6 sm:p-8`}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="relative z-10">
-            <TwoFactorInput
-              value={verificationCode}
-              onChange={setVerificationCode}
-              disabled={isSubmitting || completeRegistrationMutation.isPending}
-            />
-          </CardContent>
-
-          <CardFooter className="relative z-10 flex flex-col space-y-4 pt-8">
-            {/* Verify Button */}
-            <Button
+          <TwoFactorInput
+            value={verificationCode}
+            onChange={setVerificationCode}
+            disabled={isSubmitting || completeRegistrationMutation.isPending}
+          />
+          <div className="mt-6 flex flex-col gap-4">
+            <button
               type="submit"
-              className="from-primary to-primary/90 hover:from-primary/90 hover:to-primary w-full bg-gradient-to-r shadow-lg transition-all duration-300 hover:shadow-xl"
-              size="lg"
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${verificationCode.length !== 6 || isSubmitting || completeRegistrationMutation.isPending ? styles.neuBtnDisabled : ''}`}
               disabled={
                 verificationCode.length !== 6 ||
                 isSubmitting ||
@@ -344,25 +317,24 @@ function VerifyEmailContent() {
               {(isSubmitting || completeRegistrationMutation.isPending) && (
                 <NovuntSpinner size="sm" className="mr-2" />
               )}
-              Verify Email
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-
-            {/* Resend Button */}
+              <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Verify Email
+              </span>
+              <ArrowRight className="h-4 w-4 text-white" />
+            </button>
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">
+              <span className={styles.neuTextMuted}>
                 Didn&apos;t receive the code?{' '}
               </span>
-              <Button
+              <button
                 type="button"
-                variant="link"
-                className="h-auto px-0 font-semibold"
+                className={styles.neuLink}
                 onClick={handleResend}
                 disabled={!canResend || resendMutation.isPending}
               >
                 {resendMutation.isPending ? (
                   <>
-                    <NovuntSpinner size="sm" className="mr-2" />
+                    <NovuntSpinner size="sm" className="mr-1 inline" />
                     Sending...
                   </>
                 ) : canResend ? (
@@ -370,26 +342,24 @@ function VerifyEmailContent() {
                 ) : (
                   `Resend code (${resendTimer}s)`
                 )}
-              </Button>
+              </button>
             </div>
-
-            {/* Change Email Link */}
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              className="w-full"
+              className={`${styles.neuBtnBack} w-full rounded-xl py-3`}
               onClick={() => router.push('/signup')}
             >
               Use a different email
-            </Button>
-          </CardFooter>
+            </button>
+          </div>
         </form>
-      </Card>
+      </div>
 
-      {/* Help Text */}
-      <div className="text-muted-foreground space-y-2 text-center text-sm">
-        <p>Check your spam folder if you don&apos;t see the email</p>
-        <p>The code will expire in 15 minutes</p>
+      <div className={`${styles.neuBottomLink} text-sm`}>
+        <p className={styles.neuTextMuted}>
+          Check your spam folder if you don&apos;t see the email. Code expires
+          in 15 minutes.
+        </p>
       </div>
     </div>
   );
