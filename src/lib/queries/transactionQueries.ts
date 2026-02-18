@@ -5,20 +5,20 @@ import { apiRequest } from '@/lib/api';
  * Transaction Types & Data Models
  */
 
-export type TransactionType = 
-  | 'deposit' 
-  | 'withdrawal' 
-  | 'transfer' 
-  | 'stake' 
-  | 'roi' 
+export type TransactionType =
+  | 'deposit'
+  | 'withdrawal'
+  | 'transfer'
+  | 'stake'
+  | 'roi'
   | 'bonus'
   | 'referral';
 
-export type TransactionStatus = 
-  | 'pending' 
-  | 'processing' 
-  | 'completed' 
-  | 'failed' 
+export type TransactionStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
   | 'cancelled';
 
 export interface Transaction {
@@ -35,29 +35,50 @@ export interface Transaction {
     invoiceId?: string;
     paymentAddress?: string;
     network?: 'BEP20' | 'TRC20';
-    
+
     // Withdrawal
     withdrawalAddress?: string;
     txHash?: string;
-    
+
     // Transfer
     recipientId?: string;
     recipientUsername?: string;
     senderId?: string;
     senderUsername?: string;
     note?: string;
-    
+
     // Stake
     stakeId?: string;
     targetReturn?: number;
-    
+
     // ROI
     roiStakeId?: string;
     week?: number;
-    
+    weekNumber?: number;
+
     // Bonus
     bonusType?: 'registration' | 'referral' | 'performance';
     relatedUserId?: string;
+
+    // Safe fields (still available after sanitization)
+    date?: string;
+    level?: number;
+    referralLevel?: number;
+    rosPercentage?: number;
+    profitPercentage?: number;
+    userRank?: string;
+    poolType?: string;
+    daysActive?: number;
+
+    // ❌ REMOVED FIELDS (don't use these - sanitized by backend):
+    // stakeAmount
+    // referredUserName
+    // referredUserId
+    // totalPoolAmount
+    // premiumPoolAmount
+    // performancePoolAmount
+    // poolSharePercentage
+    // qualifierCount
   };
   createdAt: string;
   updatedAt: string;
@@ -94,19 +115,20 @@ export interface TransactionHistoryParams {
  */
 export const transactionQueryKeys = {
   all: ['transactions'] as const,
-  history: (params: TransactionHistoryParams) => ['transactions', 'history', params] as const,
+  history: (params: TransactionHistoryParams) =>
+    ['transactions', 'history', params] as const,
   details: (id: string) => ['transactions', 'details', id] as const,
 };
 
 /**
  * Get Transaction History
  * GET /api/v1/transactions/history?type=...&page=...&limit=...
- * 
+ *
  * Fetches paginated transaction history with optional filters
  */
 export function useTransactionHistory(params: TransactionHistoryParams = {}) {
   const queryParams = new URLSearchParams();
-  
+
   if (params.type) queryParams.append('type', params.type);
   if (params.status) queryParams.append('status', params.status);
   if (params.page) queryParams.append('page', params.page.toString());
@@ -122,25 +144,30 @@ export function useTransactionHistory(params: TransactionHistoryParams = {}) {
     queryKey: transactionQueryKeys.history(params),
     queryFn: async () => {
       console.log('[Transactions] 🔄 Fetching transaction history...', params);
-      
+
       try {
         const response = await apiRequest<TransactionHistoryResponse>(
           'get',
           url
         );
-        
+
         console.log('[Transactions] ✅ History loaded:', {
           count: response.data.transactions.length,
           page: response.data.pagination.currentPage,
           total: response.data.pagination.totalItems,
         });
-        
+
         return response;
       } catch (error: unknown) {
         // Handle 404 gracefully - user has no transactions yet
-        const err = error as { response?: { status?: number }; statusCode?: number };
+        const err = error as {
+          response?: { status?: number };
+          statusCode?: number;
+        };
         if (err?.response?.status === 404 || err?.statusCode === 404) {
-          console.log('[Transactions] ⚠️ No transactions found - returning empty list');
+          console.log(
+            '[Transactions] ⚠️ No transactions found - returning empty list'
+          );
           return {
             success: true,
             data: {
@@ -161,7 +188,10 @@ export function useTransactionHistory(params: TransactionHistoryParams = {}) {
     },
     staleTime: 30 * 1000, // 30 seconds
     retry: (failureCount, error: unknown) => {
-      const err = error as { response?: { status?: number }; statusCode?: number };
+      const err = error as {
+        response?: { status?: number };
+        statusCode?: number;
+      };
       // Don't retry 404s (new users without transactions)
       if (err?.response?.status === 404 || err?.statusCode === 404) {
         return false;
@@ -174,19 +204,24 @@ export function useTransactionHistory(params: TransactionHistoryParams = {}) {
 /**
  * Get Transaction Details
  * GET /api/v1/transactions/:transactionId
- * 
+ *
  * Fetches detailed information about a specific transaction
  */
 export function useTransactionDetails(transactionId: string) {
   return useQuery<{ success: boolean; transaction: Transaction }>({
     queryKey: transactionQueryKeys.details(transactionId),
     queryFn: async () => {
-      console.log(`[Transactions] 🔄 Fetching transaction details: ${transactionId}`);
-      const response = await apiRequest<{ success: boolean; transaction: Transaction }>(
-        'get',
-        `/transactions/${transactionId}`
+      console.log(
+        `[Transactions] 🔄 Fetching transaction details: ${transactionId}`
       );
-      console.log('[Transactions] ✅ Transaction details loaded:', response.transaction);
+      const response = await apiRequest<{
+        success: boolean;
+        transaction: Transaction;
+      }>('get', `/transactions/${transactionId}`);
+      console.log(
+        '[Transactions] ✅ Transaction details loaded:',
+        response.transaction
+      );
       return response;
     },
     enabled: !!transactionId, // Only run if transactionId exists
@@ -218,7 +253,10 @@ export function getTransactionStatusColor(status: TransactionStatus): {
   text: string;
   border: string;
 } {
-  const colors: Record<TransactionStatus, { bg: string; text: string; border: string }> = {
+  const colors: Record<
+    TransactionStatus,
+    { bg: string; text: string; border: string }
+  > = {
     pending: {
       bg: 'bg-amber-100 dark:bg-amber-900/30',
       text: 'text-amber-700 dark:text-amber-400',
@@ -256,7 +294,10 @@ export function getTransactionTypeColor(type: TransactionType): {
   text: string;
   icon: string;
 } {
-  const colors: Record<TransactionType, { bg: string; text: string; icon: string }> = {
+  const colors: Record<
+    TransactionType,
+    { bg: string; text: string; icon: string }
+  > = {
     deposit: {
       bg: 'bg-blue-100 dark:bg-blue-900/30',
       text: 'text-blue-700 dark:text-blue-400',
@@ -295,4 +336,3 @@ export function getTransactionTypeColor(type: TransactionType): {
   };
   return colors[type] || colors.deposit;
 }
-

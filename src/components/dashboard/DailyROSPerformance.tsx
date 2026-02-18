@@ -325,31 +325,20 @@ export function DailyROSPerformance() {
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between">
                                   <span className="text-muted-foreground">
-                                    Premium Pool
-                                  </span>
-                                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                                    ${(day.premiumPoolAmount / 1000).toFixed(1)}
-                                    k
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    Performance Pool
-                                  </span>
-                                  <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
-                                    $
-                                    {(day.performancePoolAmount / 1000).toFixed(
-                                      1
-                                    )}
-                                    k
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
                                     ROS Percentage
                                   </span>
                                   <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
                                     {pct4(percentage)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">
+                                    Status
+                                  </span>
+                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                    {day.isDistributed
+                                      ? 'Distributed'
+                                      : 'Pending'}
                                   </span>
                                 </div>
                                 {(isToday || isYesterday) && (

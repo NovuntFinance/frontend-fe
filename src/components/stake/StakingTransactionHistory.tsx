@@ -406,7 +406,7 @@ function StakingTransactionItem({
   const stakeId = transaction.metadata?.stakeId;
   const weekNumber = transaction.metadata?.weekNumber;
   const rosPercentage = transaction.metadata?.rosPercentage;
-  const stakeAmount = transaction.metadata?.stakeAmount;
+  // stakeAmount removed - sanitized by backend
 
   return (
     <motion.div
@@ -467,12 +467,7 @@ function StakingTransactionItem({
                   {rosPercentage}% ROS
                 </span>
               )}
-              {stakeAmount && (
-                <span className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
-                  Stake: {formatCurrency(stakeAmount, { showCurrency: false })}
-                </span>
-              )}
+              {/* stakeAmount removed - sanitized by backend */}
               {stakeId && (
                 <span className="font-mono text-xs">
                   Stake ID: {stakeId.slice(0, 8)}...

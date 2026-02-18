@@ -111,14 +111,7 @@ export function TodayROSCard() {
     );
   }
 
-  const {
-    profitPercentage,
-    premiumPoolAmount,
-    performancePoolAmount,
-    rosPercentage,
-    date,
-    isDistributed,
-  } = data;
+  const { profitPercentage, rosPercentage, date, isDistributed } = data;
 
   // Format date for display
   const displayDate = new Date(date).toLocaleDateString('en-US', {
@@ -211,37 +204,17 @@ export function TodayROSCard() {
           <span className="text-sm text-purple-500/70">Daily ROS</span>
         </div>
 
-        {/* Pool Amounts */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-            <p className="mb-1 text-xs font-medium text-green-600 dark:text-green-400">
-              Premium Pool
-            </p>
-            <p className="text-lg font-bold text-green-700 dark:text-green-300">
-              ${(premiumPoolAmount / 1000).toFixed(1)}k
-            </p>
-          </div>
-          <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
-            <p className="mb-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-              Performance Pool
-            </p>
-            <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-              ${(performancePoolAmount / 1000).toFixed(1)}k
-            </p>
-          </div>
-        </div>
-
-        {/* Total Pool */}
+        {/* Distribution Status */}
         <div className="rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 p-3">
           <p className="mb-1 text-xs font-medium text-purple-600 dark:text-purple-400">
-            Total Pool Amount
+            Distribution Status
           </p>
-          <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-            ${((premiumPoolAmount + performancePoolAmount) / 1000).toFixed(1)}k
+          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+            {isDistributed ? 'Distributed' : 'Pending Distribution'}
           </p>
         </div>
 
-        {/* Distribution Status */}
+        {/* Distribution Info */}
         <div className="text-muted-foreground flex items-start gap-2 text-xs">
           <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
           <p>

@@ -37,27 +37,41 @@ export interface DailyProfit {
 /**
  * Daily Profit (User View - Today Only)
  * Users can only see today's profit, not future dates
+ *
+ * NOTE: Pool amounts removed for privacy - users only see percentages
  */
 export interface TodayProfit {
   date: string; // YYYY-MM-DD format
   profitPercentage: number; // Legacy field (compat)
-  premiumPoolAmount: number; // Dollar amount for premium pool
-  performancePoolAmount: number; // Dollar amount for performance pool
   rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   isDistributed: boolean;
+  distributedAt?: string; // ISO 8601 timestamp
+  isToday?: boolean;
+  completedSlots?: number;
+  totalSlots?: number;
+
+  // ❌ REMOVED FIELDS (don't use these):
+  // premiumPoolAmount
+  // performancePoolAmount
+  // totalPoolAmount
 }
 
 /**
  * Daily Profit History (User View - Past Dates Only)
  * Users can see past profit history
+ *
+ * NOTE: Pool amounts removed for privacy - users only see percentages
  */
 export interface DailyProfitHistoryItem {
   date: string; // YYYY-MM-DD format
   profitPercentage: number; // Legacy field (compat)
-  premiumPoolAmount: number; // Dollar amount for premium pool
-  performancePoolAmount: number; // Dollar amount for performance pool
   rosPercentage: number; // 0-100 (testing; revert to 0-2.2 for production)
   isDistributed: boolean;
+
+  // ❌ REMOVED FIELDS (don't use these):
+  // premiumPoolAmount
+  // performancePoolAmount
+  // totalPoolAmount
 }
 
 /**
