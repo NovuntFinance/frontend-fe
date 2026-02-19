@@ -252,93 +252,61 @@ export function useWithdrawalLimits() {
  * Get default withdrawal address
  * GET /api/v1/wallets/withdrawal/default-address
  */
+const DEFAULT_ADDRESS_STATE = {
+  address: null as string | null,
+  hasDefaultAddress: false,
+  canChange: true,
+  moratorium: {
+    active: false,
+    canChange: true,
+    hoursRemaining: 0,
+    minutesRemaining: 0,
+    canChangeAt: null as string | null,
+    canChangeAtFormatted: null as string | null,
+    moratoriumDurationHours: 48,
+  },
+  immutable: false,
+  network: 'BEP20' as const,
+};
+
 export function useDefaultWithdrawalAddress() {
   return useQuery({
     queryKey: ['withdrawal', 'default-address'],
     queryFn: async () => {
       try {
         const response = await walletApi.getDefaultWithdrawalAddress();
-        console.log(
-          '[useDefaultWithdrawalAddress] 📥 Raw API response:',
-          response
-        );
+        // API client may return unwrapped { address, hasDefaultAddress, ... } (no .data)
+        // or wrapped { data: { address, ... } }. Normalize to the inner data object.
+        const data =
+          response && typeof response === 'object' && 'data' in response
+            ? (response as { data: typeof DEFAULT_ADDRESS_STATE }).data
+            : (response as typeof DEFAULT_ADDRESS_STATE | null);
 
-        // Ensure we always return a value, never undefined
-        if (!response || !response.data) {
-          console.warn(
-            '[useDefaultWithdrawalAddress] Invalid response, returning default'
-          );
-          return {
-            address: null,
-            hasDefaultAddress: false,
-            canChange: true,
-            moratorium: {
-              active: false,
-              canChange: true,
-              hoursRemaining: 0,
-              minutesRemaining: 0,
-              canChangeAt: null,
-              canChangeAtFormatted: null,
-              moratoriumDurationHours: 48,
-            },
-            immutable: false,
-            network: 'BEP20' as const,
-          };
+        if (!data || (typeof data === 'object' && !('address' in data))) {
+          return { ...DEFAULT_ADDRESS_STATE };
         }
 
-        console.log(
-          '[useDefaultWithdrawalAddress] 📊 Response data:',
-          response.data
-        );
-        console.log('[useDefaultWithdrawalAddress] 🔍 Address field:', {
-          address: response.data.address,
-          hasDefaultAddress: response.data.hasDefaultAddress,
-          canChange: response.data.canChange,
-          moratorium: response.data.moratorium,
-        });
-
-        return response.data;
+        return {
+          ...DEFAULT_ADDRESS_STATE,
+          ...data,
+          address: data.address ?? null,
+          hasDefaultAddress: data.hasDefaultAddress ?? !!data.address,
+          moratorium: data.moratorium
+            ? {
+                ...DEFAULT_ADDRESS_STATE.moratorium,
+                ...data.moratorium,
+              }
+            : DEFAULT_ADDRESS_STATE.moratorium,
+        };
       } catch (error: any) {
-        // If 404, user doesn't have default address
         if (error?.response?.status === 404 || error?.statusCode === 404) {
-          return {
-            address: null,
-            hasDefaultAddress: false,
-            canChange: true,
-            moratorium: {
-              active: false,
-              canChange: true,
-              hoursRemaining: 0,
-              minutesRemaining: 0,
-              canChangeAt: null,
-              canChangeAtFormatted: null,
-              moratoriumDurationHours: 48,
-            },
-            immutable: false,
-            network: 'BEP20' as const,
-          };
+          return { ...DEFAULT_ADDRESS_STATE };
         }
-        // For other errors, return default instead of throwing
-        // This prevents React Query from setting data to undefined
         console.error(
           '[useDefaultWithdrawalAddress] Error fetching default address:',
           error
         );
-        return {
-          address: null,
-          hasDefaultAddress: false,
-          canChange: true,
-          moratorium: {
-            active: false,
-            canChange: true,
-            hoursRemaining: 0,
-            minutesRemaining: 0,
-            canChangeAt: null,
-            canChangeAtFormatted: null,
-            moratoriumDurationHours: 48,
-          },
-          immutable: false,
-        };
+        return { ...DEFAULT_ADDRESS_STATE };
       }
     },
   });
@@ -358,28 +326,31 @@ export function useSetDefaultWithdrawalAddress() {
       twoFACode?: string;
     }) => walletApi.setDefaultWithdrawalAddress(payload),
     onSuccess: async (response) => {
-      // Update cache immediately with response data if available
-      if (response?.data) {
-        queryClient.setQueryData(
-          ['withdrawal', 'default-address'],
-          response.data
-        );
+      // API client may return unwrapped { address, hasDefaultAddress, ... } or wrapped { data }
+      const data = response?.data ?? response;
+      if (data && typeof data === 'object' && 'address' in data) {
+        const cacheValue = {
+          ...DEFAULT_ADDRESS_STATE,
+          ...data,
+          address: data.address ?? null,
+          hasDefaultAddress: data.hasDefaultAddress ?? !!data.address,
+          moratorium: data.moratorium
+            ? { ...DEFAULT_ADDRESS_STATE.moratorium, ...data.moratorium }
+            : DEFAULT_ADDRESS_STATE.moratorium,
+        };
+        queryClient.setQueryData(['withdrawal', 'default-address'], cacheValue);
       }
-      // Invalidate both the default address query and wallet info query
-      // (wallet info now includes default address info)
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: ['withdrawal', 'default-address'],
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.walletInfo }),
       ]);
-      // Refetch to ensure UI is updated immediately
       await queryClient.refetchQueries({
         queryKey: ['withdrawal', 'default-address'],
       });
-      // Check if this is first-time setting or a change
-      const isFirstTime = response?.data?.isFirstTime;
-      const moratorium = response?.data?.moratorium;
+      const isFirstTime = data?.isFirstTime;
+      const moratorium = data?.moratorium;
 
       if (isFirstTime) {
         toast.success('Withdrawal address set', {

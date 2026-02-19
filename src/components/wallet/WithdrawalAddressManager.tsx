@@ -2,16 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Wallet,
-  Lock,
   Check,
   Shield,
-  AlertTriangle,
-  ChevronRight,
   Copy,
   CheckCircle2,
   Clock,
-  ExternalLink,
   Edit,
   Loader2,
   Info,
@@ -48,14 +43,15 @@ export function WithdrawalAddressManager() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (addressData?.address) {
-      setNewAddress(addressData.address);
-    }
+    const addr =
+      addressData?.address ??
+      (addressData as { data?: { address?: string } })?.data?.address;
+    if (addr) setNewAddress(addr);
   }, [addressData]);
 
   const handleCopy = () => {
-    if (addressData?.address) {
-      copyToClipboard(addressData.address);
+    if (savedAddress) {
+      copyToClipboard(savedAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast.success('Address copied to clipboard');
@@ -98,8 +94,11 @@ export function WithdrawalAddressManager() {
     );
   }
 
-  // Show read-only when we have an address (even if hasDefaultAddress flag is missing)
-  const hasAddress = addressData?.hasDefaultAddress || !!addressData?.address;
+  const savedAddress =
+    addressData?.address ??
+    (addressData as { data?: { address?: string } })?.data?.address ??
+    '';
+  const hasAddress = savedAddress.length > 0;
   const moratorium = addressData?.moratorium;
   const canChange = addressData?.canChange && !moratorium?.active;
 
@@ -201,7 +200,7 @@ export function WithdrawalAddressManager() {
                   variant="ghost"
                   onClick={() => {
                     setIsEditing(false);
-                    setNewAddress(addressData.address || '');
+                    setNewAddress(savedAddress);
                   }}
                   className="rounded-xl border border-white/10 hover:bg-white/10"
                 >
@@ -224,7 +223,7 @@ export function WithdrawalAddressManager() {
               </div>
               <div className="flex items-center justify-between gap-3">
                 <code className="flex-1 font-mono text-sm break-all text-cyan-300">
-                  {addressData.address}
+                  {savedAddress}
                 </code>
                 <Button
                   variant="ghost"
