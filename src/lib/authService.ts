@@ -268,10 +268,26 @@ export const authService = {
       requestPayload
     );
 
+    // DEBUG: Log raw response from API
+    console.log(
+      '[authService.enable2FA] 🔍 Raw API Response:',
+      JSON.stringify(response, null, 2)
+    );
+    console.log('[authService.enable2FA] 🔍 Response Type:', typeof response);
+
     // Map backend response structure per guide:
     // { success: true, data: { backupCodes: [...], user: {...} } }
     if (response && typeof response === 'object') {
       const responseData = response as any;
+      console.log('[authService.enable2FA] 🔍 Response Data Structure:', {
+        'responseData keys': Object.keys(responseData),
+        'responseData.backupCodes': responseData.backupCodes,
+        'responseData.data': responseData.data,
+        'responseData.data?.backupCodes': responseData.data?.backupCodes,
+        'responseData.data?.data': responseData.data?.data,
+        'responseData.data?.data?.backupCodes':
+          responseData.data?.data?.backupCodes,
+      });
 
       // Extract backup codes from various possible locations
       const backupCodes =
@@ -279,6 +295,11 @@ export const authService = {
         responseData.data?.backupCodes ||
         responseData.data?.data?.backupCodes ||
         [];
+
+      console.log(
+        '[authService.enable2FA] 🔍 Extracted Backup Codes:',
+        backupCodes
+      );
 
       return {
         message: responseData.message || 'MFA setup completed successfully',

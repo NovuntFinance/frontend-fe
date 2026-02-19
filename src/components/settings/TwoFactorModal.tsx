@@ -254,16 +254,37 @@ export function TwoFactorModal({
         verificationCode,
       });
 
+      // DEBUG: Log the full response to see what backend is returning
+      console.log(
+        '[TwoFactorModal] 🔍 Full API Response:',
+        JSON.stringify(response, null, 2)
+      );
+      console.log('[TwoFactorModal] 🔍 Response Type:', typeof response);
+      console.log(
+        '[TwoFactorModal] 🔍 Response Keys:',
+        response ? Object.keys(response) : 'null'
+      );
+
       // Extract backup codes from response (backend guide format)
       let codes: string[] = [];
       if (response && typeof response === 'object') {
         // Check for backupCodes in various response structures
         const responseData = response as any;
+        console.log('[TwoFactorModal] 🔍 Checking backupCodes in:', {
+          'responseData.backupCodes': responseData.backupCodes,
+          'responseData.data?.backupCodes': responseData.data?.backupCodes,
+          'responseData.data?.data?.backupCodes':
+            responseData.data?.data?.backupCodes,
+          'Full responseData': responseData,
+        });
+
         codes =
           responseData.backupCodes ||
           responseData.data?.backupCodes ||
           responseData.data?.data?.backupCodes ||
           [];
+
+        console.log('[TwoFactorModal] 🔍 Extracted codes:', codes);
       }
 
       // Update the user in auth store to reflect 2FA is now enabled
