@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Mail, AlertCircle } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
 import { useLogin, useVerify2FA } from '@/lib/mutations';
@@ -18,6 +17,8 @@ import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 // Turnstile disabled for login - import removed
 import Loading from '@/components/ui/loading';
 import styles from '@/styles/auth.module.css';
+import { useAuthFooter } from '@/contexts/AuthFooterContext';
+import onboardingStyles from '@/styles/onboarding.module.css';
 
 /**
  * Login Page - BetterAuth Aligned
@@ -87,6 +88,7 @@ function LoginPageContent() {
     useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
+  const { setFooterContent } = useAuthFooter();
   // Turnstile disabled for login - removed all Turnstile-related code
 
   const {
@@ -462,7 +464,51 @@ function LoginPageContent() {
     }
   };
 
-  // Show MFA input if required
+  // Set footer content (button and signup link)
+  // NOTE: This hook must be called unconditionally before any early returns
+  React.useEffect(() => {
+    if (requiresMFA) {
+      setFooterContent(null);
+      return;
+    }
+
+    setFooterContent(
+      <>
+        {/* Log In Button */}
+        <button
+          type="submit"
+          form="login-form"
+          className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-5 ${isSubmitting || loginMutation.isPending ? styles.neuBtnDisabled : ''}`}
+          disabled={isSubmitting || loginMutation.isPending}
+        >
+          {(isSubmitting || loginMutation.isPending) && (
+            <NovuntSpinner size="sm" className="mr-2" />
+          )}
+          <span className="text-sm font-bold tracking-wider text-white uppercase">
+            Log In
+          </span>
+        </button>
+
+        {/* Sign Up Link */}
+        <p className="pb-2 text-center">
+          <span
+            className="text-sm"
+            style={{
+              color: 'var(--neu-text-muted, rgba(226, 232, 240, 0.55))',
+            }}
+          >
+            Don&apos;t have an account?{' '}
+          </span>
+          <Link href="/signup" className={onboardingStyles.loginLink}>
+            Sign up
+          </Link>
+        </p>
+      </>
+    );
+    return () => setFooterContent(null);
+  }, [isSubmitting, loginMutation.isPending, requiresMFA, setFooterContent]);
+
+  // Show MFA input if required (early return AFTER hooks)
   if (requiresMFA) {
     return (
       <div className="space-y-6">
@@ -503,7 +549,18 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="w-full space-y-5">
+      {/* Title */}
+      <h1
+        className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
+        style={{
+          color: 'var(--neu-text, #e2e8f0)',
+          fontSize: 'clamp(0.875rem, 2.5vw, 1.125rem)',
+        }}
+      >
+        Welcome Back — Continue Your Journey
+      </h1>
+
       {/* Backend Status Alert */}
       {backendStatus && !backendStatus.healthy && (
         <div className={styles.neuErrorAlert}>
@@ -572,7 +629,7 @@ function LoginPageContent() {
 
       {/* Login Form */}
       <div className={`${styles.neuAuthCard} p-6 sm:p-8`}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form id="login-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <NeuField
               id="email"
@@ -624,32 +681,7 @@ function LoginPageContent() {
 
             {/* Turnstile disabled for login - removed widget */}
           </div>
-
-          <div className="mt-6">
-            <button
-              type="submit"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || loginMutation.isPending ? styles.neuBtnDisabled : ''}`}
-              disabled={isSubmitting || loginMutation.isPending}
-            >
-              {(isSubmitting || loginMutation.isPending) && (
-                <NovuntSpinner size="sm" className="mr-2" />
-              )}
-              <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Sign In
-              </span>
-            </button>
-          </div>
         </form>
-      </div>
-
-      {/* Sign Up Link */}
-      <div className={`${styles.neuBottomLink} text-sm`}>
-        <span className={styles.neuTextMuted}>
-          Don&apos;t have an account?{' '}
-        </span>
-        <Link href="/signup" className={styles.neuLink}>
-          Sign up for free
-        </Link>
       </div>
     </div>
   );

@@ -235,7 +235,7 @@ export default function LandingPageContent() {
               href="/login"
               className="group relative hidden px-2 py-1 text-xs text-indigo-200 transition-colors hover:text-white sm:inline sm:text-sm"
             >
-              Sign In
+              Log in
               <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-indigo-400 to-purple-400 transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link

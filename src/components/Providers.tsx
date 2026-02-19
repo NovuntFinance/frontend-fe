@@ -25,8 +25,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
     });
 
     // Initialize platform settings (fetch platform day start)
-    initializePlatformSettings().catch((error) => {
-      logger.error('Failed to initialize platform settings', { error });
+    // This may fail with 401 if user is not authenticated - that's OK, we use default
+    initializePlatformSettings().catch((error: any) => {
+      // Only log non-401 errors as actual errors
+      const status = error?.response?.status || error?.statusCode;
+      if (status !== 401) {
+        logger.error('Failed to initialize platform settings', { error });
+      } else {
+        logger.info(
+          'Platform settings initialization skipped (not authenticated)',
+          {
+            message: 'Using default platform day start',
+          }
+        );
+      }
     });
 
     if (!apiBaseURL) {

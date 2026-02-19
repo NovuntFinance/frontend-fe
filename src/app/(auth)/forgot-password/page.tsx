@@ -129,7 +129,7 @@ function ForgotPasswordContent() {
             >
               <ArrowLeft className="h-4 w-4 text-white" />
               <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Back to Sign In
+                Back to Log In
               </span>
             </Link>
             <p className={`text-center text-xs ${styles.neuTextMuted}`}>
@@ -192,21 +192,6 @@ function ForgotPasswordContent() {
               </span>
               <Send className="h-4 w-4 text-white" />
             </button>
-            <Link
-              href="/login"
-              className={`${styles.neuBtnBack} flex items-center justify-center gap-2 rounded-xl py-3`}
-            >
-              <ArrowLeft
-                className="h-4 w-4"
-                style={{ color: 'var(--neu-text)' }}
-              />
-              <span
-                className="text-sm font-semibold"
-                style={{ color: 'var(--neu-text)' }}
-              >
-                Back to Sign In
-              </span>
-            </Link>
           </div>
         </form>
       </div>
@@ -214,7 +199,7 @@ function ForgotPasswordContent() {
       <div className={`${styles.neuBottomLink} text-sm`}>
         <span className={styles.neuTextMuted}>Remember your password? </span>
         <Link href="/login" className={styles.neuLink}>
-          Sign in
+          Log in
         </Link>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -11,7 +11,6 @@ import {
   User,
   Gift,
   AlertCircle,
-  Check,
   ArrowRight,
   ArrowLeft,
   AtSign,
@@ -32,6 +31,8 @@ import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
 // Turnstile disabled for signup - import removed
 import { toast } from '@/components/ui/enhanced-toast';
 import styles from '@/styles/auth.module.css';
+import { useAuthFooter } from '@/contexts/AuthFooterContext';
+import onboardingStyles from '@/styles/onboarding.module.css';
 
 // Disable static generation
 export const dynamic = 'force-dynamic';
@@ -109,12 +110,14 @@ function SignupPageContent() {
     ? calculatePasswordStrength(password)
     : null;
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     const valid = await trigger(getFieldsForStep(currentStep));
     if (valid) setCurrentStep((s) => Math.min(s + 1, STEPS.length));
-  };
+  }, [currentStep, trigger]);
 
-  const handlePrevious = () => setCurrentStep((s) => Math.max(s - 1, 1));
+  const handlePrevious = useCallback(() => {
+    setCurrentStep((s) => Math.max(s - 1, 1));
+  }, []);
 
   function getFieldsForStep(step: number): (keyof SignupFormData)[] {
     switch (step) {
@@ -297,46 +300,84 @@ function SignupPageContent() {
   };
 
   const isLoading = isSubmitting || signupMutation.isPending;
+  const { setFooterContent } = useAuthFooter();
+
+  // Set footer content (buttons and login link)
+  React.useEffect(() => {
+    setFooterContent(
+      <>
+        {/* Navigation Buttons */}
+        <div className="flex gap-3">
+          {currentStep > 1 && (
+            <button
+              type="button"
+              onClick={handlePrevious}
+              className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-5`}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm font-semibold tracking-wider uppercase">
+                Back
+              </span>
+            </button>
+          )}
+
+          {currentStep < STEPS.length ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-5`}
+            >
+              <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Continue
+              </span>
+              <ArrowRight className="h-4 w-4 text-white" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              form="signup-form"
+              disabled={isLoading}
+              className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-5 ${isLoading ? styles.neuBtnDisabled : ''}`}
+            >
+              {isLoading && <NovuntSpinner size="sm" className="mr-1" />}
+              <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Create Account
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Login Link */}
+        <p className="pb-2 text-center">
+          <span
+            className="text-sm"
+            style={{
+              color: 'var(--neu-text-muted, rgba(226, 232, 240, 0.55))',
+            }}
+          >
+            Already have an account?{' '}
+          </span>
+          <Link href="/login" className={onboardingStyles.loginLink}>
+            Log in
+          </Link>
+        </p>
+      </>
+    );
+    return () => setFooterContent(null);
+  }, [currentStep, isLoading, setFooterContent, handlePrevious, handleNext]);
 
   return (
-    <div className="space-y-4">
-      {/* ── Step Progress ── */}
-      <div className={`${styles.neuStepBar} flex items-center`}>
-        {STEPS.map((step, idx) => (
-          <React.Fragment key={step.id}>
-            <div className="flex flex-1 flex-col items-center">
-              <motion.div
-                animate={{ scale: currentStep === step.id ? 1.05 : 1 }}
-                transition={{ duration: 0.3 }}
-                className={`${styles.neuStepCircle} ${currentStep === step.id ? styles.neuStepActive : ''} ${currentStep > step.id ? styles.neuStepComplete : ''}`}
-              >
-                {currentStep > step.id ? (
-                  <Check
-                    className={`h-4 w-4 text-white ${styles.neuStepCheckIcon}`}
-                  />
-                ) : (
-                  step.id
-                )}
-              </motion.div>
-              <p
-                className={`${styles.neuStepLabel} ${currentStep >= step.id ? styles.neuStepLabelActive : ''} hidden sm:block`}
-              >
-                {step.title}
-              </p>
-            </div>
-            {idx < STEPS.length - 1 && (
-              <div className={styles.neuStepConnector}>
-                <motion.div
-                  initial={{ width: '0%' }}
-                  animate={{ width: currentStep > step.id ? '100%' : '0%' }}
-                  transition={{ duration: 0.5, ease: 'easeInOut' }}
-                  className={`${styles.neuStepConnectorFill} ${currentStep === step.id + 1 ? styles.neuStepConnectorFillActive : ''}`}
-                />
-              </div>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
+    <div className="w-full space-y-4">
+      {/* Title */}
+      <h1
+        className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
+        style={{
+          color: 'var(--neu-text, #e2e8f0)',
+          fontSize: 'clamp(0.875rem, 2.5vw, 1.125rem)',
+        }}
+      >
+        Welcome to Novunt — Start Growing Your Wealth
+      </h1>
 
       {/* Root Error */}
       {errors.root && (
@@ -352,7 +393,7 @@ function SignupPageContent() {
 
       {/* ── Form Card ── */}
       <div className={`${styles.neuAuthCard} p-5 sm:p-6`}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form id="signup-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <AnimatePresence mode="wait">
               {/* ═══ Step 1 ═══ */}
@@ -562,55 +603,7 @@ function SignupPageContent() {
               )}
             </AnimatePresence>
           </div>
-
-          {/* ── Navigation Buttons ── */}
-          <div className="mt-6 flex gap-3">
-            {currentStep > 1 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm font-semibold tracking-wider uppercase">
-                  Back
-                </span>
-              </button>
-            )}
-
-            {currentStep < STEPS.length ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5`}
-              >
-                <span className="text-sm font-bold tracking-wider text-white uppercase">
-                  Continue
-                </span>
-                <ArrowRight className="h-4 w-4 text-white" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 ${isLoading ? styles.neuBtnDisabled : ''}`}
-              >
-                {isLoading && <NovuntSpinner size="sm" className="mr-1" />}
-                <span className="text-sm font-bold tracking-wider text-white uppercase">
-                  Create Account
-                </span>
-              </button>
-            )}
-          </div>
         </form>
-      </div>
-
-      {/* Sign In Link */}
-      <div className={`${styles.neuBottomLink} mt-4 text-sm`}>
-        <span className={styles.neuTextMuted}>Already have an account? </span>
-        <Link href="/login" className={styles.neuLink}>
-          Sign in
-        </Link>
       </div>
 
       {/* Email Exists Dialog */}

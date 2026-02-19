@@ -120,7 +120,7 @@ export default function NotFound() {
                     </div>
                     <div className="text-left">
                       <p className="text-foreground text-sm font-medium">
-                        Sign In
+                        Log in
                       </p>
                       <p className="text-muted-foreground text-xs">
                         Access your account

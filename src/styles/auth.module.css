@@ -886,6 +886,10 @@
   animation: neuLogoRotate 8s linear infinite;
 }
 
+.neuLogoRotate {
+  animation: neuLogoRotate 8s linear infinite;
+}
+
 .neuLogoTitle {
   font-size: 1.25rem;
   font-weight: 600;

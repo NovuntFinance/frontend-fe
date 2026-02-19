@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -29,15 +29,20 @@ const slides: SlideData[] = [
   {
     id: 'welcome',
     icon: (
-      <Image
-        src="/icons/novunt_short.png"
-        alt="Novunt"
-        width={80}
-        height={80}
+      <div
+        className={styles.neuLogoRotate}
         style={{
-          objectFit: 'contain',
-          filter:
-            'brightness(0) saturate(100%) invert(44%) sepia(69%) saturate(2688%) hue-rotate(183deg) brightness(99%) contrast(101%)',
+          width: '6rem',
+          height: '6rem',
+          backgroundColor: '#009bf2',
+          maskImage: 'url(/icons/novunt_short.png)',
+          WebkitMaskImage: 'url(/icons/novunt_short.png)',
+          maskSize: 'contain',
+          WebkitMaskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          WebkitMaskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          WebkitMaskPosition: 'center',
         }}
       />
     ),
@@ -88,10 +93,39 @@ export default function OnboardingCarousel({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const activeSlide = slides[currentSlide];
 
+  // Reset pressed state helper
+  const resetPressedState = () => {
+    setIsPressed(false);
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = null;
+    }
+  };
+
+  // Fallback timeout to ensure pressed state resets
+  const handlePressStart = () => {
+    setIsPressed(true);
+    // Clear any existing timeout
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    // Set a fallback timeout to reset after 500ms (longer than normal press)
+    pressTimeoutRef.current = setTimeout(() => {
+      resetPressedState();
+    }, 500);
+  };
+
+  const handlePressEnd = () => {
+    resetPressedState();
+  };
+
   const nextSlide = () => {
+    // Reset pressed state when button is clicked
+    resetPressedState();
     if (isAnimating) return;
     if (currentSlide < slides.length - 1) {
       setIsAnimating(true);
@@ -146,6 +180,15 @@ export default function OnboardingCarousel({
   };
 
   const isLastSlide = currentSlide === slides.length - 1;
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -223,11 +266,13 @@ export default function OnboardingCarousel({
         {/* CTA Button */}
         <button
           onClick={nextSlide}
-          onMouseDown={() => setIsPressed(true)}
-          onMouseUp={() => setIsPressed(false)}
-          onMouseLeave={() => setIsPressed(false)}
-          onTouchStart={() => setIsPressed(true)}
-          onTouchEnd={() => setIsPressed(false)}
+          onMouseDown={handlePressStart}
+          onMouseUp={handlePressEnd}
+          onMouseLeave={handlePressEnd}
+          onTouchStart={handlePressStart}
+          onTouchEnd={handlePressEnd}
+          onTouchCancel={handlePressEnd}
+          onBlur={handlePressEnd}
           className={`flex w-full cursor-pointer items-center justify-center rounded-xl py-5 transition-all duration-150 ${isPressed ? styles.neuBtnActive : styles.neuBtn} `}
           id="onboarding-get-started"
         >
