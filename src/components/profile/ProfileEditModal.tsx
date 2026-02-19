@@ -1191,13 +1191,14 @@ export function ProfileEditModal({
                   <NovuntSpinner size="sm" />
                 </div>
               ) : !isEditingAddress &&
-                withdrawalAddressData?.hasDefaultAddress ? (
+                (withdrawalAddressData?.hasDefaultAddress ||
+                  !!withdrawalAddressData?.address) ? (
                 <div className="space-y-4">
                   {/* Current Address Display */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold tracking-wider text-white/70 uppercase">
-                        Current Address
+                      <span className="text-xs font-semibold tracking-wider text-emerald-400 uppercase">
+                        Saved Address
                       </span>
                       {withdrawalAddressData.canChange && (
                         <Button
@@ -1212,7 +1213,7 @@ export function ProfileEditModal({
                           }}
                           className="border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
                         >
-                          Edit
+                          Modify
                         </Button>
                       )}
                     </div>

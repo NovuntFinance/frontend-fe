@@ -8,14 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { useWalletBalance } from '@/lib/queries';
 import { useInitiateWithdrawal } from '@/lib/mutations/transactionMutations';
 import { LargeWithdrawalDialog } from '@/components/dialogs/LargeWithdrawalDialog';
 import { DailyLimitDialog } from '@/components/dialogs/DailyLimitDialog';
 import { useWithdrawalConfig } from '@/hooks/useWithdrawalConfig';
+import { useDefaultWithdrawalAddress } from '@/hooks/useWallet';
+import { formatAddress } from '@/lib/utils/wallet';
 import { fmt4 } from '@/utils/formatters';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -60,15 +68,26 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const fee = (amount * FEE_PERCENTAGE) / 100;
   const youReceive = amount - fee;
 
-  // Reset on open
+  const { data: defaultAddressData, isLoading: defaultAddressLoading } =
+    useDefaultWithdrawalAddress();
+  const hasWhitelistedAddress =
+    defaultAddressData?.hasDefaultAddress && !!defaultAddressData?.address;
+  const whitelistedAddress = defaultAddressData?.address ?? '';
+
+  // Reset on open; pre-fill whitelisted address when available
   useEffect(() => {
     if (isOpen) {
       setStep('form');
-      setFormData({ amount: '', walletAddress: '', network: 'BEP20' as const });
+      const initialAddress = hasWhitelistedAddress ? whitelistedAddress : '';
+      setFormData({
+        amount: '',
+        walletAddress: initialAddress,
+        network: 'BEP20' as const,
+      });
       setError('');
       refetch();
     }
-  }, [isOpen, refetch]);
+  }, [isOpen, refetch, hasWhitelistedAddress, whitelistedAddress]);
 
   const validateForm = () => {
     if (amount < MIN_WITHDRAWAL) {
@@ -301,28 +320,72 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         </div>
                       </div>
 
-                      {/* Wallet Address */}
+                      {/* Wallet Address - dropdown when user has whitelisted address */}
                       <div className="space-y-2">
                         <Label htmlFor="address">
                           Your BEP20 Wallet Address
                         </Label>
-                        <Input
-                          id="address"
-                          type="text"
-                          placeholder="Enter your wallet address"
-                          value={formData.walletAddress}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              walletAddress: e.target.value,
-                            })
-                          }
-                          className="font-mono text-sm"
-                        />
-                        <p className="text-muted-foreground text-xs">
-                          ⚠️ Double-check your address. Incorrect address may
-                          result in loss of funds.
-                        </p>
+                        {defaultAddressLoading ? (
+                          <div className="bg-muted text-muted-foreground flex h-10 items-center rounded-md px-3 text-sm">
+                            Loading address…
+                          </div>
+                        ) : hasWhitelistedAddress ? (
+                          <>
+                            <Select
+                              value={formData.walletAddress}
+                              onValueChange={(value) =>
+                                setFormData({
+                                  ...formData,
+                                  walletAddress: value,
+                                })
+                              }
+                            >
+                              <SelectTrigger
+                                id="address"
+                                className="font-mono text-sm"
+                              >
+                                <SelectValue placeholder="Select withdrawal address" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem
+                                  value={whitelistedAddress}
+                                  className="font-mono"
+                                >
+                                  My whitelisted address (
+                                  {formatAddress(whitelistedAddress)})
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-muted-foreground text-xs">
+                              Withdrawals go to your saved BEP20 address. Change
+                              it in Settings → Security if needed.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Input
+                              id="address"
+                              type="text"
+                              placeholder="Enter your BEP20 wallet address"
+                              value={formData.walletAddress}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  walletAddress: e.target.value,
+                                })
+                              }
+                              className="font-mono text-sm"
+                            />
+                            <p className="text-muted-foreground text-xs">
+                              Set a default withdrawal address in Settings →
+                              Security to use it here next time.
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              ⚠️ Double-check your address. Incorrect address
+                              may result in loss of funds.
+                            </p>
+                          </>
+                        )}
                       </div>
 
                       {/* Fee Breakdown */}

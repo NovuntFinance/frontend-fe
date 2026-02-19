@@ -98,7 +98,8 @@ export function WithdrawalAddressManager() {
     );
   }
 
-  const hasAddress = addressData?.hasDefaultAddress;
+  // Show read-only when we have an address (even if hasDefaultAddress flag is missing)
+  const hasAddress = addressData?.hasDefaultAddress || !!addressData?.address;
   const moratorium = addressData?.moratorium;
   const canChange = addressData?.canChange && !moratorium?.active;
 
@@ -134,7 +135,7 @@ export function WithdrawalAddressManager() {
               )}
             >
               <Edit className="mr-2 h-3 w-3" />
-              Change
+              Modify
             </Button>
           )}
         </div>
@@ -211,10 +212,10 @@ export function WithdrawalAddressManager() {
           </form>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">
-                  Active Address
+                <span className="text-[10px] font-bold tracking-widest text-emerald-400 uppercase">
+                  Saved Address
                 </span>
                 <div className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
                   <CheckCircle2 className="h-3 w-3" />
