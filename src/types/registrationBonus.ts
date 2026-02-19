@@ -5,7 +5,7 @@
  * Backend V2 Steps (20% each):
  *   1. Registration    — automatic on email verification
  *   2. 2FA Setup       — user enables Google Authenticator
- *   3. Withdrawal Addr — user adds BEP20/TRC20 wallet
+ *   3. Withdrawal Addr — user adds BEP20 wallet
  *   4. Social Media    — user verifies ALL 5 platforms
  *   5. First Stake     — user stakes >= 20 USDT
  */
@@ -86,7 +86,7 @@ export interface RegistrationBonusData {
     withdrawalAddressWhitelist: {
       isCompleted: boolean;
       address?: string | null;
-      network?: 'BEP20' | 'TRC20' | null;
+      network?: 'BEP20' | null; // Only BEP20 is supported
       completedAt?: string | null;
     };
     socialMediaVerifications: Array<{

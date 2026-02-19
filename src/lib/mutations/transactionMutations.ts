@@ -8,7 +8,7 @@ import { queryKeys } from '@/lib/queries';
 export interface DepositRequest {
   amount: number;
   currency: 'USDT';
-  network: 'BEP20' | 'TRC20';
+  network?: 'BEP20'; // Optional, defaults to BEP20 (only supported network)
 }
 
 export type DepositStatus =
@@ -56,7 +56,7 @@ export interface DepositResponse {
 export interface WithdrawRequest {
   amount: number;
   currency?: string;
-  network: 'BEP20' | 'TRC20';
+  network?: 'BEP20'; // Optional, defaults to BEP20 (only supported network)
   address: string;
 }
 
@@ -151,10 +151,16 @@ export function useInitiateDeposit() {
 
         console.log('[useInitiateDeposit] ✅ Deposit data:', depositData);
         if (depositData?.details) {
-          console.log('[useInitiateDeposit] ℹ️ Backend details:', depositData.details);
+          console.log(
+            '[useInitiateDeposit] ℹ️ Backend details:',
+            depositData.details
+          );
         }
         if (depositData?.status) {
-          console.log('[useInitiateDeposit] 🔁 Initial deposit status:', depositData.status);
+          console.log(
+            '[useInitiateDeposit] 🔁 Initial deposit status:',
+            depositData.status
+          );
         }
 
         return depositData;
@@ -333,9 +339,7 @@ export function pollDepositStatus(
       onUpdate(status);
 
       // Check if status is final
-      const normalizedStatus = status.status
-        ? status.status.toLowerCase()
-        : '';
+      const normalizedStatus = status.status ? status.status.toLowerCase() : '';
       if (finalStatuses.includes(normalizedStatus)) {
         onComplete(status);
         return;

@@ -90,7 +90,7 @@ const getStatusClass = (status?: string | null) => {
 export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [step, setStep] = useState<DepositStep>('amount');
   const [amount, setAmount] = useState('');
-  const [network, setNetwork] = useState<'BEP20' | 'TRC20'>('BEP20');
+  const [network] = useState<'BEP20'>('BEP20'); // Only BEP20 is supported
   const [depositData, setDepositData] = useState<DepositResponse | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [copied, setCopied] = useState(false);
@@ -115,7 +115,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     !!depositData &&
     (depositData.mockMode || (MOCK_PAYMENTS_ENABLED && isSuccessStatus));
   const successAmount = depositData?.amount ?? amount;
-  const successNetwork = depositData?.network ?? network;
+  const successNetwork = 'BEP20'; // Only BEP20 is supported
   const successStatusLabel = formatStatusLabel(
     depositData?.status || 'completed'
   );
@@ -382,13 +382,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       };
 
       setDepositData(finalDepositData);
-      const normalizedNetworkResponse = response.network?.toUpperCase?.();
-      if (
-        normalizedNetworkResponse === 'BEP20' ||
-        normalizedNetworkResponse === 'TRC20'
-      ) {
-        setNetwork(normalizedNetworkResponse);
-      }
+      // Network is always BEP20 - no need to set it
 
       // Handle immediate success (mock mode)
       if (SUCCESS_STATUSES.has(normalizedStatus)) {
@@ -554,7 +548,8 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       <AlertDescription>
                         Minimum deposit: <strong>{MIN_DEPOSIT} USDT</strong>
                         <br />
-                        Supported networks: <strong>BEP20, TRC20</strong>
+                        Supported network:{' '}
+                        <strong>BEP20 (Binance Smart Chain) only</strong>
                         <br />
                         Confirmation time: <strong>5-15 minutes</strong>
                         <br />
@@ -579,21 +574,21 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="network">Network</Label>
-                      <select
-                        id="network"
-                        value={network}
-                        onChange={(e) =>
-                          setNetwork(e.target.value as 'BEP20' | 'TRC20')
-                        }
-                        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="BEP20">
-                          BEP20 (Binance Smart Chain)
-                        </option>
-                        <option value="TRC20">TRC20 (TRON)</option>
-                      </select>
+                    {/* Network Info - BEP20 Only */}
+                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-400">
+                          BEP20
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-foreground text-sm font-semibold">
+                            Binance Smart Chain (BEP20)
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            Only BEP20 network is supported for deposits
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {error && (
@@ -642,7 +637,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       <AlertDescription className="text-secondary-foreground">
                         Send <strong>{depositData.amount} USDT</strong> to the
                         address below using{' '}
-                        <strong>{depositData.network}</strong> network
+                        <strong>BEP20 (Binance Smart Chain)</strong> network
                       </AlertDescription>
                     </Alert>
 
@@ -704,7 +699,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <span>
                           Network:{' '}
                           <strong className="text-foreground">
-                            {depositData.network}
+                            BEP20 (Binance Smart Chain)
                           </strong>
                         </span>
                       </div>
@@ -780,8 +775,9 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
                         <strong>Warning:</strong> Only send USDT via{' '}
-                        {depositData.network} network. Sending other tokens or
-                        using wrong network will result in loss of funds.
+                        <strong>BEP20 (Binance Smart Chain)</strong> network.
+                        Sending other tokens or using wrong network will result
+                        in loss of funds.
                       </AlertDescription>
                     </Alert>
 

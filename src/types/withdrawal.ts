@@ -2,7 +2,7 @@
  * Withdrawal Types
  */
 
-export type WithdrawalStatus = 
+export type WithdrawalStatus =
   | 'pending'
   | 'processing'
   | 'approved'
@@ -10,7 +10,7 @@ export type WithdrawalStatus =
   | 'completed'
   | 'cancelled';
 
-export type WithdrawalNetwork = 'TRC20' | 'ERC20';
+export type WithdrawalNetwork = 'BEP20'; // Only BEP20 is supported
 
 export interface Withdrawal {
   id: string;

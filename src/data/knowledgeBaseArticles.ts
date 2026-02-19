@@ -80,7 +80,7 @@ export const knowledgeBaseArticles: Article[] = [
       <ol>
         <li>Navigate to the Wallets section</li>
         <li>Click on "Deposit"</li>
-        <li>Choose your preferred network (BEP20 or TRC20)</li>
+        <li>Network: BEP20 (Binance Smart Chain) only</li>
         <li>Send USDT to the provided wallet address</li>
         <li>Wait for confirmation (usually takes a few minutes)</li>
         <li>Your funds will appear in your Deposit Wallet</li>
@@ -137,7 +137,7 @@ export const knowledgeBaseArticles: Article[] = [
       
       <h4>How Funds Enter Your Deposit Wallet</h4>
       <ol>
-        <li>Make a deposit via BEP20 or TRC20 network</li>
+        <li>Make a deposit via BEP20 (Binance Smart Chain) network</li>
         <li>Funds appear in your Deposit Wallet after confirmation</li>
         <li>You can then use these funds to create stakes or make transfers</li>
       </ol>
@@ -191,7 +191,7 @@ export const knowledgeBaseArticles: Article[] = [
     id: 'deposits-funding',
     title: 'Deposits & Funding',
     description:
-      'Complete guide to depositing USDT via BEP20 or TRC20 networks, limits, and security notes.',
+      'Complete guide to depositing USDT via BEP20 (Binance Smart Chain) network, limits, and security notes.',
     category: 'wallets-finance',
     readTime: 7,
     tags: ['Deposit', 'Funding', 'Security'],
@@ -199,19 +199,18 @@ export const knowledgeBaseArticles: Article[] = [
       <h2>How to Deposit Funds to Novunt</h2>
       <p>This guide explains everything you need to know about depositing USDT to your Novunt account safely and efficiently.</p>
       
-      <h3>Supported Networks</h3>
-      <p>Novunt accepts USDT (Tether) deposits via two blockchain networks:</p>
+      <h3>Supported Network</h3>
+      <p>Novunt accepts USDT (Tether) deposits via Binance Smart Chain (BEP20) network only:</p>
       <ul>
-        <li><strong>BEP20 (Binance Smart Chain):</strong> Lower transaction fees, faster confirmations</li>
-        <li><strong>TRC20 (Tron Network):</strong> Very low fees, fast transactions</li>
+        <li><strong>BEP20 (Binance Smart Chain):</strong> Lower transaction fees, faster confirmations, secure and reliable</li>
       </ul>
-      <p><strong>Important:</strong> Only send USDT. Do not send other cryptocurrencies, as they may be lost.</p>
+      <p><strong>Important:</strong> Only send USDT via BEP20 network. TRC20 addresses are no longer supported. Do not send other cryptocurrencies, as they may be lost.</p>
       
       <h3>Step-by-Step Deposit Process</h3>
       <ol>
         <li><strong>Navigate to Wallets:</strong> Go to the Wallets section from the main navigation</li>
         <li><strong>Click Deposit:</strong> Select the "Deposit" button in your Deposit Wallet card</li>
-        <li><strong>Choose Network:</strong> Select either BEP20 or TRC20 based on your preference</li>
+        <li><strong>Network:</strong> BEP20 (Binance Smart Chain) is the only supported network</li>
         <li><strong>Copy Address:</strong> Copy the wallet address displayed (or scan the QR code)</li>
         <li><strong>Send from External Wallet:</strong> Paste the address in your external wallet and send USDT</li>
         <li><strong>Wait for Confirmation:</strong> Transactions typically confirm within 5-30 minutes</li>
@@ -221,7 +220,7 @@ export const knowledgeBaseArticles: Article[] = [
       <h3>Deposit Limits</h3>
       <p>Novunt may have minimum and maximum deposit limits:</p>
       <ul>
-        <li><strong>Minimum Deposit:</strong> Typically $10-50 USDT (varies by network)</li>
+        <li><strong>Minimum Deposit:</strong> Typically $10-50 USDT</li>
         <li><strong>Maximum Deposit:</strong> May vary based on account verification level</li>
         <li><strong>Daily Limits:</strong> Check your account dashboard for current limits</li>
       </ul>
@@ -231,15 +230,14 @@ export const knowledgeBaseArticles: Article[] = [
       <p>Novunt does not charge deposit fees. However, network fees apply:</p>
       <ul>
         <li><strong>BEP20:</strong> Network fees typically $0.10-1.00</li>
-        <li><strong>TRC20:</strong> Network fees typically $0.01-0.50</li>
       </ul>
-      <p>These fees are paid to the blockchain network, not to Novunt.</p>
+      <p>These fees are paid to the Binance Smart Chain network, not to Novunt.</p>
       
       <h3>Security Best Practices</h3>
       <ul>
         <li><strong>Double-Check Address:</strong> Always verify the wallet address before sending</li>
         <li><strong>Use QR Codes:</strong> Scan QR codes when possible to avoid typing errors</li>
-        <li><strong>Network Matching:</strong> Ensure your external wallet uses the same network (BEP20 or TRC20)</li>
+        <li><strong>Network Matching:</strong> Ensure your external wallet uses BEP20 (Binance Smart Chain) network</li>
         <li><strong>Test Transaction:</strong> For large amounts, consider sending a small test amount first</li>
         <li><strong>Secure Your Wallet:</strong> Keep your external wallet credentials secure</li>
         <li><strong>Wait for Confirmations:</strong> Don't send multiple transactions until the first one confirms</li>
@@ -250,7 +248,7 @@ export const knowledgeBaseArticles: Article[] = [
       <ul>
         <li>Check that enough blockchain confirmations have occurred (usually 12-20)</li>
         <li>Verify you sent USDT, not another cryptocurrency</li>
-        <li>Ensure you used the correct network (BEP20 or TRC20)</li>
+        <li>Ensure you used BEP20 (Binance Smart Chain) network</li>
         <li>Check the transaction hash on a blockchain explorer</li>
         <li>Contact support if the issue persists</li>
       </ul>
@@ -296,9 +294,9 @@ export const knowledgeBaseArticles: Article[] = [
         <li><strong>Select Wallet:</strong> Choose the wallet you want to withdraw from</li>
         <li><strong>Click Withdraw:</strong> Select the "Withdraw" button</li>
         <li><strong>Enter Amount:</strong> Specify the amount you want to withdraw</li>
-        <li><strong>Choose Network:</strong> Select BEP20 or TRC20 network</li>
+        <li><strong>Network:</strong> BEP20 (Binance Smart Chain) is the only supported network</li>
         <li><strong>Enter Address:</strong> Paste your external wallet address (double-check it!)</li>
-        <li><strong>Note:</strong> If you recently changed your wallet address, remember there's a 48-hour moratorium before the new address becomes active for withdrawals</li>
+        <li><strong>Note:</strong> If you recently changed your wallet address, remember there's a 72-hour moratorium before the new address becomes active for withdrawals</li>
         <li><strong>Review & Submit:</strong> Review all details and confirm the withdrawal</li>
         <li><strong>Wait for Approval:</strong> Withdrawals require approval (usually within 24-48 hours)</li>
         <li><strong>Receive Funds:</strong> Once approved, funds will be sent to your external wallet</li>
@@ -327,10 +325,10 @@ export const knowledgeBaseArticles: Article[] = [
       <p>Novunt withdrawal fees structure:</p>
       <ul>
         <li><strong>Platform Fee:</strong> 3% of the withdrawal amount</li>
-        <li><strong>Network Fee:</strong> Paid to blockchain network (BEP20/TRC20)</li>
+        <li><strong>Network Fee:</strong> Paid to Binance Smart Chain (BEP20) network</li>
         <li><strong>Total Cost:</strong> 3% platform fee + network fee deducted from withdrawal amount</li>
       </ul>
-      <p><strong>Fee Calculation Example:</strong> If you withdraw $100, the platform fee is $3 (3%), plus the network fee. The network fee varies based on the blockchain network chosen (BEP20 or TRC20).</p>
+      <p><strong>Fee Calculation Example:</strong> If you withdraw $100, the platform fee is $3 (3%), plus the BEP20 network fee. Network fees are typically $0.10-1.00 for BEP20 transactions.</p>
       <p>Fees are deducted from the withdrawal amount, so ensure you have sufficient balance to cover both the platform fee and network fee.</p>
       
       <h3>Approval Process</h3>
@@ -348,9 +346,9 @@ export const knowledgeBaseArticles: Article[] = [
       <ul>
         <li><strong>Verify Address:</strong> Always double-check the withdrawal address before submitting</li>
         <li><strong>Use QR Codes:</strong> Scan QR codes when possible to avoid errors</li>
-        <li><strong>Network Matching:</strong> Ensure your external wallet supports the selected network</li>
+        <li><strong>Network Matching:</strong> Ensure your external wallet supports BEP20 (Binance Smart Chain) network</li>
         <li><strong>Enable 2FA:</strong> Add an extra layer of security to your account</li>
-        <li><strong>Wallet Address Changes:</strong> Remember that changing your withdrawal address requires a 48-hour moratorium before it becomes active</li>
+        <li><strong>Wallet Address Changes:</strong> Remember that changing your withdrawal address requires a 72-hour moratorium before it becomes active</li>
         <li><strong>Monitor Address Changes:</strong> Check your account settings regularly for any unauthorized wallet address changes</li>
         <li><strong>Start Small:</strong> For first withdrawals, try a small amount to verify the process</li>
         <li><strong>Keep Records:</strong> Save transaction IDs for your records</li>
@@ -2029,13 +2027,13 @@ export const knowledgeBaseArticles: Article[] = [
       <h3>Wallet Address Change Security</h3>
       <p>To protect your account from unauthorized wallet address changes, Novunt implements a security moratorium:</p>
       <ul>
-        <li><strong>48-Hour Moratorium:</strong> When you change your withdrawal wallet address, there is a 48-hour waiting period before the new address becomes active</li>
+        <li><strong>72-Hour Moratorium:</strong> When you change your withdrawal wallet address, there is a 72-hour waiting period before the new address becomes active</li>
         <li><strong>Security Purpose:</strong> This moratorium prevents unauthorized changes and gives you time to detect and report any suspicious activity</li>
-        <li><strong>During Moratorium:</strong> Withdrawals will continue to use your previous wallet address until the 48-hour period expires</li>
+        <li><strong>During Moratorium:</strong> Withdrawals will continue to use your previous wallet address until the 72-hour period expires</li>
         <li><strong>Notification:</strong> You'll receive notifications about the address change and when it becomes active</li>
         <li><strong>Cancel Option:</strong> If the change was unauthorized, you can contact support during the moratorium period to cancel it</li>
       </ul>
-      <p><strong>Why This Matters:</strong> The 48-hour moratorium protects you from hackers who might gain access to your account and try to change your withdrawal address to steal your funds. Always monitor your account for unexpected address changes.</p>
+      <p><strong>Why This Matters:</strong> The 72-hour moratorium protects you from hackers who might gain access to your account and try to change your withdrawal address to steal your funds. Always monitor your account for unexpected address changes.</p>
       
       <h3>Additional Security Features</h3>
       <p>Novunt may offer additional security features:</p>
@@ -2044,7 +2042,7 @@ export const knowledgeBaseArticles: Article[] = [
         <li><strong>Transaction Confirmations:</strong> Require confirmation for sensitive actions</li>
         <li><strong>IP Restrictions:</strong> Limit access to specific IP addresses</li>
         <li><strong>Activity Logs:</strong> Review account activity history</li>
-        <li><strong>Wallet Address Change Moratorium:</strong> 48-hour waiting period for wallet address changes</li>
+        <li><strong>Wallet Address Change Moratorium:</strong> 72-hour waiting period for wallet address changes</li>
       </ul>
       
       <h3>Common Questions</h3>
@@ -2114,7 +2112,7 @@ export const knowledgeBaseArticles: Article[] = [
       <ul>
         <li>Wait for blockchain confirmations (usually 12-20 confirmations)</li>
         <li>Verify you sent USDT (not other cryptocurrencies)</li>
-        <li>Check that you used the correct network (BEP20 or TRC20)</li>
+        <li>Check that you used BEP20 (Binance Smart Chain) network</li>
         <li>Verify the wallet address matches exactly</li>
         <li>Check transaction status on blockchain explorer using TXID</li>
         <li>Contact support with transaction hash if still not appearing</li>
@@ -2183,7 +2181,7 @@ export const knowledgeBaseArticles: Article[] = [
       <h4>What are the withdrawal fees?</h4>
       <ul>
         <li>Novunt charges a 3% platform fee on all withdrawals</li>
-        <li>Blockchain network fees apply (BEP20/TRC20)</li>
+        <li>Blockchain network fees apply (BEP20 only)</li>
         <li>The 3% platform fee is deducted from the withdrawal amount</li>
         <li>Network fees are also deducted from the withdrawal amount</li>
         <li>Total fees = 3% platform fee + network fee</li>

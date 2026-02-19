@@ -1,6 +1,6 @@
 /**
  * Withdrawal Address Requirement Component – Gold Design
- * Shows whether the user has added a BEP20/TRC20 withdrawal address
+ * Shows whether the user has added a BEP20 withdrawal address
  */
 
 'use client';
@@ -77,7 +77,7 @@ export function WithdrawalAddressRequirement({
                 Withdrawal Address
               </h3>
               <p className="text-muted-foreground text-xs">
-                Add a BEP20 or TRC20 wallet
+                Add a BEP20 (Binance Smart Chain) wallet
               </p>
             </div>
           </div>

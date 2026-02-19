@@ -37,13 +37,14 @@ export function formatCurrency(
 
 /**
  * Validate wallet address format
+ * Platform now only supports BEP20 (Binance Smart Chain)
  * @param address - Wallet address to validate
- * @param network - Network type (BEP20, TRC20, ERC20)
+ * @param network - Network type (should be 'BEP20', TRC20 is rejected)
  * @returns Validation result with error message if invalid
  */
 export function validateWalletAddress(
   address: string,
-  network: string
+  network: string = 'BEP20'
 ): { valid: boolean; error?: string } {
   if (!address || address.trim() === '') {
     return { valid: false, error: 'Wallet address is required' };
@@ -51,34 +52,31 @@ export function validateWalletAddress(
 
   const trimmedAddress = address.trim();
 
-  switch (network) {
-    case 'BEP20':
-    case 'ERC20':
-      // Ethereum-style: 0x followed by 40 hex characters
-      const ethRegex = /^0x[a-fA-F0-9]{40}$/;
-      if (!ethRegex.test(trimmedAddress)) {
-        return {
-          valid: false,
-          error:
-            'Invalid BEP20/ERC20 address format. Must start with 0x and be 42 characters.',
-        };
-      }
-      break;
+  // Reject TRC20 addresses explicitly
+  if (trimmedAddress.startsWith('T') && trimmedAddress.length === 34) {
+    return {
+      valid: false,
+      error:
+        'TRC20 addresses are no longer supported. Only BEP20 (Binance Smart Chain) addresses starting with 0x are accepted.',
+    };
+  }
 
-    case 'TRC20':
-      // Tron-style: T followed by 33 base58 characters
-      const tronRegex = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
-      if (!tronRegex.test(trimmedAddress)) {
-        return {
-          valid: false,
-          error:
-            'Invalid TRC20 address format. Must start with T and be 34 characters.',
-        };
-      }
-      break;
+  // Only BEP20 is supported
+  if (network !== 'BEP20') {
+    return {
+      valid: false,
+      error: 'Only BEP20 (Binance Smart Chain) network is supported.',
+    };
+  }
 
-    default:
-      return { valid: false, error: 'Unsupported network' };
+  // BEP20 validation: 0x followed by 40 hex characters
+  const bep20Regex = /^0x[a-fA-F0-9]{40}$/;
+  if (!bep20Regex.test(trimmedAddress)) {
+    return {
+      valid: false,
+      error:
+        'Invalid BEP20 address format. Address must start with 0x followed by 40 hexadecimal characters.',
+    };
   }
 
   return { valid: true };
@@ -355,31 +353,82 @@ export function formatTimeRemaining(milliseconds: number): string {
 
 /**
  * Generate a random test wallet address for development/testing
- * @param network - Network type (TRC20, BEP20, ERC20)
- * @returns A valid-looking test wallet address
+ * Platform now only supports BEP20
+ * @param network - Network type (defaults to BEP20, TRC20 is no longer supported)
+ * @returns A valid-looking test BEP20 wallet address
  *
  * NOTE: This is for TESTING ONLY. Do not use in production.
  * These addresses are randomly generated and not real wallet addresses.
  */
 export function generateTestWalletAddress(
-  network: 'TRC20' | 'BEP20' | 'ERC20' = 'TRC20'
+  network: 'BEP20' | 'ERC20' = 'BEP20'
 ): string {
-  if (network === 'TRC20') {
-    // TRC20: T + 33 base58 characters
-    const base58Chars =
-      '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    const randomChars = Array.from(
-      { length: 33 },
-      () => base58Chars[Math.floor(Math.random() * base58Chars.length)]
-    ).join('');
-    return `T${randomChars}`;
-  } else {
-    // BEP20/ERC20: 0x + 40 hex characters
-    const hexChars = '0123456789abcdef';
-    const randomHex = Array.from(
-      { length: 40 },
-      () => hexChars[Math.floor(Math.random() * hexChars.length)]
-    ).join('');
-    return `0x${randomHex}`;
+  // Only BEP20/ERC20: 0x + 40 hex characters
+  const hexChars = '0123456789abcdef';
+  const randomHex = Array.from(
+    { length: 40 },
+    () => hexChars[Math.floor(Math.random() * hexChars.length)]
+  ).join('');
+  return `0x${randomHex}`;
+}
+
+/**
+ * Validate BEP20 address format
+ * Platform now only supports BEP20 (Binance Smart Chain)
+ * BEP20 addresses are Ethereum-compatible (0x followed by 40 hex characters)
+ * @param address - Address to validate
+ * @returns true if valid BEP20 address
+ */
+export function validateBEP20Address(address: string): boolean {
+  if (!address || typeof address !== 'string') return false;
+
+  const cleanAddress = address.trim().toLowerCase();
+
+  // Reject TRC20 addresses explicitly
+  if (cleanAddress.startsWith('t') && cleanAddress.length === 34) {
+    return false;
+  }
+
+  // BEP20 validation: 0x followed by 40 hex characters
+  const bep20Regex = /^0x[a-f0-9]{40}$/;
+  return bep20Regex.test(cleanAddress);
+}
+
+/**
+ * Format address for display (shows first 6 and last 4 characters)
+ * @param address - Address to format
+ * @returns Formatted address (e.g., "0x1234...5678")
+ */
+export function formatAddress(address: string): string {
+  if (!address) return '';
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+/**
+ * Copy text to clipboard with fallback support
+ * @param text - Text to copy
+ * @returns Promise that resolves to true if successful
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
   }
 }

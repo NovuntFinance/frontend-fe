@@ -143,6 +143,14 @@ export interface WithdrawalLimits {
       instant: string;
       standard: string;
     };
+    withdrawalAddress?: {
+      address: string | null;
+      hasDefaultAddress: boolean;
+      canChange: boolean;
+      moratorium: MoratoriumStatus;
+      network: 'BEP20';
+      note: string;
+    };
   };
 }
 
@@ -180,7 +188,7 @@ export interface SetDefaultAddressRequest {
 export interface WithdrawalRequest {
   amount: number;
   walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
-  network?: 'TRC20' | 'BEP20'; // Optional, backend may use address's network
+  network?: 'BEP20'; // Optional, defaults to BEP20 (only supported network)
   twoFACode: string; // Required
   /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
   turnstileToken?: string;

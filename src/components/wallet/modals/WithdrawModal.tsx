@@ -40,7 +40,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [formData, setFormData] = useState({
     amount: '',
     walletAddress: '',
-    network: 'BEP20',
+    network: 'BEP20' as const, // Only BEP20 is supported
   });
   const [error, setError] = useState('');
   const [withdrawalId, setWithdrawalId] = useState('');
@@ -64,7 +64,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   useEffect(() => {
     if (isOpen) {
       setStep('form');
-      setFormData({ amount: '', walletAddress: '', network: 'BEP20' });
+      setFormData({ amount: '', walletAddress: '', network: 'BEP20' as const });
       setError('');
       refetch();
     }
@@ -108,7 +108,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       const response = await withdrawMutation.mutateAsync({
         amount,
         address: formData.walletAddress,
-        network: formData.network as 'BEP20' | 'TRC20',
+        network: 'BEP20' as const, // Only BEP20 is supported
         // No currency field needed - backend always uses USDT
       });
 
@@ -284,46 +284,27 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         </Button>
                       </div>
 
-                      {/* Network Selection */}
-                      <div className="space-y-2">
-                        <Label>Network</Label>
-                        <RadioGroup
-                          value={formData.network}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, network: value })
-                          }
-                        >
-                          <div className="hover:bg-muted flex cursor-pointer items-center space-x-2 rounded-lg border p-3">
-                            <RadioGroupItem value="BEP20" id="bep20" />
-                            <Label
-                              htmlFor="bep20"
-                              className="flex-1 cursor-pointer"
-                            >
-                              <div className="font-semibold">BEP20 (BSC)</div>
-                              <div className="text-muted-foreground text-xs">
-                                Binance Smart Chain - Fast & Low Fees
-                              </div>
-                            </Label>
+                      {/* Network Info - BEP20 Only */}
+                      <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-400">
+                            BEP20
                           </div>
-                          <div className="hover:bg-muted flex cursor-pointer items-center space-x-2 rounded-lg border p-3">
-                            <RadioGroupItem value="TRC20" id="trc20" />
-                            <Label
-                              htmlFor="trc20"
-                              className="flex-1 cursor-pointer"
-                            >
-                              <div className="font-semibold">TRC20 (Tron)</div>
-                              <div className="text-muted-foreground text-xs">
-                                Tron Network - Very Fast
-                              </div>
-                            </Label>
+                          <div className="flex-1">
+                            <p className="text-foreground text-sm font-semibold">
+                              Binance Smart Chain (BEP20)
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              Only BEP20 network is supported for withdrawals
+                            </p>
                           </div>
-                        </RadioGroup>
+                        </div>
                       </div>
 
                       {/* Wallet Address */}
                       <div className="space-y-2">
                         <Label htmlFor="address">
-                          Your {formData.network} Wallet Address
+                          Your BEP20 Wallet Address
                         </Label>
                         <Input
                           id="address"

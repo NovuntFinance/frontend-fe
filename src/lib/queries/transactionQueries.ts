@@ -34,7 +34,7 @@ export interface Transaction {
     // Deposit
     invoiceId?: string;
     paymentAddress?: string;
-    network?: 'BEP20' | 'TRC20';
+    network?: 'BEP20'; // Only BEP20 is supported
 
     // Withdrawal
     withdrawalAddress?: string;

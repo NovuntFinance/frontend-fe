@@ -207,7 +207,7 @@ export function useWithdrawalLimits() {
               percentage: 3.0,
               description: '3% fee applied to all withdrawals',
             },
-            supportedNetworks: ['TRC20', 'BEP20'],
+            supportedNetworks: ['BEP20'], // Only BEP20 is supported
             processingTimes: {
               instant: '5-15 minutes (amounts under $50)',
               standard: '1-24 hours (admin approval required)',
@@ -454,7 +454,7 @@ export function useCreateWithdrawal() {
     mutationFn: (payload: {
       amount: number;
       walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
-      network?: 'TRC20' | 'BEP20';
+      network?: 'BEP20'; // Only BEP20 is supported
       twoFACode: string; // Required
       turnstileToken?: string; // Cloudflare Turnstile; required when backend has TURNSTILE_SECRET_KEY set
     }) => walletApi.createWithdrawal(payload),

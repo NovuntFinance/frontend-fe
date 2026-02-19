@@ -48,6 +48,18 @@ import { toast } from '@/components/ui/enhanced-toast';
 import { AvatarSelector } from '@/components/profile/AvatarSelector';
 import { BadgeAvatarSelector } from '@/components/achievements/BadgeAvatarSelector';
 import { passwordSchema } from '@/lib/validation';
+import {
+  useDefaultWithdrawalAddress,
+  useSetDefaultWithdrawalAddress,
+} from '@/hooks/useWallet';
+import {
+  validateBEP20Address,
+  formatAddress,
+  copyToClipboard,
+} from '@/lib/utils/wallet';
+import { Wallet, Copy, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MoratoriumCountdown } from '@/components/wallet/MoratoriumCountdown';
 
 // Profile edit schema
 const profileEditSchema = z.object({
@@ -143,6 +155,16 @@ export function ProfileEditModal({
   const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(
     undefined
   );
+
+  // Withdrawal address state
+  const { data: withdrawalAddressData, isLoading: withdrawalAddressLoading } =
+    useDefaultWithdrawalAddress();
+  const { mutate: setWithdrawalAddress, isPending: isSettingAddress } =
+    useSetDefaultWithdrawalAddress();
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
+  const [withdrawalAddress2FA, setWithdrawalAddress2FA] = useState('');
+  const [addressCopied, setAddressCopied] = useState(false);
 
   // Profile edit form
   const {
@@ -1149,6 +1171,277 @@ export function ProfileEditModal({
                 </Button>
               </div>
             </form>
+
+            {/* Withdrawal Address Section */}
+            <div className="mt-8 space-y-4 rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+              <div className="space-y-2">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+                  <Wallet className="h-5 w-5" />
+                  Withdrawal Address
+                </h3>
+                <p className="text-sm text-white/60">
+                  Set your default withdrawal address. All withdrawals will be
+                  sent to this address. You can change it after 72 hours for
+                  security reasons.
+                </p>
+              </div>
+
+              {withdrawalAddressLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <NovuntSpinner size="sm" />
+                </div>
+              ) : !isEditingAddress &&
+                withdrawalAddressData?.hasDefaultAddress ? (
+                <div className="space-y-4">
+                  {/* Current Address Display */}
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-semibold tracking-wider text-white/70 uppercase">
+                        Current Address
+                      </span>
+                      {withdrawalAddressData.canChange && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsEditingAddress(true);
+                            setNewWithdrawalAddress(
+                              withdrawalAddressData.address || ''
+                            );
+                          }}
+                          className="border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <code className="flex-1 font-mono text-sm break-all text-white">
+                        {withdrawalAddressData.address}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={async () => {
+                          if (withdrawalAddressData.address) {
+                            const success = await copyToClipboard(
+                              withdrawalAddressData.address
+                            );
+                            if (success) {
+                              setAddressCopied(true);
+                              setTimeout(() => setAddressCopied(false), 2000);
+                              toast.success('Address copied to clipboard');
+                            }
+                          }
+                        }}
+                        className="h-8 w-8 shrink-0"
+                      >
+                        {addressCopied ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-white/50" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-white/50">Network:</span>
+                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-400">
+                        {withdrawalAddressData.network}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Moratorium Status */}
+                  {withdrawalAddressData.moratorium?.active && (
+                    <Alert className="border-amber-500/30 bg-amber-500/10">
+                      <Clock className="h-4 w-4 text-amber-400" />
+                      <AlertTitle className="text-sm font-semibold text-amber-400">
+                        Address Change Locked
+                      </AlertTitle>
+                      <AlertDescription className="space-y-2 text-xs text-amber-300/80">
+                        <p>
+                          {withdrawalAddressData.note ||
+                            `You can change this address in ${withdrawalAddressData.moratorium.hoursRemaining} hour(s) and ${withdrawalAddressData.moratorium.minutesRemaining} minute(s).`}
+                        </p>
+                        {withdrawalAddressData.moratorium
+                          .canChangeAtFormatted && (
+                          <p className="mt-1">
+                            You can change this address on{' '}
+                            {
+                              withdrawalAddressData.moratorium
+                                .canChangeAtFormatted
+                            }
+                          </p>
+                        )}
+                        {/* Live countdown timer */}
+                        <MoratoriumCountdown
+                          moratorium={withdrawalAddressData.moratorium}
+                          onExpired={() => {
+                            // Refetch address status when moratorium expires
+                            // This will be handled by React Query's refetch
+                          }}
+                        />
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {!withdrawalAddressData.moratorium?.active && (
+                    <Alert className="border-green-500/30 bg-green-500/10">
+                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      <AlertDescription className="text-xs text-green-300/80">
+                        {withdrawalAddressData.note ||
+                          'You can change this address now.'}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!validateBEP20Address(newWithdrawalAddress)) {
+                      toast.error('Invalid Address', {
+                        description:
+                          'Please enter a valid BEP20 (BSC) address starting with 0x.',
+                      });
+                      return;
+                    }
+                    if (
+                      !withdrawalAddress2FA ||
+                      withdrawalAddress2FA.length !== 6
+                    ) {
+                      toast.error('2FA Required', {
+                        description: 'Please enter your 6-digit 2FA code.',
+                      });
+                      return;
+                    }
+                    setWithdrawalAddress(
+                      {
+                        address: newWithdrawalAddress,
+                        network: 'BEP20',
+                        twoFACode: withdrawalAddress2FA,
+                      },
+                      {
+                        onSuccess: () => {
+                          setIsEditingAddress(false);
+                          setWithdrawalAddress2FA('');
+                          toast.success(
+                            'Withdrawal address updated successfully!'
+                          );
+                        },
+                        onError: (error: any) => {
+                          const errorMessage =
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            'Failed to update withdrawal address';
+                          if (
+                            error?.response?.data?.code ===
+                            'ADDRESS_MORATORIUM_ACTIVE'
+                          ) {
+                            toast.error('Cannot Change Address Yet', {
+                              description: errorMessage,
+                            });
+                          } else {
+                            toast.error('Update Failed', {
+                              description: errorMessage,
+                            });
+                          }
+                        },
+                      }
+                    );
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="withdrawalAddress"
+                      className="text-white/90"
+                    >
+                      Withdrawal Address <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="withdrawalAddress"
+                      type="text"
+                      value={newWithdrawalAddress}
+                      onChange={(e) => setNewWithdrawalAddress(e.target.value)}
+                      placeholder="0x..."
+                      className="border-white/20 bg-white/10 font-mono text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
+                    />
+                    <p className="text-xs text-white/50">
+                      Enter a valid BEP20 (Binance Smart Chain) wallet address
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="withdrawal2FA" className="text-white/90">
+                      2FA Verification Code{' '}
+                      <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="withdrawal2FA"
+                      type="text"
+                      value={withdrawalAddress2FA}
+                      onChange={(e) => {
+                        const value = e.target.value
+                          .replace(/\D/g, '')
+                          .slice(0, 6);
+                        setWithdrawalAddress2FA(value);
+                      }}
+                      placeholder="000000"
+                      maxLength={6}
+                      className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/30 focus:bg-white/15"
+                    />
+                    <p className="text-xs text-white/50">
+                      Enter your 6-digit code from your authenticator app
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    {withdrawalAddressData?.hasDefaultAddress && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingAddress(false);
+                          setNewWithdrawalAddress(
+                            withdrawalAddressData.address || ''
+                          );
+                          setWithdrawalAddress2FA('');
+                        }}
+                        className="border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSettingAddress ||
+                        !newWithdrawalAddress ||
+                        !withdrawalAddress2FA
+                      }
+                      className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/70 active:scale-[0.98]"
+                    >
+                      {isSettingAddress ? (
+                        <>
+                          <NovuntSpinner size="sm" className="mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="mr-2 h-4 w-4" />
+                          {withdrawalAddressData?.hasDefaultAddress
+                            ? 'Update Address'
+                            : 'Set Address'}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

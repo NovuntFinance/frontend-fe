@@ -119,7 +119,7 @@ export interface TransferBetweenWalletsPayload {
 
 export interface DepositAddress {
   address: string;
-  network: 'TRC20' | 'ERC20';
+  network: 'BEP20'; // Only BEP20 is supported
   qrCode: string;
   minimumDeposit: number;
   instructions: string[];
@@ -135,7 +135,7 @@ export interface InitiateDepositResponse {
   address: string;
   amount: number;
   currency: 'USDT';
-  network: 'TRC20' | 'ERC20';
+  network: 'BEP20'; // Only BEP20 is supported
   qrCode: string;
   expiresAt: string;
   status: 'pending' | 'completed' | 'failed' | 'expired';
