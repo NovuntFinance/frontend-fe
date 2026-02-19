@@ -251,24 +251,38 @@ export const authService = {
   /**
    * 8. Complete MFA setup - Verify TOTP code to enable 2FA
    * POST /better-auth/mfa/verify [Protected]
+   * Backend guide: userId is NOT required - backend extracts from auth token
    * @param payload - Verification token (from setup) and 6-digit TOTP code
-   * @returns Success message and optional backup codes
+   * @returns Success message and backup codes array
    */
   enable2FA: async (payload: Enable2FARequest): Promise<Enable2FAResponse> => {
+    // Backend guide: Only send verificationToken and verificationCode
+    // Backend extracts userId from Authorization token
+    const requestPayload = {
+      verificationToken: payload.verificationToken,
+      verificationCode: payload.verificationCode,
+    };
+
     const response = await api.post<InternalEnable2FAResponse>(
       '/better-auth/mfa/verify',
-      payload
+      requestPayload
     );
 
-    // Map backend response structure (backupCodes may be in response.data.data)
+    // Map backend response structure per guide:
+    // { success: true, data: { backupCodes: [...], user: {...} } }
     if (response && typeof response === 'object') {
-      const data = response as {
-        message?: string;
-        data?: { backupCodes?: string[] };
-      };
+      const responseData = response as any;
+
+      // Extract backup codes from various possible locations
+      const backupCodes =
+        responseData.backupCodes ||
+        responseData.data?.backupCodes ||
+        responseData.data?.data?.backupCodes ||
+        [];
+
       return {
-        message: data.message || 'MFA setup completed successfully',
-        backupCodes: data.data?.backupCodes,
+        message: responseData.message || 'MFA setup completed successfully',
+        backupCodes: backupCodes.length > 0 ? backupCodes : undefined,
       } as Enable2FAResponse;
     }
 

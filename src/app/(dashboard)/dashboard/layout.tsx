@@ -92,6 +92,21 @@ export default function DashboardLayout({
       window.removeEventListener('openProfileModal', handleOpenProfileModal);
     };
   }, []);
+
+  // Listen for 2FA modal open event from registration bonus components
+  useEffect(() => {
+    const handleOpenTwoFactorModal = () => {
+      setTwoFactorModalOpen(true);
+    };
+
+    window.addEventListener('openTwoFactorModal', handleOpenTwoFactorModal);
+    return () => {
+      window.removeEventListener(
+        'openTwoFactorModal',
+        handleOpenTwoFactorModal
+      );
+    };
+  }, []);
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useUser();
@@ -565,7 +580,12 @@ export default function DashboardLayout({
         <TwoFactorModal
           open={twoFactorModalOpen}
           onOpenChange={setTwoFactorModalOpen}
-          onEnable={() => setTwoFactorEnabled(true)}
+          onEnable={() => {
+            setTwoFactorEnabled(true);
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('refetchRegistrationBonus'));
+            }, 500);
+          }}
         />
 
         {/* Global Wallet Modals */}

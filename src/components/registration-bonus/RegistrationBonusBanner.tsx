@@ -1,21 +1,18 @@
 /**
- * Registration Bonus Banner - Premium Gold Design
- * Modern, attractive design with gold accents and elegant layout
+ * Registration Bonus Banner – Premium Gold Design
+ * 5-step progress tracker:
+ *   1. Registration (20%)  – automatic
+ *   2. 2FA Setup (20%)
+ *   3. Withdrawal Address (20%)
+ *   4. Social Media – ALL 5 (20%)
+ *   5. First Stake ≥ 20 USDT (20%)
  */
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Gift,
-  Star,
-  CheckCircle2,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { X, Gift, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
 import { RegistrationBonusStatus } from '@/types/registrationBonus';
 import {
@@ -27,20 +24,15 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShimmerCard } from '@/components/ui/shimmer';
-import { Progress } from '@/components/ui/progress';
 import { CountdownTimer } from './CountdownTimer';
 import { RequirementSection } from './RequirementSection';
 import { BonusActivatedCard } from './BonusActivatedCard';
 import { BonusExpiredCard } from './BonusExpiredCard';
+import { BonusCompletedCard } from '@/components/registration-bonus/BonusCompletedCard';
 import { ErrorState } from './ErrorState';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
-/**
- * Premium Gold Registration Bonus Banner
- * Modern design with gold accents and elegant layout
- */
 export function RegistrationBonusBanner() {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
   const [isDismissed, setIsDismissed] = useState(false);
@@ -60,7 +52,6 @@ export function RegistrationBonusBanner() {
     }
   }, []);
 
-  // Cleanup confetti on unmount
   useEffect(() => {
     return () => {
       if (confettiIntervalRef.current) {
@@ -69,30 +60,16 @@ export function RegistrationBonusBanner() {
     };
   }, []);
 
-  // Trigger confetti helper
   const fireConfetti = () => {
-    // NUCLEAR OPTION: Check localStorage FIRST before anything else
     if (
       typeof window !== 'undefined' &&
       localStorage.getItem('novunt_bonus_confetti_shown') === 'true'
     ) {
-      console.log(
-        '[RegistrationBonusBanner] ⛔ Confetti already shown (localStorage check), aborting'
-      );
       return;
     }
+    if (confettiFiredRef.current) return;
 
-    // Double check ref to prevent duplicate firing in same session
-    if (confettiFiredRef.current) {
-      console.log(
-        '[RegistrationBonusBanner] ⛔ Confetti already fired in this session (ref check), aborting'
-      );
-      return;
-    }
-
-    console.log('[RegistrationBonusBanner] 🎉 Firing confetti!');
     confettiFiredRef.current = true;
-
     const duration = 3000;
     const animationEnd = Date.now() + duration;
     const defaults = {
@@ -102,34 +79,23 @@ export function RegistrationBonusBanner() {
       zIndex: 9999,
       colors: ['#FFD700', '#FFA500', '#10B981', '#059669', '#34D399'],
     };
+    const randomInRange = (min: number, max: number) =>
+      Math.random() * (max - min) + min;
 
-    const randomInRange = (min: number, max: number) => {
-      return Math.random() * (max - min) + min;
-    };
-
-    // Clear any existing interval
-    if (confettiIntervalRef.current) {
-      clearInterval(confettiIntervalRef.current);
-    }
+    if (confettiIntervalRef.current) clearInterval(confettiIntervalRef.current);
 
     const interval = setInterval(() => {
       const timeLeft = animationEnd - Date.now();
-
       if (timeLeft <= 0) {
         clearInterval(interval);
         return;
       }
-
       const particleCount = 50 * (timeLeft / duration);
-
-      // Fire confetti from left side
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
       });
-
-      // Fire confetti from right side
       confetti({
         ...defaults,
         particleCount,
@@ -144,22 +110,16 @@ export function RegistrationBonusBanner() {
   useEffect(() => {
     const handleBonusCompleted = (event: any) => {
       const { bonusAmount } = event.detail || {};
-
-      // Check localStorage directly to be safe
       const isShown =
         typeof window !== 'undefined' &&
         localStorage.getItem('novunt_bonus_confetti_shown') === 'true';
 
       if (!hasShownConfetti && !isShown && !confettiFiredRef.current) {
-        console.log(
-          '[RegistrationBonusBanner] 🎉 Bonus completed event received!',
-          { bonusAmount }
-        );
         fireConfetti();
         setHasShownConfetti(true);
         localStorage.setItem('novunt_bonus_confetti_shown', 'true');
 
-        toast.success('🎉 Bonus Activated!', {
+        toast.success('Bonus Activated!', {
           description: `Congratulations! You've unlocked your ${bonusAmount ? `$${bonusAmount}` : '10%'} registration bonus!`,
           duration: 7000,
           id: 'bonus-activated-toast',
@@ -178,41 +138,10 @@ export function RegistrationBonusBanner() {
     };
   }, [hasShownConfetti, refetch]);
 
-  // Debug: Log when we detect 100% progress (but DON'T trigger confetti here)
-  // Confetti will ONLY be triggered by the 'registrationBonusCompleted' event
-  useEffect(() => {
-    const progressPercentage = data?.data?.progressPercentage ?? 0;
-    const status = data?.data?.status;
-
-    if (
-      progressPercentage === 100 &&
-      (status === RegistrationBonusStatus.REQUIREMENTS_MET ||
-        status === RegistrationBonusStatus.BONUS_ACTIVE)
-    ) {
-      // Check localStorage directly
-      const isShown =
-        typeof window !== 'undefined' &&
-        localStorage.getItem('novunt_bonus_confetti_shown') === 'true';
-
-      console.log('[RegistrationBonusBanner] 🔍 Detected 100% progress', {
-        hasShownConfetti,
-        isShownInLocalStorage: isShown,
-        confettiFiredRef: confettiFiredRef.current,
-        willTrigger: !hasShownConfetti && !isShown && !confettiFiredRef.current,
-        status,
-      });
-
-      // NOTE: We do NOT trigger confetti here anymore to prevent repeated confetti on navigation.
-      // Confetti is ONLY triggered by the 'registrationBonusCompleted' event (when stake is created).
-    }
-  }, [data?.data?.progressPercentage, data?.data?.status, hasShownConfetti]);
-
-  // Check if dismissed in localStorage, but only respect it for completed/expired/cancelled bonuses
+  // Check dismissal only for final states
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const dismissed = localStorage.getItem('novunt_bonus_dismissed');
-      // Only respect dismissal if bonus is in a final state (completed, expired, cancelled)
-      // If bonus is still pending/active, always show it to encourage completion
       if (dismissed === 'true' && data?.data) {
         const status = data.data.status;
         const isFinalState =
@@ -222,246 +151,62 @@ export function RegistrationBonusBanner() {
         if (isFinalState) {
           setIsDismissed(true);
         } else {
-          // Clear dismissal flag if bonus is still active
           localStorage.removeItem('novunt_bonus_dismissed');
           setIsDismissed(false);
         }
-      } else if (dismissed === 'true' && !data?.data && !isLoading) {
-        // If data hasn't loaded yet, don't dismiss yet
-        setIsDismissed(false);
       }
     }
-  }, [data, isLoading]);
+  }, [data]);
 
-  // Listen for refetch event (triggered after profile update)
+  // Listen for refetch event (triggered after 2FA setup, wallet addition, etc.)
   React.useEffect(() => {
-    const handleRefetch = () => {
-      refetch();
-    };
-
+    const handleRefetch = () => refetch();
     window.addEventListener('refetchRegistrationBonus', handleRefetch);
-    return () => {
+    return () =>
       window.removeEventListener('refetchRegistrationBonus', handleRefetch);
-    };
   }, [refetch]);
 
-  // Don't render if dismissed
-  if (isDismissed) {
-    if (process.env.NODE_ENV === 'development') {
-      return (
-        <Card className="mb-6 border-yellow-500/30 bg-yellow-500/5">
-          <CardContent className="p-4">
-            <p className="text-muted-foreground text-xs">
-              🐛 [DEV] Registration Bonus Banner is dismissed.
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
-    return null;
-  }
+  if (isDismissed) return null;
 
-  // Loading state
-  if (isLoading) {
-    return <BannerSkeleton />;
-  }
+  // Loading
+  if (isLoading) return <BannerSkeleton />;
 
-  // Error state
+  // Error handling
   if (error) {
-    // ✅ Comprehensive error extraction - handle ApiError format from API client
     const err = error as any;
-    const status =
-      err?.statusCode || // ApiError format (from API client interceptor)
-      err?.response?.status || // Axios error response
-      err?.status; // Direct status
-
-    // Try multiple paths for error message - ApiError format is prioritized
-    // The API client transforms errors into ApiError: { success: false, message: string, statusCode: number }
+    const status = err?.statusCode || err?.response?.status || err?.status;
     const errorMessage =
-      err?.message || // ✅ ApiError format (API client transformed) - CHECK FIRST
-      err?.response?.data?.message || // Axios error response (raw backend error)
-      err?.data?.message || // Direct data message
-      err?.response?.data?.error?.message || // Nested error object
-      err?.error?.message || // Error property
-      'Unable to load bonus status'; // Fallback
+      err?.message ||
+      err?.response?.data?.message ||
+      'Unable to load bonus status';
 
-    // 404 is expected for users without bonus records - use warn instead of error
-    // This prevents Next.js error overlay from showing
-    const isExpectedError = status === 404;
-    const logMethod = isExpectedError ? console.warn : console.error;
-    const logPrefix = isExpectedError
-      ? '⚠️ [RegistrationBonusBanner] Expected 404 - no bonus record'
-      : '❌ [RegistrationBonusBanner] Error loading bonus status';
-
-    // Better error serialization to avoid empty objects
-    const errorInfo: Record<string, unknown> = {
-      status,
-      extractedMessage: errorMessage,
-      errorStructure: {
-        hasMessage: !!err?.message,
-        hasStatusCode: !!err?.statusCode,
-        hasResponse: !!err?.response,
-        hasResponseData: !!err?.response?.data,
-        hasResponseDataMessage: !!err?.response?.data?.message,
-      },
-    };
-
-    // Only include full error details in development
-    if (process.env.NODE_ENV === 'development') {
-      errorInfo.errorObject = err;
-      errorInfo.responseData = err?.response?.data;
-      errorInfo.fullError = error;
-    }
-
-    logMethod(logPrefix, errorInfo);
-
-    if (status === 404) {
-      if (process.env.NODE_ENV === 'development') {
-        return (
-          <Card className="mb-6 border-blue-500/30 bg-blue-500/5">
-            <CardContent className="p-4">
-              <p className="text-foreground mb-2 text-sm font-semibold">
-                🐛 [DEV] Registration Bonus Banner Debug
-              </p>
-              <p className="text-muted-foreground mb-2 text-xs">
-                Status: 404 - No registration bonus record found.
-              </p>
-            </CardContent>
-          </Card>
-        );
-      }
-      return null;
-    }
-
+    if (status === 404) return null;
     return <ErrorState message={errorMessage} onRetry={() => refetch()} />;
   }
 
-  // No data
-  if (!data?.data) {
-    if (process.env.NODE_ENV === 'development') {
-      return (
-        <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
-          <CardContent className="p-4">
-            <p className="text-muted-foreground text-xs">
-              🐛 [DEV] No bonus data returned from API.
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
-    return null;
-  }
+  if (!data?.data) return null;
 
   const bonusData = data.data;
   const { status, progressPercentage, bonusPercentage } = bonusData;
-
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    // Use legacy profile field if available, otherwise use requirements.profileCompletion
-    const profileDetails = bonusData.profile?.details || [];
-    const profileCompletionPercentage =
-      bonusData.profile?.completionPercentage ??
-      bonusData.requirements?.profileCompletion?.percentage ??
-      0;
-    const completedFields = profileDetails.filter(
-      (d: any) => d.isCompleted
-    ).length;
-    const totalFields = profileDetails.length;
-
-    // Calculate expected overall progress based on correct logic:
-    // 25% (registration) + 25% (profile) + 25% (social - at least 1) + 25% (stake) = 100%
-    const expectedOverallProgress = (() => {
-      let progress = 25; // Base: Registration = 25%
-      if (profileCompletionPercentage === 100) progress += 25; // Profile complete = +25%
-      const socialCompleted =
-        bonusData.socialMedia?.completed ??
-        bonusData.requirements?.socialMediaVerification?.verifiedCount ??
-        0;
-      if (socialCompleted >= 1) progress += 25; // Social verified (at least 1) = +25%
-      const stakeCompleted =
-        (bonusData.firstStake &&
-          'stakeId' in bonusData.firstStake &&
-          bonusData.firstStake.stakeId) ??
-        bonusData.requirements?.firstStake?.completed ??
-        false;
-      if (stakeCompleted) progress += 25; // First stake = +25%
-      return progress;
-    })();
-
-    console.log('[RegistrationBonusBanner] 🔍 Data Debug:', {
-      status,
-      progressPercentage: `${progressPercentage}% (Expected: ${expectedOverallProgress}%)`,
-      bonusPercentage,
-      profileCompletion: `${profileCompletionPercentage}% (Profile: ${completedFields}/${totalFields} fields completed)`,
-      profileDetails: {
-        totalFields,
-        completedFields,
-        expectedPercentage:
-          totalFields > 0
-            ? Math.round((completedFields / totalFields) * 100)
-            : 0,
-        fields: profileDetails.map((d: any) => ({
-          field: d.fieldName,
-          completed: d.isCompleted,
-        })),
-      },
-      socialCompleted: `${bonusData.socialMedia?.completed ?? bonusData.requirements?.socialMediaVerification?.verifiedCount ?? 0}/${bonusData.socialMedia?.minimumRequired ?? bonusData.requirements?.socialMediaVerification?.totalRequired ?? 5}`,
-      stakeCompleted:
-        (bonusData.firstStake &&
-          'stakeId' in bonusData.firstStake &&
-          bonusData.firstStake.stakeId) ??
-        bonusData.requirements?.firstStake?.completed ??
-        false,
-      expectedOverallProgress: `${expectedOverallProgress}%`,
-      progressBreakdown: {
-        registration: '25% (automatic)',
-        profile: profileCompletionPercentage === 100 ? '+25%' : '+0%',
-        social:
-          (bonusData.socialMedia?.completed ??
-            bonusData.requirements?.socialMediaVerification?.verifiedCount ??
-            0) >= 1
-            ? '+25%'
-            : '+0%',
-        stake:
-          ((bonusData.firstStake &&
-            'stakeId' in bonusData.firstStake &&
-            bonusData.firstStake.stakeId) ??
-          bonusData.requirements?.firstStake?.completed ??
-          false)
-            ? '+25%'
-            : '+0%',
-        total: `${expectedOverallProgress}%`,
-      },
-      fullData: bonusData,
-    });
-  }
-
-  // Ensure we have valid numbers (fallback to 0 if undefined/null)
   const safeProgressPercentage =
     typeof progressPercentage === 'number' ? progressPercentage : 0;
-  const safeProfileCompletion =
-    bonusData.profile?.completionPercentage ??
-    bonusData.requirements?.profileCompletion?.percentage ??
-    0;
 
-  // Handle dismiss - only allow dismissal for final states
+  // Resolve countdown deadline – prefer V2 `deadline`, fallback to legacy `expiresAt`
+  const countdownDeadline = bonusData.deadline || bonusData.expiresAt;
+
   const handleDismiss = () => {
-    const status = bonusData?.status;
     const isFinalState =
       status === RegistrationBonusStatus.COMPLETED ||
       status === RegistrationBonusStatus.EXPIRED ||
       status === RegistrationBonusStatus.CANCELLED ||
       status === RegistrationBonusStatus.BONUS_ACTIVE;
 
-    // Only allow dismissal if bonus is in a final state
-    // Don't allow dismissal for pending/requirements_met bonuses (users should complete them)
     if (isFinalState) {
       setIsDismissed(true);
       if (typeof window !== 'undefined') {
         localStorage.setItem('novunt_bonus_dismissed', 'true');
       }
     } else {
-      // Show a message that the banner can't be dismissed yet
       toast.info('Complete the bonus requirements to dismiss this banner', {
         description:
           'The banner will remain visible until you complete or the bonus expires',
@@ -500,8 +245,38 @@ export function RegistrationBonusBanner() {
       );
 
     case RegistrationBonusStatus.COMPLETED:
+      return (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <BonusCompletedCard bonusData={bonusData} />
+          </motion.div>
+        </AnimatePresence>
+      );
+
     case RegistrationBonusStatus.CANCELLED:
-      return null;
+      return (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="border-muted bg-muted/30">
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground text-sm">
+                  Your registration bonus has been cancelled.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+      );
 
     case RegistrationBonusStatus.PENDING:
     case RegistrationBonusStatus.REQUIREMENTS_MET:
@@ -547,7 +322,7 @@ export function RegistrationBonusBanner() {
                         Welcome Bonus: {bonusPercentage}% on First Stake!
                       </CardTitle>
                       <CardDescription className="truncate text-[10px] sm:text-xs">
-                        Complete all requirements to unlock your bonus
+                        Complete all 5 steps within 7 days to unlock your bonus
                       </CardDescription>
                     </div>
                   </div>
@@ -580,10 +355,10 @@ export function RegistrationBonusBanner() {
 
               <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
                 {/* Countdown Timer */}
-                {bonusData.expiresAt && (
+                {countdownDeadline && (
                   <div className="mb-4">
                     <CountdownTimer
-                      deadline={bonusData.expiresAt}
+                      deadline={countdownDeadline}
                       timeRemaining={bonusData.timeRemaining ?? 0}
                       onExpire={() => refetch()}
                     />
@@ -608,9 +383,14 @@ export function RegistrationBonusBanner() {
                       transition={{ duration: 0.8, ease: 'easeOut' }}
                     />
                   </div>
+                  <p className="text-muted-foreground mt-1 text-[10px]">
+                    {safeProgressPercentage < 100
+                      ? `${Math.ceil((100 - safeProgressPercentage) / 20)} step${Math.ceil((100 - safeProgressPercentage) / 20) !== 1 ? 's' : ''} remaining`
+                      : 'All steps complete!'}
+                  </p>
                 </div>
 
-                {/* Requirements Section */}
+                {/* Requirements Section – expanded */}
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -641,9 +421,6 @@ export function RegistrationBonusBanner() {
   }
 }
 
-/**
- * Loading skeleton
- */
 function BannerSkeleton() {
   return <ShimmerCard className="h-full" />;
 }

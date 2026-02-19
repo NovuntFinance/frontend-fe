@@ -1,6 +1,13 @@
 /**
  * Registration Bonus Types
- * Complete type definitions for registration bonus feature
+ * Complete type definitions for the 5-step registration bonus feature
+ *
+ * Backend V2 Steps (20% each):
+ *   1. Registration    — automatic on email verification
+ *   2. 2FA Setup       — user enables Google Authenticator
+ *   3. Withdrawal Addr — user adds BEP20/TRC20 wallet
+ *   4. Social Media    — user verifies ALL 5 platforms
+ *   5. First Stake     — user stakes >= 20 USDT
  */
 
 // ============================================
@@ -41,31 +48,55 @@ export interface RegistrationBonusStatusResponse {
 }
 
 export interface RegistrationBonusData {
-  // Status Information
+  // Status
   status: RegistrationBonusStatus;
-  bonusPercentage: number; // e.g., 10
+  bonusPercentage: number;
+  bonusAmount?: number | null;
 
-  // Progress Tracking
-  progressPercentage: number; // 0, 20, 40, 60, 80, 100
-  daysRemaining: number; // 7-day countdown
+  // Progress
+  progressPercentage: number;
+  allRequirementsMet: boolean;
 
-  // Requirements Breakdown (V2 - Matching Backend Structure)
+  // Deadline
+  deadline?: string;
+  daysRemaining: number;
+
+  // Bonus payout info (populated when status is bonus_active / completed)
+  bonus?: {
+    totalAmount: number;
+    paidOut: number;
+    remaining: number;
+    activatedAt?: string | null;
+    completedAt?: string | null;
+    // Legacy aliases — kept for backward compat with older backend versions
+    amount?: number;
+    total?: number;
+    remainingBonus?: number;
+    bonusPaidOut?: number;
+    weeklyPayoutCount?: number;
+    payouts?: unknown[];
+  };
+
+  // Requirements breakdown (V2 — 5 steps)
   requirements: {
     twoFASetup: {
       isCompleted: boolean;
-      completedAt: string | null;
+      completedAt?: string | null;
     };
     withdrawalAddressWhitelist: {
       isCompleted: boolean;
-      address: string | null;
-      network: 'BEP20' | null;
+      address?: string | null;
+      network?: 'BEP20' | 'TRC20' | null;
+      completedAt?: string | null;
     };
     socialMediaVerifications: Array<{
       platform: SocialMediaPlatform | string;
       isVerified: boolean;
+      verifiedAt?: string | null;
     }>;
     firstStakeCompleted: boolean;
-    // Legacy/alias names used by components
+
+    // Legacy fields (for backward compat — will be removed eventually)
     profileCompletion?: {
       isCompleted: boolean;
       completionPercentage?: number;
@@ -88,26 +119,17 @@ export interface RegistrationBonusData {
     };
   };
 
-  // Metadata
-  allRequirementsMet: boolean;
+  // IDs for cross-referencing
+  firstStakeId?: string | null;
+  bonusStakeId?: string | null;
 
-  // Legacy fields (for backward compatibility during migration)
-  deadline?: string;
+  // Computed helpers added by the API service
   timeRemaining?: number;
   currentStep?: number;
   nextStepDescription?: string;
+
+  // Legacy fields (kept for backward compat during migration)
   expiresAt?: string;
-  bonusAmount?: number | null;
-  bonus?: {
-    amount?: number;
-    total?: number;
-    remaining?: number;
-    remainingBonus?: number;
-    bonusPaidOut?: number;
-    weeklyPayoutCount?: number;
-    completedAt?: string;
-    payouts?: unknown[];
-  };
   profile?: {
     completionPercentage?: number;
     percentage?: number;
@@ -136,8 +158,34 @@ export interface RegistrationBonusData {
 }
 
 // ============================================
-// Bonus Payout History Types (NEW)
+// Bonus Payout History Types
 // ============================================
+
+export interface BonusPayout {
+  _id: string;
+  userId: string;
+  registrationBonusId: string;
+  weekNumber: number;
+  paidAt: string;
+  rosPercentage: number;
+  amountPaid: number;
+  remainingBalance: number;
+  status: 'completed' | 'pending' | 'failed';
+  createdAt: string;
+}
+
+export interface BonusPayoutHistoryData {
+  payouts: BonusPayout[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  totalPaidOut: number;
+  totalRemaining: number;
+}
 
 export interface BonusPayoutHistoryResponse {
   success: boolean;
@@ -145,33 +193,18 @@ export interface BonusPayoutHistoryResponse {
   message?: string;
 }
 
-export interface BonusPayoutHistoryData {
-  bonusAmount: number; // Total bonus earned
-  totalPaidOut: number; // Total paid so far
-  remainingBonus: number; // Remaining to be paid
-  payouts: BonusPayout[]; // Individual payout records
-}
-
-export interface BonusPayout {
-  week: number; // Week number since activation
-  date: string; // ISO 8601 date of payout
-  roiPercentage: number; // Declared ROI % for that week
-  amount: number; // Bonus amount paid that week
-  remainingAfter: number; // Remaining bonus after this payout
-}
-
 export interface SocialMediaVerification {
   platform: SocialMediaPlatform;
   isVerified: boolean;
-  verifiedAt: string | null; // ISO 8601 date or null
+  verifiedAt: string | null;
   accountHandle: string | null;
 }
 
 export interface ProfileCompletionField {
   fieldName: ProfileFieldName;
   isCompleted: boolean;
-  completedAt: string | null; // ISO 8601 date or null
-  value?: string; // Optional field value
+  completedAt: string | null;
+  value?: string;
 }
 
 export interface ProcessStakeRequest {
@@ -183,8 +216,8 @@ export interface ProcessStakeResponse {
   success: boolean;
   message: string;
   bonusAmount?: number;
-  bonusActivated?: boolean; // True when all requirements met and bonus is activated (100% progress)
-  progressPercentage?: number; // Updated progress after processing stake
+  bonusActivated?: boolean;
+  progressPercentage?: number;
 }
 
 // ============================================
@@ -259,39 +292,22 @@ export interface StakeRequirementProps {
   onComplete: () => void;
 }
 
-// ============================================
-// Bonus Payout History Types (NEW)
-// ============================================
-
-export interface BonusPayout {
-  _id: string;
-  userId: string;
-  registrationBonusId: string;
-  weekNumber: number;
-  paidAt: string;
-  rosPercentage: number;
-  amountPaid: number;
-  remainingBalance: number;
-  status: 'completed' | 'pending' | 'failed';
-  createdAt: string;
-}
-
-export interface BonusPayoutHistoryData {
-  payouts: BonusPayout[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
+export interface TwoFARequirementProps {
+  twoFAData: {
+    isCompleted: boolean;
+    completedAt?: string | null;
   };
-  totalPaidOut: number;
-  totalRemaining: number;
+  onComplete: () => void;
 }
 
-export interface BonusPayoutHistoryResponse {
-  success: boolean;
-  data?: BonusPayoutHistoryData;
+export interface WithdrawalAddressRequirementProps {
+  addressData: {
+    isCompleted: boolean;
+    address?: string | null;
+    network?: 'BEP20' | 'TRC20' | null;
+    completedAt?: string | null;
+  };
+  onComplete: () => void;
 }
 
 // ============================================
@@ -316,5 +332,4 @@ export interface ErrorStateProps {
 // ============================================
 
 // Platform configuration is now in @/config/socialMediaIcons.ts
-// This allows runtime imports of React components
 // Import PLATFORM_CONFIG from '@/config/socialMediaIcons' instead

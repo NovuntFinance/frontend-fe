@@ -1,7 +1,7 @@
 /**
  * Progress Stepper Component
- * 4-step progress indicator with visual progress bar
- * Follows Novunt design system
+ * 5-step progress indicator with visual progress bar
+ * Adapts grid to the number of steps provided.
  */
 
 'use client';
@@ -9,56 +9,47 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
-import { ProgressStepperProps, Step } from '@/types/registrationBonus';
-import { Progress } from '@/components/ui/progress';
+import { ProgressStepperProps } from '@/types/registrationBonus';
 import { cn } from '@/lib/utils';
 
-/**
- * Progress Stepper Component
- * Shows 4 steps with completion status and progress bar
- */
 export function ProgressStepper({
   currentStep,
   progressPercentage,
   steps,
 }: ProgressStepperProps) {
+  const gridCols = steps.length <= 4 ? 'md:grid-cols-4' : 'md:grid-cols-5';
+
   return (
     <div className="space-y-4">
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Overall Progress</span>
-          <span className="font-semibold text-primary">{progressPercentage}%</span>
+          <span className="text-primary font-semibold">
+            {progressPercentage}%
+          </span>
         </div>
-        <div className="relative h-3 overflow-hidden rounded-full bg-muted">
+        <div className="bg-muted relative h-3 overflow-hidden rounded-full">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary via-primary/90 to-secondary"
+            className="from-primary via-primary/90 to-secondary h-full bg-gradient-to-r"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercentage}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
-          {/* Shimmer effect */}
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            animate={{
-              x: ['-100%', '200%'],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 1,
-            }}
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
           />
         </div>
       </div>
 
       {/* Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={cn('grid grid-cols-1 gap-4', gridCols)}>
         {steps.map((step, index) => {
           const stepNumber = index + 1;
           const isCompleted = step.completed;
           const isCurrent = stepNumber === currentStep && !isCompleted;
-          const isPending = stepNumber > currentStep;
 
           return (
             <motion.div
@@ -67,23 +58,22 @@ export function ProgressStepper({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300',
+                'relative flex items-start gap-3 rounded-xl border p-4 transition-all duration-300',
                 isCompleted
-                  ? 'bg-green-500/10 border-green-500/30 dark:bg-green-500/5'
+                  ? 'border-green-500/30 bg-green-500/10 dark:bg-green-500/5'
                   : isCurrent
-                  ? 'bg-primary/10 border-primary/30 dark:bg-primary/5 ring-2 ring-primary/20'
-                  : 'bg-muted/50 border-border/50'
+                    ? 'border-primary/30 bg-primary/10 ring-primary/20 dark:bg-primary/5 ring-2'
+                    : 'border-border/50 bg-muted/50'
               )}
             >
-              {/* Step Icon */}
               <div
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-lg transition-all duration-300',
+                  'flex-shrink-0 rounded-lg p-2 transition-all duration-300',
                   isCompleted
                     ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                     : isCurrent
-                    ? 'bg-primary/20 text-primary animate-pulse'
-                    : 'bg-muted text-muted-foreground'
+                      ? 'bg-primary/20 text-primary animate-pulse'
+                      : 'bg-muted text-muted-foreground'
                 )}
               >
                 {isCompleted ? (
@@ -95,9 +85,8 @@ export function ProgressStepper({
                 )}
               </div>
 
-              {/* Step Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
                   <span
                     className={cn(
                       'text-xs font-semibold',
@@ -111,7 +100,7 @@ export function ProgressStepper({
                 </div>
                 <h3
                   className={cn(
-                    'text-sm font-semibold mb-1',
+                    'mb-1 text-sm font-semibold',
                     isCompleted || isCurrent
                       ? 'text-foreground'
                       : 'text-muted-foreground'
@@ -119,21 +108,20 @@ export function ProgressStepper({
                 >
                   {step.title}
                 </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-muted-foreground line-clamp-2 text-xs">
                   {step.description}
                 </p>
               </div>
 
-              {/* Connector Line (not for last step) */}
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    'absolute top-1/2 -right-2 w-4 h-0.5 -translate-y-1/2 transition-colors duration-300',
+                    'absolute top-1/2 -right-2 hidden h-0.5 w-4 -translate-y-1/2 transition-colors duration-300 md:block',
                     isCompleted
                       ? 'bg-green-500'
                       : isCurrent
-                      ? 'bg-primary'
-                      : 'bg-muted'
+                        ? 'bg-primary'
+                        : 'bg-muted'
                   )}
                 />
               )}
@@ -144,4 +132,3 @@ export function ProgressStepper({
     </div>
   );
 }
-

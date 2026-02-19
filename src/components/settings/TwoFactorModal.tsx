@@ -140,12 +140,19 @@ export function TwoFactorModal({
 
       // Try various paths to find the QR code URL, secret, and verification token
       if (responseData && typeof responseData === 'object') {
-        // Check for setupDetails structure (actual API format)
+        // PRIORITY 1: Check for setupDetails structure (backend guide format)
         if ('setupDetails' in responseData && responseData.setupDetails) {
           const setupDetails = responseData.setupDetails as any;
           qrUrl = setupDetails.qrCode || '';
           secret = setupDetails.secret || '';
         }
+
+        // Extract verification token (may be at data level or setupDetails level)
+        verificationToken =
+          responseData.verificationToken ||
+          (responseData.setupDetails as any)?.verificationToken ||
+          responseData.token ||
+          '';
 
         // Also check for setupMethods structure (expected format from types)
         if (!qrUrl || !secret) {
@@ -169,10 +176,6 @@ export function TwoFactorModal({
             responseData.secretKey ||
             '';
         }
-
-        // Extract verification token
-        verificationToken =
-          responseData.verificationToken || responseData.token || '';
       }
 
       // If we found QR code and secret, we can proceed
@@ -245,43 +248,55 @@ export function TwoFactorModal({
 
     setIsLoading(true);
     try {
-      // Get user ID from auth store
-      const { user } = useAuthStore.getState();
-      const userId = user?._id || user?.id || '';
-
-      if (!userId) {
-        throw new Error('User ID not found. Please log in again.');
-      }
-
+      // Backend guide: userId is NOT required - backend extracts from auth token
       const response = await authService.enable2FA({
-        userId,
         verificationToken,
         verificationCode,
       });
 
-      toast.success(
-        response.message || 'Two-Factor Authentication enabled successfully!'
-      );
+      // Extract backup codes from response (backend guide format)
+      let codes: string[] = [];
+      if (response && typeof response === 'object') {
+        // Check for backupCodes in various response structures
+        const responseData = response as any;
+        codes =
+          responseData.backupCodes ||
+          responseData.data?.backupCodes ||
+          responseData.data?.data?.backupCodes ||
+          [];
+      }
 
       // Update the user in auth store to reflect 2FA is now enabled
       updateUser({ twoFAEnabled: true });
 
-      setStep('select');
-      setIsEnabled(true);
       setVerificationCode('');
+      setIsEnabled(true);
 
-      // Clear QR data
-      setQrCodeUrl('');
-      setSecretKey('');
-      setVerificationToken('');
-
-      if (onEnable) onEnable();
-      onOpenChange(false);
+      // If backup codes are provided, show them prominently
+      if (codes && codes.length > 0) {
+        setBackupCodes(codes);
+        setStep('backupCodes');
+        toast.success(
+          '2FA enabled successfully! Please save your backup codes.'
+        );
+      } else {
+        // No backup codes (shouldn't happen per backend guide, but handle gracefully)
+        toast.success(
+          response.message || 'Two-Factor Authentication enabled successfully!'
+        );
+        setStep('select');
+        setQrCodeUrl('');
+        setSecretKey('');
+        setVerificationToken('');
+        if (onEnable) onEnable();
+        onOpenChange(false);
+      }
     } catch (error: unknown) {
       console.error('[TwoFactorModal] Failed to verify 2FA code:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Invalid verification code';
       toast.error(errorMessage);
+      setVerificationCode(''); // Clear on error
     } finally {
       setIsLoading(false);
     }
@@ -495,45 +510,95 @@ export function TwoFactorModal({
           {/* Backup Codes Display */}
           {step === 'backupCodes' && backupCodes.length > 0 && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-amber-500 bg-amber-500/10 p-4">
+              {/* Success Header */}
+              <div className="rounded-lg border border-emerald-500 bg-emerald-500/10 p-4">
                 <div className="flex items-start gap-3">
-                  <Key className="mt-0.5 h-5 w-5 text-amber-600" />
+                  <Check className="mt-0.5 h-5 w-5 text-emerald-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                      Save Your Backup Codes
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                      ✅ 2FA Enabled Successfully!
                     </p>
-                    <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-500">
-                      Store these codes in a safe place. You can use them to
-                      access your account if you lose your device.
+                  </div>
+                </div>
+              </div>
+
+              {/* Critical Warning */}
+              <div className="rounded-lg border-2 border-amber-500 bg-amber-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <Key className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                  <div className="flex-1">
+                    <p className="mb-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                      ⚠️ IMPORTANT: Save Your Backup Codes
+                    </p>
+                    <p className="space-y-1 text-xs text-amber-600 dark:text-amber-500">
+                      <span className="block">
+                        These codes can be used if you lose access to your
+                        authenticator app.
+                      </span>
+                      <span className="block font-medium">
+                        Each code can only be used once.
+                      </span>
+                      <span className="block">
+                        Store them in a safe place - you won&apos;t be able to
+                        see them again!
+                      </span>
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="border-border bg-card rounded-lg border p-4">
-                <h3 className="mb-3 text-sm font-semibold">Recovery Codes</h3>
-                <div className="mb-3 grid grid-cols-2 gap-2">
+                <h3 className="mb-3 text-sm font-semibold">
+                  Your Backup Codes
+                </h3>
+                <div className="mb-4 grid grid-cols-2 gap-2">
                   {backupCodes.map((code, index) => (
                     <code
                       key={index}
-                      className="bg-muted rounded p-2 text-center font-mono text-xs"
+                      className="bg-muted border-border rounded border p-2 text-center font-mono text-xs font-medium"
                     >
-                      {code}
+                      {code.toUpperCase()}
                     </code>
                   ))}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    navigator.clipboard.writeText(backupCodes.join('\n'));
-                    toast.success('Backup codes copied to clipboard!');
-                  }}
-                >
-                  <Copy className="mr-2 h-3 w-3" />
-                  Copy All Codes
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      navigator.clipboard.writeText(backupCodes.join('\n'));
+                      toast.success('All backup codes copied to clipboard!');
+                    }}
+                  >
+                    <Copy className="mr-2 h-3 w-3" />
+                    Copy All Codes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      const blob = new Blob(
+                        [
+                          `Novunt Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.map((c, i) => `${i + 1}. ${c.toUpperCase()}`).join('\n')}\n\n⚠️ IMPORTANT:\n- Each code can only be used once\n- Store these codes securely\n- Use them if you lose access to your authenticator app`,
+                        ],
+                        { type: 'text/plain' }
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `novunt-backup-codes-${Date.now()}.txt`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success('Backup codes downloaded!');
+                    }}
+                  >
+                    Download as Text
+                  </Button>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -541,10 +606,15 @@ export function TwoFactorModal({
                   onClick={() => {
                     setStep('select');
                     setShowBackupCodes(false);
+                    setBackupCodes([]);
+                    setQrCodeUrl('');
+                    setSecretKey('');
+                    setVerificationToken('');
                     if (onEnable) onEnable();
                     onOpenChange(false);
                   }}
                   className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600"
+                  size="lg"
                 >
                   <Check className="mr-2 h-4 w-4" />
                   I’ve Saved My Codes

@@ -392,6 +392,11 @@ export function useSetDefaultWithdrawalAddress() {
             : 'Your withdrawal address has been updated successfully.',
         });
       }
+
+      // Trigger registration bonus refetch so progress bar updates
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('refetchRegistrationBonus'));
+      }, 500);
     },
     onError: (error: any) => {
       const errorData = error?.response?.data;

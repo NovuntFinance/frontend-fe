@@ -45,13 +45,21 @@ export const registrationBonusApi = {
         };
       }
 
-      // Add helper fields for backward compatibility if needed,
-      // but backend V2 now provides the source of truth for progress
       if (normalizedResponse.data) {
         const data = normalizedResponse.data;
 
-        // Ensure timeRemaining is calculated for UI timers
-        if (data.daysRemaining !== undefined) {
+        // Normalize status to uppercase — backend V2 may return lowercase
+        // (e.g. "pending") but the frontend enum uses uppercase ("PENDING")
+        if (data.status && typeof data.status === 'string') {
+          data.status = data.status.toUpperCase() as any;
+        }
+
+        // Calculate precise timeRemaining from the deadline ISO string
+        if (data.deadline) {
+          const deadlineMs = new Date(data.deadline).getTime();
+          const nowMs = Date.now();
+          data.timeRemaining = Math.max(0, deadlineMs - nowMs);
+        } else if (data.daysRemaining !== undefined) {
           data.timeRemaining = data.daysRemaining * 24 * 60 * 60 * 1000;
         }
       }
