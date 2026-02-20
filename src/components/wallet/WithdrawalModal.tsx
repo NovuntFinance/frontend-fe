@@ -205,7 +205,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       ) {
         if (moratorium?.active) {
           toast.error('Address change locked', {
-            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 72 hours.`,
             duration: 6000,
           });
         } else {
@@ -724,7 +724,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                       ) {
                         if (moratorium?.active) {
                           toast.error('Address change locked', {
-                            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+                            description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 72 hours.`,
                             duration: 6000,
                           });
                         } else {
@@ -1019,7 +1019,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             ) {
                               if (moratorium?.active) {
                                 toast.error('Address change locked', {
-                                  description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 48 hours.`,
+                                  description: `Please wait ${moratorium.hoursRemaining} hour(s) and ${moratorium.minutesRemaining} minute(s). For security, addresses can only be changed every 72 hours.`,
                                   duration: 6000,
                                 });
                               } else {

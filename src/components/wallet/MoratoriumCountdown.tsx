@@ -12,7 +12,7 @@ interface MoratoriumCountdownProps {
 
 /**
  * Moratorium Countdown Component
- * Displays a countdown timer for the 48-hour wallet address change moratorium
+ * Displays a countdown timer for the 72-hour wallet address change moratorium
  */
 export function MoratoriumCountdown({
   moratorium,
@@ -91,7 +91,7 @@ export function MoratoriumCountdown({
           )}
           <div className="mt-2 rounded-md bg-amber-500/20 p-2">
             <p className="mb-1 text-xs font-semibold text-amber-800 dark:text-amber-300">
-              🔒 Why the 48-hour wait?
+              🔒 Why the 72-hour wait?
             </p>
             <p className="text-xs text-amber-700/90 dark:text-amber-400/90">
               This security measure protects you from hackers who might gain

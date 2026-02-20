@@ -263,7 +263,7 @@ const DEFAULT_ADDRESS_STATE = {
     minutesRemaining: 0,
     canChangeAt: null as string | null,
     canChangeAtFormatted: null as string | null,
-    moratoriumDurationHours: 48,
+    moratoriumDurationHours: 72,
   },
   immutable: false,
   network: 'BEP20' as const,
@@ -359,7 +359,7 @@ export function useSetDefaultWithdrawalAddress() {
       } else {
         toast.success('Withdrawal address updated', {
           description: moratorium?.active
-            ? `Address updated. You can change it again after 48 hours.`
+            ? `Address updated. You can change it again after 72 hours.`
             : 'Your withdrawal address has been updated successfully.',
         });
       }
