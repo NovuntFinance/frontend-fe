@@ -667,7 +667,8 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           </AlertTitle>
                           <AlertDescription>
                             You are testing with sandbox. No real funds will be
-                            transferred.
+                            transferred. Pending deposits may auto-confirm after
+                            about 30 seconds—keep this window open.
                           </AlertDescription>
                         </div>
                       </Alert>
