@@ -90,11 +90,13 @@ const getStatusClass = (status?: string | null) => {
 export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [step, setStep] = useState<DepositStep>('amount');
   const [amount, setAmount] = useState('');
-  const [network] = useState<'BEP20'>('BEP20'); // Only BEP20 is supported
+  // Network is always BEP20 - no need for state since it's constant
+  const network = 'BEP20' as const; // Only BEP20 is supported
   const [depositData, setDepositData] = useState<DepositResponse | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used internally for polling state management
   const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
@@ -152,7 +154,6 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     if (isOpen) {
       setStep('amount');
       setAmount('');
-      setNetwork('BEP20');
       setDepositData(null);
       setError('');
       setQrCodeUrl('');
