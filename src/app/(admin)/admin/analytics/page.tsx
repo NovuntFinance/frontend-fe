@@ -9,6 +9,7 @@ import type {
 } from '@/types/adminAnalytics';
 import { useAdminAnalyticsDashboard } from '@/lib/queries';
 import { PermissionGuard } from '@/components/admin/PermissionGuard';
+import { FinanceTitanPoolDisplay } from '@/components/admin/FinanceTitanPoolDisplay';
 import {
   Tooltip,
   TooltipContent,
@@ -67,7 +68,7 @@ function getChangeMeta(card?: AdminAnalyticsCardValue) {
 
 function AnalyticsPageInner() {
   const [activeTab, setActiveTab] = useState<
-    'users' | 'financial' | 'staking' | 'referral'
+    'users' | 'financial' | 'staking' | 'referral' | 'ranks'
   >('users');
   const [timeframe, setTimeframe] = useState<AdminAnalyticsTimeframe>('30d');
 
@@ -496,6 +497,16 @@ function AnalyticsPageInner() {
             } border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
           >
             Referral Analytics
+          </button>
+          <button
+            onClick={() => setActiveTab('ranks')}
+            className={`${
+              activeTab === 'ranks'
+                ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300'
+            } border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
+          >
+            Rank & Pool Analytics
           </button>
         </nav>
       </div>
@@ -939,6 +950,12 @@ function AnalyticsPageInner() {
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'ranks' && (
+            <div className="space-y-6">
+              <FinanceTitanPoolDisplay />
             </div>
           )}
         </div>

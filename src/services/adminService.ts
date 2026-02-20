@@ -665,6 +665,18 @@ class AdminService {
 
     throw lastErr;
   }
+
+  /**
+   * Get Rank Analytics (includes Finance Titan pool allocations)
+   * GET /api/v1/rank-management/analytics
+   * Note: Admin only, read-only, NO 2FA
+   */
+  async getRankAnalytics() {
+    const get2FACode = async () => null;
+    const api = createAdminApi(get2FACode);
+    const response = await api.get('/rank-management/analytics');
+    return response.data;
+  }
 }
 
 export const adminService = new AdminService();

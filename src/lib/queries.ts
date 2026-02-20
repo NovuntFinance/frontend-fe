@@ -45,6 +45,7 @@ import type {
   AdminAnalyticsDashboardData,
   AdminAnalyticsTimeframe,
 } from '@/types/adminAnalytics';
+import type { RankAnalyticsResponse } from '@/types/rankAnalytics';
 import { useAuthStore } from '@/store/authStore';
 import { getStakingStreak } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
@@ -128,6 +129,7 @@ export const queryKeys = {
     from?: string;
     to?: string;
   }) => ['admin', 'analytics-dashboard', params] as const,
+  rankAnalytics: ['admin', 'rank-analytics'] as const,
 
   // RBAC
   rbacPermissions: ['rbac', 'permissions'] as const,
@@ -2052,6 +2054,41 @@ export function useAdminAnalyticsDashboard(params: {
     },
     staleTime: 5 * 60 * 1000, // endpoint cached ~5 mins server-side
     enabled: checkAdminAuth() && isParamsReady,
+    retry: (failureCount, error: any) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Get Rank Analytics (includes Finance Titan pool allocations)
+ * GET /api/v1/rank-management/analytics
+ * Note: Admin only, read-only, NO 2FA
+ */
+export function useRankAnalytics() {
+  const checkAdminAuth = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { adminAuthService } = require('@/services/adminAuthService');
+      return adminAuthService.isAuthenticated();
+    } catch {
+      return false;
+    }
+  };
+
+  return useQuery({
+    queryKey: queryKeys.rankAnalytics,
+    queryFn: async () => {
+      const { adminService } = await import('@/services/adminService');
+      const response = await adminService.getRankAnalytics();
+      // API client may unwrap response.data, normalize it
+      return (response?.data ?? response) as RankAnalyticsResponse['data'];
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: checkAdminAuth(),
     retry: (failureCount, error: any) => {
       const status = error?.response?.status;
       if (status === 401 || status === 403) return false;
