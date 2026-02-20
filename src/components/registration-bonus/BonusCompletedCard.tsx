@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp, ArrowRight } from 'lucide-react';
+import { Award, TrendingUp, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { BonusActivatedCardProps } from '@/types/registrationBonus';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,7 +34,7 @@ export function BonusCompletedCard({ bonusData }: BonusActivatedCardProps) {
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             className="inline-flex h-16 w-16 items-center justify-center rounded-full border-4 border-emerald-500/30 bg-emerald-500/20"
           >
-            <Trophy className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            <Award className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           </motion.div>
 
           <motion.div

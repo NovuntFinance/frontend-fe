@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trophy, Users, Award, Info } from 'lucide-react';
+import { Award, Users, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRankAnalytics } from '@/lib/queries';
@@ -20,7 +20,7 @@ export function FinanceTitanPoolDisplay() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+            <Award className="h-5 w-5 text-yellow-500" />
             Finance Titan Pool Allocations
           </CardTitle>
         </CardHeader>
@@ -36,7 +36,7 @@ export function FinanceTitanPoolDisplay() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+            <Award className="h-5 w-5 text-yellow-500" />
             Finance Titan Pool Allocations
           </CardTitle>
         </CardHeader>
@@ -59,7 +59,7 @@ export function FinanceTitanPoolDisplay() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+            <Award className="h-5 w-5 text-yellow-500" />
             Finance Titan Pool Allocations
           </CardTitle>
         </CardHeader>
@@ -76,7 +76,7 @@ export function FinanceTitanPoolDisplay() {
     <Card className="border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
+          <Award className="h-5 w-5 text-yellow-500" />
           Finance Titan - Pool Allocations
           <Badge variant="outline" className="ml-auto">
             Level {financeTitan.level}

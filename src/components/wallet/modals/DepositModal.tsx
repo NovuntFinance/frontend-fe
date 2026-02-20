@@ -116,6 +116,11 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const showMockBanner =
     !!depositData &&
     (depositData.mockMode || (MOCK_PAYMENTS_ENABLED && isSuccessStatus));
+  const showSandboxBanner =
+    !!depositData &&
+    (depositData.isSandbox === true || depositData.isTestMode === true);
+  const paymentPortalUrl =
+    depositData?.paymentUrl || depositData?.invoiceUrl || '';
   const successAmount = depositData?.amount ?? amount;
   const successNetwork = 'BEP20'; // Only BEP20 is supported
   const successStatusLabel = formatStatusLabel(
@@ -199,14 +204,16 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
   }, [depositData]);
 
-  // Poll for deposit confirmation automatically when invoice is available
+  // Poll for deposit confirmation: use transactionId for POST check-status, else invoiceId for GET status
   useEffect(() => {
-    if (!depositData?.invoiceId) {
+    const hasTransactionId = Boolean(depositData?.transactionId);
+    const hasInvoiceId = Boolean(depositData?.invoiceId);
+    if (!hasTransactionId && !hasInvoiceId) {
       setIsPolling(false);
       return;
     }
 
-    const normalizedStatus = depositData.status?.toLowerCase?.() || '';
+    const normalizedStatus = depositData?.status?.toLowerCase?.() || '';
 
     if (!PENDING_STATUSES.has(normalizedStatus)) {
       setIsPolling(false);
@@ -216,7 +223,10 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setIsPolling(true);
 
     const cancel = pollDepositStatus(
-      depositData.invoiceId,
+      {
+        transactionId: depositData?.transactionId ?? null,
+        invoiceId: depositData?.invoiceId ?? null,
+      },
       (statusUpdate) => {
         setDepositData((prev) => {
           if (!prev) return prev;
@@ -253,7 +263,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
           setStep('success');
           toast.success('Deposit confirmed!', {
-            description: `${finalStatus.amount ?? depositData.amount} USDT credited to your Funded Wallet`,
+            description: `${finalStatus.amount ?? depositData?.amount ?? 0} USDT credited to your Funded Wallet`,
           });
         } else if (FAILURE_STATUSES.has(finalNormalized)) {
           setError(`Deposit ${finalNormalized}. Please try again.`);
@@ -266,9 +276,13 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       (pollError) => {
         setIsPolling(false);
         console.error('Status check error:', pollError);
-        toast.error('Failed to check deposit status');
+        toast.error('Deposit status', {
+          description:
+            pollError?.message ??
+            'Failed to check deposit status. Please try again.',
+        });
       },
-      15000 // Poll every 15 seconds
+      12000 // Poll every 10–15 seconds (backend recommendation)
     );
 
     // Safety timeout after 1 hour
@@ -296,6 +310,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setIsPolling(false);
     };
   }, [
+    depositData?.transactionId,
     depositData?.invoiceId,
     depositData?.status,
     depositData?.amount,
@@ -373,13 +388,16 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
       const normalizedStatus = response.status?.toLowerCase?.() || '';
 
-      // Normalize the response to use depositAddress
+      // Normalize the response to use depositAddress and sandbox flags from API
       const finalDepositData = {
         ...response,
         depositAddress: depositAddress,
         mockMode:
           response.mockMode ??
           (MOCK_PAYMENTS_ENABLED && SUCCESS_STATUSES.has(normalizedStatus)),
+        isSandbox: response.isSandbox,
+        isTestMode: response.isTestMode,
+        invoiceUrl: response.invoiceUrl,
       };
 
       setDepositData(finalDepositData);
@@ -456,13 +474,11 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   };
 
   const openPaymentPortal = () => {
-    if (!depositData?.paymentUrl) return;
+    const url =
+      paymentPortalUrl || depositData?.paymentUrl || depositData?.invoiceUrl;
+    if (!url) return;
     try {
-      const newWindow = window.open(
-        depositData.paymentUrl,
-        '_blank',
-        'noopener,noreferrer'
-      );
+      const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
       if (!newWindow || newWindow.closed) {
         throw new Error('Popup blocked');
       }
@@ -642,7 +658,22 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </AlertDescription>
                     </Alert>
 
-                    {showMockBanner && (
+                    {showSandboxBanner && (
+                      <Alert className="border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-950/30">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <div>
+                          <AlertTitle className="text-amber-800 dark:text-amber-200">
+                            Sandbox Mode
+                          </AlertTitle>
+                          <AlertDescription>
+                            You are testing with sandbox. No real funds will be
+                            transferred.
+                          </AlertDescription>
+                        </div>
+                      </Alert>
+                    )}
+
+                    {showMockBanner && !showSandboxBanner && (
                       <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
                         <AlertCircle className="h-4 w-4 text-amber-500" />
                         <div>
@@ -743,7 +774,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </div>
                     </div>
 
-                    {depositData.paymentUrl && (
+                    {paymentPortalUrl && (
                       <div className="space-y-2">
                         <Label>Payment Portal</Label>
                         <Button
@@ -755,7 +786,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                         <p className="text-muted-foreground text-xs break-all">
-                          {depositData.paymentUrl}
+                          {paymentPortalUrl}
                         </p>
                       </div>
                     )}
@@ -912,14 +943,15 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </p>
                     </div>
 
-                    {showMockBanner && (
+                    {(showSandboxBanner || showMockBanner) && (
                       <Alert className="mx-auto max-w-xl border-amber-200 bg-amber-50 text-left dark:bg-amber-950/20">
                         <AlertCircle className="h-4 w-4 text-amber-500" />
                         <div>
                           <AlertTitle>Sandbox Mode</AlertTitle>
                           <AlertDescription>
-                            Payment auto-confirmed in mock mode. These funds are
-                            for testing only.
+                            {showSandboxBanner
+                              ? 'You were testing with sandbox. No real funds were transferred.'
+                              : 'Payment auto-confirmed in mock mode. These funds are for testing only.'}
                           </AlertDescription>
                         </div>
                       </Alert>

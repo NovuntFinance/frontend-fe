@@ -267,6 +267,7 @@ const DEFAULT_ADDRESS_STATE = {
   },
   immutable: false,
   network: 'BEP20' as const,
+  note: undefined as string | undefined,
 };
 
 export function useDefaultWithdrawalAddress() {

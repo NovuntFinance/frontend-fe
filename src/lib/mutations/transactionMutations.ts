@@ -31,10 +31,15 @@ export interface DepositResponse {
   expiresAt: string;
   status: DepositStatus | string;
   paymentUrl?: string;
+  /** Fallback payment URL from API (e.g. NowPayments invoice URL) */
+  invoiceUrl?: string;
   paymentAddress?: string;
   qrCodeUrl?: string;
   statusLabel?: string;
   mockMode?: boolean;
+  /** True when deposit was created in sandbox/test environment */
+  isSandbox?: boolean;
+  isTestMode?: boolean;
   details?: Record<string, unknown>;
   instructions?:
     | string
@@ -249,20 +254,31 @@ export function useInitiateP2PTransfer() {
 
 /**
  * Get Deposit Transaction Status
- * GET /api/v1/transactions/deposit/status/:invoiceId
+ * Use the correct endpoint based on flow:
+ * - Transaction flow: POST /api/transaction/deposit/:transactionId/check-status
+ * - Enhanced flow: GET /api/v1/enhanced-transactions/deposit/status/:invoiceId
  */
-export function useGetDepositStatus(invoiceId: string | null) {
+export function useGetDepositStatus(
+  transactionId: string | null,
+  invoiceId: string | null,
+  useEnhancedEndpoint = false
+) {
   return useMutation<TransactionStatusResponse, Error, void>({
     mutationFn: async () => {
-      if (!invoiceId) {
-        throw new Error('Invoice ID is required');
+      if (useEnhancedEndpoint) {
+        if (!invoiceId) throw new Error('Invoice ID is required');
+        const response = await apiRequest<TransactionStatusResponse>(
+          'get',
+          `/enhanced-transactions/deposit/status/${invoiceId}`
+        );
+        return response as TransactionStatusResponse;
       }
-
-      const response = await apiRequest<{ data: TransactionStatusResponse }>(
-        'get',
-        `/transaction/deposit/status/${invoiceId}`
+      if (!transactionId) throw new Error('Transaction ID is required');
+      const response = await apiRequest<TransactionStatusResponse>(
+        'post',
+        `/transaction/deposit/${transactionId}/check-status`
       );
-      return response.data; // Extract data from wrapper
+      return response as TransactionStatusResponse;
     },
   });
 }
@@ -307,65 +323,122 @@ export function useSearchUsers() {
 }
 
 /**
+ * Params for deposit status polling.
+ * - For /api/transaction/deposit: pass transactionId → POST .../deposit/{transactionId}/check-status
+ * - For /api/v1/enhanced-transactions/deposit: pass invoiceId only → GET .../deposit/status/{invoiceId}
+ */
+export interface PollDepositStatusParams {
+  /** Use for POST /api/transaction/deposit/:transactionId/check-status */
+  transactionId?: string | null;
+  /** Use for GET /api/v1/enhanced-transactions/deposit/status/:invoiceId */
+  invoiceId?: string | null;
+}
+
+/**
  * Helper: Poll Deposit Status
- * Polls every `interval` ms until status is final
- * Uses invoiceId from deposit initiation
+ * Uses the correct endpoint based on which deposit API was used.
+ * Polls every `interval` ms (recommended 10–15s) until status is final.
  */
 export function pollDepositStatus(
-  invoiceId: string,
+  params: PollDepositStatusParams,
   onUpdate: (status: TransactionStatusResponse) => void,
   onComplete: (status: TransactionStatusResponse) => void,
   onError: (error: Error) => void,
-  interval = 10000 // 10 seconds (backend recommends 10-15s)
+  interval = 12000 // 10–15 seconds (backend recommends 10-15s)
 ): () => void {
+  const { transactionId, invoiceId } = params;
+  const useTransactionEndpoint = Boolean(transactionId);
+  const useEnhancedEndpoint = !useTransactionEndpoint && Boolean(invoiceId);
+
   let timeoutId: NodeJS.Timeout;
   let isCancelled = false;
 
-  // Final statuses per backend: confirmed, failed, expired
   const finalStatuses = ['confirmed', 'completed', 'failed', 'expired'];
+
+  function getUserFriendlyMessage(err: unknown): string {
+    if (err && typeof err === 'object') {
+      const status =
+        (err as { response?: { status?: number }; statusCode?: number })
+          .response?.status ?? (err as { statusCode?: number }).statusCode;
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ?? (err as Error).message;
+      if (status === 404)
+        return 'Deposit or payment not found. It may have expired.';
+      if (status === 500)
+        return 'Server error checking status. Please try again in a moment.';
+      if (message && !String(message).toLowerCase().includes('network'))
+        return message;
+    }
+    return 'Unable to check deposit status. Please check your connection and try again.';
+  }
 
   const poll = async () => {
     if (isCancelled) return;
 
     try {
-      const response = await apiRequest<{ data: TransactionStatusResponse }>(
-        'get',
-        `/transaction/deposit/status/${invoiceId}`
-      );
+      let status: TransactionStatusResponse;
+
+      if (useTransactionEndpoint && transactionId) {
+        // POST /api/transaction/deposit/:transactionId/check-status
+        const response = await apiRequest<
+          TransactionStatusResponse & {
+            transaction?: unknown;
+            checkedAt?: string;
+          }
+        >('post', `/transaction/deposit/${transactionId}/check-status`);
+        // apiRequest unwraps { data } from backend; response may be the status object directly
+        const raw =
+          response && typeof response === 'object' && 'data' in response
+            ? (response as { data: TransactionStatusResponse }).data
+            : response;
+        status = (
+          raw && typeof raw === 'object' && 'status' in raw ? raw : response
+        ) as TransactionStatusResponse;
+      } else if (useEnhancedEndpoint && invoiceId) {
+        // GET /api/v1/enhanced-transactions/deposit/status/:invoiceId
+        const response = await apiRequest<TransactionStatusResponse>(
+          'get',
+          `/enhanced-transactions/deposit/status/${invoiceId}`
+        );
+        const raw =
+          response && typeof response === 'object' && 'data' in response
+            ? (response as { data: TransactionStatusResponse }).data
+            : response;
+        status = (
+          raw && typeof raw === 'object' && 'status' in raw ? raw : response
+        ) as TransactionStatusResponse;
+      } else {
+        onError(
+          new Error('Missing transaction or invoice ID for status check.')
+        );
+        return;
+      }
 
       if (isCancelled) return;
 
-      const status = response.data;
       onUpdate(status);
 
-      // Check if status is final
-      const normalizedStatus = status.status ? status.status.toLowerCase() : '';
+      const normalizedStatus = status?.status
+        ? String(status.status).toLowerCase()
+        : '';
       if (finalStatuses.includes(normalizedStatus)) {
         onComplete(status);
         return;
       }
 
-      // Continue polling
       timeoutId = setTimeout(poll, interval);
     } catch (error) {
       if (!isCancelled) {
-        onError(
-          error instanceof Error
-            ? error
-            : new Error('Failed to check deposit status')
-        );
+        onError(new Error(getUserFriendlyMessage(error)));
       }
     }
   };
 
-  // Start polling
   poll();
 
-  // Return cancel function
   return () => {
     isCancelled = true;
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
+    if (timeoutId) clearTimeout(timeoutId);
   };
 }
