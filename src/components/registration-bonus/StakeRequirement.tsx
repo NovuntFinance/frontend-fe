@@ -26,8 +26,8 @@ export function StakeRequirement({
   const isComplete = stakeData.completed;
 
   const handleStakeClick = () => {
-    // Open deposit modal instead of routing to stake page
-    openModal('deposit');
+    // Open create stake modal
+    openModal('create-stake');
   };
 
   if (isComplete) {
