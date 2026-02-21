@@ -2,8 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
-import { SiTiktok } from 'react-icons/si';
 import styles from '@/styles/auth.module.css';
 import onboardingStyles from '@/styles/onboarding.module.css';
 import {
@@ -72,55 +70,6 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
       <div className="z-20 flex w-full max-w-md flex-col gap-7">
         {/* Buttons and Login Link from pages */}
         {footerContent}
-
-        {/* Social Media Icons */}
-        <div className="flex items-center justify-center gap-3">
-          <a
-            href="https://www.facebook.com/share/16oLeHcQkH/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Facebook"
-            className="text-[#009bf2] transition-colors hover:text-[#009bf2]/80"
-          >
-            <FaFacebook className="h-5 w-5" />
-          </a>
-          <a
-            href="https://www.instagram.com/novunt_hq?igsh=bGxoaGV3d3B0MWd5"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Instagram"
-            className="text-[#009bf2] transition-colors hover:text-[#009bf2]/80"
-          >
-            <FaInstagram className="h-5 w-5" />
-          </a>
-          <a
-            href="https://www.tiktok.com/@novuntofficial?_t=ZS-8ymrJsyJBk9&_r=1"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="TikTok"
-            className="text-[#009bf2] transition-colors hover:text-[#009bf2]/80"
-          >
-            <SiTiktok className="h-5 w-5" />
-          </a>
-          <a
-            href="https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="YouTube"
-            className="text-[#009bf2] transition-colors hover:text-[#009bf2]/80"
-          >
-            <FaYoutube className="h-5 w-5" />
-          </a>
-          <a
-            href="https://t.me/novunt"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Telegram"
-            className="text-[#009bf2] transition-colors hover:text-[#009bf2]/80"
-          >
-            <FaTelegram className="h-5 w-5" />
-          </a>
-        </div>
       </div>
     </main>
   );
