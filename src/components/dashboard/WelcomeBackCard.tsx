@@ -1,36 +1,26 @@
 'use client';
 
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Eye,
-  EyeOff,
-  RefreshCw,
-  CheckCircle2,
-  TrendingUp,
-  Info,
-  Target,
-  Share2,
-} from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { hoverAnimation } from '@/design-system/animations';
-import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
 import { pct4 } from '@/utils/formatters';
-import { SiTiktok } from 'react-icons/si';
 import { openShareModal } from '@/store/shareModalStore';
+import { useActiveStakes } from '@/lib/queries';
+import { useStakeDashboard } from '@/lib/queries/stakingQueries';
+
+const NEU_BG = '#0D162C';
+const NEU_SURFACE = '#131B2E';
+const NEU_TEXT = '#009BF2';
+const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
+const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
 
 interface WelcomeBackCardProps {
   user: any;
@@ -41,6 +31,7 @@ interface WelcomeBackCardProps {
   totalPortfolioValue: number;
   lastWeekProfitChange: number;
   totalEarnings?: number;
+  noCard?: boolean; // If true, removes the outer card wrapper
 }
 
 export function WelcomeBackCard({
@@ -52,87 +43,101 @@ export function WelcomeBackCard({
   totalPortfolioValue,
   lastWeekProfitChange,
   totalEarnings = 0,
+  noCard = false,
 }: WelcomeBackCardProps) {
+  const router = useRouter();
+  const { data: stakingDashboard } = useStakeDashboard();
+  const { data: activeStakes } = useActiveStakes();
+
+  // Get accurate active stakes count
+  const activeStakesArray = Array.isArray(activeStakes)
+    ? activeStakes
+    : (activeStakes as any)?.data?.activeStakes ||
+      (activeStakes as any)?.activeStakes ||
+      [];
+  const activeStakesCount = activeStakesArray.length;
+
+  // Get daily ROS (today's profit amount) from staking dashboard summary
+  const dailyROS = Number(stakingDashboard?.summary?.todaysProfit || 0);
+
   const greetingName = user?.firstName
     ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
     : 'Stakeholder';
 
-  // Map rank names to Cloudinary icon URLs
-  const getRankIcon = (rankName: string): string => {
-    const rankMap: Record<string, string> = {
-      Stakeholder:
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763740099/stakeholder_e1aiiq.png',
-      'Associate Stakeholder':
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763740425/associate-stakeholder_fqly9v.jpg',
-      'Principal Strategist':
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763741307/principal-strategist_nlvp5f.png',
-      'Elite Capitalist':
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763741307/elite-capitalist_jddpzw.png',
-      'Wealth Architect':
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763741520/wealth-architect_j7v707.png',
-      'Finance Titan':
-        'https://res.cloudinary.com/dfpulrssa/image/upload/v1763741605/finance-titan_ejpsji.png',
-    };
-
-    return (
-      rankMap[rankName] ||
-      'https://res.cloudinary.com/dfpulrssa/image/upload/v1763740099/stakeholder_e1aiiq.png'
-    );
-  };
-
-  const rankIconPath = getRankIcon(user?.rank || 'Stakeholder');
-
-  return (
-    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-amber-500/10 to-transparent" />
-
-      {/* Animated Floating Blob */}
-      <motion.div
-        animate={{
-          x: [0, -15, 0],
-          y: [0, 10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-orange-500/30 blur-2xl"
-      />
-
-      {/* Rank Icon Background - Full Card Coverage */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          backgroundImage: `url(${rankIconPath})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.08,
-        }}
-      />
-
-      <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center gap-2 sm:gap-3">
-          <motion.div
-            {...hoverAnimation()}
-            className="rounded-xl bg-gradient-to-br from-orange-500/30 to-amber-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+  const content = (
+    <div className="relative z-10 p-5 sm:p-6 lg:p-5 xl:p-6">
+      {/* Balance and actions aligned horizontally */}
+      <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-3">
+        {/* Portfolio value - Left side */}
+        <div className="min-w-0 flex-1">
+          <p
+            className="mb-1.5 text-xs font-bold sm:mb-2 sm:text-sm lg:mb-1.5 lg:text-xs"
+            style={{ color: NEU_TEXT_MUTED }}
           >
-            <Target className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-              Welcome back, {greetingName}! 👋
-            </CardTitle>
-            <CardDescription className="text-[10px] sm:text-xs">
-              Total Portfolio Value
-            </CardDescription>
-          </div>
-          {/* Header Actions (Eye toggle and Share button) */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Share Button - Circular */}
+            Total Portfolio Value
+          </p>
+          {balanceVisible ? (
+            <motion.div
+              key="portfolio"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
+              style={{ color: NEU_TEXT, filter: 'none' }}
+            >
+              $
+              {totalPortfolioValue.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="hidden"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
+              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
+            >
+              ••••••••
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right side: % badge + Share + Eye */}
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3 lg:gap-2">
+          {/* Inset neumorphic % badge with double border */}
+          {lastWeekProfitChange !== 0 && (
+            <div
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 lg:px-3 lg:py-1.5"
+              style={{
+                background: NEU_SURFACE,
+                boxShadow: `
+                    inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                    inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                    inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                    0 0 0 1px rgba(255, 255, 255, 0.03)
+                  `,
+                border: 'none',
+                color: NEU_TEXT,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+              }}
+            >
+              <TrendingUp
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3 lg:w-3 ${(lastWeekProfitChange ?? 0) < 0 ? 'rotate-180' : ''}`}
+              />
+              <span className="lg:text-xs">
+                {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
+                {pct4(lastWeekProfitChange ?? 0)}
+              </span>
+            </div>
+          )}
+
+          {/* Share + Eye */}
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -145,166 +150,314 @@ export function WelcomeBackCard({
                       amount: totalEarnings,
                     });
                   }}
-                  className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:from-blue-700 hover:to-purple-700 sm:h-10 sm:w-10"
+                  className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
+                  style={{
+                    background: NEU_SURFACE,
+                    color: NEU_TEXT,
+                    boxShadow: `
+                        8px 8px 16px ${NEU_SHADOW_DARK},
+                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.05)
+                      `,
+                    border: 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `
+                        10px 10px 20px ${NEU_SHADOW_DARK},
+                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.08),
+                        0 0 20px rgba(0, 155, 242, 0.2)
+                      `;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = `
+                        8px 8px 16px ${NEU_SHADOW_DARK},
+                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.05)
+                      `;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.boxShadow = `
+                        inset 4px 4px 8px ${NEU_SHADOW_DARK},
+                        inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
+                      `;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.boxShadow = `
+                        10px 10px 20px ${NEU_SHADOW_DARK},
+                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.08),
+                        0 0 20px rgba(0, 155, 242, 0.2)
+                      `;
+                  }}
                 >
-                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Share your success</p>
               </TooltipContent>
             </Tooltip>
-
-            {/* Eye Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setBalanceVisible(!balanceVisible)}
-              className="text-muted-foreground hover:text-foreground h-8 w-8 hover:bg-white/5 sm:h-10 sm:w-10"
+              className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
+              style={{
+                background: NEU_SURFACE,
+                color: NEU_TEXT,
+                boxShadow: `
+                    8px 8px 16px ${NEU_SHADOW_DARK},
+                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.05)
+                  `,
+                border: 'none',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `
+                    10px 10px 20px ${NEU_SHADOW_DARK},
+                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.08),
+                    0 0 20px rgba(0, 155, 242, 0.2)
+                  `;
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = `
+                    8px 8px 16px ${NEU_SHADOW_DARK},
+                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.05)
+                  `;
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.boxShadow = `
+                    inset 4px 4px 8px ${NEU_SHADOW_DARK},
+                    inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
+                  `;
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.boxShadow = `
+                    10px 10px 20px ${NEU_SHADOW_DARK},
+                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.08),
+                    0 0 20px rgba(0, 155, 242, 0.2)
+                  `;
+              }}
             >
               {balanceVisible ? (
-                <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
               ) : (
-                <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
+                <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
               )}
             </Button>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-        <div className="space-y-4 sm:space-y-6">
-          {/* Header Actions (Eye toggle and Share button) - Positioned absolutely */}
-          {/* User Status Section - Only Weekly Profit Badge */}
-          {lastWeekProfitChange !== 0 && (
-            <div className="mb-2 sm:mb-4">
-              <Badge
-                variant={
-                  (lastWeekProfitChange ?? 0) >= 0 ? 'default' : 'destructive'
-                }
-                className={`${
-                  (lastWeekProfitChange ?? 0) >= 0
-                    ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                    : 'border-red-500/30 bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                } px-3 py-1 text-xs font-semibold sm:text-sm`}
-              >
-                <TrendingUp
-                  className={`mr-1.5 h-3.5 w-3.5 ${(lastWeekProfitChange ?? 0) >= 0 ? 'text-emerald-400' : 'rotate-180 text-red-400'}`}
-                />
-                <span className="font-bold">
-                  {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
-                  {pct4(lastWeekProfitChange ?? 0)}
-                </span>
-              </Badge>
-            </div>
-          )}
+      {/* Daily ROS and Active Stakes - Bottom section */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:mt-5 lg:gap-4">
+        {/* Daily ROS - Clickable with double border inset */}
+        <button
+          onClick={() => {
+            const handleScroll = () => {
+              const element = document.getElementById('daily-ros');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            };
 
-          {/* Total Portfolio Value Section */}
-          <div className="mb-2 sm:mb-4">
-            {balanceVisible ? (
-              <motion.div
-                key="portfolio"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.9 }}
-                className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl lg:text-5xl"
-              >
-                $
-                {totalPortfolioValue.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="hidden"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.9 }}
-                className="text-muted-foreground/50 text-2xl font-black sm:text-3xl md:text-4xl lg:text-5xl"
-              >
-                ••••••••
-              </motion.div>
-            )}
-          </div>
-
-          {/* Social Media Links Footer */}
-          <div className="border-t border-white/5 pt-4 sm:pt-6">
-            <p className="text-muted-foreground mb-3 text-xs sm:mb-4 sm:text-sm">
-              You can also keep up with us here
+            // Check if we're already on the dashboard page
+            if (window.location.pathname === '/dashboard') {
+              // Already on dashboard, just scroll
+              handleScroll();
+            } else {
+              // Navigate first, then scroll
+              router.push('/dashboard#daily-ros');
+              // Wait for navigation to complete
+              setTimeout(handleScroll, 300);
+            }
+          }}
+          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
+          style={{
+            background: NEU_SURFACE,
+            boxShadow: `
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
+              `,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
+              `;
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 12px 12px 24px ${NEU_SHADOW_DARK},
+                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
+              `;
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `;
+          }}
+        >
+          <p
+            className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
+            style={{ color: NEU_TEXT_MUTED }}
+          >
+            DAILY ROS
+          </p>
+          {balanceVisible ? (
+            <p
+              className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
+              style={{ color: NEU_TEXT, filter: 'none' }}
+            >
+              $
+              {dailyROS.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
-            <div className="flex items-center gap-2">
-              <SocialButton
-                icon={FaFacebook}
-                onClick={() =>
-                  window.open(
-                    'https://www.facebook.com/share/16oLeHcQkH/',
-                    '_blank'
-                  )
-                }
-              />
-              <SocialButton
-                icon={FaInstagram}
-                onClick={() =>
-                  window.open(
-                    'https://www.instagram.com/novunt_hq?igsh=bGxoaGV3d3B0MWd5',
-                    '_blank'
-                  )
-                }
-              />
-              <SocialButton
-                icon={SiTiktok}
-                onClick={() =>
-                  window.open(
-                    'https://www.tiktok.com/@novuntofficial?_t=ZS-8ymrJsyJBk9&_r=1',
-                    '_blank'
-                  )
-                }
-              />
-              <SocialButton
-                icon={FaYoutube}
-                onClick={() =>
-                  window.open(
-                    'https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4',
-                    '_blank'
-                  )
-                }
-              />
-              <SocialButton
-                icon={FaTelegram}
-                onClick={() => window.open('https://t.me/novunt', '_blank')}
-              />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+          ) : (
+            <p
+              className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
+              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
+            >
+              ••••••
+            </p>
+          )}
+        </button>
 
-function SocialButton({
-  icon: Icon,
-  onClick,
-}: {
-  icon: React.ElementType;
-  onClick: () => void;
-}) {
+        {/* Active Stakes - Clickable with double border inset */}
+        <button
+          onClick={() => router.push('/dashboard/stakes')}
+          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
+          style={{
+            background: NEU_SURFACE,
+            boxShadow: `
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
+              `,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
+              `;
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 12px 12px 24px ${NEU_SHADOW_DARK},
+                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
+              `;
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.boxShadow = `
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `;
+          }}
+        >
+          <p
+            className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
+            style={{ color: NEU_TEXT_MUTED }}
+          >
+            ACTIVE STAKES
+          </p>
+          <p
+            className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
+            style={{ color: NEU_TEXT, filter: 'none' }}
+          >
+            {activeStakesCount} {activeStakesCount === 1 ? 'Asset' : 'Assets'}
+          </p>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (noCard) {
+    return content;
+  }
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-      animate={{
-        x: [0, 2, 0, -2, 0],
+    <div
+      className="group relative overflow-hidden rounded-3xl transition-all duration-300 lg:max-w-md lg:rounded-2xl"
+      style={{
+        background: NEU_SURFACE,
+        boxShadow: `
+          12px 12px 24px ${NEU_SHADOW_DARK},
+          -12px -12px 24px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.05)
+        `,
       }}
-      transition={{
-        duration: 3,
-        repeat: Infinity,
-        ease: 'easeInOut',
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `
+          14px 14px 28px ${NEU_SHADOW_DARK},
+          -14px -14px 28px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.08)
+        `;
       }}
-      className="text-muted-foreground hover:text-foreground flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-white/5"
-      onClick={onClick}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = `
+          12px 12px 24px ${NEU_SHADOW_DARK},
+          -12px -12px 24px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.05)
+        `;
+      }}
     >
-      <Icon className="h-4 w-4" />
-    </motion.button>
+      {content}
+    </div>
   );
 }

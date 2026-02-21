@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { hoverAnimation } from '@/design-system/animations';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Download,
   Upload,
@@ -14,20 +13,10 @@ import {
   XCircle,
   DollarSign,
   Wallet,
-  ChevronRight,
 } from 'lucide-react';
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
 
@@ -160,213 +149,174 @@ const isOutgoingTransaction = (tx: TransactionUnion): boolean => {
 
 /**
  * ActivityFeed Component
- * Modern card showing recent transaction history with icons and colors
+ * Neumorphic card matching Total Earned card design, showing one activity at a time with auto-rotation
  */
 export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (isLoading) {
-    return (
-      <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
-        <motion.div
-          animate={{
-            x: [0, -15, 0],
-            y: [0, 10, 0],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-        />
-        <CardHeader className="relative p-4 sm:p-6">
-          {/* Arrow Icon - Top Right */}
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
-          >
-            <a href="/dashboard/wallets?tab=transactions">
-              <ChevronRight className="h-5 w-5" />
-            </a>
-          </Button>
+  // Memoize transactions to detect changes
+  const transactionsKey = useMemo(
+    () => safeTransactions.map((tx) => getTransactionId(tx)).join(','),
+    [safeTransactions]
+  );
 
-          <div className="mb-2 flex items-center gap-2 sm:gap-3">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: -10 }}
-              className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-            >
-              <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-            </motion.div>
-            <div className="min-w-0 flex-1">
-              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                Recent Activity
-              </CardTitle>
-              <CardDescription className="text-[10px] sm:text-xs">
-                Your latest transactions
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-          <LoadingStates.List lines={5} className="space-y-3" />
-        </CardContent>
-      </Card>
-    );
-  }
+  // Reset to first item when transactions change (new activity added)
+  useEffect(() => {
+    if (safeTransactions.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [transactionsKey]);
+
+  // Auto-rotate through activities every 5 seconds
+  useEffect(() => {
+    if (safeTransactions.length === 0 || isLoading) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % safeTransactions.length);
+    }, 5000); // Rotate every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [safeTransactions.length, isLoading]);
+
+  // Get current activity to display
+  const currentTransaction =
+    safeTransactions.length > 0 ? safeTransactions[currentIndex] : null;
 
   return (
-    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent" />
-
-      {/* Animated Floating Blob */}
+    <div className="lg:max-w-md">
       <motion.div
-        animate={{
-          x: [0, -15, 0],
-          y: [0, 10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-      />
-
-      <CardHeader className="relative p-4 sm:p-6">
-        {/* Arrow Icon - Top Right */}
-        <Button
-          variant="ghost"
-          size="icon"
-          asChild
-          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div
+          className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+          style={{
+            background: '#0D162C',
+            boxShadow: `
+              inset 8px 8px 16px rgba(0, 0, 0, 0.5),
+              inset -8px -8px 16px rgba(255, 255, 255, 0.05),
+              inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+              inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+              0 0 0 1px rgba(255, 255, 255, 0.03)
+            `,
+          }}
         >
-          <a href="/dashboard/wallets?tab=transactions">
-            <ChevronRight className="h-5 w-5" />
-          </a>
-        </Button>
-
-        <div className="mb-2 flex items-center gap-2 sm:gap-3">
-          <motion.div
-            {...hoverAnimation()}
-            className="rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-          >
-            <TrendingUp className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-              Recent Activity
-            </CardTitle>
-            <CardDescription className="text-[10px] sm:text-xs">
-              Your latest transactions
-            </CardDescription>
+          {/* Content Section - Single Activity Display (matches Total Deposit card typography) */}
+          <div className="min-h-[80px]">
+            {isLoading ? (
+              <LoadingStates.Text lines={1} className="h-8 sm:h-10" />
+            ) : safeTransactions.length === 0 ? (
+              <EmptyStates.EmptyTransactions
+                action={{
+                  label: 'Make Your First Deposit',
+                  onClick: () => (window.location.href = '/dashboard/wallets'),
+                }}
+              />
+            ) : currentTransaction ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${getTransactionId(currentTransaction)}-${currentIndex}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full"
+                >
+                  <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                    {/* Icon - same size/shape as Total Deposit card */}
+                    <div
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                    >
+                      {(() => {
+                        const Icon = getTransactionIcon(
+                          currentTransaction.type
+                        );
+                        return (
+                          <Icon
+                            className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                            style={{
+                              color: 'rgba(255, 255, 255, 0.95)',
+                              filter: 'none',
+                            }}
+                          />
+                        );
+                      })()}
+                    </div>
+                    {/* Label + subtitle - same font size/color as Total Deposit card */}
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="truncate text-xs font-medium capitalize sm:text-sm lg:text-xs"
+                        style={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          filter: 'none',
+                        }}
+                      >
+                        {getTransactionTypeLabel(currentTransaction)}
+                      </p>
+                      <p
+                        className="text-[10px] sm:text-xs lg:text-[10px]"
+                        style={{
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          filter: 'none',
+                        }}
+                      >
+                        {formatRelativeTime(
+                          getTransactionDate(currentTransaction)
+                        )}
+                        {(() => {
+                          const reference = isEnhancedTransaction(
+                            currentTransaction
+                          )
+                            ? currentTransaction.reference
+                            : currentTransaction.reference;
+                          return reference ? (
+                            <span className="ml-1.5 font-mono">
+                              • {reference.slice(0, 8)}
+                            </span>
+                          ) : null;
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Amount - same font size/shape as Total Deposit; green for +, red for - */}
+                  {(() => {
+                    const isOutgoing =
+                      isOutgoingTransaction(currentTransaction);
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                        style={{
+                          color: isOutgoing ? '#ef4444' : '#22c55e',
+                          filter: 'none',
+                        }}
+                      >
+                        {isOutgoing ? '-' : '+'}
+                        {formatCurrency(currentTransaction.amount)}
+                      </motion.div>
+                    );
+                  })()}
+                  {/* Status - same muted style as card subtitle */}
+                  <p
+                    className="mt-1.5 text-[10px] font-medium capitalize sm:text-xs lg:text-[10px]"
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      filter: 'none',
+                    }}
+                  >
+                    {currentTransaction.status}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            ) : null}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-        {safeTransactions.length === 0 ? (
-          <EmptyStates.EmptyTransactions
-            action={{
-              label: 'Make Your First Deposit',
-              onClick: () => window.location.href = '/dashboard/wallets',
-            }}
-          />
-        ) : (
-          <div className="space-y-2">
-            {safeTransactions.slice(0, 5).map((transaction, index) => {
-              const Icon = getTransactionIcon(transaction.type);
-              const StatusIcon = getStatusIcon(transaction.status);
-              const isOutgoing = isOutgoingTransaction(transaction);
-              const transactionId = getTransactionId(transaction);
-              const transactionDate = getTransactionDate(transaction);
-              const typeLabel = getTransactionTypeLabel(transaction);
-              const reference = isEnhancedTransaction(transaction)
-                ? transaction.reference
-                : transaction.reference;
-
-              return (
-                <motion.div
-                  key={transactionId}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="hover:bg-muted/50 group hover:border-border/50 flex cursor-pointer items-center gap-4 rounded-xl border border-transparent p-4 transition-all duration-300"
-                >
-                  {/* Transaction Icon */}
-                  <div
-                    className={`rounded-xl p-3 transition-transform duration-300 group-hover:scale-110 ${
-                      isOutgoing ? 'bg-destructive/10' : 'bg-success/10'
-                    } `}
-                  >
-                    <Icon
-                      className={`h-5 w-5 ${
-                        isOutgoing ? 'text-destructive' : 'text-success'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Transaction Details */}
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <p className="truncate text-sm font-medium capitalize">
-                        {typeLabel}
-                      </p>
-                      <StatusIcon
-                        className={`h-3 w-3 flex-shrink-0 ${
-                          transaction.status === 'completed' ||
-                          transaction.status === 'confirmed'
-                            ? 'text-success'
-                            : transaction.status === 'pending' ||
-                                transaction.status === 'processing'
-                              ? 'text-warning'
-                              : 'text-destructive'
-                        }`}
-                      />
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      {formatRelativeTime(transactionDate)}
-                      {reference && (
-                        <span className="ml-2 font-mono">
-                          • {reference.slice(0, 8)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Amount & Status */}
-                  <div className="text-right">
-                    <p
-                      className={`text-sm font-bold ${
-                        isOutgoing ? 'text-destructive' : 'text-success'
-                      }`}
-                    >
-                      {isOutgoing ? '-' : '+'}
-                      {formatCurrency(transaction.amount)}
-                    </p>
-                    <Badge
-                      variant={
-                        transaction.status === 'completed' ||
-                        transaction.status === 'confirmed'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className="mt-1 text-xs capitalize"
-                    >
-                      {transaction.status}
-                    </Badge>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </motion.div>
+    </div>
   );
 }

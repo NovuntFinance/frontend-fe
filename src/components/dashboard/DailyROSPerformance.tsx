@@ -3,36 +3,29 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { useProfitHistory } from '@/lib/queries';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
-import { hoverAnimation } from '@/design-system/animations';
 import { pct4 } from '@/utils/formatters';
 
 type TimeRange = '7D' | '30D' | '100D';
 
 const timeRanges: TimeRange[] = ['7D', '30D', '100D'];
 
+// Chart dimensions
+const CHART_HEIGHT = 140;
+const CHART_PADDING = { top: 8, right: 8, bottom: 24, left: 8 };
+const POINT_R = 4;
+
 /**
  * Daily ROS Performance Card
- *
- * Displays a graph of declared ROS percentages over time.
- * Shows 7D, 30D, or 100D views with interactive chart.
+ * Line chart with area fill (smooth line + gradient under line).
+ * Styled to match dashboard cards; placed under Recent Activity.
  */
 export function DailyROSPerformance() {
   const [selectedRange, setSelectedRange] = useState<TimeRange>('7D');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Determine limit based on selected range
   const limit = useMemo(() => {
     switch (selectedRange) {
       case '7D':
@@ -46,44 +39,14 @@ export function DailyROSPerformance() {
     }
   }, [selectedRange]);
 
-  // Fetch profit history for selected range
   const { data: profitHistory, isLoading, error } = useProfitHistory(limit, 0);
 
-  // Debug logging in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[DailyROSPerformance] Data Debug:', {
-        profitHistory,
-        hasProfits: !!profitHistory?.profits,
-        profitsLength: profitHistory?.profits?.length || 0,
-        profits: profitHistory?.profits,
-        isLoading,
-        error,
-        errorStatus: error?.statusCode || error?.response?.status,
-        errorMessage: error?.message || error?.response?.data?.message,
-      });
-    }
-  }, [profitHistory, isLoading, error]);
-
-  // Prepare chart data - reverse to show oldest to newest (left to right)
   const chartData = useMemo(() => {
-    if (!profitHistory?.profits) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[DailyROSPerformance] No profits data:', {
-          profitHistory,
-          hasProfits: !!profitHistory?.profits,
-        });
-      }
-      return [];
-    }
+    if (!profitHistory?.profits) return [];
 
-    // Sort by date (oldest first) and take the last N entries
     const sorted = [...profitHistory.profits]
-      .sort((a, b) => {
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-limit)
-      // Filter out entries with invalid rosPercentage values
       .filter((d) => {
         const ros = d.rosPercentage;
         return (
@@ -94,7 +57,6 @@ export function DailyROSPerformance() {
           ros >= 0
         );
       })
-      // Ensure rosPercentage is a valid number
       .map((d) => ({
         ...d,
         rosPercentage: Number(d.rosPercentage) || 0,
@@ -103,301 +65,303 @@ export function DailyROSPerformance() {
     return sorted;
   }, [profitHistory, limit]);
 
-  // Calculate max percentage for chart scaling
   const maxPercentage = useMemo(() => {
     if (chartData.length === 0) return 1;
-    const validPercentages = chartData
+    const valid = chartData
       .map((d) => d.rosPercentage)
       .filter((p) => !isNaN(p) && isFinite(p) && p >= 0);
-    if (validPercentages.length === 0) return 1;
-    const max = Math.max(...validPercentages);
-    // Add 10% padding for better visualization
-    return max * 1.1 || 1;
+    if (valid.length === 0) return 1;
+    return Math.max(...valid) * 1.1 || 1;
   }, [chartData]);
 
-  // Calculate average percentage
   const averagePercentage = useMemo(() => {
     if (chartData.length === 0) return 0;
-    const validPercentages = chartData
+    const valid = chartData
       .map((d) => d.rosPercentage)
       .filter((p) => !isNaN(p) && isFinite(p) && p >= 0);
-    if (validPercentages.length === 0) return 0;
-    const sum = validPercentages.reduce((acc, p) => acc + p, 0);
-    return sum / validPercentages.length;
+    if (valid.length === 0) return 0;
+    return valid.reduce((a, p) => a + p, 0) / valid.length;
   }, [chartData]);
 
-  // Debug logging in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[DailyROSPerformance] Profit History:', {
-        profitHistory,
-        profitsCount: profitHistory?.profits?.length || 0,
-        firstProfit: profitHistory?.profits?.[0],
-        isLoading,
-        error,
-        chartDataLength: chartData.length,
-        averagePercentage,
-        chartDataSample: chartData.slice(0, 3),
-      });
+  // SVG path data: line and area (for fill)
+  const { linePath, areaPath, points, xAxisLabels } = useMemo(() => {
+    if (chartData.length === 0) {
+      return {
+        linePath: '',
+        areaPath: '',
+        points: [] as { x: number; y: number }[],
+        xAxisLabels: [] as string[],
+      };
     }
-  }, [profitHistory, isLoading, error, chartData, averagePercentage]);
+
+    const w = 100; // percentage-based so it scales
+    const innerHeight = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
+    const n = chartData.length;
+    const stepX =
+      n > 1 ? (w - CHART_PADDING.left - CHART_PADDING.right) / (n - 1) : 0;
+    const baseX = CHART_PADDING.left;
+
+    const pts = chartData.map((d, i) => {
+      const x = baseX + (n > 1 ? i * stepX : stepX * 0.5);
+      const pct = maxPercentage > 0 ? d.rosPercentage / maxPercentage : 0;
+      const y = CHART_PADDING.top + innerHeight * (1 - pct);
+      return { x, y, percentage: d.rosPercentage, date: d.date };
+    });
+
+    const linePathD = pts
+      .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
+      .join(' ');
+    const areaPathD =
+      linePathD +
+      ` L ${pts[pts.length - 1].x} ${CHART_HEIGHT - CHART_PADDING.bottom} L ${pts[0].x} ${CHART_HEIGHT - CHART_PADDING.bottom} Z`;
+
+    const labels = chartData.map((d, i) => {
+      const date = new Date(d.date);
+      if (selectedRange === '7D') {
+        return date
+          .toLocaleDateString('en-US', { weekday: 'short' })
+          .toUpperCase();
+      }
+      if (selectedRange === '30D') {
+        return i % 5 === 0
+          ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : '';
+      }
+      return i % 15 === 0
+        ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : '';
+    });
+
+    return {
+      linePath: linePathD,
+      areaPath: areaPathD,
+      points: pts.map((p) => ({ x: p.x, y: p.y })),
+      xAxisLabels: labels,
+    };
+  }, [chartData, maxPercentage, selectedRange]);
+
+  const rangeLabel =
+    selectedRange === '7D'
+      ? 'Last 7 days'
+      : selectedRange === '30D'
+        ? 'Last 30 days'
+        : 'Last 100 days';
 
   return (
-    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-transparent" />
-
-      {/* Animated Floating Blob */}
+    <div className="lg:max-w-md">
       <motion.div
-        animate={{
-          x: [0, -15, 0],
-          y: [0, 10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
-      />
-
-      <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center gap-2 sm:gap-3">
-          <motion.div
-            {...hoverAnimation()}
-            className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-          >
-            <TrendingUp className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-              Daily ROS Performance
-            </CardTitle>
-            <CardDescription className="text-[10px] sm:text-xs">
-              Declared percentages over time
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-        <div className="space-y-4 sm:space-y-6">
-          {/* Controls & Summary */}
-          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex items-baseline gap-1.5 sm:gap-2">
-              {isLoading ? (
-                <LoadingStates.Text
-                  lines={1}
-                  className="h-7 w-24 sm:h-8 sm:w-32"
-                />
-              ) : (
-                <>
-                  <h2 className="text-xl font-bold text-emerald-500 sm:text-2xl md:text-3xl">
-                    {isNaN(averagePercentage) || !isFinite(averagePercentage)
-                      ? '0.0000'
-                      : pct4(averagePercentage)}
-                  </h2>
-                  <span className="text-muted-foreground text-xs sm:text-sm">
-                    avg in {selectedRange}
-                  </span>
-                </>
-              )}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div
+          className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+          style={{
+            background: '#0D162C',
+            boxShadow: `
+              inset 8px 8px 16px rgba(0, 0, 0, 0.5),
+              inset -8px -8px 16px rgba(255, 255, 255, 0.05),
+              inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+              inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+              0 0 0 1px rgba(255, 255, 255, 0.03)
+            `,
+          }}
+        >
+          {/* Header - same typography as other dashboard cards */}
+          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+              style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+            >
+              <TrendingUp
+                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                style={{ color: 'rgba(255, 255, 255, 0.95)', filter: 'none' }}
+              />
             </div>
-
-            <div className="bg-muted/50 flex rounded-lg p-1">
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-xs font-medium sm:text-sm lg:text-xs"
+                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
+              >
+                Daily ROS Performance
+              </p>
+              <p
+                className="text-[10px] sm:text-xs lg:text-[10px]"
+                style={{ color: 'rgba(255, 255, 255, 0.5)', filter: 'none' }}
+              >
+                {rangeLabel}
+              </p>
+            </div>
+            {/* Time range pills - same style as second image (pill, muted) */}
+            <div
+              className="flex rounded-lg p-0.5"
+              style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+            >
               {timeRanges.map((range) => (
-                <Button
+                <button
                   key={range}
-                  variant={selectedRange === range ? 'default' : 'ghost'}
-                  size="sm"
+                  type="button"
                   onClick={() => setSelectedRange(range)}
-                  className={cn(
-                    'h-7 text-xs font-medium transition-all',
-                    selectedRange === range &&
-                      'bg-emerald-600 text-white hover:bg-emerald-700'
-                  )}
+                  className="rounded-md px-2.5 py-1 text-[10px] font-medium transition-all sm:text-xs"
+                  style={{
+                    background:
+                      selectedRange === range
+                        ? 'rgba(0, 155, 242, 0.25)'
+                        : 'transparent',
+                    color:
+                      selectedRange === range
+                        ? 'rgba(255, 255, 255, 0.95)'
+                        : 'rgba(255, 255, 255, 0.5)',
+                    filter: 'none',
+                  }}
                 >
                   {range}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Chart Area */}
-          <div className="relative mt-3 h-[180px] w-full select-none sm:mt-4 sm:h-[200px] md:h-[220px]">
+          {/* KPI - avg percentage */}
+          <div className="mb-3 flex items-baseline gap-2">
             {isLoading ? (
-              <LoadingStates.Grid
-                items={Math.min(limit, 7)}
-                columns={Math.min(limit, 7)}
-                className="h-full items-end"
-              />
+              <LoadingStates.Text lines={1} className="h-7 w-24" />
+            ) : (
+              <>
+                <span
+                  className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                  style={{ color: '#22c55e', filter: 'none' }}
+                >
+                  {isNaN(averagePercentage) || !isFinite(averagePercentage)
+                    ? '0.0000'
+                    : pct4(averagePercentage)}
+                </span>
+                <span
+                  className="text-[10px] sm:text-xs lg:text-[10px]"
+                  style={{ color: 'rgba(255, 255, 255, 0.5)', filter: 'none' }}
+                >
+                  avg in {selectedRange}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Line chart with area fill */}
+          <div className="relative h-[180px] w-full">
+            {isLoading ? (
+              <LoadingStates.Text lines={3} className="h-full w-full" />
             ) : error ? (
               <div className="flex h-full items-center justify-center">
                 <EmptyStates.EmptyState
                   title="Failed to load data"
-                  description="Unable to fetch ROS performance data. Please try again later."
-                />
-              </div>
-            ) : error ? (
-              <div className="flex h-full items-center justify-center">
-                <EmptyStates.EmptyState
-                  title="Unable to load data"
-                  description={
-                    (error as any)?.statusCode === 404 ||
-                    (error as any)?.response?.status === 404
-                      ? 'The profit history endpoint is not available yet. Data will appear here once the backend endpoint is implemented.'
-                      : 'Failed to fetch ROS performance data. Please try again later.'
-                  }
+                  description="Unable to fetch ROS performance data."
                 />
               </div>
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <EmptyStates.EmptyState
-                  title={`No data available for ${selectedRange}`}
-                  description="ROS performance data will appear here once profits are declared and distributed"
+                  title={`No data for ${selectedRange}`}
+                  description="ROS data will appear once profits are declared"
                 />
               </div>
             ) : (
-              <div className="absolute inset-0 flex items-end justify-between gap-1 sm:gap-2">
-                {chartData.map((day, index) => {
-                  const percentage = day.rosPercentage || 0;
-                  const heightPercent =
-                    maxPercentage > 0 ? (percentage / maxPercentage) * 100 : 0;
-
-                  const isHovered = hoveredIndex === index;
-                  const date = new Date(day.date);
-                  const isToday =
-                    date.toDateString() === new Date().toDateString();
-                  const isYesterday =
-                    date.toDateString() ===
-                    new Date(Date.now() - 86400000).toDateString();
-
-                  // Format date label based on range
-                  const getDateLabel = () => {
-                    if (selectedRange === '7D') {
-                      return date.toLocaleDateString('en-US', {
-                        weekday: 'short',
-                      });
-                    } else if (selectedRange === '30D') {
-                      return index % 5 === 0
-                        ? date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        : '';
-                    } else {
-                      // 100D - show fewer labels
-                      return index % 15 === 0
-                        ? date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        : '';
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={index}
-                      className="group relative flex h-full flex-1 flex-col justify-end"
-                      onMouseEnter={() => setHoveredIndex(index)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                    >
-                      {/* Tooltip */}
-                      <AnimatePresence>
-                        {isHovered && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2"
+              <svg
+                viewBox={`0 0 100 ${CHART_HEIGHT}`}
+                preserveAspectRatio="none"
+                className="h-full w-full"
+              >
+                <defs>
+                  <linearGradient
+                    id="ros-area-fill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                    gradientUnits="objectBoundingBox"
+                  >
+                    <stop offset="0%" stopColor="#009BF2" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#009BF2" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Area under line */}
+                <motion.path
+                  d={areaPath}
+                  fill="url(#ros-area-fill)"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                />
+                {/* Line */}
+                <motion.path
+                  d={linePath}
+                  fill="none"
+                  stroke="#009BF2"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.6, ease: 'easeInOut' }}
+                />
+                {/* Data points */}
+                <AnimatePresence>
+                  {points.map((pt, i) => (
+                    <g key={i}>
+                      <motion.circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={POINT_R}
+                        fill="#009BF2"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.3 + i * 0.05 }}
+                        onMouseEnter={() => setHoveredIndex(i)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      {hoveredIndex === i && chartData[i] && (
+                        <motion.g
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <text
+                            x={pt.x}
+                            y={pt.y - 10}
+                            textAnchor="middle"
+                            fill="rgba(255,255,255,0.95)"
+                            fontSize="10"
+                            fontWeight="600"
                           >
-                            <div className="bg-popover/95 border-border/50 rounded-xl border p-3 text-xs shadow-xl backdrop-blur-md">
-                              <p className="border-border/50 mb-2 border-b pb-1 text-center font-semibold">
-                                {date.toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                })}
-                              </p>
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    ROS Percentage
-                                  </span>
-                                  <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
-                                    {pct4(percentage)}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    Status
-                                  </span>
-                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                    {day.isDistributed
-                                      ? 'Distributed'
-                                      : 'Pending'}
-                                  </span>
-                                </div>
-                                {(isToday || isYesterday) && (
-                                  <div className="text-muted-foreground pt-1 text-[10px] italic">
-                                    {isToday ? 'Today' : 'Yesterday'}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {/* Arrow */}
-                            <div className="bg-popover/95 border-border/50 absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-r border-b" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Bar */}
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${heightPercent}%` }}
-                        transition={{ duration: 0.5, delay: index * 0.02 }}
-                        className={cn(
-                          'relative w-full overflow-hidden rounded-t-sm transition-all duration-200',
-                          isHovered
-                            ? 'z-10 scale-x-110 opacity-100 shadow-lg'
-                            : 'opacity-85 hover:opacity-100',
-                          isToday || isYesterday
-                            ? 'bg-emerald-600 dark:bg-emerald-500'
-                            : 'bg-emerald-500'
-                        )}
-                      >
-                        <div
-                          className="w-full bg-emerald-500 transition-colors"
-                          style={{ height: '100%' }}
-                        />
-                      </motion.div>
-
-                      {/* X-Axis Label */}
-                      {getDateLabel() && (
-                        <div className="text-muted-foreground mt-2 truncate text-center text-[10px] font-medium">
-                          {getDateLabel()}
-                        </div>
+                            {pct4(chartData[i].rosPercentage)}
+                          </text>
+                        </motion.g>
                       )}
-                    </div>
-                  );
-                })}
-              </div>
+                    </g>
+                  ))}
+                </AnimatePresence>
+              </svg>
             )}
 
-            {/* Grid Lines */}
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-10">
-              <div className="bg-foreground h-px w-full" />
-              <div className="bg-foreground h-px w-full" />
-              <div className="bg-foreground h-px w-full" />
-              <div className="bg-foreground h-px w-full" />
-              <div className="bg-foreground h-px w-full" />
-            </div>
+            {/* X-axis labels - aligned with data points */}
+            {chartData.length > 0 && !isLoading && !error && (
+              <div
+                className="absolute right-0 bottom-0 left-0 flex text-[10px] font-medium sm:text-xs"
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+              >
+                {xAxisLabels.map((label, i) => (
+                  <span
+                    key={i}
+                    className="flex-1 truncate text-center"
+                    style={{ minWidth: 0 }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </motion.div>
+    </div>
   );
 }
