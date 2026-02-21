@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 // Framer Motion removed - no longer needed for navigation
 import {
-  Shield,
   AlertTriangle,
   ArrowUpRight,
   Lock,
@@ -17,8 +16,6 @@ import {
   Bell,
   LogOut,
   User,
-  Sun,
-  Moon,
   TrendingDown,
   Users,
 } from 'lucide-react';
@@ -47,7 +44,6 @@ import { NotificationsModal } from '@/components/settings/NotificationsModal';
 import { NotificationBadge } from '@/components/notifications/NotificationBadge';
 import { DateFilteredNotificationList } from '@/components/notifications/DateFilteredNotificationList';
 import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings } from 'lucide-react';
 import { toast } from '@/components/ui/enhanced-toast';
@@ -56,10 +52,15 @@ import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
 import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
-import { InfoMarquee } from '@/components/ui/info-marquee';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
-import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
 import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
+import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
+import {
+  IoSunnyOutline,
+  IoMoonOutline,
+  IoHeadsetOutline,
+} from 'react-icons/io5';
+import neuStyles from '@/styles/neumorphic.module.css';
 
 /**
  * Dashboard Layout
@@ -80,6 +81,7 @@ export default function DashboardLayout({
   const [notificationTab, setNotificationTab] = useState<'all' | 'system'>(
     'all'
   );
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {
@@ -147,150 +149,73 @@ export default function DashboardLayout({
 
   return (
     <DashboardGuard>
-      <div className="from-background via-background to-background min-h-screen bg-gradient-to-br dark:from-slate-950 dark:via-indigo-950 dark:to-slate-950">
+      <div className="min-h-screen" style={{ background: '#0D162C' }}>
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
-        <header className="sticky top-0 z-30 h-14 border-b border-white/20 bg-gradient-to-b from-white/10 via-white/5 to-white/2 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/2">
-          <div className="flex h-full items-center gap-4 px-4">
-            {/* Profile Icon - Left side */}
-            <div className="flex shrink-0 items-center">
+        <header
+          className="sticky top-0 z-30 min-h-16 py-5 sm:py-4"
+          style={{ background: '#0D162C' }}
+        >
+          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-4 py-2">
+            {/* Profile Section - Left side */}
+            <div className="flex shrink-0 items-center gap-3">
               <DropdownMenu
                 open={profileDropdownOpen}
                 onOpenChange={setProfileDropdownOpen}
               >
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full p-0"
-                  >
-                    {(() => {
-                      const avatarUrl = getUserAvatarUrl(user);
-                      const isBadge = avatarUrl && isBadgeIcon(avatarUrl);
-
-                      if (isBadge && avatarUrl) {
-                        return (
-                          <BadgeAvatar
-                            badgeIcon={avatarUrl}
-                            size="md"
-                            className="h-10 w-10"
-                          />
-                        );
-                      }
-
-                      return (
-                        <Avatar className="h-10 w-10">
-                          <img
-                            src={avatarUrl || ''}
-                            alt={user?.firstName || 'User'}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        </Avatar>
-                      );
-                    })()}
-                  </Button>
+                  <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
+                    <span
+                      className="text-sm font-medium [filter:none]"
+                      style={{
+                        color: 'rgba(255,255,255,0.95)',
+                        filter: 'none',
+                      }}
+                    >
+                      {user?.firstName} {user?.lastName}
+                    </span>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-56 border border-white/20 bg-white/10 p-2 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-white/8"
+                  className="w-56 border border-white/10 p-2"
+                  style={{
+                    background: '#131B2E',
+                    boxShadow:
+                      '8px 8px 16px rgba(0,0,0,0.5), -8px -8px 16px rgba(255,255,255,0.05)',
+                  }}
                 >
-                  <DropdownMenuLabel className="px-3 py-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-foreground text-sm font-medium dark:text-white">
-                        {user?.firstName} {user?.lastName}
-                      </p>
-                      <p className="text-muted-foreground text-xs dark:text-white/60">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-border my-1 dark:bg-white/10" />
                   <DropdownMenuItem
                     onClick={() => {
                       setProfileDropdownOpen(false);
                       setProfileModalOpen(true);
                     }}
-                    className="text-foreground focus:bg-accent focus:text-foreground cursor-pointer rounded-md dark:text-white/90 dark:focus:bg-white/10 dark:focus:text-white"
+                    className="cursor-pointer rounded-md focus:bg-white/10"
+                    style={{ color: '#009BF2', filter: 'none' }}
                   >
-                    <User className="text-muted-foreground mr-2 h-4 w-4 dark:text-white/70" />
+                    <User
+                      className="mr-2 h-4 w-4"
+                      style={{ color: '#009BF2', filter: 'none' }}
+                    />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
                       setProfileDropdownOpen(false);
-                      // Small delay to ensure dropdown closes before opening notification center
                       setTimeout(() => {
                         setNotificationCenterOpen(true);
                       }, 100);
                     }}
-                    className="text-foreground focus:bg-accent focus:text-foreground relative cursor-pointer rounded-md dark:text-white/90 dark:focus:bg-white/10 dark:focus:text-white"
+                    className="relative cursor-pointer rounded-md focus:bg-white/10"
+                    style={{ color: '#009BF2', filter: 'none' }}
                   >
-                    <Bell className="text-muted-foreground mr-2 h-4 w-4 dark:text-white/70" />
+                    <Bell
+                      className="mr-2 h-4 w-4"
+                      style={{ color: '#009BF2', filter: 'none' }}
+                    />
                     <span className="flex-1">Notifications</span>
                     <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                    className="text-foreground focus:bg-accent focus:text-foreground cursor-pointer rounded-md dark:text-white/90 dark:focus:bg-white/10 dark:focus:text-white"
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex items-center">
-                        {theme === 'dark' ? (
-                          <Moon className="text-muted-foreground mr-2 h-4 w-4 dark:text-white/70" />
-                        ) : (
-                          <Sun className="text-muted-foreground mr-2 h-4 w-4 dark:text-white/70" />
-                        )}
-                        <span>Theme</span>
-                      </div>
-                      <Switch
-                        checked={theme === 'dark'}
-                        onCheckedChange={(checked) => {
-                          setTheme(checked ? 'dark' : 'light');
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="data-[state=checked]:bg-indigo-600 data-[state=unchecked]:bg-white/20"
-                      />
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                    className="text-foreground focus:bg-accent focus:text-foreground cursor-pointer rounded-md dark:text-white/90 dark:focus:bg-white/10 dark:focus:text-white"
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex items-center">
-                        <Shield className="text-muted-foreground mr-2 h-4 w-4 dark:text-white/70" />
-                        <span>2FA Auth</span>
-                      </div>
-                      <Switch
-                        checked={twoFactorEnabled}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setTwoFactorModalOpen(true);
-                          } else {
-                            // Disable 2FA via API
-                            disable2FAMutation.mutate(undefined, {
-                              onSuccess: () => {
-                                setTwoFactorEnabled(false);
-                              },
-                              onError: () => {
-                                // Revert toggle on error
-                                setTwoFactorEnabled(
-                                  user?.twoFAEnabled || false
-                                );
-                              },
-                            });
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        disabled={disable2FAMutation.isPending}
-                        className="data-[state=checked]:bg-indigo-600 data-[state=unchecked]:bg-white/20"
-                      />
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-border my-1 dark:bg-white/10" />
+                  <DropdownMenuSeparator className="my-1 bg-white/10" />
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer rounded-md text-red-400 focus:bg-red-500/10 focus:text-red-400"
@@ -302,9 +227,43 @@ export default function DashboardLayout({
               </DropdownMenu>
             </div>
 
-            {/* Information Marquee - shown on all views */}
-            <div className="min-w-0 flex-1">
-              <InfoMarquee speed={45} className="h-full" />
+            {/* Theme Toggle and Customer Support - Right side (neumorphic) */}
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                style={{
+                  boxShadow:
+                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
+                  background: '#131B2E',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  color: '#009BF2',
+                  filter: 'none',
+                }}
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? (
+                  <IoSunnyOutline className="h-5 w-5" />
+                ) : (
+                  <IoMoonOutline className="h-5 w-5" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setAssistantOpen(true)}
+                className={`relative flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                style={{
+                  boxShadow:
+                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
+                  background: '#131B2E',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  color: '#009BF2',
+                  filter: 'none',
+                }}
+                aria-label="Open customer support"
+              >
+                <IoHeadsetOutline className="h-5 w-5" />
+              </button>
             </div>
           </div>
 
@@ -410,33 +369,6 @@ export default function DashboardLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-
-        {/* Breadcrumbs */}
-        <div className="border-b border-white/10 bg-white/5 px-4 py-3 dark:border-white/5 dark:bg-white/2">
-          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <Breadcrumbs />
-
-            {/* Wallet Quick Access with Lock Indicator */}
-            {!isOnboardingPage && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="group hover:bg-novunt-gold-500/10 relative rounded-xl border-white/10 bg-white/5 pr-3 transition-all"
-                onClick={() => router.push('/dashboard/wallets')}
-              >
-                <div className="bg-novunt-gold-100 group-hover:bg-novunt-gold-200 dark:bg-novunt-gold-900/30 h-6 w-6 rounded-lg p-1 transition-colors">
-                  <Wallet className="text-novunt-gold-600 dark:text-novunt-gold-500 h-full w-full" />
-                </div>
-                <span className="ml-2 text-xs font-bold tracking-wider uppercase">
-                  Wallet
-                </span>
-                {isLocked && (
-                  <Lock className="bg-background absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full border border-amber-500/50 text-amber-500 shadow-lg" />
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
 
         {/* Compliance & Registration Bonus Banners */}
         {!isOnboardingPage && (
@@ -606,6 +538,12 @@ export default function DashboardLayout({
 
         {/* Floating Assistant Button */}
         <FloatingAssistantButton />
+
+        {/* Customer Support Assistant Modal */}
+        <NovuntAssistant
+          isOpen={assistantOpen}
+          onClose={() => setAssistantOpen(false)}
+        />
       </div>
     </DashboardGuard>
   );

@@ -2375,23 +2375,37 @@ export function useProfitHistory(limit: number = 30, offset: number = 0) {
 
         return response.data;
       } catch (error: any) {
-        // Enhanced error logging
         const status = error?.statusCode || error?.response?.status;
         const message = error?.message || error?.response?.data?.message;
 
         // 404 is expected if no history exists yet - use warn instead of error
         if (status === 404) {
-          console.warn(
-            '[useProfitHistory] ⚠️ 404 - No profit history found (this is normal for new users)'
-          );
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(
+              '[useProfitHistory] ⚠️ 404 - No profit history found (this is normal for new users)'
+            );
+          }
         } else {
+          // Enhanced error logging for non-404 errors
+          const errorDetails: any = {
+            status,
+            message: message || 'Unknown error',
+          };
+
+          // Only include error object if it has useful information
+          if (error?.response?.data) {
+            errorDetails.responseData = error.response.data;
+          }
+          if (error?.message) {
+            errorDetails.errorMessage = error.message;
+          }
+          if (error?.stack) {
+            errorDetails.stack = error.stack;
+          }
+
           console.error(
             '[useProfitHistory] ❌ Failed to fetch profit history:',
-            {
-              status,
-              message,
-              error,
-            }
+            errorDetails
           );
         }
 

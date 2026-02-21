@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { slideUp } from '@/design-system/animations';
 import {
   Wallet,
@@ -18,7 +19,16 @@ import {
   Gift,
   Send,
   Check,
+  Award,
+  CreditCard,
+  Settings,
+  HelpCircle,
 } from 'lucide-react';
+// Semantic aliases: use type-resolving icons (Trophy/Flame/BookOpen/Sparkles have declaration issues in some setups)
+const Trophy = Award;
+const Flame = Clock;
+const BookOpen = HelpCircle;
+const Sparkles = Star;
 import {
   useWalletBalance,
   useActiveStakes,
@@ -59,6 +69,12 @@ import type { PlatformActivity } from '@/types/platformActivity';
 export default function DashboardPage() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [currentStat, setCurrentStat] = useState<
+    'earned' | 'staked' | 'deposited' | 'withdrawn'
+  >('staked');
+  const [hoveredButtonIndex, setHoveredButtonIndex] = useState<number | null>(
+    null
+  );
   const [newUserInfo, setNewUserInfo] = useState<{
     firstName: string;
     lastName: string;
@@ -69,6 +85,20 @@ export default function DashboardPage() {
 
   // Fetch staking streak data
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
+
+  // Handle hash navigation (e.g., #daily-ros)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.substring(1); // Remove the #
+      const element = document.getElementById(hash);
+      if (element) {
+        // Small delay to ensure page is fully rendered
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    }
+  }, []);
 
   // Check for first-time login and show welcome modal
   useEffect(() => {
@@ -95,6 +125,25 @@ export default function DashboardPage() {
       }
     }
   }, []);
+
+  // Rotate through all stats every 5 seconds (carousel)
+  const stats = useMemo<Array<'earned' | 'staked' | 'deposited' | 'withdrawn'>>(
+    () => ['staked', 'earned', 'deposited', 'withdrawn'],
+    []
+  );
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % stats.length);
+    }, 5000); // Rotate every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [stats.length]);
+
+  useEffect(() => {
+    setCurrentStat(stats[currentIndex]);
+  }, [currentIndex, stats]);
 
   // Handle welcome modal close
   const handleWelcomeModalClose = () => {
@@ -531,27 +580,8 @@ export default function DashboardPage() {
   const isRefetching = false; // Can be connected to refetch state
 
   return (
-    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
+    <div className="min-h-screen">
       <div className="space-y-4 sm:space-y-6">
-        {/* Hero Section - Welcome Card */}
-        {/* Hero Section - Welcome Card */}
-        {/* Hero Section - Welcome Card */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <WelcomeBackCard
-            user={user}
-            balanceVisible={balanceVisible}
-            setBalanceVisible={setBalanceVisible}
-            refetch={refetch}
-            isRefetching={isRefetching}
-            totalPortfolioValue={totalPortfolioValue}
-            totalEarnings={totalEarnings}
-            lastWeekProfitChange={0}
-          />
-        </motion.div>
-
         {/* Registration Bonus Banner */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -561,203 +591,593 @@ export default function DashboardPage() {
           <RegistrationBonusBanner />
         </motion.div>
 
-        {/* Stats Grid - Premium Cards (2x2 layout) */}
-        {/* REORDERED: Total Earned FIRST (most motivating), then Total Staked, Total Deposited, Total Withdrawn */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
-          {[
-            {
-              title: 'Total Earned',
-              value: totalEarned,
-              tooltip: 'Total earnings from all sources.',
-              icon: TrendingUp,
-              colorTheme: 'emerald' as const,
-            },
-            {
-              title: 'Total Staked',
-              value: totalStaked,
-              tooltip: 'Total amount staked across all stakes.',
-              icon: Wallet,
-              colorTheme: 'orange' as const,
-            },
-            {
-              title: 'Total Deposited',
-              value: totalDeposited,
-              tooltip: 'Total amount deposited to your wallet.',
-              icon: ArrowDownRight,
-              colorTheme: 'purple' as const,
-            },
-            {
-              title: 'Total Withdrawn',
-              value: totalWithdrawn,
-              tooltip: 'Total amount withdrawn from your wallet.',
-              icon: ArrowUpRight,
-              colorTheme: 'blue' as const,
-            },
-            ...(pendingEarnings > 0
-              ? [
-                  {
-                    title: 'Pending Earnings',
-                    value: pendingEarnings,
-                    tooltip: 'Earnings awaiting confirmation or release.',
-                    icon: Clock,
-                    colorTheme: 'orange' as const,
-                  },
-                ]
-              : []),
-            ...(nextPayoutDate
-              ? [
-                  {
-                    title: 'Next Payout',
-                    value: null,
-                    displayValue: new Date(nextPayoutDate).toLocaleDateString(
-                      'en-US',
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      }
-                    ),
-                    tooltip: 'Expected date for your next ROS or distribution.',
-                    icon: Calendar,
-                    colorTheme: 'blue' as const,
-                  },
-                ]
-              : []),
-          ].map((stat, index) => {
-            // Color theme mappings for gradient backgrounds
-            const colorConfigs: Record<
-              string,
-              {
-                gradient: string;
-                blob: string;
-                iconBg: string;
-                textGradient: string;
-                iconColor: string;
-              }
-            > = {
-              purple: {
-                gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
-                blob: 'bg-purple-500/30',
-                iconBg: 'from-purple-500/30 to-indigo-500/20',
-                textGradient: 'from-purple-600 to-indigo-600',
-                iconColor: 'text-purple-500',
-              },
-              orange: {
-                gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
-                blob: 'bg-amber-500/30',
-                iconBg: 'from-amber-500/30 to-orange-500/20',
-                textGradient: 'from-amber-600 to-orange-600',
-                iconColor: 'text-amber-500',
-              },
-              emerald: {
-                gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
-                blob: 'bg-emerald-500/30',
-                iconBg: 'from-emerald-500/30 to-green-500/20',
-                textGradient: 'from-emerald-600 to-green-600',
-                iconColor: 'text-emerald-500',
-              },
-              blue: {
-                gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
-                blob: 'bg-blue-500/30',
-                iconBg: 'from-blue-500/30 to-cyan-500/20',
-                textGradient: 'from-blue-600 to-cyan-600',
-                iconColor: 'text-blue-500',
-              },
-            };
-
-            const colors = colorConfigs[stat.colorTheme] || colorConfigs.purple;
-            const IconComponent = stat.icon;
-
-            return (
+        {/* Single Neumorphic Card containing all dashboard elements */}
+        <div className="lg:max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div
+              className="rounded-3xl p-5 transition-all duration-300 sm:p-6 lg:rounded-2xl lg:p-5 xl:p-6"
+              style={{
+                background: '#131B2E',
+                boxShadow: `
+                  12px 12px 24px rgba(0, 0, 0, 0.5),
+                  -12px -12px 24px rgba(255, 255, 255, 0.05),
+                  0 0 0 1px rgba(255, 255, 255, 0.05)
+                `,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `
+                  14px 14px 28px rgba(0, 0, 0, 0.5),
+                  -14px -14px 28px rgba(255, 255, 255, 0.05),
+                  0 0 0 1px rgba(255, 255, 255, 0.08)
+                `;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = `
+                  12px 12px 24px rgba(0, 0, 0, 0.5),
+                  -12px -12px 24px rgba(255, 255, 255, 0.05),
+                  0 0 0 1px rgba(255, 255, 255, 0.05)
+                `;
+              }}
+            >
+              {/* Balance Card Content */}
               <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -4, scale: 1.01 }}
               >
-                <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-                  {/* Animated Gradient Background */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${colors.gradient}`}
-                  />
-
-                  {/* Animated Floating Blob */}
-                  <motion.div
-                    animate={{
-                      x: [0, -15, 0],
-                      y: [0, 10, 0],
-                      scale: [1, 1.15, 1],
-                    }}
-                    transition={{
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    className={`absolute -bottom-12 -left-12 h-24 w-24 rounded-full ${colors.blob} blur-2xl`}
-                  />
-
-                  <CardHeader className="relative p-4 sm:p-6">
-                    <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: -10 }}
-                        className={`rounded-xl bg-gradient-to-br ${colors.iconBg} p-2 shadow-lg backdrop-blur-sm sm:p-3`}
-                      >
-                        <IconComponent
-                          className={`h-5 w-5 sm:h-6 sm:w-6 ${colors.iconColor}`}
-                        />
-                      </motion.div>
-                      <div className="min-w-0 flex-1">
-                        <CardTitle
-                          className={`bg-gradient-to-r ${colors.textGradient} truncate bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg`}
-                        >
-                          {stat.title}
-                        </CardTitle>
-                        <CardDescription className="truncate text-[10px] sm:text-xs">
-                          {stat.tooltip.split('.')[0]}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
-                    {isLoading ? (
-                      <LoadingStates.Text lines={1} className="h-16 sm:h-20" />
-                    ) : (
-                      <div className="mb-2 flex w-full min-w-0 items-baseline gap-2 sm:mb-4 sm:gap-3">
-                        <motion.span
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.9 }}
-                          key={stat.value ?? 0}
-                          className={`bg-gradient-to-r ${colors.textGradient} overflow-visible bg-clip-text text-2xl leading-tight font-black whitespace-nowrap text-transparent sm:text-3xl md:text-4xl lg:text-5xl`}
-                          style={{ wordBreak: 'keep-all' }}
-                        >
-                          {balanceVisible
-                            ? stat.displayValue ||
-                              `$${(stat.value ?? 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}`
-                            : '••••••'}
-                        </motion.span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <WelcomeBackCard
+                  user={user}
+                  balanceVisible={balanceVisible}
+                  setBalanceVisible={setBalanceVisible}
+                  refetch={refetch}
+                  isRefetching={isRefetching}
+                  totalPortfolioValue={totalPortfolioValue}
+                  totalEarnings={totalEarnings}
+                  lastWeekProfitChange={0}
+                  noCard={true}
+                />
               </motion.div>
-            );
-          })}
+
+              {/* Quick Actions - Directly under balance card */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mt-4"
+              >
+                <QuickActions />
+              </motion.div>
+
+              {/* Stats Carousel Card */}
+              <div className="mt-4">
+                <div
+                  className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+                  style={{
+                    background: '#0D162C',
+                    boxShadow: `
+                      inset 8px 8px 16px rgba(0, 0, 0, 0.5),
+                      inset -8px -8px 16px rgba(255, 255, 255, 0.05),
+                      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                      inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                      0 0 0 1px rgba(255, 255, 255, 0.03)
+                    `,
+                  }}
+                >
+                  <div className="min-h-[80px]">
+                    <AnimatePresence mode="wait">
+                      {currentStat === 'earned' && (
+                        <motion.div
+                          key="total-earned"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="w-full"
+                        >
+                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
+                              <Wallet
+                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  filter: 'none',
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="text-xs font-medium sm:text-sm lg:text-xs"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total Earned
+                              </p>
+                              <p
+                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total earnings from all sources
+                              </p>
+                            </div>
+                          </div>
+                          {isLoading ? (
+                            <LoadingStates.Text
+                              lines={1}
+                              className="h-8 sm:h-10"
+                            />
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                              key={totalEarned ?? 0}
+                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                filter: 'none',
+                              }}
+                            >
+                              {balanceVisible
+                                ? `$${(totalEarned ?? 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}`
+                                : '••••••'}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                      {currentStat === 'staked' && (
+                        <motion.div
+                          key="total-staked"
+                          custom={currentIndex}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.4, ease: 'easeInOut' }}
+                          className="w-full"
+                        >
+                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
+                              <TrendingUp
+                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  filter: 'none',
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="text-xs font-medium sm:text-sm lg:text-xs"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total Staked
+                              </p>
+                              <p
+                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total amount staked across all stakes
+                              </p>
+                            </div>
+                          </div>
+                          {isLoading ? (
+                            <LoadingStates.Text
+                              lines={1}
+                              className="h-8 sm:h-10"
+                            />
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                              key={totalStaked ?? 0}
+                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                filter: 'none',
+                              }}
+                            >
+                              {balanceVisible
+                                ? `$${(totalStaked ?? 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}`
+                                : '••••••'}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                      {currentStat === 'deposited' && (
+                        <motion.div
+                          key="total-deposited"
+                          custom={currentIndex}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.4, ease: 'easeInOut' }}
+                          className="w-full"
+                        >
+                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
+                              <ArrowDownRight
+                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  filter: 'none',
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="text-xs font-medium sm:text-sm lg:text-xs"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total Deposited
+                              </p>
+                              <p
+                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total amount deposited to your wallet
+                              </p>
+                            </div>
+                          </div>
+                          {isLoading ? (
+                            <LoadingStates.Text
+                              lines={1}
+                              className="h-8 sm:h-10"
+                            />
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                              key={totalDeposited ?? 0}
+                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                filter: 'none',
+                              }}
+                            >
+                              {balanceVisible
+                                ? `$${(totalDeposited ?? 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}`
+                                : '••••••'}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                      {currentStat === 'withdrawn' && (
+                        <motion.div
+                          key="total-withdrawn"
+                          custom={currentIndex}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.4, ease: 'easeInOut' }}
+                          className="w-full"
+                        >
+                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
+                              <ArrowUpRight
+                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  filter: 'none',
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="text-xs font-medium sm:text-sm lg:text-xs"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total Withdrawn
+                              </p>
+                              <p
+                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                style={{
+                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  filter: 'none',
+                                }}
+                              >
+                                Total amount withdrawn from your wallet
+                              </p>
+                            </div>
+                          </div>
+                          {isLoading ? (
+                            <LoadingStates.Text
+                              lines={1}
+                              className="h-8 sm:h-10"
+                            />
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                              key={totalWithdrawn ?? 0}
+                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                filter: 'none',
+                              }}
+                            >
+                              {balanceVisible
+                                ? `$${(totalWithdrawn ?? 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}`
+                                : '••••••'}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {/* Carousel Indicators */}
+                  <div className="mt-3 flex items-center justify-center gap-1.5">
+                    {stats.map((stat, index) => (
+                      <button
+                        key={stat}
+                        onClick={() => {
+                          setCurrentIndex(index);
+                          setCurrentStat(stats[index]);
+                        }}
+                        className="h-1.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: currentIndex === index ? '24px' : '8px',
+                          background:
+                            currentIndex === index
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(255, 255, 255, 0.3)',
+                        }}
+                        aria-label={`Go to ${stat}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Buttons Grid - 4 columns */}
+              <div className="mt-4 flex justify-center px-2 sm:px-4">
+                <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
+                  {[
+                    {
+                      id: 'welcome-bonus',
+                      label: '10% Bonus',
+                      icon: Gift,
+                      href: '/dashboard/onboarding',
+                    },
+                    {
+                      id: 'nxp-gamification',
+                      label: 'NXP',
+                      icon: Sparkles,
+                      href: '/dashboard/nxp',
+                    },
+                    {
+                      id: 'rank',
+                      label: 'Rank',
+                      icon: Trophy,
+                      href: '/dashboard/rank',
+                    },
+                    {
+                      id: 'wallet-address',
+                      label: 'Wallet',
+                      icon: CreditCard,
+                      href: '/dashboard/wallet',
+                    },
+                    {
+                      id: 'community',
+                      label: 'Team',
+                      icon: Users,
+                      href: '/dashboard/team',
+                    },
+                    {
+                      id: 'staking-streak',
+                      label: 'Streak',
+                      icon: Flame,
+                      href: '/dashboard',
+                    },
+                    {
+                      id: 'knowledge-base',
+                      label: 'Help',
+                      icon: BookOpen,
+                      href: '/dashboard/knowledge-base',
+                    },
+                    {
+                      id: 'settings',
+                      label: 'Settings',
+                      icon: Settings,
+                      href: '/dashboard/settings',
+                    },
+                  ].map((button, index) => {
+                    const IconComponent = button.icon;
+                    const NEU_SURFACE = '#131B2E';
+                    const NEU_TEXT = '#009BF2';
+                    const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+                    const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+
+                    return (
+                      <Link key={button.id} href={button.href}>
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                          className="flex flex-col items-center gap-1.5"
+                        >
+                          {/* Circular neumorphic button */}
+                          <div
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                            style={{
+                              background:
+                                hoveredButtonIndex === index
+                                  ? NEU_TEXT
+                                  : NEU_SURFACE,
+                              boxShadow: `
+                            6px 6px 12px ${NEU_SHADOW_DARK},
+                            -6px -6px 12px ${NEU_SHADOW_LIGHT},
+                            0 0 0 1px rgba(255, 255, 255, 0.05)
+                          `,
+                            }}
+                            onMouseEnter={(e) => {
+                              setHoveredButtonIndex(index);
+                              e.currentTarget.style.boxShadow = `
+                            8px 8px 16px ${NEU_SHADOW_DARK},
+                            -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                            0 0 0 1px rgba(255, 255, 255, 0.08),
+                            0 0 20px rgba(0, 155, 242, 0.2)
+                          `;
+                              e.currentTarget.style.transform =
+                                'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              setHoveredButtonIndex(null);
+                              e.currentTarget.style.boxShadow = `
+                            6px 6px 12px ${NEU_SHADOW_DARK},
+                            -6px -6px 12px ${NEU_SHADOW_LIGHT},
+                            0 0 0 1px rgba(255, 255, 255, 0.05)
+                          `;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseDown={(e) => {
+                              e.currentTarget.style.boxShadow = `
+                            inset 3px 3px 6px ${NEU_SHADOW_DARK},
+                            inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
+                          `;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseUp={(e) => {
+                              e.currentTarget.style.boxShadow = `
+                            8px 8px 16px ${NEU_SHADOW_DARK},
+                            -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                            0 0 0 1px rgba(255, 255, 255, 0.08),
+                            0 0 20px rgba(0, 155, 242, 0.2)
+                          `;
+                            }}
+                          >
+                            <motion.div
+                              animate={{
+                                y: [0, -2, 0],
+                                scale: [1, 1.02, 1],
+                              }}
+                              transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                                delay: index * 0.3,
+                              }}
+                            >
+                              <IconComponent
+                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                                style={{
+                                  color:
+                                    hoveredButtonIndex === index
+                                      ? NEU_SURFACE
+                                      : NEU_TEXT,
+                                  filter: 'none',
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                          {/* Label */}
+                          <span
+                            className="text-center text-[10px] font-medium sm:text-xs"
+                            style={{ color: NEU_TEXT, filter: 'none' }}
+                          >
+                            {button.label}
+                          </span>
+                        </motion.button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Recent Activity - Directly under Feature Buttons Grid */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="mt-4"
+              >
+                <ActivityFeed
+                  transactions={transactions || []}
+                  isLoading={transactionsLoading}
+                />
+              </motion.div>
+
+              {/* Daily ROS Performance - Directly under Recent Activity */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.38 }}
+                className="mt-4"
+                id="daily-ros"
+              >
+                <DailyROSPerformance />
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
-
-        {/* Daily ROS Performance - MOVED UP (Critical for showing earning potential) */}
-        <motion.div {...slideUp(0.3)}>
-          <DailyROSPerformance />
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div {...slideUp(0.4)}>
-          <QuickActions />
-        </motion.div>
 
         {/* Rank Progress */}
         <motion.div {...slideUp(0.45)}>
@@ -767,14 +1187,6 @@ export default function DashboardPage() {
         {/* Achievements Summary */}
         <motion.div {...slideUp(0.47)}>
           <AchievementsSummaryCard />
-        </motion.div>
-
-        {/* Recent Activity */}
-        <motion.div {...slideUp(0.5)}>
-          <ActivityFeed
-            transactions={transactions || []}
-            isLoading={transactionsLoading}
-          />
         </motion.div>
 
         {/* Staking Streak - MOVED UP (Critical for habit building and retention) */}
@@ -885,168 +1297,13 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Additional Value Cards - Lower Priority */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
-          {/* Live Trading Signals - MOVED DOWN (Additional value, less critical) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <LiveTradingSignals />
-          </motion.div>
-
-          {/* Live Platform Activity Card - MOVED DOWN (Social proof, less personal relevance) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75 }}
-          >
-            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-              {/* Animated Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-
-              {/* Animated Floating Blob */}
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-              />
-
-              <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: -10 }}
-                      className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                    >
-                      <Circle className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                    </motion.div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                          Live Platform Activity
-                        </CardTitle>
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="flex-shrink-0"
-                        >
-                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                        </motion.div>
-                      </div>
-                      <CardDescription className="text-[10px] sm:text-xs">
-                        <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
-                        Real-time user activities
-                      </CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="custom-scrollbar relative max-h-[400px] space-y-2 overflow-y-auto p-4 pt-0 sm:max-h-[450px] sm:space-y-3 sm:p-6 sm:pt-0">
-                {activityLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <LoadingStates.Card key={i} height="h-20" />
-                    ))}
-                  </div>
-                ) : displayActivities.length === 0 ? (
-                  <div className="text-muted-foreground py-8 text-center">
-                    <Circle className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                    <p className="text-sm">No activities available</p>
-                  </div>
-                ) : (
-                  <AnimatePresence mode="popLayout">
-                    {displayActivities.map((activity, index) => {
-                      const ActivityIcon = activity.icon;
-                      // Create a unique key based on activity content
-                      const uniqueKey = `${activity.user}-${activity.action}-${activity.time}-${activity.amount || 'no-amount'}`;
-                      return (
-                        <motion.div
-                          key={uniqueKey}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 transition-all hover:border-blue-500/40 hover:shadow-md sm:p-4"
-                        >
-                          <div className="mb-2 flex items-start justify-between gap-2 sm:mb-3">
-                            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-                              <div className="flex-shrink-0 rounded-lg bg-blue-500/20 p-1.5 sm:p-2">
-                                <ActivityIcon
-                                  className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${activity.color}`}
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-foreground truncate text-sm font-bold sm:text-base">
-                                  {activity.user}
-                                </p>
-                                <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                                  {activity.action}
-                                  {activity.amount && (
-                                    <span className="text-foreground font-semibold">
-                                      ${activity.amount.toLocaleString()}
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="border-border/50 flex items-center justify-between border-t pt-2 sm:pt-3">
-                            <Badge
-                              variant="outline"
-                              className="bg-background/50 text-xs"
-                            >
-                              {activity.time}
-                            </Badge>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </AnimatePresence>
-                )}
-
-                {/* Footer */}
-                <div className="border-border/50 border-t pt-3">
-                  <p className="text-muted-foreground flex flex-wrap items-center justify-center gap-1 px-2 text-center text-xs sm:gap-1.5">
-                    <Check className="h-3 w-3 flex-shrink-0 text-emerald-500" />
-                    <strong className="whitespace-nowrap">Auto-updated</strong>
-                    <span className="text-muted-foreground/60 hidden sm:inline">
-                      •
-                    </span>
-                    <span className="whitespace-nowrap">
-                      Real-time platform activities
-                    </span>
-                  </p>
-                </div>
-              </CardContent>
-
-              <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                  width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                  background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                  background: hsl(var(--muted-foreground) / 0.3);
-                  border-radius: 3px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                  background: hsl(var(--muted-foreground) / 0.5);
-                }
-              `}</style>
-            </Card>
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <LiveTradingSignals />
+        </motion.div>
       </div>
 
       {/* Welcome Modal for First-Time Users */}

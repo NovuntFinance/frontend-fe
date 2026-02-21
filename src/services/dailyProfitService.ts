@@ -262,22 +262,13 @@ class DailyProfitService {
       const status = error?.response?.status;
       const message = error?.message || error?.response?.data?.message;
 
-      // Enhanced error logging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[dailyProfitService.getProfitHistory] Error:', {
-          status,
-          message,
-          url: `${API_BASE_URL}/api/v1/daily-profit/history`,
-          params: { limit, offset },
-          error,
-        });
-      }
-
       // If 404, return empty response instead of throwing (endpoint might not exist yet)
       if (status === 404) {
-        console.warn(
-          '[dailyProfitService.getProfitHistory] ⚠️ 404 - Endpoint not found or no data. Returning empty response.'
-        );
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[dailyProfitService.getProfitHistory] ⚠️ 404 - Endpoint not found or no data. Returning empty response.'
+          );
+        }
         return {
           success: true,
           data: {
@@ -289,6 +280,32 @@ class DailyProfitService {
             },
           },
         };
+      }
+
+      // Enhanced error logging for non-404 errors
+      if (process.env.NODE_ENV === 'development') {
+        const errorDetails: any = {
+          status,
+          message: message || 'Unknown error',
+          url: `${API_BASE_URL}/api/v1/daily-profit/history`,
+          params: { limit, offset },
+        };
+
+        // Only include error object if it has useful information
+        if (error?.response?.data) {
+          errorDetails.responseData = error.response.data;
+        }
+        if (error?.message) {
+          errorDetails.errorMessage = error.message;
+        }
+        if (error?.stack) {
+          errorDetails.stack = error.stack;
+        }
+
+        console.error(
+          '[dailyProfitService.getProfitHistory] Error:',
+          errorDetails
+        );
       }
 
       throw error;

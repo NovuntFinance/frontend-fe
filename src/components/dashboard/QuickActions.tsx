@@ -1,37 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { hoverAnimation } from '@/design-system/animations';
 import {
-  Download,
-  Upload,
-  Send,
   TrendingUp,
-  ArrowRight,
   ArrowDownLeft,
   ArrowUpRight,
   ArrowRightLeft,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
+const NEU_SURFACE = '#131B2E';
+const NEU_TEXT = '#009BF2';
+const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+
 interface QuickAction {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-  borderColor: string;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
 }
 
 /**
  * QuickActions Component
- * Modern gradient buttons for primary wallet actions
+ * Neumorphic circular buttons matching the balance card style
  */
 export function QuickActions() {
   const router = useRouter();
   const { openModal } = useUIStore();
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const handleAction = (actionType: string) => {
     if (actionType === 'stake') {
@@ -51,53 +52,108 @@ export function QuickActions() {
   const actions: QuickAction[] = [
     {
       id: 'stake',
-      label: 'Create Stake',
+      label: 'Stake',
       icon: TrendingUp,
-      color: 'text-novunt-blue-600 dark:text-novunt-blue-400',
-      bgColor: 'bg-novunt-blue-50 dark:bg-novunt-blue-900/20',
-      borderColor: 'border-novunt-blue-200 dark:border-novunt-blue-800',
     },
     {
       id: 'deposit',
       label: 'Deposit',
       icon: ArrowDownLeft,
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
-      borderColor: 'border-emerald-200 dark:border-emerald-800',
     },
     {
       id: 'withdraw',
       label: 'Withdraw',
       icon: ArrowUpRight,
-      color: 'text-amber-600 dark:text-amber-400',
-      bgColor: 'bg-amber-50 dark:bg-amber-900/20',
-      borderColor: 'border-amber-200 dark:border-amber-800',
     },
     {
       id: 'transfer',
       label: 'Transfer',
       icon: ArrowRightLeft,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-      borderColor: 'border-purple-200 dark:border-purple-800',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      {actions.map((action) => (
+    <div className="flex items-center justify-between gap-3 sm:gap-4">
+      {actions.map((action, index) => (
         <motion.button
           key={action.id}
-          {...(hoverAnimation() as any)}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: index * 0.1 }}
           onClick={() => handleAction(action.id)}
-          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-200 ${action.bgColor} ${action.borderColor} hover:shadow-lg`}
+          className="flex flex-1 flex-col items-center gap-2"
         >
+          {/* Circular neumorphic button */}
           <div
-            className={`mb-3 rounded-full bg-white p-3 shadow-sm dark:bg-gray-800 ${action.color}`}
+            className="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 sm:h-16 sm:w-16"
+            style={{
+              background: hoveredIndex === index ? NEU_TEXT : NEU_SURFACE,
+              boxShadow: `
+                8px 8px 16px ${NEU_SHADOW_DARK},
+                -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `,
+            }}
+            onMouseEnter={(e) => {
+              setHoveredIndex(index);
+              e.currentTarget.style.boxShadow = `
+                10px 10px 20px ${NEU_SHADOW_DARK},
+                -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 0 20px rgba(0, 155, 242, 0.2)
+              `;
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              setHoveredIndex(null);
+              e.currentTarget.style.boxShadow = `
+                8px 8px 16px ${NEU_SHADOW_DARK},
+                -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                0 0 0 1px rgba(255, 255, 255, 0.05)
+              `;
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.boxShadow = `
+                inset 4px 4px 8px ${NEU_SHADOW_DARK},
+                inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
+              `;
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.boxShadow = `
+                10px 10px 20px ${NEU_SHADOW_DARK},
+                -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 0 20px rgba(0, 155, 242, 0.2)
+              `;
+            }}
           >
-            <action.icon className="h-6 w-6" />
+            <motion.div
+              animate={{
+                y: [0, -2, 0],
+                scale: [1, 1.02, 1],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: index * 0.3,
+              }}
+            >
+              <action.icon
+                className="h-6 w-6 transition-colors duration-200 sm:h-7 sm:w-7"
+                {...(hoveredIndex === index
+                  ? { color: NEU_SURFACE }
+                  : { color: NEU_TEXT })}
+              />
+            </motion.div>
           </div>
-          <span className="font-semibold text-gray-900 dark:text-white">
+          {/* Label */}
+          <span
+            className="text-xs font-medium sm:text-sm"
+            style={{ color: NEU_TEXT, filter: 'none' }}
+          >
             {action.label}
           </span>
         </motion.button>
