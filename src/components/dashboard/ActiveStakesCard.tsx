@@ -183,7 +183,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
 
 /**
  * Neumorphic Active Stakes card(s). Renders directly under Daily ROS Performance.
- * Shows section title "Active Stakes (N)" and one neumorphic card per active stake.
+ * One neumorphic card per active stake; full width to align with other dashboard cards.
  */
 export function ActiveStakesCard() {
   const router = useRouter();
@@ -194,23 +194,12 @@ export function ActiveStakesCard() {
   const goToStakes = () => router.push('/dashboard/stakes');
 
   return (
-    <div className="lg:max-w-md">
+    <div className="w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.42 }}
       >
-        <h2
-          role="button"
-          tabIndex={0}
-          onClick={goToStakes}
-          onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-          className="mb-3 cursor-pointer text-base font-semibold sm:text-lg transition-opacity hover:opacity-90"
-          style={{ color: NEU_TEXT }}
-        >
-          Active Stakes ({count})
-        </h2>
-
         {isLoading ? (
           <div
             role="button"

@@ -973,20 +973,9 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </div>
-        </div>
 
-        {/* Column 2 - Feature buttons, activity, daily ROS */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-0"
-          >
-              {/* Feature Buttons Grid - 4 columns */}
-              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-0">
+              {/* Feature Buttons Grid - 8 circular buttons, directly under stats carousel */}
+              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-6">
                 <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
                   {[
                     {
@@ -1067,82 +1056,83 @@ export default function DashboardPage() {
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `,
-                          }}
-                          onMouseEnter={(e) => {
-                            setHoveredButtonIndex(index);
-                            e.currentTarget.style.boxShadow = `
+                            }}
+                            onMouseEnter={(e) => {
+                              setHoveredButtonIndex(index);
+                              e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
-                            e.currentTarget.style.transform =
-                              'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            setHoveredButtonIndex(null);
-                            e.currentTarget.style.boxShadow = `
+                              e.currentTarget.style.transform =
+                                'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              setHoveredButtonIndex(null);
+                              e.currentTarget.style.boxShadow = `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseDown={(e) => {
-                            e.currentTarget.style.boxShadow = `
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseDown={(e) => {
+                              e.currentTarget.style.boxShadow = `
                             inset 3px 3px 6px ${NEU_SHADOW_DARK},
                             inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
                           `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseUp={(e) => {
-                            e.currentTarget.style.boxShadow = `
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseUp={(e) => {
+                              e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
-                          }}
-                        >
-                          <motion.div
-                            animate={{
-                              y: [0, -2, 0],
-                              scale: [1, 1.02, 1],
-                            }}
-                            transition={{
-                              duration: 5,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                              delay: index * 0.3,
                             }}
                           >
-                            <IconComponent
-                              className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                              style={{
-                                color:
-                                  hoveredButtonIndex === index
-                                    ? NEU_SURFACE
-                                    : NEU_TEXT,
-                                filter: 'none',
+                            <motion.div
+                              animate={{
+                                y: [0, -2, 0],
+                                scale: [1, 1.02, 1],
                               }}
-                            />
-                          </motion.div>
-                        </div>
-                        {/* Label */}
-                        <span
-                          className="text-center text-[10px] font-medium sm:text-xs"
-                          style={{ color: NEU_TEXT, filter: 'none' }}
-                        >
-                          {button.label}
-                        </span>
-                      </motion.button>
+                              transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                                delay: index * 0.3,
+                              }}
+                            >
+                              <IconComponent
+                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                                style={{
+                                  color:
+                                    hoveredButtonIndex === index
+                                      ? NEU_SURFACE
+                                      : NEU_TEXT,
+                                  filter: 'none',
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                          {/* Label */}
+                          <span
+                            className="text-center text-[10px] font-medium sm:text-xs"
+                            style={{ color: NEU_TEXT, filter: 'none' }}
+                          >
+                            {button.label}
+                          </span>
+                        </motion.button>
                     );
 
                     return (
                       <React.Fragment key={button.id}>
                         {isSettings ? (
-                          <button
-                            type="button"
+                          <div
+                            role="button"
+                            tabIndex={0}
                             onClick={(e) => {
                               e.preventDefault();
                               window.dispatchEvent(
@@ -1151,26 +1141,50 @@ export default function DashboardPage() {
                                 })
                               );
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                window.dispatchEvent(
+                                  new CustomEvent('openProfileModal', {
+                                    bubbles: true,
+                                  })
+                                );
+                              }
+                            }}
                             className="cursor-pointer border-0 bg-transparent p-0 text-left"
                           >
                             {buttonContent}
-                          </button>
+                          </div>
                         ) : isStreak ? (
-                          <button
-                            type="button"
+                          <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setStreakModalOpen(true)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setStreakModalOpen(true);
+                              }
+                            }}
                             className="cursor-pointer border-0 bg-transparent p-0 text-left"
                           >
                             {buttonContent}
-                          </button>
+                          </div>
                         ) : isRank ? (
-                          <button
-                            type="button"
+                          <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setRankModalOpen(true)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setRankModalOpen(true);
+                              }
+                            }}
                             className="cursor-pointer border-0 bg-transparent p-0 text-left"
                           >
                             {buttonContent}
-                          </button>
+                          </div>
                         ) : (
                           <Link href={button.href}>{buttonContent}</Link>
                         )}
@@ -1179,8 +1193,19 @@ export default function DashboardPage() {
                   })}
                 </div>
               </div>
+            </motion.div>
+          </div>
+        </div>
 
-              {/* Recent Activity - Directly under Feature Buttons Grid */}
+        {/* Column 2 - activity, daily ROS */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-0"
+          >
+              {/* Recent Activity */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1203,33 +1228,43 @@ export default function DashboardPage() {
               >
                 <DailyROSPerformance />
               </motion.div>
-          </motion.div>
-        </div>
 
-        {/* Column 3 - Active stakes, live signals, live platform activities */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-0"
-          >
-              {/* Active Stakes - Neumorphic card directly under Daily ROS Performance */}
+              {/* Active Stakes - under Daily ROS Performance on large screens only */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="mt-2 lg:mt-0"
+                className="mt-2 hidden lg:block"
+              >
+                <ActiveStakesCard />
+              </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Column 3 - Active stakes (small screens), live signals, live platform activities; on lg the two cards share column height equally */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+          >
+              {/* Active Stakes - shown here on small screens only; on lg it moves to column 2 */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-2 lg:hidden lg:mt-0"
               >
                 <ActiveStakesCard />
               </motion.div>
 
-              {/* Live Trading Signals & Live Platform Activity - dark neumorphic, side by side, below Active Stakes */}
+              {/* Live Trading Signals & Live Platform Activity - on lg they stack and share column height equally (50/50) */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.42 }}
-                className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2"
+                className="mt-2 grid grid-cols-1 gap-3 lg:mt-0 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
               >
                 <LiveTradingSignals />
                 <LivePlatformActivities />

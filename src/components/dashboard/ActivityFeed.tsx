@@ -186,7 +186,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   const openModal = useUIStore((s) => s.openModal);
 
   return (
-    <div className="lg:max-w-md">
+    <div className="lg:w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
