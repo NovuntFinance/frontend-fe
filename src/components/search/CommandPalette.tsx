@@ -24,7 +24,6 @@ import {
   Wallet,
   TrendingUp,
   Users,
-  Gift,
   Award,
   Settings,
   Home,
@@ -80,15 +79,6 @@ const defaultCommands: CommandItem[] = [
     href: '/dashboard/team',
     category: 'navigation',
     keywords: ['team', 'referral', 'referrals', 'network'],
-  },
-  {
-    id: 'pools',
-    label: 'Pools',
-    description: 'View performance and premium pools',
-    icon: Gift,
-    href: '/dashboard/pools',
-    category: 'navigation',
-    keywords: ['pool', 'pools', 'premium', 'performance'],
   },
   {
     id: 'achievements',

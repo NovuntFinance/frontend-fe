@@ -33,7 +33,6 @@ import {
   useWalletBalance,
   useActiveStakes,
   useDashboardOverview,
-  useStakingStreak,
 } from '@/lib/queries';
 import { useTransactionHistory } from '@/hooks/useWallet';
 import {
@@ -46,13 +45,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
+import { ActiveStakesCard } from '@/components/dashboard/ActiveStakesCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
+import { LivePlatformActivities } from '@/components/dashboard/LivePlatformActivities';
+import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
-import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
+import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
+import { RegistrationBonusBanner } from '@/components/registration-bonus';
 import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
 import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
 import { useUIStore } from '@/store/uiStore';
@@ -80,12 +83,11 @@ export default function DashboardPage() {
     lastName: string;
     email: string;
   } | null>(null);
+  const [streakModalOpen, setStreakModalOpen] = useState(false);
+  const [rankModalOpen, setRankModalOpen] = useState(false);
   const { user } = useUser();
   const {} = useResponsive();
   const openModal = useUIStore((s) => s.openModal);
-
-  // Fetch staking streak data
-  const { data: streakData, isLoading: streakLoading } = useStakingStreak();
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -581,41 +583,24 @@ export default function DashboardPage() {
   const isRefetching = false; // Can be connected to refetch state
 
   return (
-    <div className="min-h-screen">
-      <div className="space-y-4 sm:space-y-6">
-        {/* Single Neumorphic Card containing all dashboard elements */}
-        <div className="lg:max-w-md">
+    <div className="min-h-screen lg:h-full lg:min-h-0">
+      <div className="space-y-1 sm:space-y-2 lg:grid lg:grid-cols-3 lg:gap-4 lg:h-full lg:space-y-0">
+        {/* Column 1 - Banner, balance, quick actions, stats carousel */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.1 }}
           >
-            <div
-              className="rounded-3xl p-5 transition-all duration-300 sm:p-6 lg:rounded-2xl lg:p-5 xl:p-6"
-              style={{
-                background: '#131B2E',
-                boxShadow: `
-                  12px 12px 24px rgba(0, 0, 0, 0.5),
-                  -12px -12px 24px rgba(255, 255, 255, 0.05),
-                  0 0 0 1px rgba(255, 255, 255, 0.05)
-                `,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `
-                  14px 14px 28px rgba(0, 0, 0, 0.5),
-                  -14px -14px 28px rgba(255, 255, 255, 0.05),
-                  0 0 0 1px rgba(255, 255, 255, 0.08)
-                `;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = `
-                  12px 12px 24px rgba(0, 0, 0, 0.5),
-                  -12px -12px 24px rgba(255, 255, 255, 0.05),
-                  0 0 0 1px rgba(255, 255, 255, 0.05)
-                `;
-              }}
+            <RegistrationBonusBanner />
+          </motion.div>
+          <div className="lg:max-w-md lg:max-w-none">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-0"
             >
-              {/* Balance Card Content */}
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -638,13 +623,13 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="mt-4"
+                className="mt-2"
               >
                 <QuickActions />
               </motion.div>
 
               {/* Stats Carousel Card */}
-              <div className="mt-4">
+              <div className="mt-2">
                 <div
                   className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
                   style={{
@@ -988,9 +973,20 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        </div>
 
+        {/* Column 2 - Feature buttons, activity, daily ROS */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-0"
+          >
               {/* Feature Buttons Grid - 4 columns */}
-              <div className="mt-4 flex justify-center px-2 sm:px-4">
+              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-0">
                 <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
                   {[
                     {
@@ -1003,19 +999,19 @@ export default function DashboardPage() {
                       id: 'nxp-gamification',
                       label: 'NXP',
                       icon: Sparkles,
-                      href: '/dashboard/nxp',
+                      href: '/dashboard/achievements',
                     },
                     {
                       id: 'rank',
                       label: 'Rank',
                       icon: Trophy,
-                      href: '/dashboard/rank',
+                      href: '#',
                     },
                     {
                       id: 'wallet-address',
                       label: 'Wallet',
                       icon: CreditCard,
-                      href: '/dashboard/wallet',
+                      href: '/dashboard/wallets',
                     },
                     {
                       id: 'community',
@@ -1048,22 +1044,25 @@ export default function DashboardPage() {
                     const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
                     const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
 
+                    const isSettings = button.id === 'settings';
+                    const isStreak = button.id === 'staking-streak';
+                    const isRank = button.id === 'rank';
                     const buttonContent = (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 + index * 0.05 }}
-                        className="flex flex-col items-center gap-1.5"
-                      >
-                        {/* Circular neumorphic button */}
-                        <div
-                          className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
-                          style={{
-                            background:
-                              hoveredButtonIndex === index
-                                ? NEU_TEXT
-                                : NEU_SURFACE,
-                            boxShadow: `
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                          className="flex flex-col items-center gap-1.5"
+                        >
+                          {/* Circular neumorphic button */}
+                          <div
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                            style={{
+                              background:
+                                hoveredButtonIndex === index
+                                  ? NEU_TEXT
+                                  : NEU_SURFACE,
+                              boxShadow: `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
@@ -1138,23 +1137,44 @@ export default function DashboardPage() {
                         </span>
                       </motion.button>
                     );
-                    return button.id === 'welcome-bonus' ? (
-                      <div
-                        key={button.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => openModal('registration-bonus')}
-                        onKeyDown={(e) =>
-                          e.key === 'Enter' && openModal('registration-bonus')
-                        }
-                        className="flex cursor-pointer flex-col items-center gap-1.5"
-                      >
-                        {buttonContent}
-                      </div>
-                    ) : (
-                      <Link key={button.id} href={button.href}>
-                        {buttonContent}
-                      </Link>
+
+                    return (
+                      <React.Fragment key={button.id}>
+                        {isSettings ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.dispatchEvent(
+                                new CustomEvent('openProfileModal', {
+                                  bubbles: true,
+                                })
+                              );
+                            }}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </button>
+                        ) : isStreak ? (
+                          <button
+                            type="button"
+                            onClick={() => setStreakModalOpen(true)}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </button>
+                        ) : isRank ? (
+                          <button
+                            type="button"
+                            onClick={() => setRankModalOpen(true)}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </button>
+                        ) : (
+                          <Link href={button.href}>{buttonContent}</Link>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </div>
@@ -1165,7 +1185,7 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="mt-4"
+                className="mt-2"
               >
                 <ActivityFeed
                   transactions={transactions || []}
@@ -1178,141 +1198,57 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.38 }}
-                className="mt-4"
+                className="mt-2"
                 id="daily-ros"
               >
                 <DailyROSPerformance />
               </motion.div>
-            </div>
           </motion.div>
         </div>
 
-        {/* Rank Progress */}
-        <motion.div {...slideUp(0.45)}>
-          <RankProgressCard />
-        </motion.div>
-
-        {/* Achievements Summary */}
-        <motion.div {...slideUp(0.47)}>
-          <AchievementsSummaryCard />
-        </motion.div>
-
-        {/* Staking Streak - MOVED UP (Critical for habit building and retention) */}
-        <motion.div {...slideUp(0.55)} className="mb-8 sm:mb-10">
-          {streakLoading ? (
-            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-              <CardHeader className="relative">
-                <LoadingStates.Card height="h-20" />
-              </CardHeader>
-              <CardContent className="relative">
-                <LoadingStates.Card height="h-32" />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-              {/* Animated Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-
-              {/* Animated Floating Blob */}
+        {/* Column 3 - Active stakes, live signals, live platform activities */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-0"
+          >
+              {/* Active Stakes - Neumorphic card directly under Daily ROS Performance */}
               <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-              />
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-2 lg:mt-0"
+              >
+                <ActiveStakesCard />
+              </motion.div>
 
-              <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-3 shadow-lg backdrop-blur-sm"
-                  >
-                    <Clock className="h-6 w-6 text-blue-500" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                      Staking Streak
-                    </CardTitle>
-                    <CardDescription className="text-[10px] sm:text-xs">
-                      Consecutive active days
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-                <div className="mb-2 flex items-baseline gap-2 sm:mb-4 sm:gap-3">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.9 }}
-                    key={streakData?.currentStreak || 0}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-2xl font-black break-words text-transparent sm:text-3xl md:text-4xl lg:text-5xl"
-                  >
-                    {streakData?.currentStreak || 0}
-                  </motion.span>
-                  <span className="text-muted-foreground text-sm font-semibold sm:text-base md:text-lg">
-                    days
-                  </span>
-                </div>
-                <div className="flex gap-1.5">
-                  {(
-                    streakData?.weeklyProgress ||
-                    Array.from({ length: 7 }, () => ({ hasActiveStake: false }))
-                  ).map((day, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ scaleY: 0, opacity: 0 }}
-                      animate={{ scaleY: 1, opacity: 1 }}
-                      transition={{ delay: 0.9 + i * 0.1, type: 'spring' }}
-                      whileHover={{ scaleY: 1.2 }}
-                      className={`h-10 flex-1 rounded-lg transition-all ${
-                        day.hasActiveStake
-                          ? 'bg-gradient-to-t from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/50'
-                          : 'bg-muted/50'
-                      }`}
-                      title={
-                        day.hasActiveStake ? 'Active stake' : 'No active stake'
-                      }
-                    />
-                  ))}
-                </div>
-                {streakData?.nextMilestone &&
-                  streakData.daysUntilNextMilestone > 0 && (
-                    <div className="text-muted-foreground mt-3 text-center text-xs">
-                      {streakData.daysUntilNextMilestone} days until{' '}
-                      {streakData.nextMilestone} day milestone
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-          )}
-        </motion.div>
-
-        {/* Referral & Team Metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65 }}
-        >
-          <ReferralMetricsCard />
-        </motion.div>
-
-        {/* Additional Value Cards - Lower Priority */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-        >
-          <LiveTradingSignals />
-        </motion.div>
+              {/* Live Trading Signals & Live Platform Activity - dark neumorphic, side by side, below Active Stakes */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.42 }}
+                className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2"
+              >
+                <LiveTradingSignals />
+                <LivePlatformActivities />
+              </motion.div>
+          </motion.div>
+        </div>
       </div>
+
+      {/* Staking Streak - Neumorphic modal (opened via Streak button) */}
+      <StakingStreakModal
+        open={streakModalOpen}
+        onOpenChange={setStreakModalOpen}
+      />
+
+      {/* Rank Progress - Neumorphic modal (opened via Rank button) */}
+      <RankProgressModal
+        open={rankModalOpen}
+        onOpenChange={setRankModalOpen}
+      />
 
       {/* Welcome Modal for First-Time Users */}
       {newUserInfo && (

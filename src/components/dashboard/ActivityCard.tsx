@@ -18,9 +18,13 @@ import {
 
 interface ActivityCardProps {
   activity: PlatformActivity;
+  variant?: 'default' | 'neumorphic' | 'neumorphicDark';
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+const NEU_TEXT = '#009BF2';
+const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
+
+export function ActivityCard({ activity, variant = 'default' }: ActivityCardProps) {
   const getActivityIcon = (type: PlatformActivity['type']) => {
     const iconMap: Record<string, typeof ArrowDownRight> = {
       deposit: ArrowDownRight,
@@ -79,26 +83,60 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     return bgColorMap[type] || 'bg-muted';
   };
 
+  // Display: "user" then "action $amount" (e.g. "L*h E." + "staked $362" or "earned ROS $41")
+  const actionLabel =
+    activity.amount !== null && activity.amount !== undefined
+      ? `${activity.action} $${activity.amount.toLocaleString()}`
+      : activity.action;
+
+  const isNeumorphic = variant === 'neumorphic';
+  const isNeumorphicDark = variant === 'neumorphicDark';
+
+  const cardClassName = isNeumorphicDark
+    ? 'flex items-center gap-2 rounded-lg border border-white/10 p-2 transition-colors'
+    : isNeumorphic
+      ? 'flex items-center gap-3 rounded-xl p-3 transition-colors bg-white shadow-[4px_4px_8px_0_rgba(203,213,225,0.5),-4px_-4px_8px_0_rgba(255,255,255,0.9)] dark:bg-slate-800/80 dark:shadow-[4px_4px_8px_0_rgba(0,0,0,0.2),-2px_-2px_6px_0_rgba(255,255,255,0.05)]'
+      : 'bg-card hover:bg-accent/50 flex items-center gap-3 rounded-lg border p-3 transition-colors';
+
+  const cardStyle = isNeumorphicDark
+    ? {
+        background: 'rgba(0, 0, 0, 0.2)',
+        boxShadow: 'inset 2px 2px 6px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(255,255,255,0.03)',
+      }
+    : undefined;
+
+  const iconWrapperClass = isNeumorphicDark
+    ? 'flex-shrink-0 rounded-lg p-2'
+    : isNeumorphic
+      ? 'flex-shrink-0 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-2 dark:from-blue-500/30 dark:to-cyan-500/20'
+      : `flex-shrink-0 rounded-lg p-2 ${getBgColorClass(activity.type)}`;
+
+  const iconWrapperStyle = isNeumorphicDark ? { background: 'rgba(0, 155, 242, 0.15)' } : undefined;
+
   return (
-    <div className="bg-card hover:bg-accent/50 flex items-center gap-3 rounded-lg border p-3 transition-colors">
-      <div className={`rounded-lg p-2 ${getBgColorClass(activity.type)}`}>
-        <Icon className={`h-4 w-4 ${colorClass}`} />
+    <div className={cardClassName} style={cardStyle}>
+      <div className={iconWrapperClass} style={iconWrapperStyle}>
+        <Icon className={`h-4 w-4 ${isNeumorphicDark ? '' : colorClass}`} style={isNeumorphicDark ? { color: NEU_TEXT } : undefined} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-foreground text-sm font-medium">
+          <span
+            className={isNeumorphicDark ? 'text-sm font-medium' : 'text-foreground text-sm font-medium'}
+            style={isNeumorphicDark ? { color: NEU_TEXT } : undefined}
+          >
             {activity.user}
           </span>
-          <span className="text-muted-foreground text-sm">
-            {activity.action}
+          <span
+            className={isNeumorphicDark ? 'text-sm' : 'text-muted-foreground text-sm'}
+            style={isNeumorphicDark ? { color: NEU_TEXT_MUTED } : undefined}
+          >
+            {actionLabel}
           </span>
-          {activity.amount !== null && (
-            <span className={`text-sm font-semibold ${colorClass}`}>
-              ${activity.amount.toLocaleString()}
-            </span>
-          )}
         </div>
-        <span className="text-muted-foreground mt-0.5 block text-xs">
+        <span
+          className={isNeumorphicDark ? 'mt-0.5 block text-xs' : 'text-muted-foreground mt-0.5 block text-xs'}
+          style={isNeumorphicDark ? { color: NEU_TEXT_MUTED } : undefined}
+        >
           {activity.timeAgo}
         </span>
       </div>
