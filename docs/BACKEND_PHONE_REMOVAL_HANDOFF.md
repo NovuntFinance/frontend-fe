@@ -7,13 +7,13 @@
 
 ## 1. Summary of Frontend Changes
 
-| Area | Before | After |
-|------|--------|--------|
-| **Registration (signup)** | Required: phone number + country code (with “Required for account verification”); payload included `phoneNumber` and `countryCode`. | Phone field removed from UI and from payload. Registration payload **does not** include `phoneNumber` or `countryCode`. |
-| **Profile edit** | Required phone number section; profile update payload included `phoneNumber`, `phone`, and `countryCode`. | Phone section removed from profile modal. Profile update payload **does not** include `phoneNumber`, `phone`, or `countryCode`. |
-| **Validation** | Signup schema required phone (E.164). Profile schema required phone. | Phone removed from both schemas. |
-| **Auth types** | `RegisterRequest` had required `phoneNumber` and `countryCode`. | Both are **optional** in the type; frontend does not send them. |
-| **Onboarding** | “New user” used `!user.phoneNumber \|\| !user.firstName`. | “New user” uses only `!user.firstName`. |
+| Area                      | Before                                                                                                                              | After                                                                                                                           |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Registration (signup)** | Required: phone number + country code (with “Required for account verification”); payload included `phoneNumber` and `countryCode`. | Phone field removed from UI and from payload. Registration payload **does not** include `phoneNumber` or `countryCode`.         |
+| **Profile edit**          | Required phone number section; profile update payload included `phoneNumber`, `phone`, and `countryCode`.                           | Phone section removed from profile modal. Profile update payload **does not** include `phoneNumber`, `phone`, or `countryCode`. |
+| **Validation**            | Signup schema required phone (E.164). Profile schema required phone.                                                                | Phone removed from both schemas.                                                                                                |
+| **Auth types**            | `RegisterRequest` had required `phoneNumber` and `countryCode`.                                                                     | Both are **optional** in the type; frontend does not send them.                                                                 |
+| **Onboarding**            | “New user” used `!user.phoneNumber \|\| !user.firstName`.                                                                           | “New user” uses only `!user.firstName`.                                                                                         |
 
 The frontend no longer collects, validates, or sends phone number for **new** signups or for **profile updates**. Existing users may still have `phoneNumber`/`countryCode` in the database; the frontend does not display or edit them in the main flows (admin may still show “No phone” / “Not provided” for existing data).
 
@@ -135,8 +135,8 @@ interface RegisterRequest {
   username: string;
   password: string;
   confirmPassword: string;
-  phoneNumber?: string;   // Optional — not sent by frontend
-  countryCode?: string;  // Optional — not sent by frontend
+  phoneNumber?: string; // Optional — not sent by frontend
+  countryCode?: string; // Optional — not sent by frontend
   referralCode?: string;
   turnstileToken?: string;
 }

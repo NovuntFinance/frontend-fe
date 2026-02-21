@@ -43,7 +43,7 @@ export function useOnboarding() {
     if (user && pathname?.startsWith('/dashboard')) {
       // Check if user is new (e.g., account created recently or no activity)
       const isNewUser = !user.firstName;
-      
+
       if (isNewUser) {
         setShouldShowOnboarding(true);
         router.push('/dashboard/onboarding');
@@ -67,4 +67,3 @@ export function useOnboarding() {
     skipOnboarding,
   };
 }
-

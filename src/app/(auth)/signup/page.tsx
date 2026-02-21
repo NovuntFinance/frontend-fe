@@ -145,17 +145,8 @@ function SignupPageContent() {
           : {}),
       };
 
-      const required = [
-        'firstName',
-        'lastName',
-        'email',
-        'username',
-      ] as const;
-      if (
-        required.some(
-          (k) => !(payload as Record<string, unknown>)[k]
-        )
-      ) {
+      const required = ['firstName', 'lastName', 'email', 'username'] as const;
+      if (required.some((k) => !(payload as Record<string, unknown>)[k])) {
         toast.error('Validation Error', {
           description: 'Please fill in all required fields',
         });
