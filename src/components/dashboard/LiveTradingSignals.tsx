@@ -2,29 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { slideUp, hoverAnimation } from '@/design-system/animations';
 import {
   TrendingUp,
   TrendingDown,
-  Clock,
-  Check,
-  X,
-  TrendingUp as ActivityIcon,
-  Star as ZapIcon,
   RefreshCw,
-  ChevronRight,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
-import { useRouter } from 'next/navigation';
 
 // Trading instrument types
 type MarketType = 'forex' | 'crypto' | 'metals' | 'commodities';
@@ -36,6 +20,20 @@ const getTimeAgo = (minutes: number): string => {
   if (remainingMins === 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
   return `${hours}h ${remainingMins}m ago`;
 };
+
+/** Dark neumorphic (like DAILY ROS / ACTIVE STAKES cards) */
+const NEU_SURFACE = '#131B2E';
+const NEU_TEXT = '#009BF2';
+const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
+const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+const NEU_CARD_SHADOW = `
+  inset 8px 8px 16px ${NEU_SHADOW_DARK},
+  inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+  inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+  inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+  0 0 0 1px rgba(255, 255, 255, 0.03)
+`;
 
 const getMarketTypeBadge = (type: MarketType) => {
   const badges = {
@@ -63,9 +61,11 @@ const getMarketTypeBadge = (type: MarketType) => {
   return badges[type];
 };
 
+const ROTATE_INTERVAL_MS = 5000;
+
 export function LiveTradingSignals() {
-  const router = useRouter();
   const [trades, setTrades] = useState<TradingSignal[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date());
   const [error, setError] = useState<string | null>(null);
@@ -170,248 +170,112 @@ export function LiveTradingSignals() {
     return () => clearInterval(interval);
   }, []);
 
+  const tradesKey = React.useMemo(() => trades.map((t) => t.id).join(','), [trades]);
+  useEffect(() => {
+    if (trades.length > 0) setCurrentIndex(0);
+  }, [tradesKey, trades.length]);
+
+  // Auto-rotate through trades every 5s (same as Recent Activity)
+  useEffect(() => {
+    if (trades.length === 0 || trades.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % trades.length);
+    }, ROTATE_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [trades.length]);
+
+  const currentTrade = trades.length > 0 ? trades[currentIndex] : null;
+
   return (
-    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-blue-500/10 to-transparent" />
-
-      {/* Animated Floating Blob */}
-      <motion.div
-        animate={{
-          x: [0, -15, 0],
-          y: [0, 10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
-      />
-
-      <CardHeader className="relative p-4 sm:p-6">
-        {/* Arrow Icon - Top Right */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/dashboard/trading-signals')}
-          className="text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 h-8 w-8 transition-colors sm:top-6 sm:right-6"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-
-        <div className="mb-2 flex items-center gap-2 sm:gap-3">
-          <motion.div
-            {...hoverAnimation()}
-            className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-          >
-            <ActivityIcon className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <CardTitle className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                Live Trading Signals
-              </CardTitle>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="flex-shrink-0"
-              >
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              </motion.div>
+    <Card
+      className="group relative overflow-hidden rounded-2xl border-0 transition-shadow duration-300 hover:shadow-xl"
+      style={{ background: NEU_SURFACE, boxShadow: NEU_CARD_SHADOW }}
+    >
+      <CardContent className="relative p-3 sm:p-4">
+        <div className="min-h-[72px]">
+          {trades.length === 0 && !error ? (
+            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: NEU_TEXT_MUTED }}>
+              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: NEU_TEXT }} />
+              <p className="text-xs">Loading...</p>
             </div>
-            <CardDescription className="text-[10px] sm:text-xs">
-              <Check className="mr-1 inline h-3 w-3 flex-shrink-0 text-emerald-500" />
-              {isLoadingPrices ? (
-                <>
-                  <RefreshCw className="mr-1 inline h-3 w-3 animate-spin" />
-                  Updating...
-                </>
-              ) : error ? (
-                <span className="text-red-500">{error}</span>
-              ) : (
-                <span className="truncate">Real market data • Verifiable</span>
-              )}
-            </CardDescription>
-          </div>
-        </div>
-        <div className="flex items-center justify-end">
-          <Badge className="w-fit border-emerald-500/30 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-            <ZapIcon className="mr-1 h-3 w-3" />
-            Live
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="custom-scrollbar relative max-h-[400px] space-y-2 overflow-y-auto px-3 pb-4 sm:max-h-[450px] sm:space-y-3 sm:px-6">
-        {trades.length === 0 && !error ? (
-          <div className="text-muted-foreground py-8 text-center">
-            <RefreshCw className="mx-auto mb-2 h-8 w-8 animate-spin" />
-            <p className="text-sm">Loading live trades...</p>
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {trades.map((trade, index) => (
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: NEU_TEXT_MUTED }}>
+              <p>{error}</p>
+            </div>
+          ) : currentTrade ? (
+            <AnimatePresence mode="wait">
               <motion.div
-                key={trade.id}
-                {...slideUp(0.1 + index * 0.05)}
-                exit={{ opacity: 0, x: 20 }}
-                className={`rounded-xl border p-3 transition-all sm:p-4 ${
-                  trade.isProfitable
-                    ? 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40 hover:shadow-md'
-                    : 'border-red-500/20 bg-red-500/5 hover:border-red-500/40 hover:shadow-md'
-                } `}
+                key={`${currentTrade.id}-${currentIndex}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="w-full space-y-1"
               >
-                <div className="mb-2 flex items-start justify-between gap-2 sm:mb-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-                    <div
-                      className={`flex-shrink-0 rounded-lg p-1.5 sm:p-2 ${trade.direction === 'LONG' ? 'bg-emerald-500/20' : 'bg-blue-500/20'}`}
-                    >
-                      {trade.direction === 'LONG' ? (
-                        <TrendingUp
-                          className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${trade.isProfitable ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
-                        />
-                      ) : (
-                        <TrendingDown
-                          className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${trade.isProfitable ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
-                        />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <p className="text-foreground text-sm font-bold sm:text-base">
-                          {trade.symbol}
-                        </p>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${getMarketTypeBadge(trade.marketType).className}`}
-                        >
-                          {getMarketTypeBadge(trade.marketType).label}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground mt-0.5 text-xs font-semibold uppercase">
-                        {trade.direction}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {trade.isProfitable ? (
-                      <Check className="h-4 w-4 text-emerald-600 sm:h-5 sm:w-5 dark:text-emerald-400" />
+                {/* Row 1: Icon + Symbol + metadata */}
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
+                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                  >
+                    {currentTrade.direction === 'LONG' ? (
+                      <TrendingUp className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
                     ) : (
-                      <X className="h-4 w-4 text-red-600 sm:h-5 sm:w-5 dark:text-red-400" />
+                      <TrendingDown className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
                     )}
                   </div>
-                </div>
-
-                <div className="mb-2 grid grid-cols-2 gap-2 sm:mb-3 sm:gap-3">
-                  <div className="space-y-0.5 sm:space-y-1">
-                    <p className="text-muted-foreground text-xs font-semibold">
-                      Entry
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      {currentTrade.symbol} {currentTrade.direction}
                     </p>
-                    <p className="text-foreground text-xs font-bold break-all sm:text-sm">
-                      {trade.entryPrice.toFixed(
-                        trade.symbol.includes('JPY') ? 3 : 5
-                      )}
-                    </p>
-                    <p className="text-muted-foreground text-xs whitespace-nowrap">
-                      @{' '}
-                      {new Date(trade.entryTime).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true,
-                      })}
-                    </p>
-                  </div>
-                  <div className="space-y-0.5 sm:space-y-1">
-                    <p className="text-muted-foreground text-xs font-semibold">
-                      Exit
-                    </p>
-                    <p className="text-foreground text-xs font-bold break-all sm:text-sm">
-                      {trade.exitPrice.toFixed(
-                        trade.symbol.includes('JPY') ? 3 : 5
-                      )}
-                    </p>
-                    <p className="text-muted-foreground text-xs whitespace-nowrap">
-                      @{' '}
-                      {new Date(trade.exitTime).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true,
-                      })}
+                    <p className="text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                      {getTimeAgo(currentTrade.minutesAgo)} • {getMarketTypeBadge(currentTrade.marketType).label}
                     </p>
                   </div>
                 </div>
-
-                <div className="border-border/50 flex flex-col gap-2 border-t pt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:pt-3">
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span
-                      className={`text-xs font-bold sm:text-sm ${trade.isProfitable ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
-                    >
-                      {trade.isProfitable ? '+' : ''}
-                      {trade.pipsPoints.toFixed(1)}{' '}
-                      {trade.marketType === 'forex' ? 'pips' : 'pts'}
-                    </span>
-                    <span className="text-muted-foreground text-xs">•</span>
-                    <span
-                      className={`text-sm font-black sm:text-base ${trade.isProfitable ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
-                    >
-                      {trade.isProfitable ? '+' : ''}
-                      {trade.profitUSD >= 0 ? '$' : '-$'}
-                      {Math.abs(trade.profitUSD).toLocaleString()}
-                    </span>
+                {/* Row 2: Entry | Exit compact */}
+                <div className="grid grid-cols-2 gap-2 rounded border border-white/5 bg-black/20 px-2 py-1.5">
+                  <div>
+                    <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Entry</p>
+                    <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                      {currentTrade.entryPrice.toFixed(currentTrade.symbol.includes('JPY') ? 3 : 5)}
+                    </p>
+                    <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
+                      @ {new Date(currentTrade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </p>
                   </div>
-                  <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <Clock className="h-3 w-3 flex-shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {getTimeAgo(trade.minutesAgo)}
-                    </span>
+                  <div>
+                    <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Exit</p>
+                    <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                      {currentTrade.exitPrice.toFixed(currentTrade.symbol.includes('JPY') ? 3 : 5)}
+                    </p>
+                    <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
+                      @ {new Date(currentTrade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </p>
                   </div>
+                </div>
+                {/* Row 3: P/L + status */}
+                <div className="flex items-center justify-between gap-2 pt-0.5">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-sm font-bold"
+                    style={{ color: currentTrade.isProfitable ? '#22c55e' : '#ef4444' }}
+                  >
+                    {currentTrade.isProfitable ? '+' : ''}
+                    {currentTrade.profitUSD >= 0 ? '$' : '-$'}
+                    {Math.abs(currentTrade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </motion.span>
+                  <span className="text-[9px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    {currentTrade.isProfitable ? 'Profitable' : 'Closed'}
+                  </span>
                 </div>
               </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-
-        <div className="border-border/50 border-t pt-3">
-          <p className="text-muted-foreground flex flex-wrap items-center justify-center gap-1 px-2 text-center text-xs sm:gap-1.5">
-            <Check className="h-3 w-3 flex-shrink-0 text-emerald-500" />
-            <strong className="whitespace-nowrap">Auto-updated</strong>
-            <span className="text-muted-foreground/60 hidden sm:inline">•</span>
-            <span className="whitespace-nowrap">Verifiable on TradingView</span>
-            {lastUpdate && (
-              <>
-                <span className="text-muted-foreground/60 hidden sm:inline">
-                  •
-                </span>
-                <span className="text-muted-foreground/80 text-xs whitespace-nowrap">
-                  {lastUpdate.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  })}
-                </span>
-              </>
-            )}
-          </p>
+            </AnimatePresence>
+          ) : null}
         </div>
       </CardContent>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--muted-foreground) / 0.3);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--muted-foreground) / 0.5);
-        }
-      `}</style>
     </Card>
   );
 }

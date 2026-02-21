@@ -168,8 +168,8 @@ export function RegistrationBonusBanner() {
 
   if (isDismissed) return null;
 
-  // Loading
-  if (isLoading) return <BannerSkeleton />;
+  // Loading: render nothing so no skeleton or extra spacing; banner appears when data is ready
+  if (isLoading) return null;
 
   // Error handling
   if (error) {
@@ -419,8 +419,4 @@ export function RegistrationBonusBanner() {
         </AnimatePresence>
       );
   }
-}
-
-function BannerSkeleton() {
-  return <ShimmerCard className="h-full" />;
 }

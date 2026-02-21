@@ -65,7 +65,7 @@ export function WelcomeBackCard({
     : 'Stakeholder';
 
   const content = (
-    <div className="relative z-10 p-5 sm:p-6 lg:p-5 xl:p-6">
+    <div className="relative z-10 p-3 sm:p-4 lg:p-3 xl:p-4">
       {/* Balance and actions aligned horizontally */}
       <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-3">
         {/* Portfolio value - Left side */}
@@ -260,7 +260,7 @@ export function WelcomeBackCard({
       </div>
 
       {/* Daily ROS and Active Stakes - Bottom section */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:mt-5 lg:gap-4">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 lg:mt-3 lg:gap-4">
         {/* Daily ROS - Clickable with double border inset */}
         <button
           onClick={() => {

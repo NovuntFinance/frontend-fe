@@ -2,10 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Wallet, TrendingUp, Users, Gift, Award, FileText } from 'lucide-react';
+import { Wallet, TrendingUp, Users, Award, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -42,12 +41,6 @@ const navigation: NavItem[] = [
     href: '/dashboard/team',
     icon: Users,
     iconColor: 'from-purple-500 to-pink-600',
-  },
-  {
-    name: 'Pools',
-    href: '/dashboard/pools',
-    icon: Gift,
-    iconColor: 'from-amber-500 to-orange-600',
   },
   {
     name: 'Knowledge Base',
@@ -197,45 +190,6 @@ export function HorizontalNav() {
               </Link>
             );
           })}
-
-          {/* Center Logo - Dashboard (Large, Elevated Button) - Mobile First */}
-          <div className="absolute top-0 left-1/2 flex flex-shrink-0 -translate-x-1/2 -translate-y-1/2">
-            <Link
-              href="/dashboard"
-              onClick={(e) => handleClick(e, '/dashboard')}
-              className={cn(
-                'group relative flex items-center justify-center transition-all duration-300',
-                'focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-none',
-                'active:scale-95 sm:hover:scale-105'
-              )}
-              aria-label="Navigate to Dashboard"
-            >
-              {/* Outer glow effect - mobile optimized */}
-              <motion.div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-15 blur-xl sm:opacity-20 sm:blur-2xl dark:opacity-25 dark:sm:opacity-30"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.15, 0.3, 0.15],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-
-              {/* Logo - No borders, just the icon, larger than menu items */}
-              <div className="relative z-10 h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20">
-                <Image
-                  src="/icons/novunt_short.png"
-                  alt="Novunt Logo"
-                  fill
-                  className="object-contain brightness-0 drop-shadow-lg dark:brightness-0 dark:invert"
-                  priority
-                />
-              </div>
-            </Link>
-          </div>
 
           {/* Right Navigation Items: Team, Pools, Knowledge Base (3 items) */}
           {navigation.slice(3).map((item) => {

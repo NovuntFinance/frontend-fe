@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 // Framer Motion removed - no longer needed for navigation
 import {
-  AlertTriangle,
   ArrowUpRight,
   Lock,
   CheckCircle2,
@@ -25,7 +24,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
 import { useDisable2FA } from '@/lib/mutations';
-import { Avatar } from '@/components/ui/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 import { BadgeAvatar } from '@/components/ui/BadgeAvatar';
 import { getUserAvatarUrl, isBadgeIcon } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
@@ -52,8 +55,6 @@ import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
 import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
-import { HorizontalNav } from '@/components/navigation/HorizontalNav';
-import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import {
   IoSunnyOutline,
@@ -149,13 +150,16 @@ export default function DashboardLayout({
 
   return (
     <DashboardGuard>
-      <div className="min-h-screen" style={{ background: '#0D162C' }}>
+      <div
+        className="min-h-screen lg:h-screen lg:flex lg:flex-col"
+        style={{ background: '#0D162C' }}
+      >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
         <header
-          className="sticky top-0 z-30 min-h-16 py-5 sm:py-4"
+          className="sticky top-0 z-30 shrink-0 py-1"
           style={{ background: '#0D162C' }}
         >
-          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-4 py-2">
+          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
             {/* Profile Section - Left side */}
             <div className="flex shrink-0 items-center gap-3">
               <DropdownMenu
@@ -164,6 +168,40 @@ export default function DashboardLayout({
               >
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
+                      style={{
+                        boxShadow:
+                          '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
+                        background: '#131B2E',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      {user?.avatar && isBadgeIcon(user.avatar) ? (
+                        <BadgeAvatar
+                          badgeIcon={user.avatar}
+                          size="md"
+                          className="shrink-0"
+                        />
+                      ) : (
+                        <Avatar className="h-full w-full overflow-hidden rounded-full">
+                          <AvatarImage
+                            src={getUserAvatarUrl(user) ?? undefined}
+                            alt={`${user?.firstName} ${user?.lastName}`}
+                          />
+                          <AvatarFallback
+                            className="text-sm font-medium"
+                            style={{
+                              background: '#131B2E',
+                              color: 'rgba(255,255,255,0.95)',
+                            }}
+                          >
+                            {user?.firstName?.[0]}
+                            {user?.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
                     <span
                       className="text-sm font-medium [filter:none]"
                       style={{
@@ -370,37 +408,11 @@ export default function DashboardLayout({
           </DropdownMenu>
         </header>
 
-        {/* Compliance & Registration Bonus Banners */}
-        {!isOnboardingPage && (
+        {/* Compliance & Registration Bonus Banners - only render wrapper when at least one banner is shown */}
+        {!isOnboardingPage &&
+          ((progress >= 40 && progress < 60) ||
+            (progress >= 60 && progress < 100 && !!bonusData)) && (
           <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
-            {/* Mandatory 2FA Banner (Progress < 40%) */}
-            {progress < 40 && (
-              <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4 backdrop-blur-xl transition-all hover:bg-red-500/15 sm:flex-row">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-500">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-red-500">
-                      CRITICAL SECURITY REQUIRED
-                    </h4>
-                    <p className="text-xs text-red-400/80">
-                      Setup 2FA to access platform features and protect your
-                      account.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => router.push('/dashboard/onboarding')}
-                  className="w-full rounded-xl bg-red-500 font-bold hover:bg-red-600 sm:w-auto"
-                >
-                  Setup Now
-                  <ArrowUpRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
             {/* Wallet Setup Banner (40% <= Progress < 60%) */}
             {progress >= 40 && progress < 60 && (
               <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
@@ -478,16 +490,13 @@ export default function DashboardLayout({
           </div>
         )}
 
-        {/* Page content - Mobile first padding */}
+        {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
         <main
           id="main-content"
-          className="p-3 pb-24 sm:p-4 sm:pb-28 md:p-6 md:pb-32 lg:p-8 lg:pb-36"
+          className="px-3 pt-0 pb-8 sm:px-4 sm:pt-0 sm:pb-10 md:px-5 md:pt-0 md:pb-12 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:px-6 lg:pt-0 lg:pb-0"
         >
           {children}
         </main>
-
-        {/* Horizontal Navigation - Fixed at bottom */}
-        <HorizontalNav />
 
         {/* Modals */}
         <ProfileEditModal
@@ -535,9 +544,6 @@ export default function DashboardLayout({
           isOpen={isModalOpen('transfer')}
           onClose={() => closeModal('transfer')}
         />
-
-        {/* Floating Assistant Button */}
-        <FloatingAssistantButton />
 
         {/* Customer Support Assistant Modal */}
         <NovuntAssistant
