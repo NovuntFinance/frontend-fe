@@ -4,10 +4,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, DollarSign, Target, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useUIStore } from '@/store/uiStore';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import type { Stake } from '@/lib/queries/stakingQueries';
+import neuStyles from '@/styles/neumorphic.module.css';
+import neuStyles from '@/styles/neumorphic.module.css';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { LoadingStates } from '@/components/ui/loading-states';
+import { EmptyStates } from '@/components/EmptyStates';
 import { fmt4 } from '@/utils/formatters';
 
 const NEU_SURFACE = '#131B2E';
@@ -32,7 +36,9 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
   const stakingConfig = useStakingConfig();
   const isRegistrationBonus =
     stake.isRegistrationBonus === true || stake.type === 'registration_bonus';
-  const targetROSPercent = stake.targetROSPercent ?? (isRegistrationBonus ? 100 : stakingConfig.goalTargetPercentage ?? 200);
+  const targetROSPercent =
+    stake.targetROSPercent ??
+    (isRegistrationBonus ? 100 : (stakingConfig.goalTargetPercentage ?? 200));
   const currentROSPercent = stake.currentROSPercent ?? 0;
   const progressNum = stake.progressToTarget
     ? parseFloat(stake.progressToTarget.replace('%', ''))
@@ -85,7 +91,9 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
                 className="text-xs sm:text-sm"
                 style={{ color: NEU_TEXT_MUTED }}
               >
-                {isRegistrationBonus ? 'Registration Bonus' : formatStakeDate(stake.createdAt)}
+                {isRegistrationBonus
+                  ? 'Registration Bonus'
+                  : formatStakeDate(stake.createdAt)}
               </p>
             </div>
           </div>
@@ -96,7 +104,9 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
               color: ACCENT_BLUE,
             }}
           >
-            {stake.status ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1) : 'Active'}
+            {stake.status
+              ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
+              : 'Active'}
           </span>
         </div>
 
@@ -107,7 +117,8 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
               Progress to {targetROSPercent}% ROS
             </span>
             <span style={{ color: NEU_TEXT }}>
-              {typeof stake.currentROSPercent === 'number' && typeof stake.targetROSPercent === 'number'
+              {typeof stake.currentROSPercent === 'number' &&
+              typeof stake.targetROSPercent === 'number'
                 ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% ROS`
                 : `${stake.progressToTarget || '0%'} of ${targetROSPercent}% ROS`}
             </span>
@@ -138,12 +149,21 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
             }}
           >
             <div className="mb-1 flex items-center gap-1.5">
-              <DollarSign className="h-3.5 w-3.5" style={{ color: ACCENT_GREEN }} />
-              <span className="text-xs font-medium" style={{ color: ACCENT_GREEN }}>
+              <DollarSign
+                className="h-3.5 w-3.5"
+                style={{ color: ACCENT_GREEN }}
+              />
+              <span
+                className="text-xs font-medium"
+                style={{ color: ACCENT_GREEN }}
+              >
                 Total Earned
               </span>
             </div>
-            <p className="text-base font-bold sm:text-lg" style={{ color: NEU_TEXT }}>
+            <p
+              className="text-base font-bold sm:text-lg"
+              style={{ color: NEU_TEXT }}
+            >
               ${fmt4(stake.totalEarned)}
             </p>
           </div>
@@ -156,11 +176,17 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
           >
             <div className="mb-1 flex items-center gap-1.5">
               <Target className="h-3.5 w-3.5" style={{ color: ACCENT_BLUE }} />
-              <span className="text-xs font-medium" style={{ color: ACCENT_BLUE }}>
+              <span
+                className="text-xs font-medium"
+                style={{ color: ACCENT_BLUE }}
+              >
                 Target
               </span>
             </div>
-            <p className="text-base font-bold sm:text-lg" style={{ color: NEU_TEXT }}>
+            <p
+              className="text-base font-bold sm:text-lg"
+              style={{ color: NEU_TEXT }}
+            >
               ${fmt4(stake.targetReturn)}
             </p>
           </div>
@@ -168,7 +194,10 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
 
         {/* Remaining */}
         <div className="flex items-center justify-between text-xs sm:text-sm">
-          <span className="flex items-center gap-1.5" style={{ color: NEU_TEXT_MUTED }}>
+          <span
+            className="flex items-center gap-1.5"
+            style={{ color: NEU_TEXT_MUTED }}
+          >
             <Clock className="h-3.5 w-3.5" />
             Remaining
           </span>
@@ -187,11 +216,14 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
  */
 export function ActiveStakesCard() {
   const router = useRouter();
+  const openModal = useUIStore((s) => s.openModal);
   const { data: stakingData, isLoading, error } = useStakeDashboard();
   const activeStakes: Stake[] = stakingData?.activeStakes ?? [];
   const count = activeStakes.length;
 
   const goToStakes = () => router.push('/dashboard/stakes');
+  const openCreateStakeModal = () => openModal('create-stake');
+  const handleHeaderClick = count === 0 ? openCreateStakeModal : goToStakes;
 
   return (
     <div className="lg:max-w-md">
@@ -203,9 +235,9 @@ export function ActiveStakesCard() {
         <h2
           role="button"
           tabIndex={0}
-          onClick={goToStakes}
-          onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-          className="mb-3 cursor-pointer text-base font-semibold sm:text-lg transition-opacity hover:opacity-90"
+          onClick={handleHeaderClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleHeaderClick()}
+          className="mb-3 cursor-pointer text-base font-semibold transition-opacity hover:opacity-90 sm:text-lg"
           style={{ color: NEU_TEXT }}
         >
           Active Stakes ({count})
@@ -217,7 +249,7 @@ export function ActiveStakesCard() {
             tabIndex={0}
             onClick={goToStakes}
             onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 sm:p-6 transition-opacity hover:opacity-95"
+            className="cursor-pointer rounded-2xl p-5 transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               boxShadow: `
@@ -235,7 +267,7 @@ export function ActiveStakesCard() {
             tabIndex={0}
             onClick={goToStakes}
             onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 text-center text-sm sm:p-6 transition-opacity hover:opacity-95"
+            className="cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               color: NEU_TEXT_MUTED,
@@ -250,11 +282,7 @@ export function ActiveStakesCard() {
           </div>
         ) : count === 0 ? (
           <div
-            role="button"
-            tabIndex={0}
-            onClick={goToStakes}
-            onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-6 text-center sm:p-8 transition-opacity hover:opacity-95"
+            className="rounded-2xl p-6 text-center sm:p-8"
             style={{
               background: NEU_SURFACE,
               boxShadow: `
@@ -264,12 +292,16 @@ export function ActiveStakesCard() {
               `,
             }}
           >
-            <p className="mb-2 text-sm font-medium" style={{ color: NEU_TEXT }}>
-              No Active Stakes Yet
-            </p>
-            <p className="text-xs" style={{ color: NEU_TEXT_MUTED }}>
-              Create a stake to start earning 200% ROS.
-            </p>
+            <EmptyStates.EmptyState
+              icon={<TrendingUp className="h-8 w-8 sm:h-10 sm:w-10" />}
+              title="No Active Stakes Yet"
+              description="Create a stake to start earning 200% ROS."
+              variant="neumorphic"
+              action={{
+                label: 'Create Your First Stake',
+                onClick: openCreateStakeModal,
+              }}
+            />
           </div>
         ) : (
           <div className="space-y-4">

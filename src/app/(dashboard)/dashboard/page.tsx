@@ -55,7 +55,6 @@ import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
-import { RegistrationBonusBanner } from '@/components/registration-bonus';
 import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
 import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
 import { useUIStore } from '@/store/uiStore';
@@ -584,16 +583,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen lg:h-full lg:min-h-0">
-      <div className="space-y-1 sm:space-y-2 lg:grid lg:grid-cols-3 lg:gap-4 lg:h-full lg:space-y-0">
-        {/* Column 1 - Banner, balance, quick actions, stats carousel */}
+      <div className="space-y-1 sm:space-y-2 lg:grid lg:h-full lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+        {/* Column 1 - Balance, quick actions, stats carousel (Registration Bonus is in modal via 10% Bonus button) */}
         <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <RegistrationBonusBanner />
-          </motion.div>
           <div className="lg:max-w-md lg:max-w-none">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -985,224 +977,232 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
             className="space-y-0"
           >
-              {/* Feature Buttons Grid - 4 columns */}
-              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-0">
-                <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
-                  {[
-                    {
-                      id: 'welcome-bonus',
-                      label: '10% Bonus',
-                      icon: Gift,
-                      href: '/dashboard/onboarding',
-                    },
-                    {
-                      id: 'nxp-gamification',
-                      label: 'NXP',
-                      icon: Sparkles,
-                      href: '/dashboard/achievements',
-                    },
-                    {
-                      id: 'rank',
-                      label: 'Rank',
-                      icon: Trophy,
-                      href: '#',
-                    },
-                    {
-                      id: 'wallet-address',
-                      label: 'Wallet',
-                      icon: CreditCard,
-                      href: '/dashboard/wallets',
-                    },
-                    {
-                      id: 'community',
-                      label: 'Team',
-                      icon: Users,
-                      href: '/dashboard/team',
-                    },
-                    {
-                      id: 'staking-streak',
-                      label: 'Streak',
-                      icon: Flame,
-                      href: '/dashboard',
-                    },
-                    {
-                      id: 'knowledge-base',
-                      label: 'Help',
-                      icon: BookOpen,
-                      href: '/dashboard/knowledge-base',
-                    },
-                    {
-                      id: 'settings',
-                      label: 'Settings',
-                      icon: Settings,
-                      href: '/dashboard/settings',
-                    },
-                  ].map((button, index) => {
-                    const IconComponent = button.icon;
-                    const NEU_SURFACE = '#131B2E';
-                    const NEU_TEXT = '#009BF2';
-                    const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-                    const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+            {/* Feature Buttons Grid - 4 columns */}
+            <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-0">
+              <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
+                {[
+                  {
+                    id: 'welcome-bonus',
+                    label: '10% Bonus',
+                    icon: Gift,
+                    href: '/dashboard/onboarding',
+                  },
+                  {
+                    id: 'nxp-gamification',
+                    label: 'NXP',
+                    icon: Sparkles,
+                    href: '/dashboard/achievements',
+                  },
+                  {
+                    id: 'rank',
+                    label: 'Rank',
+                    icon: Trophy,
+                    href: '#',
+                  },
+                  {
+                    id: 'wallet-address',
+                    label: 'Wallet',
+                    icon: CreditCard,
+                    href: '/dashboard/wallets',
+                  },
+                  {
+                    id: 'community',
+                    label: 'Team',
+                    icon: Users,
+                    href: '/dashboard/team',
+                  },
+                  {
+                    id: 'staking-streak',
+                    label: 'Streak',
+                    icon: Flame,
+                    href: '/dashboard',
+                  },
+                  {
+                    id: 'knowledge-base',
+                    label: 'Help',
+                    icon: BookOpen,
+                    href: '/dashboard/knowledge-base',
+                  },
+                  {
+                    id: 'settings',
+                    label: 'Settings',
+                    icon: Settings,
+                    href: '/dashboard/settings',
+                  },
+                ].map((button, index) => {
+                  const IconComponent = button.icon;
+                  const NEU_SURFACE = '#131B2E';
+                  const NEU_TEXT = '#009BF2';
+                  const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+                  const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
 
-                    const isSettings = button.id === 'settings';
-                    const isStreak = button.id === 'staking-streak';
-                    const isRank = button.id === 'rank';
-                    const buttonContent = (
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="flex flex-col items-center gap-1.5"
-                        >
-                          {/* Circular neumorphic button */}
-                          <div
-                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
-                            style={{
-                              background:
-                                hoveredButtonIndex === index
-                                  ? NEU_TEXT
-                                  : NEU_SURFACE,
-                              boxShadow: `
+                  const isSettings = button.id === 'settings';
+                  const isStreak = button.id === 'staking-streak';
+                  const isRank = button.id === 'rank';
+                  const isWelcomeBonus = button.id === 'welcome-bonus';
+                  const buttonContent = (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 + index * 0.05 }}
+                      className="flex flex-col items-center gap-1.5"
+                    >
+                      {/* Circular neumorphic button */}
+                      <div
+                        className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                        style={{
+                          background:
+                            hoveredButtonIndex === index
+                              ? NEU_TEXT
+                              : NEU_SURFACE,
+                          boxShadow: `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `,
-                          }}
-                          onMouseEnter={(e) => {
-                            setHoveredButtonIndex(index);
-                            e.currentTarget.style.boxShadow = `
+                        }}
+                        onMouseEnter={(e) => {
+                          setHoveredButtonIndex(index);
+                          e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
-                            e.currentTarget.style.transform =
-                              'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            setHoveredButtonIndex(null);
-                            e.currentTarget.style.boxShadow = `
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          setHoveredButtonIndex(null);
+                          e.currentTarget.style.boxShadow = `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseDown={(e) => {
-                            e.currentTarget.style.boxShadow = `
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                        onMouseDown={(e) => {
+                          e.currentTarget.style.boxShadow = `
                             inset 3px 3px 6px ${NEU_SHADOW_DARK},
                             inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
                           `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseUp={(e) => {
-                            e.currentTarget.style.boxShadow = `
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                        onMouseUp={(e) => {
+                          e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
+                        }}
+                      >
+                        <motion.div
+                          animate={{
+                            y: [0, -2, 0],
+                            scale: [1, 1.02, 1],
+                          }}
+                          transition={{
+                            duration: 5,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                            delay: index * 0.3,
                           }}
                         >
-                          <motion.div
-                            animate={{
-                              y: [0, -2, 0],
-                              scale: [1, 1.02, 1],
+                          <IconComponent
+                            className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                            style={{
+                              color:
+                                hoveredButtonIndex === index
+                                  ? NEU_SURFACE
+                                  : NEU_TEXT,
+                              filter: 'none',
                             }}
-                            transition={{
-                              duration: 5,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                              delay: index * 0.3,
-                            }}
-                          >
-                            <IconComponent
-                              className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                              style={{
-                                color:
-                                  hoveredButtonIndex === index
-                                    ? NEU_SURFACE
-                                    : NEU_TEXT,
-                                filter: 'none',
-                              }}
-                            />
-                          </motion.div>
-                        </div>
-                        {/* Label */}
-                        <span
-                          className="text-center text-[10px] font-medium sm:text-xs"
-                          style={{ color: NEU_TEXT, filter: 'none' }}
+                          />
+                        </motion.div>
+                      </div>
+                      {/* Label */}
+                      <span
+                        className="text-center text-[10px] font-medium sm:text-xs"
+                        style={{ color: NEU_TEXT, filter: 'none' }}
+                      >
+                        {button.label}
+                      </span>
+                    </motion.button>
+                  );
+
+                  return (
+                    <React.Fragment key={button.id}>
+                      {isWelcomeBonus ? (
+                        <button
+                          type="button"
+                          onClick={() => openModal('registration-bonus')}
+                          className="cursor-pointer border-0 bg-transparent p-0 text-left"
                         >
-                          {button.label}
-                        </span>
-                      </motion.button>
-                    );
-
-                    return (
-                      <React.Fragment key={button.id}>
-                        {isSettings ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.dispatchEvent(
-                                new CustomEvent('openProfileModal', {
-                                  bubbles: true,
-                                })
-                              );
-                            }}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </button>
-                        ) : isStreak ? (
-                          <button
-                            type="button"
-                            onClick={() => setStreakModalOpen(true)}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </button>
-                        ) : isRank ? (
-                          <button
-                            type="button"
-                            onClick={() => setRankModalOpen(true)}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </button>
-                        ) : (
-                          <Link href={button.href}>{buttonContent}</Link>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
+                          {buttonContent}
+                        </button>
+                      ) : isSettings ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.dispatchEvent(
+                              new CustomEvent('openProfileModal', {
+                                bubbles: true,
+                              })
+                            );
+                          }}
+                          className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                        >
+                          {buttonContent}
+                        </button>
+                      ) : isStreak ? (
+                        <button
+                          type="button"
+                          onClick={() => setStreakModalOpen(true)}
+                          className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                        >
+                          {buttonContent}
+                        </button>
+                      ) : isRank ? (
+                        <button
+                          type="button"
+                          onClick={() => setRankModalOpen(true)}
+                          className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                        >
+                          {buttonContent}
+                        </button>
+                      ) : (
+                        <Link href={button.href}>{buttonContent}</Link>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Recent Activity - Directly under Feature Buttons Grid */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="mt-2"
-              >
-                <ActivityFeed
-                  transactions={transactions || []}
-                  isLoading={transactionsLoading}
-                />
-              </motion.div>
+            {/* Recent Activity - Directly under Feature Buttons Grid */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mt-2"
+            >
+              <ActivityFeed
+                transactions={transactions || []}
+                isLoading={transactionsLoading}
+              />
+            </motion.div>
 
-              {/* Daily ROS Performance - Directly under Recent Activity */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.38 }}
-                className="mt-2"
-                id="daily-ros"
-              >
-                <DailyROSPerformance />
-              </motion.div>
+            {/* Daily ROS Performance - Directly under Recent Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38 }}
+              className="mt-2"
+              id="daily-ros"
+            >
+              <DailyROSPerformance />
+            </motion.div>
           </motion.div>
         </div>
 
@@ -1214,26 +1214,26 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
             className="space-y-0"
           >
-              {/* Active Stakes - Neumorphic card directly under Daily ROS Performance */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-2 lg:mt-0"
-              >
-                <ActiveStakesCard />
-              </motion.div>
+            {/* Active Stakes - Neumorphic card directly under Daily ROS Performance */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-2 lg:mt-0"
+            >
+              <ActiveStakesCard />
+            </motion.div>
 
-              {/* Live Trading Signals & Live Platform Activity - dark neumorphic, side by side, below Active Stakes */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.42 }}
-                className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2"
-              >
-                <LiveTradingSignals />
-                <LivePlatformActivities />
-              </motion.div>
+            {/* Live Trading Signals & Live Platform Activity - dark neumorphic, side by side, below Active Stakes */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42 }}
+              className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2"
+            >
+              <LiveTradingSignals />
+              <LivePlatformActivities />
+            </motion.div>
           </motion.div>
         </div>
       </div>
@@ -1245,10 +1245,7 @@ export default function DashboardPage() {
       />
 
       {/* Rank Progress - Neumorphic modal (opened via Rank button) */}
-      <RankProgressModal
-        open={rankModalOpen}
-        onOpenChange={setRankModalOpen}
-      />
+      <RankProgressModal open={rankModalOpen} onOpenChange={setRankModalOpen} />
 
       {/* Welcome Modal for First-Time Users */}
       {newUserInfo && (
