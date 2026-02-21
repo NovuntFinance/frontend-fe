@@ -4,6 +4,7 @@
  */
 
 export { RegistrationBonusBanner } from './RegistrationBonusBanner';
+export { RegistrationBonusModal } from './RegistrationBonusModal';
 export { ProgressStepper } from './ProgressStepper';
 export { CountdownTimer } from './CountdownTimer';
 export { RequirementSection } from './RequirementSection';

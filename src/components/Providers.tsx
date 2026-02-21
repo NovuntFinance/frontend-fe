@@ -27,17 +27,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // Initialize platform settings (fetch platform day start)
     // This may fail with 401 if user is not authenticated - that's OK, we use default
     initializePlatformSettings().catch((error: any) => {
-      // Only log non-401 errors as actual errors
+      // 401/403 are expected when backend restricts public settings; use default, don't log as error
       const status = error?.response?.status || error?.statusCode;
-      if (status !== 401) {
+      if (status !== 401 && status !== 403) {
         logger.error('Failed to initialize platform settings', { error });
-      } else {
-        logger.info(
-          'Platform settings initialization skipped (not authenticated)',
-          {
-            message: 'Using default platform day start',
-          }
-        );
       }
     });
 

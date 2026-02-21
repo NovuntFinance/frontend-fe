@@ -54,8 +54,8 @@ import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressCard } from '@/components/rank-progress/RankProgressCard';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
-import { RegistrationBonusBanner } from '@/components/registration-bonus';
 import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
+import { useUIStore } from '@/store/uiStore';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
@@ -82,6 +82,7 @@ export default function DashboardPage() {
   } | null>(null);
   const { user } = useUser();
   const {} = useResponsive();
+  const openModal = useUIStore((s) => s.openModal);
 
   // Fetch staking streak data
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
@@ -582,15 +583,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen">
       <div className="space-y-4 sm:space-y-6">
-        {/* Registration Bonus Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <RegistrationBonusBanner />
-        </motion.div>
-
         {/* Single Neumorphic Card containing all dashboard elements */}
         <div className="lg:max-w-md">
           <motion.div
@@ -1056,96 +1048,112 @@ export default function DashboardPage() {
                     const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
                     const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
 
-                    return (
-                      <Link key={button.id} href={button.href}>
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="flex flex-col items-center gap-1.5"
-                        >
-                          {/* Circular neumorphic button */}
-                          <div
-                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
-                            style={{
-                              background:
-                                hoveredButtonIndex === index
-                                  ? NEU_TEXT
-                                  : NEU_SURFACE,
-                              boxShadow: `
+                    const buttonContent = (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + index * 0.05 }}
+                        className="flex flex-col items-center gap-1.5"
+                      >
+                        {/* Circular neumorphic button */}
+                        <div
+                          className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                          style={{
+                            background:
+                              hoveredButtonIndex === index
+                                ? NEU_TEXT
+                                : NEU_SURFACE,
+                            boxShadow: `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `,
-                            }}
-                            onMouseEnter={(e) => {
-                              setHoveredButtonIndex(index);
-                              e.currentTarget.style.boxShadow = `
+                          }}
+                          onMouseEnter={(e) => {
+                            setHoveredButtonIndex(index);
+                            e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
-                              e.currentTarget.style.transform =
-                                'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              setHoveredButtonIndex(null);
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform =
+                              'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            setHoveredButtonIndex(null);
+                            e.currentTarget.style.boxShadow = `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `;
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseDown={(e) => {
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                          onMouseDown={(e) => {
+                            e.currentTarget.style.boxShadow = `
                             inset 3px 3px 6px ${NEU_SHADOW_DARK},
                             inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
                           `;
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseUp={(e) => {
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                          onMouseUp={(e) => {
+                            e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
+                          }}
+                        >
+                          <motion.div
+                            animate={{
+                              y: [0, -2, 0],
+                              scale: [1, 1.02, 1],
+                            }}
+                            transition={{
+                              duration: 5,
+                              repeat: Infinity,
+                              ease: 'easeInOut',
+                              delay: index * 0.3,
                             }}
                           >
-                            <motion.div
-                              animate={{
-                                y: [0, -2, 0],
-                                scale: [1, 1.02, 1],
+                            <IconComponent
+                              className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                              style={{
+                                color:
+                                  hoveredButtonIndex === index
+                                    ? NEU_SURFACE
+                                    : NEU_TEXT,
+                                filter: 'none',
                               }}
-                              transition={{
-                                duration: 5,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                                delay: index * 0.3,
-                              }}
-                            >
-                              <IconComponent
-                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                                style={{
-                                  color:
-                                    hoveredButtonIndex === index
-                                      ? NEU_SURFACE
-                                      : NEU_TEXT,
-                                  filter: 'none',
-                                }}
-                              />
-                            </motion.div>
-                          </div>
-                          {/* Label */}
-                          <span
-                            className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: NEU_TEXT, filter: 'none' }}
-                          >
-                            {button.label}
-                          </span>
-                        </motion.button>
+                            />
+                          </motion.div>
+                        </div>
+                        {/* Label */}
+                        <span
+                          className="text-center text-[10px] font-medium sm:text-xs"
+                          style={{ color: NEU_TEXT, filter: 'none' }}
+                        >
+                          {button.label}
+                        </span>
+                      </motion.button>
+                    );
+                    return button.id === 'welcome-bonus' ? (
+                      <div
+                        key={button.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openModal('registration-bonus')}
+                        onKeyDown={(e) =>
+                          e.key === 'Enter' && openModal('registration-bonus')
+                        }
+                        className="flex cursor-pointer flex-col items-center gap-1.5"
+                      >
+                        {buttonContent}
+                      </div>
+                    ) : (
+                      <Link key={button.id} href={button.href}>
+                        {buttonContent}
                       </Link>
                     );
                   })}

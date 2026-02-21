@@ -487,11 +487,17 @@ apiClient.interceptors.response.use(
       error.message?.toLowerCase().includes('network error') ||
       !error.response; // No response means network error
 
-    // Log raw error for debugging (skip 404s and network errors)
+    // 403 on public settings is expected when backend restricts by role; frontend uses default
+    const isPublicSettingsForbidden =
+      error.response?.status === 403 &&
+      originalRequest.url?.includes('/settings/public/');
+
+    // Log raw error for debugging (skip 404s, network errors, and 403 on public settings)
     if (
       process.env.NODE_ENV === 'development' &&
       error.response?.status !== 404 &&
-      !isNetworkError
+      !isNetworkError &&
+      !isPublicSettingsForbidden
     ) {
       // Better error serialization with proper JSON stringification
       const errorInfo: Record<string, unknown> = {
@@ -670,8 +676,14 @@ apiClient.interceptors.response.use(
         );
       }
 
-      // Log the actual error from backend if available
-      if (error.response?.data) {
+      // Log the actual error from backend if available (skip for 403 on public settings)
+      if (
+        error.response?.data &&
+        !(
+          error.response?.status === 403 &&
+          originalRequest.url?.includes('/settings/public/')
+        )
+      ) {
         const backendError = error.response.data;
         const errorKeys =
           typeof backendError === 'object' && backendError !== null
