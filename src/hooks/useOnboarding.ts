@@ -42,7 +42,7 @@ export function useOnboarding() {
     // Show onboarding for new users (first time on dashboard)
     if (user && pathname?.startsWith('/dashboard')) {
       // Check if user is new (e.g., account created recently or no activity)
-      const isNewUser = !user.phoneNumber || !user.firstName;
+      const isNewUser = !user.firstName;
       
       if (isNewUser) {
         setShouldShowOnboarding(true);

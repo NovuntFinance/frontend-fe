@@ -332,33 +332,16 @@ export function useSignup() {
       const lastName = (creds.lastName || creds.lname || '').trim();
       const email = (credentials.email || '').trim();
       const username = (credentials.username || '').trim();
-      const phoneNumber = (credentials.phoneNumber || '').trim();
-      const countryCode = (credentials.countryCode || '').trim();
-
-      // Validate all required fields (phoneNumber and countryCode are now REQUIRED)
-      if (
-        !firstName ||
-        !lastName ||
-        !email ||
-        !username ||
-        !phoneNumber ||
-        !countryCode
-      ) {
+      if (!firstName || !lastName || !email || !username) {
         const missingFields = [];
         if (!firstName) missingFields.push('firstName');
         if (!lastName) missingFields.push('lastName');
         if (!email) missingFields.push('email');
         if (!username) missingFields.push('username');
-        if (!phoneNumber) missingFields.push('phoneNumber');
-        if (!countryCode) missingFields.push('countryCode');
-
-        console.error('[useSignup] Missing required fields:', missingFields);
         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
       }
-
       // BetterAuth expects firstName/lastName directly (not fname/lname)
-      // NOTE: Avatar/profilePicture is NOT included - backend should set it to null
-      // Users must set their own avatar after registration via the profile page
+      // Phone number removed from registration — not sent
       const payload: RegisterRequest = {
         firstName,
         lastName,
@@ -366,34 +349,18 @@ export function useSignup() {
         username: username.toLowerCase(),
         password: credentials.password,
         confirmPassword: credentials.confirmPassword,
-        phoneNumber, // ✅ REQUIRED
-        countryCode, // ✅ REQUIRED
         ...(credentials.referralCode?.trim()
           ? { referralCode: credentials.referralCode.trim() }
           : {}),
         ...(credentials.turnstileToken
           ? { turnstileToken: credentials.turnstileToken }
           : {}),
-        // Avatar/profilePicture is intentionally NOT included - should be null in backend
       };
 
       console.log('[useSignup] BetterAuth registration payload:', {
         ...payload,
         password: '***',
         confirmPassword: '***',
-      });
-
-      // Log the exact payload structure for debugging
-      console.log('[useSignup] Payload structure:', {
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        username: payload.username,
-        phoneNumber: payload.phoneNumber,
-        countryCode: payload.countryCode,
-        hasReferralCode: !!payload.referralCode,
-        passwordLength: payload.password.length,
-        confirmPasswordLength: payload.confirmPassword.length,
       });
 
       return authService.register(payload);

@@ -19,8 +19,8 @@ export interface RegisterRequest {
   username: string;
   password: string;
   confirmPassword: string;
-  phoneNumber: string; // ✅ REQUIRED (was optional before)
-  countryCode: string; // ✅ REQUIRED (was optional before)
+  phoneNumber?: string; // Optional — removed from registration flow
+  countryCode?: string; // Optional — removed from registration flow
   referralCode?: string; // ✅ Optional (only optional field)
   turnstileToken?: string; // ✅ Optional Cloudflare Turnstile token for bot protection
 }

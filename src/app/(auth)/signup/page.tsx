@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,9 +16,6 @@ import {
   AtSign,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
-import PhoneInput, { getCountries } from 'react-phone-number-input';
-import { parsePhoneNumber } from 'libphonenumber-js';
-import '@/styles/phone-input.css';
 import {
   signupSchema,
   type SignupFormData,
@@ -63,7 +60,6 @@ function SignupPageContent() {
 
   const {
     register,
-    control,
     handleSubmit,
     watch,
     trigger,
@@ -80,7 +76,6 @@ function SignupPageContent() {
       password: '',
       confirmPassword: '',
       username: '',
-      phoneNumber: '',
       referralCode: '',
       acceptedTerms: false,
     },
@@ -124,7 +119,7 @@ function SignupPageContent() {
       case 1:
         return ['email', 'password', 'confirmPassword'];
       case 2:
-        return ['firstName', 'lastName', 'username', 'phoneNumber'];
+        return ['firstName', 'lastName', 'username'];
       case 3:
         return ['referralCode', 'acceptedTerms'];
       default:
@@ -138,39 +133,6 @@ function SignupPageContent() {
   // Handle form submission
   const onSubmit = async (data: SignupFormData) => {
     try {
-      let countryCode = '';
-      let nationalNumber = '';
-
-      try {
-        const phoneNumberObj = parsePhoneNumber(data.phoneNumber);
-        if (phoneNumberObj?.isValid()) {
-          countryCode = phoneNumberObj.countryCallingCode;
-          nationalNumber = phoneNumberObj.nationalNumber;
-        } else {
-          const match = data.phoneNumber.match(/^\+?(\d{1,3})(.+)$/);
-          if (match) {
-            countryCode = match[1];
-            nationalNumber = match[2].replace(/\D/g, '');
-          }
-        }
-      } catch {
-        const match = data.phoneNumber.match(/^\+?(\d{1,3})(.+)$/);
-        if (match) {
-          countryCode = match[1];
-          nationalNumber = match[2].replace(/\D/g, '');
-        }
-      }
-
-      const finalPhoneNumber =
-        nationalNumber || data.phoneNumber.replace(/\D/g, '');
-      if (!finalPhoneNumber || finalPhoneNumber.length < 5) {
-        setError('phoneNumber', {
-          type: 'manual',
-          message: 'Please enter a valid phone number',
-        });
-        return;
-      }
-
       const payload = {
         email: data.email.trim().toLowerCase(),
         password: data.password,
@@ -178,8 +140,6 @@ function SignupPageContent() {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         username: data.username.trim().toLowerCase(),
-        phoneNumber: finalPhoneNumber,
-        countryCode: countryCode ? `+${countryCode}` : '+1',
         ...(data.referralCode?.trim()
           ? { referralCode: data.referralCode.trim() }
           : {}),
@@ -190,10 +150,12 @@ function SignupPageContent() {
         'lastName',
         'email',
         'username',
-        'phoneNumber',
-        'countryCode',
       ] as const;
-      if (required.some((k) => !payload[k])) {
+      if (
+        required.some(
+          (k) => !(payload as Record<string, unknown>)[k]
+        )
+      ) {
         toast.error('Validation Error', {
           description: 'Please fill in all required fields',
         });
@@ -279,18 +241,6 @@ function SignupPageContent() {
           message: 'This username is already taken.',
         });
         toast.error('Username already taken');
-        return;
-      }
-
-      if (
-        (errorResponse.field === 'phoneNumber' || msgLower.includes('phone')) &&
-        (msgLower.includes('taken') || msgLower.includes('exists'))
-      ) {
-        setError('phoneNumber', {
-          type: 'manual',
-          message: 'This phone number is already registered.',
-        });
-        toast.error('Phone number already registered');
         return;
       }
 
@@ -495,46 +445,6 @@ function SignupPageContent() {
                     registerName="lastName"
                     delay={0.1}
                   />
-
-                  {/* Phone — unique layout, stays inline */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15, duration: 0.3 }}
-                    className="space-y-2"
-                  >
-                    <div
-                      className={`${styles.neuPhoneWrapper} ${errors.phoneNumber ? styles.neuInputError : ''}`}
-                    >
-                      <Controller
-                        name="phoneNumber"
-                        control={control}
-                        render={({ field }) => (
-                          <PhoneInput
-                            id="phoneNumber"
-                            placeholder="Phone Number"
-                            value={field.value}
-                            onChange={field.onChange}
-                            countries={getCountries().filter((c) => c !== 'US')}
-                            defaultCountry="GB"
-                            international
-                            countryCallingCodeEditable={false}
-                            limitMaxLength
-                            smartCaret
-                            aria-label="Phone Number"
-                          />
-                        )}
-                      />
-                    </div>
-                    {errors.phoneNumber?.message && (
-                      <p className={styles.neuFieldError}>
-                        {errors.phoneNumber.message}
-                      </p>
-                    )}
-                    <p className={`text-xs ${styles.neuTextMuted}`}>
-                      Required for account verification
-                    </p>
-                  </motion.div>
                 </motion.div>
               )}
 

@@ -86,13 +86,6 @@ export const signupSchema = z
     email: z.string().email('Please enter a valid email address'),
     password: passwordSchema,
     confirmPassword: z.string(),
-    phoneNumber: z
-      .string()
-      .min(1, 'Phone number is required')
-      .regex(
-        /^\+[1-9]\d{1,14}$/,
-        'Please enter a valid international phone number with country code'
-      ),
     referralCode: z
       .string()
       .min(6, 'Referral code must be at least 6 characters')

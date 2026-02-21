@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User as UserIcon,
   Mail,
-  Phone,
   Lock,
   Eye,
   EyeOff,
@@ -19,9 +18,6 @@ import {
   Home as MapPinIcon,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
-import PhoneInput from 'react-phone-number-input';
-import { parsePhoneNumber } from 'libphonenumber-js';
-import '@/styles/phone-input.css';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateProfile } from '@/lib/mutations';
 import { useProfile } from '@/lib/queries';
@@ -79,7 +75,6 @@ const profileEditSchema = z.object({
       /^[a-zA-Z\s'-]+$/,
       'Last name can only contain letters, spaces, hyphens, and apostrophes'
     ),
-  phoneNumber: z.string().min(1, 'Phone number is required'),
   dateOfBirth: z
     .string()
     .min(1, 'Date of birth is required')
@@ -180,37 +175,6 @@ export function ProfileEditModal({
     defaultValues: {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
-      phoneNumber: (() => {
-        // Format phone number to E.164 if missing + prefix
-        // Check both user object and profileData for phone number
-        let phone =
-          user?.phoneNumber || (profileData as any)?.phoneNumber || '';
-
-        // If still empty, check nested profile structure
-        if (!phone && profileData) {
-          const profile = (profileData as any)?.profile;
-          phone = profile?.phone || profile?.phoneNumber || '';
-        }
-
-        // If phone number exists but doesn't start with +, add country code
-        if (phone && !phone.startsWith('+')) {
-          const countryCode =
-            user?.countryCode || (profileData as any)?.countryCode || '+1';
-          phone = `${countryCode}${phone}`;
-        }
-
-        // If phone is still empty but we have country code, set default format
-        if (
-          !phone &&
-          (user?.countryCode || (profileData as any)?.countryCode)
-        ) {
-          const countryCode =
-            user?.countryCode || (profileData as any)?.countryCode || '+1';
-          phone = countryCode; // Just country code as placeholder
-        }
-
-        return phone;
-      })(),
       dateOfBirth: (() => {
         // Format date from profile data if available
         // profileData may have nested profile or flat structure
@@ -257,35 +221,6 @@ export function ProfileEditModal({
   // Update form when user data changes
   useEffect(() => {
     if (user && profileData) {
-      // Format phone number to E.164 if it's missing the + prefix
-      // Check both user object and profileData for phone number
-      let formattedPhone =
-        user.phoneNumber || (profileData as any)?.phoneNumber || '';
-
-      // If still empty, check nested profile structure
-      if (!formattedPhone) {
-        const profile = (profileData as any)?.profile;
-        formattedPhone = profile?.phone || profile?.phoneNumber || '';
-      }
-
-      // If phone number exists but doesn't start with +, add country code
-      if (formattedPhone && !formattedPhone.startsWith('+')) {
-        // Try to construct E.164 format with country code
-        const countryCode =
-          user.countryCode || (profileData as any)?.countryCode || '+1'; // Default to US
-        formattedPhone = `${countryCode}${formattedPhone}`;
-      }
-
-      // If phone is still empty but we have country code, set default format
-      if (
-        !formattedPhone &&
-        (user.countryCode || (profileData as any)?.countryCode)
-      ) {
-        const countryCode =
-          user.countryCode || (profileData as any)?.countryCode || '+1';
-        formattedPhone = countryCode; // Just country code as placeholder
-      }
-
       // Format date of birth
       let formattedDateOfBirth = '';
       const profile = (profileData as any)?.profile || profileData;
@@ -297,7 +232,6 @@ export function ProfileEditModal({
       reset({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        phoneNumber: formattedPhone,
         dateOfBirth: formattedDateOfBirth,
         gender: ((profileData as any)?.profile?.gender ||
           (profileData as any)?.gender ||
@@ -347,116 +281,28 @@ export function ProfileEditModal({
 
   const onSubmitProfile = async (data: ProfileEditFormData) => {
     try {
-      // Parse phone number to extract country code
-      let phoneNumber = data.phoneNumber || '';
-      let countryCode = '';
-
-      // Skip parsing if phone number is empty or just country code
-      if (!phoneNumber || phoneNumber.length <= 4) {
-        toast.error('Please enter a valid phone number with country code');
-        setError('phoneNumber', {
-          type: 'manual',
-          message: 'Phone number is required',
-        });
-        return;
-      }
-
-      try {
-        const parsed = parsePhoneNumber(phoneNumber);
-        if (parsed && parsed.isValid()) {
-          phoneNumber = parsed.nationalNumber;
-          countryCode = `+${parsed.countryCallingCode}`;
-        } else {
-          // If phone is not valid, try to extract country code manually
-          if (phoneNumber.startsWith('+')) {
-            const parts = phoneNumber.match(/^\+(\d{1,3})(.+)$/);
-            if (parts) {
-              countryCode = `+${parts[1]}`;
-              phoneNumber = parts[2];
-            } else {
-              throw new Error('Invalid phone number format');
-            }
-          } else {
-            // Assume US if no country code
-            countryCode = '+1';
-          }
-        }
-      } catch (error: any) {
-        console.error('Failed to parse phone number:', error);
-        console.error('Phone number value:', phoneNumber);
-
-        // If parsing fails, try to handle gracefully
-        if (phoneNumber.startsWith('+')) {
-          // Try to extract country code manually
-          const match = phoneNumber.match(/^\+(\d{1,3})(.+)$/);
-          if (match && match[2].length >= 7) {
-            countryCode = `+${match[1]}`;
-            phoneNumber = match[2];
-          } else {
-            toast.error(
-              'Please enter a valid phone number with country code (e.g., +1234567890)'
-            );
-            setError('phoneNumber', {
-              type: 'manual',
-              message: 'Invalid phone number format',
-            });
-            return;
-          }
-        } else {
-          toast.error(
-            'Please enter a valid phone number with country code (e.g., +1234567890)'
-          );
-          setError('phoneNumber', {
-            type: 'manual',
-            message: 'Phone number must include country code',
-          });
-          return;
-        }
-      }
-
       // Prepare payload according to backend API: PUT /api/v1/user/profile
       // Build fullName from firstName and lastName
       const fullName = `${data.firstName} ${data.lastName}`.trim();
 
       // Build address object according to schema
-      // Note: Backend automatically geocodes using city/country and populates coordinates
-      // Geocoding is non-blocking - profile updates even if geocoding fails
-      // Supports 30+ cities and 15+ countries (offline, instant, no API calls)
       const addressObject = {
         street: data.addressStreet,
         city: data.addressCity,
         state: data.addressState,
         country: data.addressCountry,
         postalCode: data.addressPostalCode,
-        // Coordinates (latitude/longitude) are automatically populated by backend
-        // Backend uses city + country for geocoding (supports abbreviations like USA/US, UK/GB)
       };
-
-      // Build phone number in E.164 format (with country code)
-      const fullPhoneNumber =
-        countryCode && phoneNumber
-          ? `${countryCode}${phoneNumber}`
-          : data.phoneNumber;
 
       const payload = {
         firstName: data.firstName,
         lastName: data.lastName,
-        fullName: fullName, // Required for registration bonus
-        phoneNumber: fullPhoneNumber, // Send full E.164 format (e.g., +1234567890)
-        phone: fullPhoneNumber, // Also send as 'phone' for UserProfile schema (E.164 format)
-        countryCode, // Also send country code separately
-        // Registration bonus required fields
-        dateOfBirth: data.dateOfBirth, // Format: "YYYY-MM-DD"
-        gender: data.gender, // "male", "female", "other", or "prefer_not_to_say"
-        address: addressObject, // Address object with nested fields
-        profilePhoto: data.profilePhoto || undefined, // Profile photo URL
+        fullName,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        address: addressObject,
+        profilePhoto: data.profilePhoto || undefined,
       };
-
-      console.log('[ProfileEditModal] Phone number details:', {
-        original: data.phoneNumber,
-        parsed: { phoneNumber, countryCode },
-        fullPhoneNumber,
-      });
 
       // Add user ID to payload if available (for fallback endpoint)
       const payloadWithUserId = {
@@ -519,26 +365,6 @@ export function ProfileEditModal({
         toast.error('Username already taken', {
           description:
             'This username is already in use. Please choose another.',
-        });
-        return;
-      }
-
-      // Handle phone number uniqueness error
-      if (
-        (errorMessage.toLowerCase().includes('phone') ||
-          errorMessage.toLowerCase().includes('phoneNumber')) &&
-        (errorMessage.toLowerCase().includes('taken') ||
-          errorMessage.toLowerCase().includes('exists') ||
-          errorMessage.toLowerCase().includes('already'))
-      ) {
-        setError('phoneNumber', {
-          type: 'manual',
-          message:
-            'This phone number is already registered. Please use a different number.',
-        });
-        toast.error('Phone number already registered', {
-          description:
-            'This phone number is already in use. Please use a different number.',
         });
         return;
       }
@@ -666,40 +492,6 @@ export function ProfileEditModal({
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Phone Number Section */}
-              <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                <h3 className="mb-4 text-sm font-semibold text-white">
-                  Phone Number
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber" className="text-white/90">
-                    Phone Number <span className="text-red-400">*</span>
-                  </Label>
-                  <Controller
-                    name="phoneNumber"
-                    control={control}
-                    render={({ field }) => (
-                      <PhoneInput
-                        international
-                        defaultCountry="US"
-                        value={field.value}
-                        onChange={field.onChange}
-                        className="phone-input-container"
-                        placeholder="Enter phone number"
-                      />
-                    )}
-                  />
-                  {errors.phoneNumber && (
-                    <p className="text-sm text-red-400">
-                      {errors.phoneNumber.message}
-                    </p>
-                  )}
-                  <p className="text-xs text-white/60">
-                    Include country code (e.g., +1 for USA)
-                  </p>
                 </div>
               </div>
 
