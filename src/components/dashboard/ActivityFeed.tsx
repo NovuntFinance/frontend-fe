@@ -19,6 +19,7 @@ import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
+import { useUIStore } from '@/store/uiStore';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -182,6 +183,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   // Get current activity to display
   const currentTransaction =
     safeTransactions.length > 0 ? safeTransactions[currentIndex] : null;
+  const openModal = useUIStore((s) => s.openModal);
 
   return (
     <div className="lg:max-w-md">
@@ -209,9 +211,11 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
               <LoadingStates.Text lines={1} className="h-8 sm:h-10" />
             ) : safeTransactions.length === 0 ? (
               <EmptyStates.EmptyTransactions
+                variant="neumorphic"
+                compact
                 action={{
                   label: 'Make Your First Deposit',
-                  onClick: () => (window.location.href = '/dashboard/wallets'),
+                  onClick: () => openModal('deposit'),
                 }}
               />
             ) : currentTransaction ? (

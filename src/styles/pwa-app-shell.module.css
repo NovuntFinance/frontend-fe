@@ -1,0 +1,100 @@
+/* ═══════════════════════════════════════════════════════════
+   PWA App Shell — Auth & Onboarding
+   Fixed viewport, no overflow, safe-area, mobile-first
+   ═══════════════════════════════════════════════════════════ */
+
+/* Full viewport container: exact screen, no overflow */
+.shell {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Prefer dvh for mobile browsers (dynamic viewport); fallback svh */
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  /* Safe area for notches and home indicators */
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-sizing: border-box;
+}
+
+/* Optional: inner wrapper that adds horizontal padding (auth uses px-6) */
+.shellInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Fixed header area — does not grow or shrink */
+.shellHeader {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Scrollable middle — only this section scrolls */
+.shellScroll {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 28rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Content inside scroll: prevent horizontal overflow */
+.shellScrollContent {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fixed footer area */
+.shellFooter {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Utility: prevent any child from causing overflow */
+.shellNoOverflow {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}

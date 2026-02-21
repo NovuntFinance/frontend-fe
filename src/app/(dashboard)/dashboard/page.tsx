@@ -56,6 +56,9 @@ import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
 import { RegistrationBonusBanner } from '@/components/registration-bonus';
+import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
+import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
+import { useUIStore } from '@/store/uiStore';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
@@ -84,6 +87,7 @@ export default function DashboardPage() {
   const [rankModalOpen, setRankModalOpen] = useState(false);
   const { user } = useUser();
   const {} = useResponsive();
+  const openModal = useUIStore((s) => s.openModal);
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -1063,75 +1067,75 @@ export default function DashboardPage() {
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `,
-                            }}
-                            onMouseEnter={(e) => {
-                              setHoveredButtonIndex(index);
-                              e.currentTarget.style.boxShadow = `
+                          }}
+                          onMouseEnter={(e) => {
+                            setHoveredButtonIndex(index);
+                            e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
-                              e.currentTarget.style.transform =
-                                'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              setHoveredButtonIndex(null);
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform =
+                              'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            setHoveredButtonIndex(null);
+                            e.currentTarget.style.boxShadow = `
                             6px 6px 12px ${NEU_SHADOW_DARK},
                             -6px -6px 12px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.05)
                           `;
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseDown={(e) => {
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                          onMouseDown={(e) => {
+                            e.currentTarget.style.boxShadow = `
                             inset 3px 3px 6px ${NEU_SHADOW_DARK},
                             inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
                           `;
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseUp={(e) => {
-                              e.currentTarget.style.boxShadow = `
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                          onMouseUp={(e) => {
+                            e.currentTarget.style.boxShadow = `
                             8px 8px 16px ${NEU_SHADOW_DARK},
                             -8px -8px 16px ${NEU_SHADOW_LIGHT},
                             0 0 0 1px rgba(255, 255, 255, 0.08),
                             0 0 20px rgba(0, 155, 242, 0.2)
                           `;
+                          }}
+                        >
+                          <motion.div
+                            animate={{
+                              y: [0, -2, 0],
+                              scale: [1, 1.02, 1],
+                            }}
+                            transition={{
+                              duration: 5,
+                              repeat: Infinity,
+                              ease: 'easeInOut',
+                              delay: index * 0.3,
                             }}
                           >
-                            <motion.div
-                              animate={{
-                                y: [0, -2, 0],
-                                scale: [1, 1.02, 1],
+                            <IconComponent
+                              className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                              style={{
+                                color:
+                                  hoveredButtonIndex === index
+                                    ? NEU_SURFACE
+                                    : NEU_TEXT,
+                                filter: 'none',
                               }}
-                              transition={{
-                                duration: 5,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                                delay: index * 0.3,
-                              }}
-                            >
-                              <IconComponent
-                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                                style={{
-                                  color:
-                                    hoveredButtonIndex === index
-                                      ? NEU_SURFACE
-                                      : NEU_TEXT,
-                                  filter: 'none',
-                                }}
-                              />
-                            </motion.div>
-                          </div>
-                          {/* Label */}
-                          <span
-                            className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: NEU_TEXT, filter: 'none' }}
-                          >
-                            {button.label}
-                          </span>
-                        </motion.button>
+                            />
+                          </motion.div>
+                        </div>
+                        {/* Label */}
+                        <span
+                          className="text-center text-[10px] font-medium sm:text-xs"
+                          style={{ color: NEU_TEXT, filter: 'none' }}
+                        >
+                          {button.label}
+                        </span>
+                      </motion.button>
                     );
 
                     return (

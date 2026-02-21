@@ -28,18 +28,28 @@ import { CountdownTimer } from './CountdownTimer';
 import { RequirementSection } from './RequirementSection';
 import { BonusActivatedCard } from './BonusActivatedCard';
 import { BonusExpiredCard } from './BonusExpiredCard';
-import { BonusCompletedCard } from '@/components/registration-bonus/BonusCompletedCard';
+import { BonusCompletedCard } from './BonusCompletedCard';
 import { ErrorState } from './ErrorState';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
-export function RegistrationBonusBanner() {
+export interface RegistrationBonusBannerProps {
+  /** When provided (e.g. inside a modal), the X button calls this instead of dismiss logic */
+  onClose?: () => void;
+  /** When true (e.g. in modal), the Details section is expanded by default so progress and steps are visible */
+  defaultExpanded?: boolean;
+}
+
+export function RegistrationBonusBanner({
+  onClose,
+  defaultExpanded = false,
+}: RegistrationBonusBannerProps = {}) {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasShownConfetti, setHasShownConfetti] = useState(false);
   const confettiIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const confettiFiredRef = React.useRef(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   // Check localStorage on mount
   useEffect(() => {
@@ -343,9 +353,9 @@ export function RegistrationBonusBanner() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleDismiss}
+                      onClick={onClose ?? handleDismiss}
                       className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0 rounded-full"
-                      aria-label="Dismiss banner"
+                      aria-label={onClose ? 'Close' : 'Dismiss banner'}
                     >
                       <X className="h-4 w-4" />
                     </Button>

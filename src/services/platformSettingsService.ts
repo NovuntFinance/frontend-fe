@@ -32,22 +32,27 @@ async function fetchPlatformDayStartFromAPI(): Promise<string> {
 
     return response.data.value;
   } catch (error: any) {
-    // Handle 401 errors gracefully - this is a public endpoint that might fail
-    // if backend requires auth or if user is not authenticated
+    // Handle 401/403 gracefully - public endpoint may require auth on some backends
+    // or return FORBIDDEN when user lacks permission; use default and don't throw
     const status = error?.response?.status || error?.statusCode;
 
-    if (status === 401) {
-      console.warn(
-        '[platformSettingsService] 401 Unauthorized - Using default platform day start. This is normal if user is not authenticated.'
-      );
-      // Return default value instead of throwing
+    if (status === 401 || status === 403) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          '[platformSettingsService]',
+          status === 403 ? '403 Forbidden' : '401 Unauthorized',
+          '- Using default platform day start (00:00:00).'
+        );
+      }
       return '00:00:00';
     }
 
-    console.error(
-      '[platformSettingsService] Failed to fetch platform day start:',
-      error
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[platformSettingsService] Failed to fetch platform day start:',
+        error?.message ?? error
+      );
+    }
     throw error;
   }
 }
@@ -80,14 +85,10 @@ export async function getPlatformDayStart(force = false): Promise<string> {
 
     return dayStart;
   } catch (error: any) {
-    // Handle 401 errors gracefully - don't set error state for auth issues
     const status = error?.response?.status || error?.statusCode;
 
-    if (status === 401) {
-      // 401 is handled in fetchPlatformDayStartFromAPI, but just in case
-      console.warn(
-        '[platformSettingsService] 401 Unauthorized - Using default value'
-      );
+    // 401/403: use default without setting error state (expected for public endpoint when backend restricts access)
+    if (status === 401 || status === 403) {
       const defaultValue = '00:00:00';
       store.setPlatformDayStart(defaultValue);
       return defaultValue;
@@ -97,16 +98,10 @@ export async function getPlatformDayStart(force = false): Promise<string> {
       error instanceof Error ? error.message : 'Unknown error';
     store.setError(errorMessage);
 
-    // Return cached value if available, otherwise default
     if (store.platformDayStart) {
-      console.warn(
-        '[platformSettingsService] Using cached value after fetch error'
-      );
       return store.platformDayStart;
     }
 
-    // Fallback to default
-    console.warn('[platformSettingsService] Using default value: 00:00:00');
     return '00:00:00';
   } finally {
     store.setLoading(false);
@@ -120,21 +115,12 @@ export async function getPlatformDayStart(force = false): Promise<string> {
  * @returns Promise resolving to platform day start time
  */
 export async function initializePlatformSettings(): Promise<string> {
-  console.log('[platformSettingsService] Initializing platform settings...');
-
   try {
     const dayStart = await getPlatformDayStart(true); // Force refresh on init
-    console.log(
-      '[platformSettingsService] Platform day start initialized:',
-      dayStart
-    );
     return dayStart;
-  } catch (error) {
-    console.error(
-      '[platformSettingsService] Failed to initialize platform settings:',
-      error
-    );
-    return '00:00:00'; // Fallback default
+  } catch {
+    // getPlatformDayStart already falls back to 00:00:00 for 401/403; any other error use default
+    return '00:00:00';
   }
 }
 

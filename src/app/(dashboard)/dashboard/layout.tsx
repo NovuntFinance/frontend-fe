@@ -55,6 +55,9 @@ import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
 import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
+import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
+import { HorizontalNav } from '@/components/navigation/HorizontalNav';
+import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import {
   IoSunnyOutline,
@@ -543,6 +546,10 @@ export default function DashboardLayout({
         <TransferModal
           isOpen={isModalOpen('transfer')}
           onClose={() => closeModal('transfer')}
+        />
+        <RegistrationBonusModal
+          isOpen={isModalOpen('registration-bonus')}
+          onClose={() => closeModal('registration-bonus')}
         />
 
         {/* Customer Support Assistant Modal */}
