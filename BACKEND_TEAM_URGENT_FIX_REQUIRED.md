@@ -127,7 +127,7 @@ function validate2FACode(secret: string, code: string): boolean {
 
 ```bash
 # Test 1: Endpoint exists
-curl "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
+curl "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
   -H "Authorization: Bearer <token>"
 # Expected: 200 OK
 # Actual: 404 Not Found ❌

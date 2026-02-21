@@ -179,7 +179,7 @@ Backend team can test both scenarios:
 **Test 1: With Backup Codes**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/verify \
+curl -X POST https://api.novunt.com/api/v1/better-auth/mfa/verify \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

@@ -302,7 +302,7 @@ if (Number(amount) > 100000) {
 
 ```bash
 # Replace YOUR_TOKEN with actual access token
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/setup \
+curl -X POST https://api.novunt.com/api/v1/better-auth/mfa/setup \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}'
@@ -328,7 +328,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/set
 
 ```bash
 # Get current TOTP code from authenticator app after scanning QR
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/verify \
+curl -X POST https://api.novunt.com/api/v1/better-auth/mfa/verify \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -340,7 +340,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/ver
 ### 3. Test High-Value Stake with 2FA
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/staking/create \
+curl -X POST https://api.novunt.com/api/v1/staking/create \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

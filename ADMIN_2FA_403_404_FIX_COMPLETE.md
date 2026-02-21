@@ -12,7 +12,7 @@
 **Error:**
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/profile 403 (Forbidden)
+GET https://api.novunt.com/api/v1/admin/profile 403 (Forbidden)
 [AdminAuthService] Failed to refresh admin data
 ```
 
@@ -35,7 +35,7 @@ GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/profile 403 (Forbidden
 **Error:**
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/metrics?timeframe=30d&twoFACode=574846 404 (Not Found)
+GET https://api.novunt.com/api/v1/admin/metrics?timeframe=30d&twoFACode=574846 404 (Not Found)
 ROUTE_NOT_FOUND: The route /api/v1/admin/metrics... does not exist
 ```
 

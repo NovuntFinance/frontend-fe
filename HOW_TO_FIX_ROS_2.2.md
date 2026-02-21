@@ -8,19 +8,19 @@ You're seeing this because the **backend** your frontend is calling still only a
 
 In the browser console you should see something like:
 
-- `🔧 NEXT_PUBLIC_API_URL: https://novunt-backend-uw3z.onrender.com/api/v1`
+- `🔧 NEXT_PUBLIC_API_URL: https://api.novunt.com/api/v1`
 
-That URL is the backend that **must** be updated. Right now it's the Render backend.
+That URL is the backend that **must** be updated (e.g. on AWS).
 
 ---
 
-## 2. Option A — Fix the Render backend (recommended if you deploy there)
+## 2. Option A — Fix the backend (recommended if you deploy to AWS / production)
 
 1. Open the **backend** repo (not this frontend).
 2. Apply the changes described in **`BACKEND_PROMPT_ROS_0_100_VALIDATION.md`** in this repo:
    - Allow `rosPercentage` in the range **0–100** (inclusive).
    - Return the error message **"ROS percentage must be between 0 and 100"** (not "2.2") when out of range.
-3. Deploy the updated backend to Render (push to the branch Render uses, or trigger a new deploy).
+3. Deploy the updated backend (push to the branch your deploy uses, or trigger a new deploy in your hosting dashboard).
 4. After deploy, try declaring again from the admin UI (e.g. ROS 50%). It should succeed.
 
 ---
@@ -33,7 +33,7 @@ That URL is the backend that **must** be updated. Right now it's the Render back
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
    ```
-   Remove or comment out the Render URL so the app uses localhost.
+   Ensure no other API URL overrides this so the app uses localhost.
 4. Restart the frontend dev server (`npm run dev`).
 5. Try declaring again from the admin UI.
 

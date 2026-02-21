@@ -57,7 +57,7 @@ Backend error response: {
 3. Try logging in again
 4. Find the request to `/admin/login`
 5. Check:
-   - **Request URL**: Should be `https://novunt-backend-uw3z.onrender.com/api/v1/admin/login`
+   - **Request URL**: Should be `https://api.novunt.com/api/v1/admin/login`
    - **Request Payload**: Should show `{"identifier": "...", "password": "..."}`
    - **Response**: Click on the request and check the **Response** tab to see what the backend returned
 
@@ -75,7 +75,7 @@ The endpoint should be:
 The backend URL from your logs is:
 
 ```
-https://novunt-backend-uw3z.onrender.com/api/v1
+https://api.novunt.com/api/v1
 ```
 
 Verify:

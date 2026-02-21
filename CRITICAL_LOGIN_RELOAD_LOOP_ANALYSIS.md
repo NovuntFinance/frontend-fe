@@ -12,7 +12,7 @@
 Users attempting to login at **novunt.com** experience an infinite redirect loop:
 
 1. ✅ Login page loads
-2. ✅ User enters credentials  
+2. ✅ User enters credentials
 3. ❌ Component unmounts/remounts rapidly
 4. ❌ Page reloads continuously in fast succession
 5. ❌ Login never completes
@@ -26,6 +26,7 @@ Users attempting to login at **novunt.com** experience an infinite redirect loop
 **Location**: [`src/lib/api.ts`](src/lib/api.ts#L310-L450)
 
 **The Problem**:
+
 ```typescript
 // Line 310-450 in src/lib/api.ts
 apiClient.interceptors.response.use(
@@ -34,7 +35,7 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized
     if (error.response?.status === 401 && !originalRequest._retry) {
       // ... token refresh attempt ...
-      
+
       try {
         // Attempt token refresh
         // ...
@@ -44,10 +45,10 @@ apiClient.interceptors.response.use(
         if (typeof window !== 'undefined') {
           const { useAuthStore } = await import('@/store/authStore');
           const store = useAuthStore.getState();
-          store.clearAuth();  // <-- LINE 441: Clears authentication
-          
+          store.clearAuth(); // <-- LINE 441: Clears authentication
+
           // Hard redirect to login
-          window.location.href = `/login?error=session_expired`;  // <-- Creates loop
+          window.location.href = `/login?error=session_expired`; // <-- Creates loop
         }
       }
     }
@@ -58,7 +59,7 @@ apiClient.interceptors.response.use(
 **Why This Causes The Loop**:
 
 1. **User logs in successfully** → auth token stored
-2. **Login page redirects** to `/dashboard`  
+2. **Login page redirects** to `/dashboard`
 3. **Dashboard loads** → fires multiple API queries:
    - `useWalletBalance()`
    - `useDashboardOverview()`
@@ -67,7 +68,7 @@ apiClient.interceptors.response.use(
 4. **ONE of these queries returns 401** (reasons below)
 5. **API interceptor catches 401** → attempts token refresh
 6. **Token refresh fails** (if endpoint doesn't exist or CORS blocks it)
-7. **Interceptor calls `clearAuth()`** → wipes all authentication  
+7. **Interceptor calls `clearAuth()`** → wipes all authentication
 8. **`window.location.href = '/login'`** → hard redirect back to login
 9. **Login page loads again** → but now user might auto-submit or page state triggers actions
 10. **LOOP REPEATS**
@@ -78,38 +79,40 @@ apiClient.interceptors.response.use(
 
 ### 1. **Multiple Redirect Mechanisms in Login Page**
 
-**Location**: [`src/app/(auth)/login/page.tsx`](src/app/(auth)/login/page.tsx#L145-L255)
+**Location**: [`src/app/(auth)/login/page.tsx`](<src/app/(auth)/login/page.tsx#L145-L255>)
 
 #### Issue 1A: useEffect with isAuthenticated Check
+
 ```typescript
 // Lines 145-169
 useEffect(() => {
   if (isAuthenticated && !hasRedirected) {
     const redirectTo = searchParams?.get('redirect') || '/dashboard';
     setHasRedirected(true);
-    
+
     const redirectTimer = setTimeout(() => {
-      router.replace(redirectTo);  // <-- First redirect attempt
+      router.replace(redirectTo); // <-- First redirect attempt
     }, 100);
-    
+
     return () => clearTimeout(redirectTimer);
   }
 }, [isAuthenticated, hasRedirected, router, searchParams]);
 ```
 
 #### Issue 1B: Recursive Polling Function
+
 ```typescript
 // Lines 237-255
 const checkAuthAndRedirect = () => {
   const authState = useAuthStore.getState();
   if (authState.isAuthenticated && authState.token) {
-    router.replace(redirectTo);  // <-- Second redirect attempt
+    router.replace(redirectTo); // <-- Second redirect attempt
   } else {
-    setTimeout(checkAuthAndRedirect, 100);  // <-- Polls every 100ms
+    setTimeout(checkAuthAndRedirect, 100); // <-- Polls every 100ms
   }
 };
 
-setTimeout(checkAuthAndRedirect, 200);  // Starts after 200ms
+setTimeout(checkAuthAndRedirect, 200); // Starts after 200ms
 ```
 
 **Problem**: Two separate redirect mechanisms can conflict, creating race conditions.
@@ -128,13 +131,13 @@ if (isAuthRoute && token && !isTokenExpired(token)) {
   if (allowAccess) {
     return NextResponse.next();
   }
-  
+
   const redirectTo = request.nextUrl.searchParams.get('redirect');
   if (redirectTo && redirectTo.startsWith('/')) {
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
   // Default redirect to dashboard
-  return NextResponse.redirect(new URL('/dashboard', request.url));  // <-- Middleware redirect
+  return NextResponse.redirect(new URL('/dashboard', request.url)); // <-- Middleware redirect
 }
 ```
 
@@ -144,15 +147,15 @@ if (isAuthRoute && token && !isTokenExpired(token)) {
 
 ### 3. **Dashboard API Queries Fire Immediately**
 
-**Location**: [`src/app/(dashboard)/dashboard/page.tsx`](src/app/(dashboard)/dashboard/page.tsx#L20-L30)
+**Location**: [`src/app/(dashboard)/dashboard/page.tsx`](<src/app/(dashboard)/dashboard/page.tsx#L20-L30>)
 
 ```typescript
 // Lines 20-30
 import {
-  useWalletBalance,     // <-- API call on mount
-  useActiveStakes,      // <-- API call on mount
+  useWalletBalance, // <-- API call on mount
+  useActiveStakes, // <-- API call on mount
   useDashboardOverview, // <-- API call on mount
-  useStakingStreak,     // <-- API call on mount
+  useStakingStreak, // <-- API call on mount
 } from '@/lib/queries';
 
 // Component renders → All queries fire immediately
@@ -261,25 +264,30 @@ export default function DashboardPage() {
 Possible backend/frontend misalignment issues:
 
 ### A. **Token Format Mismatch**
+
 - Frontend sends: `Bearer {token}`
 - Backend expects: Different format or cookie-based auth
 
 ### B. **CORS Configuration**
+
 - Backend not allowing credentials
 - Missing `Access-Control-Allow-Credentials: true`
 - Cookie not being sent with requests
 
 ### C. **Backend Token Validation**
+
 - Backend rejecting valid tokens
 - Token signature verification failing
 - Token expiry check too strict
 
 ### D. **Endpoint Availability**
+
 - Some dashboard endpoints missing
-- Backend not deployed or sleeping (Render free tier)
+- Backend not deployed or unreachable
 - Route mismatch (e.g., `/api/v1/wallet/balance` vs `/wallet/balance`)
 
 ### E. **Session/Token Persistence**
+
 - Token stored but not properly retrieved
 - localStorage cleared between login and dashboard
 - Auth state not fully hydrated
@@ -311,6 +319,7 @@ Possible backend/frontend misalignment issues:
    - How fast are they repeating?
 
 **Screenshot These**:
+
 - Network waterfall showing the loop
 - Console errors
 - The 401 response body
@@ -330,20 +339,25 @@ async (error: AxiosError<ApiError>) => {
     headers: error.config?.headers,
     responseData: error.response?.data,
   });
-  
+
   // Handle 401 Unauthorized
   if (error.response?.status === 401 && !originalRequest._retry) {
-    console.error('🚨 [API Interceptor] 401 CAUGHT - About to clear auth and redirect');
+    console.error(
+      '🚨 [API Interceptor] 401 CAUGHT - About to clear auth and redirect'
+    );
     // ... rest of handler
   }
-}
+};
 ```
 
 **Add to `src/app/(auth)/login/page.tsx` (line 195)**:
 
 ```typescript
 const result = await loginMutation.mutateAsync(loginPayload);
-console.log('✅ [Login] SUCCESS - Token received:', result.token?.substring(0, 20) + '...');
+console.log(
+  '✅ [Login] SUCCESS - Token received:',
+  result.token?.substring(0, 20) + '...'
+);
 console.log('✅ [Login] About to redirect to:', redirectTo);
 ```
 
@@ -377,10 +391,22 @@ console.log('✅ [Login] About to redirect to:', redirectTo);
 ```javascript
 // Check all token storage locations
 console.log('=== TOKEN STORAGE CHECK ===');
-console.log('1. localStorage.accessToken:', localStorage.getItem('accessToken')?.substring(0, 30) + '...');
-console.log('2. localStorage.refreshToken:', localStorage.getItem('refreshToken') ? 'EXISTS' : 'MISSING');
-console.log('3. localStorage.authToken:', localStorage.getItem('authToken')?.substring(0, 30) + '...');
-console.log('4. Zustand store:', JSON.parse(localStorage.getItem('novunt-auth-storage')));
+console.log(
+  '1. localStorage.accessToken:',
+  localStorage.getItem('accessToken')?.substring(0, 30) + '...'
+);
+console.log(
+  '2. localStorage.refreshToken:',
+  localStorage.getItem('refreshToken') ? 'EXISTS' : 'MISSING'
+);
+console.log(
+  '3. localStorage.authToken:',
+  localStorage.getItem('authToken')?.substring(0, 30) + '...'
+);
+console.log(
+  '4. Zustand store:',
+  JSON.parse(localStorage.getItem('novunt-auth-storage'))
+);
 console.log('5. Cookies:', document.cookie);
 console.log('=== END CHECK ===');
 ```
@@ -398,7 +424,7 @@ console.log('=== END CHECK ===');
 } catch (refreshError) {
   console.error('[API] Token refresh failed:', refreshError);
   processQueue(refreshError);
-  
+
   // 🔥 TEMPORARY: Comment out auto-clear and redirect
   /*
   tokenManager.clearTokens();
@@ -409,7 +435,7 @@ console.log('=== END CHECK ===');
     window.location.href = `/login?error=session_expired`;
   }
   */
-  
+
   // Instead, just log and return gracefully
   console.error('⚠️ [API] 401 caught but NOT clearing auth (temporary fix)');
   return Promise.reject(refreshError);
@@ -424,12 +450,12 @@ console.log('=== END CHECK ===');
 
 ### Fix 2: Add Delay Before Dashboard Queries
 
-**File**: [`src/app/(dashboard)/dashboard/page.tsx`](src/app/(dashboard)/dashboard/page.tsx)
+**File**: [`src/app/(dashboard)/dashboard/page.tsx`](<src/app/(dashboard)/dashboard/page.tsx>)
 
 ```typescript
 export default function DashboardPage() {
   const [enableQueries, setEnableQueries] = useState(false);
-  
+
   // Wait 2 seconds after mount before enabling queries
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -437,17 +463,17 @@ export default function DashboardPage() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
-  
+
   // Pass enabled flag to queries
   const { data: streakData, isLoading: streakLoading } = useStakingStreak({
     enabled: enableQueries,  // <-- Don't run immediately
   });
-  
+
   // Show loading state while waiting
   if (!enableQueries) {
     return <Loading label="Initializing dashboard..." />;
   }
-  
+
   // ... rest of component
 }
 ```
@@ -456,7 +482,7 @@ export default function DashboardPage() {
 
 ### Fix 3: Remove Duplicate Redirects from Login Page
 
-**File**: [`src/app/(auth)/login/page.tsx`](src/app/(auth)/login/page.tsx#L237-L255)
+**File**: [`src/app/(auth)/login/page.tsx`](<src/app/(auth)/login/page.tsx#L237-L255>)
 
 ```typescript
 // Lines 230-260: Remove the checkAuthAndRedirect polling
@@ -464,7 +490,7 @@ export default function DashboardPage() {
   // Success - wait for auth state to update, then redirect
   console.log('[Login Page] Login successful, waiting for auth state update...');
   const redirectTo = searchParams?.get('redirect') || '/dashboard';
-  
+
   // ❌ DELETE THIS: Remove recursive polling
   /*
   const checkAuthAndRedirect = () => {
@@ -477,7 +503,7 @@ export default function DashboardPage() {
   };
   setTimeout(checkAuthAndRedirect, 200);
   */
-  
+
   // ✅ USE THIS: Single redirect with buffer
   setTimeout(() => {
     router.replace(redirectTo);
@@ -503,17 +529,19 @@ const MAX_RETRIES = 2;
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiError>) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       const requestKey = `${originalRequest.method}:${originalRequest.url}`;
       const attempts = retryAttempts.get(requestKey) || 0;
-      
+
       // Only clear auth after multiple failures
       if (attempts >= MAX_RETRIES) {
         console.error('[API] Multiple 401s detected, clearing auth');
         retryAttempts.delete(requestKey);
-        
+
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           const { useAuthStore } = await import('@/store/authStore');
@@ -522,12 +550,12 @@ apiClient.interceptors.response.use(
         }
         return Promise.reject(error);
       }
-     retryAttempts.set(requestKey, attempts + 1);
-      
+      retryAttempts.set(requestKey, attempts + 1);
+
       // Attempt refresh...
       // ... existing refresh logic ...
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -539,16 +567,16 @@ apiClient.interceptors.response.use(
 
 **Goal**: Show error UI instead of clearing auth on failed query.
 
-**File**: [`src/app/(dashboard)/dashboard/page.tsx`](src/app/(dashboard)/dashboard/page.tsx)
+**File**: [`src/app/(dashboard)/dashboard/page.tsx`](<src/app/(dashboard)/dashboard/page.tsx>)
 
 ```typescript
 export default function DashboardPage() {
   const { data: overview, error: overviewError } = useDashboardOverview();
   const { data: balance, error: balanceError } = useWalletBalance();
-  
+
   // Check for critical errors
   const hasCriticalError = overviewError && balanceError;
-  
+
   if (hasCriticalError) {
     return (
       <Card className="m-4">
@@ -566,7 +594,7 @@ export default function DashboardPage() {
       </Card>
     );
   }
-  
+
   // ... rest of component
 }
 ```
@@ -585,16 +613,16 @@ class CircuitBreaker {
   private lastFailure: number = 0;
   private readonly threshold = 5;
   private readonly timeout = 60000; // 1 minute
-  
+
   recordFailure() {
     this.failures++;
     this.lastFailure = Date.now();
   }
-  
+
   recordSuccess() {
     this.failures = 0;
   }
-  
+
   isOpen(): boolean {
     if (this.failures >= this.threshold) {
       const timeSinceLastFailure = Date.now() - this.lastFailure;
@@ -621,7 +649,7 @@ export function useDashboardOverview() {
       if (apiCircuitBreaker.isOpen()) {
         throw new Error('Circuit breaker is open');
       }
-      
+
       try {
         const data = await api.get('/dashboard/overview');
         apiCircuitBreaker.recordSuccess();
@@ -651,35 +679,38 @@ export function useDashboardOverview() {
 
 ```javascript
 // Backend should have:
-app.use(cors({
-  origin: process.env.FRONTEND_URL, // https://novunt.com
-  credentials: true, // CRITICAL
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL, // https://novunt.com
+    credentials: true, // CRITICAL
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  })
+);
 ```
 
 ### 3. **Implement Token Refresh Endpoint**
 
 Must exist and be accessible:
+
 - `POST /better-auth/refresh-token`
 - OR `POST /auth/refresh`
 
 ```javascript
 app.post('/better-auth/refresh-token', async (req, res) => {
   const { refreshToken } = req.body;
-  
+
   try {
     // Validate refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    
+
     // Generate new access token
     const newAccessToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-    
+
     res.json({
       success: true,
       data: {
@@ -720,12 +751,14 @@ if (!isValidToken(token)) {
 ### 5. **Verify All Dashboard Endpoints**
 
 Ensure these exist and return proper responses:
+
 - `GET /wallet/balance`
 - `GET /dashboard/overview`
 - `GET /stakes/active`
 - `GET /staking/streak`
 
 Test each with a valid token:
+
 ```bash
 curl -H "Authorization: Bearer {token}" \
      https://novunt-backend.com/api/v1/wallet/balance
@@ -836,19 +869,21 @@ curl -H "Authorization: Bearer {token}" \
 ✅ No 401 errors in console after successful login  
 ✅ Token persists after page refresh  
 ✅ Graceful error handling if backend is down  
-✅ Single redirect from login to dashboard (not multiple)  
+✅ Single redirect from login to dashboard (not multiple)
 
 ---
 
 ## 📞 Next Steps
 
 ### Immediate (Frontend Dev):
+
 1. Add detailed console logging per Step 2 above
 2. Apply Temporary Fix 1 (disable auto-clear in interceptor)
 3. Take screenshots of network activity
 4. Share findings with backend team
 
 ### Immediate (Backend Dev):
+
 1. Check login endpoint logs - is token being generated?
 2. Check dashboard endpoint logs - why 401?
 3. Verify CORS configuration
@@ -856,12 +891,14 @@ curl -H "Authorization: Bearer {token}" \
 5. Share backend logs
 
 ### Short-term:
+
 1. Implement Solution 1 (improved 401 handler)
 2. Implement Solution 2 (graceful error handling)
 3. Add comprehensive error boundaries
 4. Test thoroughly
 
 ### Long-term:
+
 1. Migrate to HTTP-only cookies
 2. Implement token refresh with sliding window
 3. Add health check before login

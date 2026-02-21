@@ -120,7 +120,7 @@
 
 - `NEXT_PUBLIC_API_URL` - Backend API URL
   - Development: `http://localhost:5000/api/v1`
-  - Production: `https://novunt-backend-uw3z.onrender.com/api/v1`
+  - Production: `https://api.novunt.com/api/v1`
 
 **Scripts Available**:
 

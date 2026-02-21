@@ -16,7 +16,7 @@ If that’s you → continue to Step 2.
 
 ## Step 2: Decide where your backend runs
 
-- **A)** Backend is on **Render** (e.g. `https://novunt-backend-uw3z.onrender.com`) → you will update that backend and **redeploy** it.
+- **A)** Backend is on **AWS** (e.g. `https://api.novunt.com`) → you will update that backend and **redeploy** it.
 - **B)** Backend runs **locally** (e.g. `http://localhost:5000`) → you will update the backend code and **restart** it.
 
 Pick A or B and follow the matching steps below.
@@ -38,19 +38,19 @@ Copy the **"Prompt to give to the backend"** section below (or from `PROMPT_FOR_
 
 ### 3c. After the backend is updated
 
-- **If you chose A (Render):** Deploy the updated backend to Render (push to the branch Render uses, or trigger a new deploy in the Render dashboard).
+- **If you chose A (AWS):** Deploy the updated backend to AWS (push to the branch your deploy uses, or trigger a new deploy in your hosting dashboard).
 - **If you chose B (local):** Restart your local backend server (e.g. `npm run dev` or whatever you use).
 
 ---
 
 ## Step 4: Point the frontend at the updated backend (only if needed)
 
-- **If you use Render:** Do nothing. Your frontend already uses `NEXT_PUBLIC_API_URL` pointing to Render; once Render has the new backend, it will work.
+- **If you use AWS (api.novunt.com):** Do nothing. Your frontend already uses `NEXT_PUBLIC_API_URL` pointing to the backend; once the backend is redeployed, it will work.
 - **If you use a local backend:** In the **frontend** repo, in `.env.local`, set **only**:
   ```env
   NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
   ```
-  (Remove or comment out the Render URL if it’s there.) Then restart the frontend (`npm run dev`).
+  Then restart the frontend (`npm run dev`).
 
 ---
 
@@ -69,7 +69,7 @@ If you still see "0 and 2.2", the request is still hitting the old backend (wron
 | Step | What to do                                                                                                              |
 | ---- | ----------------------------------------------------------------------------------------------------------------------- |
 | 1    | Confirm you see the "0 and 2.2" error.                                                                                  |
-| 2    | Decide: backend on Render (A) or local (B).                                                                             |
+| 2    | Decide: backend on AWS (A) or local (B).                                                                                |
 | 3    | Update backend using the prompt below; then deploy (A) or restart (B).                                                  |
 | 4    | If local backend: set `NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1` in frontend `.env.local` and restart frontend. |
 | 5    | Test declare/update with e.g. ROS 50%.                                                                                  |

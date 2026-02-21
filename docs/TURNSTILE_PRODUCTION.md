@@ -8,11 +8,11 @@ If the login or signup page shows **"Verification failed. Please complete the se
 
 1. **Add the variable in your production environment**
    - **Vercel:** Project → Settings → Environment Variables → add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = `0x4AAAAAACYFUiUbw2p7Qoh4` (or your key) for Production (and Preview if needed).
-   - **Render / Netlify / other:** Add the same variable in the project’s environment / build settings.
+   - **Vercel / AWS / other:** Add the same variable in the project’s environment / build settings.
 
 2. **Redeploy**
-   - Trigger a new build (e.g. push a commit or use “Redeploy” in the dashboard).  
-   - A build that ran *before* the variable was set will never show the widget.
+   - Trigger a new build (e.g. push a commit or use “Redeploy” in the dashboard).
+   - A build that ran _before_ the variable was set will never show the widget.
 
 3. **Allow your domain in Cloudflare**
    - In [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile), open the widget that uses this site key.

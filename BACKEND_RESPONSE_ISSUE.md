@@ -85,7 +85,7 @@ Look at backend server logs to see:
 Test the endpoint with curl or Postman:
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/login \
+curl -X POST https://api.novunt.com/api/v1/admin/login \
   -H "Content-Type: application/json" \
   -d '{
     "identifier": "superadmin@novunt.com",

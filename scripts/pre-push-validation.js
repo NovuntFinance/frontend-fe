@@ -109,7 +109,7 @@ function runCurlTests() {
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     (process.env.NODE_ENV === 'production'
-      ? 'https://novunt-backend-uw3z.onrender.com/api/v1'
+      ? 'https://api.novunt.com/api/v1'
       : 'http://localhost:5000/api/v1');
 
   log.info(`Testing API endpoints at: ${apiUrl}`);

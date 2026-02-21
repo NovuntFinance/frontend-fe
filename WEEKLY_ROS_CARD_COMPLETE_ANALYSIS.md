@@ -39,7 +39,7 @@ GET /api/analytics/weekly-summary
 **Base URL:**
 
 - Development: `http://localhost:5000/api/analytics/weekly-summary`
-- Production: `https://novunt-backend-uw3z.onrender.com/api/analytics/weekly-summary`
+- Production: `https://api.novunt.com/api/analytics/weekly-summary`
 
 **Authentication:**
 

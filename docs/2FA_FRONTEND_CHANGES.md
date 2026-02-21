@@ -187,13 +187,13 @@ See [`docs/2FA_INTEGRATION_GUIDE.md`](./2FA_INTEGRATION_GUIDE.md) for:
 
 ```bash
 # 1. Setup 2FA (get QR code)
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/setup \
+curl -X POST https://api.novunt.com/api/v1/better-auth/mfa/setup \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}'
 
 # 2. Verify and enable (after scanning QR)
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/better-auth/mfa/verify \
+curl -X POST https://api.novunt.com/api/v1/better-auth/mfa/verify \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

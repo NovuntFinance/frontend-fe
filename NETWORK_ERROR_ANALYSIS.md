@@ -37,7 +37,7 @@ Then... **nothing**. No success, no error logs shown.
 
 **Check:**
 
-- Is the backend deployed to `https://novunt-backend-uw3z.onrender.com`?
+- Is the backend deployed to `https://api.novunt.com`?
 - Is the endpoint actually live?
 
 ### 2. **CORS Issue**
@@ -109,7 +109,7 @@ Ask backend team:
 Try the exact same request with cURL:
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <YOUR_ADMIN_TOKEN>" \
   -H "X-2FA-Code: 519736" \
   -H "Content-Type: application/json" \
@@ -165,7 +165,7 @@ If you see the error log, check what comes after it for the actual error details
 Open browser console and run:
 
 ```javascript
-fetch('https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar', {
+fetch('https://api.novunt.com/api/v1/admin/ros-calendar', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

@@ -366,7 +366,7 @@ module.exports = router;
 
 ```bash
 curl -X GET \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings' \
+  'https://api.novunt.com/api/v1/admin/settings' \
   -H 'Authorization: Bearer <admin-token>'
 ```
 
@@ -390,7 +390,7 @@ curl -X GET \
 
 ```bash
 curl -X GET \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings' \
+  'https://api.novunt.com/api/v1/admin/settings' \
   -H 'Authorization: Bearer invalid-token'
 ```
 
@@ -410,7 +410,7 @@ curl -X GET \
 
 ```bash
 curl -X PUT \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings/referral_bonus' \
+  'https://api.novunt.com/api/v1/admin/settings/referral_bonus' \
   -H 'Authorization: Bearer <admin-token>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -438,7 +438,7 @@ curl -X PUT \
 
 ```bash
 curl -X PUT \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings/referral_bonus' \
+  'https://api.novunt.com/api/v1/admin/settings/referral_bonus' \
   -H 'Authorization: Bearer <admin-token>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -468,7 +468,7 @@ curl -X PUT \
 
 ```bash
 curl -X PUT \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings/referral_bonus' \
+  'https://api.novunt.com/api/v1/admin/settings/referral_bonus' \
   -H 'Authorization: Bearer <admin-token>' \
   -H 'Content-Type: application/json' \
   -d '{

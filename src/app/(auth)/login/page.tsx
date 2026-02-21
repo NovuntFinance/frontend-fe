@@ -568,7 +568,8 @@ function LoginPageContent() {
           <div>
             <strong>Backend connection issue:</strong> {backendStatus.message}
             <span className="mt-1 block text-sm opacity-90">
-              If using Render free tier, wait 30-60 seconds and try again.
+              Wait a moment and try again, or check that the backend is
+              reachable.
             </span>
           </div>
         </div>

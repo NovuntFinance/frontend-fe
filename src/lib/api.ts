@@ -16,7 +16,7 @@ import { useAuthStore } from '@/store/authStore';
  * Get API base URL from environment
  *
  * Development: http://localhost:5000/api/v1
- * Production: https://novunt-backend-uw3z.onrender.com/api/v1
+ * Production: https://api.novunt.com/api/v1 (AWS)
  *
  * CRITICAL: Always use NEXT_PUBLIC_API_URL environment variable
  * DO NOT hardcode URLs - this causes CORS failures
@@ -838,35 +838,13 @@ apiClient.interceptors.response.use(
 
         // Try to diagnose the issue
         let diagnosticMessage = `Unable to connect to the server at ${requestURL}.`;
-
-        // Check if backend might be down
-        if (API_BASE_URL.includes('onrender.com')) {
-          diagnosticMessage += '\n\nPossible causes:\n';
-          diagnosticMessage +=
-            '1. Backend server might be sleeping (Render free tier - wait 30-60 seconds)\n';
-          diagnosticMessage +=
-            '2. Backend server might be down or restarting\n';
-          diagnosticMessage += '3. CORS not configured on backend\n';
-          diagnosticMessage += '4. Network connectivity issue\n\n';
-          diagnosticMessage += 'Try:\n';
-          diagnosticMessage +=
-            '- Visit https://novunt-backend-uw3z.onrender.com in your browser to wake up the server\n';
-          diagnosticMessage += '- Wait 30-60 seconds if backend was sleeping\n';
-          diagnosticMessage +=
-            '- Check browser DevTools Network tab for CORS errors\n';
-          diagnosticMessage +=
-            '- Verify NEXT_PUBLIC_API_URL in .env.local is set correctly\n';
-          diagnosticMessage +=
-            '- Check if backend CORS allows requests from your frontend origin';
-        } else {
-          diagnosticMessage += '\n\nPlease check:\n';
-          diagnosticMessage +=
-            '1. Backend server is running at ' + API_BASE_URL + '\n';
-          diagnosticMessage += '2. CORS is configured correctly on backend\n';
-          diagnosticMessage += '3. Network connectivity\n';
-          diagnosticMessage +=
-            '4. NEXT_PUBLIC_API_URL environment variable is set correctly';
-        }
+        diagnosticMessage += '\n\nPlease check:\n';
+        diagnosticMessage +=
+          '1. Backend server is running at ' + API_BASE_URL + '\n';
+        diagnosticMessage += '2. CORS is configured correctly on backend\n';
+        diagnosticMessage += '3. Network connectivity\n';
+        diagnosticMessage +=
+          '4. NEXT_PUBLIC_API_URL environment variable is set correctly';
 
         const corsError: ApiError = {
           success: false,

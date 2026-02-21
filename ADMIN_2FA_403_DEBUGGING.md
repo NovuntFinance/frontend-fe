@@ -5,7 +5,7 @@
 **Error:**
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/metrics?timeframe=30d&twoFACode=968410 403 (Forbidden)
+GET https://api.novunt.com/api/v1/admin/metrics?timeframe=30d&twoFACode=968410 403 (Forbidden)
 ```
 
 ---

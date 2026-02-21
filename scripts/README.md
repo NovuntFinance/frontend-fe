@@ -86,7 +86,7 @@ scripts\test-api-endpoints.bat
 The scripts use `NEXT_PUBLIC_API_URL` from `.env.local` for API testing. If not set, defaults are:
 
 - Development: `http://localhost:5000/api/v1`
-- Production: `https://novunt-backend-uw3z.onrender.com/api/v1`
+- Production: `https://api.novunt.com/api/v1`
 
 ## Integration with Git Hooks
 

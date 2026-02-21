@@ -385,7 +385,7 @@ POST /api/admin/ros-calendar
 **Request:**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <adminToken>" \
   -H "X-2FA-Code: 123456" \
   -H "Content-Type: application/json" \
@@ -403,7 +403,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar 
 **Request:**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <adminToken>" \
   -H "X-2FA-Code: 123456" \
   -H "Content-Type: application/json" \
@@ -429,7 +429,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar 
 **Request:**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <adminToken>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -445,7 +445,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar 
 **Request:**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <adminToken>" \
   -H "X-2FA-Code: 000000" \
   -H "Content-Type: application/json" \
@@ -462,7 +462,7 @@ curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar 
 **Request:**
 
 ```bash
-curl -X POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar \
+curl -X POST https://api.novunt.com/api/v1/admin/ros-calendar \
   -H "Authorization: Bearer <adminToken>" \
   -H "X-2FA-Code: 123456" \
   -H "Content-Type: application/json" \

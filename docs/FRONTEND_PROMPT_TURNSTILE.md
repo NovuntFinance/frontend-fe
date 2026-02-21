@@ -20,13 +20,13 @@ If the frontend does not send a valid token, the backend returns **400** and doe
 
 ## 1. Endpoints That Require Turnstile (Backend Contract)
 
-| # | Method | Full URL | When token required |
-|---|--------|----------|----------------------|
-| 1 | POST | `{API_BASE}/better-auth/register` | Always (when backend has `TURNSTILE_SECRET_KEY` set) |
-| 2 | POST | `{API_BASE}/better-auth/login` | Always |
-| 3 | POST | `{API_BASE}/enhanced-transactions/withdrawal/create` | Always |
+| #   | Method | Full URL                                             | When token required                                  |
+| --- | ------ | ---------------------------------------------------- | ---------------------------------------------------- |
+| 1   | POST   | `{API_BASE}/better-auth/register`                    | Always (when backend has `TURNSTILE_SECRET_KEY` set) |
+| 2   | POST   | `{API_BASE}/better-auth/login`                       | Always                                               |
+| 3   | POST   | `{API_BASE}/enhanced-transactions/withdrawal/create` | Always                                               |
 
-- **API_BASE** = your backend base URL, e.g. `https://novunt-backend-uw3z.onrender.com/api/v1` or `http://localhost:5000/api/v1`.
+- **API_BASE** = your backend base URL, e.g. `https://api.novunt.com/api/v1` or `http://localhost:5000/api/v1`.
 - If `TURNSTILE_SECRET_KEY` is **not** set on the backend (e.g. dev/staging), the backend **skips** Turnstile and accepts requests without a token. The frontend should still implement the widget and send the token so behaviour is consistent when Turnstile is enabled in production.
 
 ---
@@ -157,7 +157,10 @@ Add the script once (e.g. in `index.html` or the root layout):
 Load the script with `?render=explicit`:
 
 ```html
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+  defer
+></script>
 ```
 
 In your component (React example):
@@ -172,7 +175,9 @@ function TurnstileWidget({ onSuccess, onExpire }) {
   useEffect(() => {
     if (!window.turnstile || !containerRef.current) return;
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAACYFUiUbw2p7Qoh4',
+      sitekey:
+        process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+        '0x4AAAAAACYFUiUbw2p7Qoh4',
       theme: 'light',
       size: 'normal',
       callback: (token) => onSuccess?.(token),
@@ -209,7 +214,9 @@ Before submitting login, register, or withdrawal:
 **Example (login with axios):**
 
 ```js
-const token = window.turnstile?.getResponse(widgetId) ?? document.querySelector('input[name="cf-turnstile-response"]')?.value;
+const token =
+  window.turnstile?.getResponse(widgetId) ??
+  document.querySelector('input[name="cf-turnstile-response"]')?.value;
 
 const response = await axios.post(`${API_BASE}/better-auth/login`, {
   email: formData.email,
@@ -221,16 +228,22 @@ const response = await axios.post(`${API_BASE}/better-auth/login`, {
 **Example (withdrawal with fetch):**
 
 ```js
-const response = await fetch(`${API_BASE}/enhanced-transactions/withdrawal/create`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-  body: JSON.stringify({
-    amount: formData.amount,
-    walletAddress: formData.walletAddress,
-    network: formData.network,
-    turnstileToken: turnstileToken,
-  }),
-});
+const response = await fetch(
+  `${API_BASE}/enhanced-transactions/withdrawal/create`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      amount: formData.amount,
+      walletAddress: formData.walletAddress,
+      network: formData.network,
+      turnstileToken: turnstileToken,
+    }),
+  }
+);
 ```
 
 ### Step 4: Handle 400 TURNSTILE_FAILED
@@ -268,14 +281,14 @@ On any 400 response:
 
 ## 7. Quick Reference Table
 
-| Item | Value |
-|------|-------|
-| **Site key** | `0x4AAAAAACYFUiUbw2p7Qoh4` |
-| **Token field (body)** | `turnstileToken` or `cf-turnstile-response` |
-| **Failure code** | `TURNSTILE_FAILED` |
-| **Failure status** | 400 |
-| **Token validity** | ~5 min, single-use |
-| **Script URL** | `https://challenges.cloudflare.com/turnstile/v0/api.js` |
+| Item                   | Value                                                   |
+| ---------------------- | ------------------------------------------------------- |
+| **Site key**           | `0x4AAAAAACYFUiUbw2p7Qoh4`                              |
+| **Token field (body)** | `turnstileToken` or `cf-turnstile-response`             |
+| **Failure code**       | `TURNSTILE_FAILED`                                      |
+| **Failure status**     | 400                                                     |
+| **Token validity**     | ~5 min, single-use                                      |
+| **Script URL**         | `https://challenges.cloudflare.com/turnstile/v0/api.js` |
 
 ---
 

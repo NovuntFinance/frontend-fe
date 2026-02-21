@@ -184,7 +184,7 @@ router.patch('/admin/withdrawal/:id', validateAdmin2FA, approveWithdrawal);
 
 ```bash
 curl -X GET \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/metrics?timeframe=30d&twoFACode=123456' \
+  'https://api.novunt.com/api/v1/admin/metrics?timeframe=30d&twoFACode=123456' \
   -H 'Authorization: Bearer <admin-token>'
 ```
 
@@ -232,7 +232,7 @@ curl -X GET \
 
 ```bash
 curl -X POST \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/settings' \
+  'https://api.novunt.com/api/v1/admin/settings' \
   -H 'Authorization: Bearer <admin-token>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -250,7 +250,7 @@ curl -X POST \
 
 ```bash
 curl -X GET \
-  'https://novunt-backend-uw3z.onrender.com/api/v1/admin/metrics?timeframe=30d' \
+  'https://api.novunt.com/api/v1/admin/metrics?timeframe=30d' \
   -H 'Authorization: Bearer <admin-token>'
 ```
 

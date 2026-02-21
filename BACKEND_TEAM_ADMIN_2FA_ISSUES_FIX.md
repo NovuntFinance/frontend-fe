@@ -25,7 +25,7 @@ Frontend is calling `/api/v1/admin/ui/dashboard` as specified in your `FRONTEND_
 **Error from Frontend:**
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=574846
+GET https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=574846
 Status: 404 (Not Found)
 Error: ROUTE_NOT_FOUND - The route does not exist
 ```
@@ -117,7 +117,7 @@ If you have a different endpoint for dashboard data, please:
 
 ```bash
 # Test with 2FA code in query params
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
   -H "Authorization: Bearer <adminToken>"
 
 # Expected: 200 OK with dashboard data
@@ -222,11 +222,11 @@ const isValid = validate2FACode(secret, providedCode);
 # Test 2FA code validation
 # 1. Get current code from authenticator app
 # 2. Use it immediately
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=CURRENT_CODE" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=CURRENT_CODE" \
   -H "Authorization: Bearer <adminToken>"
 
 # 3. Use same code again within 30 seconds (should work)
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=SAME_CODE" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=SAME_CODE" \
   -H "Authorization: Bearer <adminToken>"
 
 # Expected: Both requests should succeed
@@ -397,7 +397,7 @@ function requireAdmin2FA(req: Request, res: Response, next: NextFunction) {
 
 ```bash
 # Should return 200 OK with dashboard data
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
   -H "Authorization: Bearer <adminToken>"
 
 # Expected: 200 OK
@@ -411,13 +411,13 @@ curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?
 CURRENT_CODE="123456"  # Replace with actual code
 
 # Step 2: Use code immediately
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=$CURRENT_CODE" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=$CURRENT_CODE" \
   -H "Authorization: Bearer <adminToken>"
 
 # Expected: 200 OK
 
 # Step 3: Use same code again within 30 seconds
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=$CURRENT_CODE" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=$CURRENT_CODE" \
   -H "Authorization: Bearer <adminToken>"
 
 # Expected: 200 OK (same code should work)
@@ -428,7 +428,7 @@ curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?
 
 ```bash
 # Test that backend reads twoFACode from query params
-curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
+curl -X GET "https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=123456" \
   -H "Authorization: Bearer <adminToken>" \
   -v
 
@@ -465,7 +465,7 @@ curl -X GET "https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?
 **Request URL:**
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=574846
+GET https://api.novunt.com/api/v1/admin/ui/dashboard?timeframe=30d&twoFACode=574846
 ```
 
 **Headers:**

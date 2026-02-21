@@ -4,7 +4,7 @@
 
 When trying to create a calendar, you're getting network errors:
 
-- "XHR failed loading: POST https://novunt-backend-uw3z.onrender.com/api/v1/admin/ros-calendar"
+- "XHR failed loading: POST https://api.novunt.com/api/v1/admin/ros-calendar"
 - Multiple retries happening
 - No clear error message displayed
 

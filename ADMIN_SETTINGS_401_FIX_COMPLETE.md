@@ -10,7 +10,7 @@
 The admin settings page was getting **401 Unauthorized** errors when trying to fetch settings:
 
 ```
-GET https://novunt-backend-uw3z.onrender.com/api/v1/settings?includeTooltips=true 401 (Unauthorized)
+GET https://api.novunt.com/api/v1/settings?includeTooltips=true 401 (Unauthorized)
 ```
 
 ---
