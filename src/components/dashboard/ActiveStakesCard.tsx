@@ -8,7 +8,6 @@ import { useUIStore } from '@/store/uiStore';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import type { Stake } from '@/lib/queries/stakingQueries';
 import neuStyles from '@/styles/neumorphic.module.css';
-import neuStyles from '@/styles/neumorphic.module.css';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
