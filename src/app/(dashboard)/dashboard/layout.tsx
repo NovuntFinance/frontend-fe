@@ -150,7 +150,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="min-h-screen lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden"
+        className="dashboard-viewport-cap min-h-screen lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden"
         style={{ background: '#0D162C' }}
       >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}

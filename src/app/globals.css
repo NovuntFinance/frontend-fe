@@ -168,6 +168,14 @@
   }
 }
 
+/* Dashboard: force 100vh cap on large screens so layout is compact (works even if Tailwind lg: classes differ in build) */
+@media (min-width: 1024px) {
+  .dashboard-viewport-cap {
+    max-height: 100vh;
+    overflow: hidden;
+  }
+}
+
 /* Background image helper for landing page */
 .vault-bg {
   background-size: cover;
