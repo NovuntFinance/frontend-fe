@@ -124,27 +124,33 @@
 }
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
   * {
     @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    height: 100%;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
     min-height: 100%;
-    /* PWA optimizations */
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overscroll-behavior: none;
-    /* Prevent pull-to-refresh on mobile */
     overscroll-behavior-y: contain;
-    /* Better touch targets */
     touch-action: manipulation;
-  }
-
-  /* Smooth scrolling for anchor links; full height so 100vh/100% chains work (e.g. dashboard) */
-  html {
-    scroll-behavior: smooth;
-    height: 100%;
   }
 
   /* Better tap highlights for touch devices */
@@ -168,15 +174,16 @@
   }
 }
 
-/* Dashboard: force 100vh cap on large screens so layout is compact (works even if Tailwind lg: classes differ in build) */
+/* Dashboard: viewport cap on large screens so only main scrolls. Use dvh for consistent height across browsers/production. */
 @media (min-width: 1024px) {
   .dashboard-viewport-cap {
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     overflow: hidden;
   }
 
-  /* Lock document height when dashboard is mounted so only main#main-content scrolls */
   html.dashboard-viewport-active,
   html.dashboard-viewport-active body {
     height: 100%;

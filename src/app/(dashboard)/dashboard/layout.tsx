@@ -61,6 +61,7 @@ import {
   IoHeadsetOutline,
 } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
+import { LayoutDebug } from '@/components/debug/LayoutDebug';
 
 /**
  * Dashboard Layout
@@ -157,8 +158,9 @@ export default function DashboardLayout({
 
   return (
     <DashboardGuard>
+      <LayoutDebug />
       <div
-        className="dashboard-viewport-cap min-h-screen lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden"
+        className="dashboard-viewport-cap min-h-[100dvh] min-h-screen lg:flex lg:h-[100dvh] lg:h-screen lg:max-h-[100dvh] lg:max-h-screen lg:flex-col lg:overflow-hidden"
         style={{ background: '#0D162C' }}
       >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
