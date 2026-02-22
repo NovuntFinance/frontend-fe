@@ -21,8 +21,7 @@ export function useOtpCooldown() {
       response?: { data?: { waitSeconds?: number } };
       waitSeconds?: number;
     };
-    const waitSeconds =
-      err?.response?.data?.waitSeconds ?? err?.waitSeconds;
+    const waitSeconds = err?.response?.data?.waitSeconds ?? err?.waitSeconds;
     if (typeof waitSeconds === 'number' && waitSeconds > 0) {
       setCooldownSeconds(waitSeconds);
       return true;

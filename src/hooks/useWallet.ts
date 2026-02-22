@@ -505,13 +505,9 @@ export function useCreateWithdrawal() {
         });
       } else if (code === 'SUPPORT_REQUIRED') {
         toast.error('Too many attempts', {
-          description:
-            'Please contact support or try again later.',
+          description: 'Please contact support or try again later.',
         });
-      } else if (
-        code === 'INVALID_EMAIL_OTP' ||
-        code === 'INVALID_OTP'
-      ) {
+      } else if (code === 'INVALID_EMAIL_OTP' || code === 'INVALID_OTP') {
         toast.error('Invalid verification code', {
           description:
             message || 'Invalid or expired code. Please request a new one.',

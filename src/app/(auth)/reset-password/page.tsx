@@ -23,7 +23,10 @@ import { useResetPassword } from '@/lib/mutations';
 import { NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { NeuField } from '@/components/auth/NeuField';
-import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import styles from '@/styles/auth.module.css';
 
 function ResetPasswordContent() {
@@ -89,7 +92,9 @@ function ResetPasswordContent() {
         router.push('/login?reset=true');
       }, 2000);
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { code?: string; message?: string } } };
+      const err = error as {
+        response?: { data?: { code?: string; message?: string } };
+      };
       const code = err?.response?.data?.code;
       if (code === 'TURNSTILE_FAILED') {
         turnstileRef.current?.reset();
@@ -185,7 +190,9 @@ function ResetPasswordContent() {
                 {...register('otp')}
               />
               {errors.otp && (
-                <p className="mt-1 text-sm text-red-400">{errors.otp.message}</p>
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.otp.message}
+                </p>
               )}
             </div>
             <NeuPasswordField

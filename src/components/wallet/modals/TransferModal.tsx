@@ -161,8 +161,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       return;
     }
 
-    const turnstileToken =
-      turnstileRef.current?.getToken() || undefined;
+    const turnstileToken = turnstileRef.current?.getToken() || undefined;
     if (!turnstileToken) {
       setError('Please complete the security verification');
       return;
@@ -234,8 +233,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       return;
     }
 
-    const turnstileToken =
-      turnstileConfirmRef.current?.getToken() || undefined;
+    const turnstileToken = turnstileConfirmRef.current?.getToken() || undefined;
     if (!turnstileToken) {
       setError('Please complete the security verification');
       return;

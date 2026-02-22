@@ -17,7 +17,10 @@ import {
 import { z } from 'zod';
 import { useRequestPasswordReset } from '@/lib/mutations';
 import { NeuField } from '@/components/auth/NeuField';
-import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import styles from '@/styles/auth.module.css';
 
@@ -77,14 +80,17 @@ function ForgotPasswordContent() {
       setSubmittedEmail(data.email);
       turnstileRef.current?.reset();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { code?: string; waitSeconds?: number } } };
+      const err = error as {
+        response?: { data?: { code?: string; waitSeconds?: number } };
+      };
       if (triggerCooldown(error)) {
         setError('root', {
           message: 'Please wait before requesting a new code',
         });
       } else if (err?.response?.data?.code === 'SUPPORT_REQUIRED') {
         setError('root', {
-          message: 'Too many attempts. Please contact support or try again later.',
+          message:
+            'Too many attempts. Please contact support or try again later.',
         });
       } else {
         const message =
@@ -216,7 +222,9 @@ function ForgotPasswordContent() {
             <button
               type="submit"
               className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || forgotPasswordMutation.isPending || isOnCooldown ? styles.neuBtnDisabled : ''}`}
-              disabled={isSubmitting || forgotPasswordMutation.isPending || isOnCooldown}
+              disabled={
+                isSubmitting || forgotPasswordMutation.isPending || isOnCooldown
+              }
             >
               {(isSubmitting || forgotPasswordMutation.isPending) && (
                 <Loader2 className="h-4 w-4 animate-spin text-white" />

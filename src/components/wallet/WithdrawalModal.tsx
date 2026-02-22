@@ -372,7 +372,12 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
 
     // Submit withdrawal with OTP and 2FA code
     // Backend will use default address automatically (BEP20 only)
-    await handleWithdrawalSubmit(data.amount, twoFactorCode, undefined, emailOtp);
+    await handleWithdrawalSubmit(
+      data.amount,
+      twoFactorCode,
+      undefined,
+      emailOtp
+    );
   };
 
   const handleSendVerificationCode = async () => {
@@ -450,7 +455,9 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         network: 'BEP20', // Only BEP20 is supported
         twoFACode,
         emailOtp: otp!,
-        ...(turnstileToken ? { turnstileToken, 'cf-turnstile-response': turnstileToken } : {}),
+        ...(turnstileToken
+          ? { turnstileToken, 'cf-turnstile-response': turnstileToken }
+          : {}),
       };
 
       // Only include walletAddress if user provided a custom address different from default
@@ -704,14 +711,19 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                           setupTurnstileRef.current?.reset();
                           toast.success('Verification code sent');
                         } catch (err: any) {
-                          const errData = err?.response?.data || err?.responseData;
+                          const errData =
+                            err?.response?.data || err?.responseData;
                           if (setupTriggerCooldown(err)) {
-                            toast.error('Please wait before requesting a new code');
+                            toast.error(
+                              'Please wait before requesting a new code'
+                            );
                           } else if (errData?.code === 'TURNSTILE_FAILED') {
                             setupTurnstileRef.current?.reset();
                             toast.error('Security check failed');
                           } else if (errData?.code === 'SUPPORT_REQUIRED') {
-                            toast.error('Too many attempts. Please contact support');
+                            toast.error(
+                              'Too many attempts. Please contact support'
+                            );
                           } else {
                             toast.error('Could not send code');
                           }
@@ -719,23 +731,23 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                           setSetupRequestingOtp(false);
                         }
                       }}
-                          disabled={
-                            setupRequestingOtp ||
-                            !addressToSet ||
-                            addressToSet.startsWith('T') ||
-                            setupIsOnCooldown
-                          }
+                      disabled={
+                        setupRequestingOtp ||
+                        !addressToSet ||
+                        addressToSet.startsWith('T') ||
+                        setupIsOnCooldown
+                      }
                     >
-                          {setupRequestingOtp ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Sending...
-                            </>
-                          ) : setupIsOnCooldown ? (
-                            `Resend in ${setupCooldownSeconds}s`
-                          ) : (
-                            'Send verification code'
-                          )}
+                      {setupRequestingOtp ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : setupIsOnCooldown ? (
+                        `Resend in ${setupCooldownSeconds}s`
+                      ) : (
+                        'Send verification code'
+                      )}
                     </Button>
                   ) : (
                     <div className="mt-2">
@@ -750,7 +762,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         onChange={(e) =>
                           setSetupEmailOtp(e.target.value.replace(/\D/g, ''))
                         }
-                        className="mt-2 font-mono text-center tracking-widest"
+                        className="mt-2 text-center font-mono tracking-widest"
                       />
                     </div>
                   )}
@@ -774,7 +786,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
 
                         if (!setupOtpSent || setupEmailOtp.length !== 6) {
                           toast.error('Verification code required', {
-                            description: 'Please enter the 6-digit code from your email',
+                            description:
+                              'Please enter the 6-digit code from your email',
                           });
                           return;
                         }
@@ -1270,7 +1283,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                       variant="outline"
                       className="mt-2 w-full"
                       onClick={handleSendVerificationCode}
-                        disabled={
+                      disabled={
                         requestingOtp ||
                         !amount ||
                         amount < minWithdrawal ||
@@ -1307,7 +1320,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         const v = e.target.value.replace(/\D/g, '');
                         setEmailOtp(v);
                       }}
-                      className="mt-2 font-mono text-center tracking-widest"
+                      className="mt-2 text-center font-mono tracking-widest"
                     />
                   </div>
                 )}

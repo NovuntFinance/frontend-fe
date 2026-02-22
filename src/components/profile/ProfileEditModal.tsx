@@ -19,7 +19,11 @@ import {
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useAuth } from '@/hooks/useAuth';
-import { useUpdateProfile, useChangePassword, useRequestChangePasswordOtp } from '@/lib/mutations';
+import {
+  useUpdateProfile,
+  useChangePassword,
+  useRequestChangePasswordOtp,
+} from '@/lib/mutations';
 import { useProfile } from '@/lib/queries';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -56,7 +60,10 @@ import {
 import { Wallet, Copy, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MoratoriumCountdown } from '@/components/wallet/MoratoriumCountdown';
-import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
 import { walletApi } from '@/services/walletApi';
 import { useOtpCooldown } from '@/hooks/useOtpCooldown';
@@ -182,11 +189,14 @@ export function ProfileEditModal({
   const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
   const [withdrawalAddress2FA, setWithdrawalAddress2FA] = useState('');
   const [withdrawalAddressOtp, setWithdrawalAddressOtp] = useState('');
-  const [withdrawalAddressOtpSent, setWithdrawalAddressOtpSent] = useState(false);
+  const [withdrawalAddressOtpSent, setWithdrawalAddressOtpSent] =
+    useState(false);
   const [withdrawalAddressRequestingOtp, setWithdrawalAddressRequestingOtp] =
     useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
-  const withdrawalAddressTurnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const withdrawalAddressTurnstileRef = useRef<TurnstileWidgetHandle | null>(
+    null
+  );
 
   // Profile edit form
   const {
@@ -436,9 +446,14 @@ export function ProfileEditModal({
   };
 
   const onSubmitPassword = async (data: ChangePasswordFormData) => {
-    if (!changePasswordOtpSent || !changePasswordOtp || changePasswordOtp.length !== 6) {
+    if (
+      !changePasswordOtpSent ||
+      !changePasswordOtp ||
+      changePasswordOtp.length !== 6
+    ) {
       toast.error('Verification required', {
-        description: 'Please request and enter the verification code from your email',
+        description:
+          'Please request and enter the verification code from your email',
       });
       return;
     }
@@ -1010,7 +1025,9 @@ export function ProfileEditModal({
 
               {/* Step 1: Send verification code */}
               <div className="space-y-2">
-                <Label className="text-white/90">Step 1: Get verification code</Label>
+                <Label className="text-white/90">
+                  Step 1: Get verification code
+                </Label>
                 <TurnstileWidget
                   widgetRef={changePasswordTurnstileRef}
                   size="compact"
@@ -1039,7 +1056,10 @@ export function ProfileEditModal({
                   </Button>
                 ) : (
                   <div className="space-y-2">
-                    <Label htmlFor="changePasswordOtp" className="text-white/90">
+                    <Label
+                      htmlFor="changePasswordOtp"
+                      className="text-white/90"
+                    >
                       Email verification code
                     </Label>
                     <Input
@@ -1052,7 +1072,7 @@ export function ProfileEditModal({
                       onChange={(e) =>
                         setChangePasswordOtp(e.target.value.replace(/\D/g, ''))
                       }
-                      className="border-white/20 bg-white/10 font-mono text-center tracking-widest text-white placeholder:text-white/50"
+                      className="border-white/20 bg-white/10 text-center font-mono tracking-widest text-white placeholder:text-white/50"
                     />
                   </div>
                 )}
@@ -1255,7 +1275,8 @@ export function ProfileEditModal({
                       withdrawalAddressOtp.length !== 6
                     ) {
                       toast.error('Verification code required', {
-                        description: 'Please request and enter the code from your email.',
+                        description:
+                          'Please request and enter the code from your email.',
                       });
                       return;
                     }
@@ -1412,7 +1433,9 @@ export function ProfileEditModal({
                               toast.success('Verification code sent');
                             } catch (err: unknown) {
                               if (withdrawalAddressTriggerCooldown(err)) {
-                                toast.error('Please wait before requesting a new code');
+                                toast.error(
+                                  'Please wait before requesting a new code'
+                                );
                               } else {
                                 toast.error('Could not send code');
                               }
@@ -1452,7 +1475,7 @@ export function ProfileEditModal({
                                 e.target.value.replace(/\D/g, '')
                               )
                             }
-                            className="mt-2 font-mono text-center tracking-widest"
+                            className="mt-2 text-center font-mono tracking-widest"
                           />
                         </div>
                       )}
