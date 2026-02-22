@@ -109,6 +109,14 @@ export default function DashboardLayout({
       );
     };
   }, []);
+
+  // Lock document to 100vh on large screens so only main scrolls (fixes expansion on live)
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.add('dashboard-viewport-active');
+    return () => html.classList.remove('dashboard-viewport-active');
+  }, []);
+
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useUser();

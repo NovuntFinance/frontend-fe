@@ -174,6 +174,13 @@
     max-height: 100vh;
     overflow: hidden;
   }
+
+  /* Lock document height when dashboard is mounted so only main#main-content scrolls */
+  html.dashboard-viewport-active,
+  html.dashboard-viewport-active body {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 
 /* Background image helper for landing page */
