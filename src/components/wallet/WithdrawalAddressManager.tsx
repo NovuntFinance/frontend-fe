@@ -73,6 +73,7 @@ export function WithdrawalAddressManager() {
       {
         address: newAddress,
         network: 'BEP20',
+        emailOtp: '', // TODO: add email OTP input if backend requires it
         twoFACode: twoFACode || undefined,
       },
       {

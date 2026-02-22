@@ -22,6 +22,7 @@
     "analyze:bundle": "node scripts/analyze-bundle.js",
     "validate": "node scripts/pre-push-validation.js",
     "validate:pre-push": "node scripts/pre-push-validation.js",
+    "prepush": "npm run lint && npm run typecheck && npm run build",
     "security-scan": "node scripts/security-scan.js",
     "security-smoke-test": "node scripts/security-smoke-test.js",
     "security-audit": "npm audit --audit-level=high",

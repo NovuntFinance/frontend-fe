@@ -24,11 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
 import { useDisable2FA } from '@/lib/mutations';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BadgeAvatar } from '@/components/ui/BadgeAvatar';
 import { getUserAvatarUrl, isBadgeIcon } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
@@ -116,6 +112,7 @@ export default function DashboardLayout({
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useUser();
+  const displayName = user?.firstName || user?.fname || 'User';
   const { data: overview } = useDashboardOverview();
   const { data: bonusResponse } = useRegistrationBonusStatus();
 
@@ -154,13 +151,18 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="min-h-screen lg:h-screen lg:flex lg:flex-col"
+        className="min-h-screen lg:flex lg:h-screen lg:flex-col"
         style={{ background: 'var(--app-page-bg)' }}
       >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
         <header
           className="sticky top-0 z-30 shrink-0 py-1"
-          style={{ background: 'var(--app-page-bg)' }}
+          style={{
+            background: 'var(--app-surface)',
+            boxShadow:
+              '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5)',
+            borderBottom: '1px solid var(--app-border)',
+          }}
         >
           <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
             {/* Profile Section - Left side */}
@@ -190,7 +192,7 @@ export default function DashboardLayout({
                         <Avatar className="h-full w-full overflow-hidden rounded-full">
                           <AvatarImage
                             src={getUserAvatarUrl(user) ?? undefined}
-                            alt={`${user?.firstName} ${user?.lastName}`}
+                            alt={`${displayName}`}
                           />
                           <AvatarFallback
                             className="text-sm font-medium"
@@ -199,21 +201,34 @@ export default function DashboardLayout({
                               color: 'var(--app-text-primary)',
                             }}
                           >
-                            {user?.firstName?.[0]}
-                            {user?.lastName?.[0]}
+                            {displayName[0]?.toUpperCase()}
+                            {user?.lastName?.[0] || user?.lname?.[0] || ''}
                           </AvatarFallback>
                         </Avatar>
                       )}
                     </div>
-                    <span
-                      className="text-sm font-medium [filter:none]"
-                      style={{
-                        color: 'var(--app-text-primary)',
-                        filter: 'none',
-                      }}
-                    >
-                      {user?.firstName} {user?.lastName}
-                    </span>
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span
+                        className="text-sm font-medium [filter:none]"
+                        style={{
+                          color: 'var(--app-text-primary)',
+                          filter: 'none',
+                        }}
+                      >
+                        Hello, {displayName}.
+                      </span>
+                      <span
+                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                        style={{
+                          background: 'var(--app-accent)',
+                          color: 'var(--app-page-bg)',
+                          boxShadow:
+                            '2px 2px 6px rgba(4, 8, 18, 0.5), -1px -1px 4px rgba(25, 40, 72, 0.3)',
+                        }}
+                      >
+                        {user?.rank || 'Stakeholder'}
+                      </span>
+                    </div>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -416,88 +431,88 @@ export default function DashboardLayout({
         {!isOnboardingPage &&
           ((progress >= 40 && progress < 60) ||
             (progress >= 60 && progress < 100 && !!bonusData)) && (
-          <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
-            {/* Wallet Setup Banner (40% <= Progress < 60%) */}
-            {progress >= 40 && progress < 60 && (
-              <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
-                    <Wallet className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-amber-500">
-                      WALLET SETUP REQUIRED
-                    </h4>
-                    <p className="text-xs text-amber-400/80">
-                      Whitelist your BEP20 withdrawal address to unlock
-                      transfers & withdrawals.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => router.push('/dashboard/onboarding')}
-                  className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
-                >
-                  Whitelist
-                  <ArrowUpRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {/* Registration Bonus Progress Banner (Unlocked but active) */}
-            {progress >= 60 && progress < 100 && bonusData && (
-              <div className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 backdrop-blur-xl transition-all hover:bg-emerald-500/10">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold tracking-widest text-emerald-500/80 uppercase">
-                        Registration Bonus: {progress}%
-                      </span>
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-emerald-500/10">
-                        <div
-                          className="h-full bg-emerald-500"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
+            <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
+              {/* Wallet Setup Banner (40% <= Progress < 60%) */}
+              {progress >= 40 && progress < 60 && (
+                <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
+                      <Wallet className="h-5 w-5" />
                     </div>
-                    <p className="text-[10px] text-slate-400">
-                      Complete social follows and first stake to activate your
-                      10% bonus.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden text-right sm:block">
-                    <span className="block text-[10px] leading-tight text-slate-500 uppercase">
-                      Time Left
-                    </span>
-                    <span className="font-mono text-xs font-bold text-emerald-400">
-                      {bonusData.daysRemaining}d left
-                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-500">
+                        WALLET SETUP REQUIRED
+                      </h4>
+                      <p className="text-xs text-amber-400/80">
+                        Whitelist your BEP20 withdrawal address to unlock
+                        transfers & withdrawals.
+                      </p>
+                    </div>
                   </div>
                   <Button
                     size="sm"
-                    variant="ghost"
                     onClick={() => router.push('/dashboard/onboarding')}
-                    className="h-8 rounded-lg px-2 text-[10px] text-emerald-400 hover:bg-emerald-500/20"
+                    className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
                   >
-                    Complete
-                    <ArrowUpRight className="ml-1 h-3 w-3" />
+                    Whitelist
+                    <ArrowUpRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+
+              {/* Registration Bonus Progress Banner (Unlocked but active) */}
+              {progress >= 60 && progress < 100 && bonusData && (
+                <div className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 backdrop-blur-xl transition-all hover:bg-emerald-500/10">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold tracking-widest text-emerald-500/80 uppercase">
+                          Registration Bonus: {progress}%
+                        </span>
+                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-emerald-500/10">
+                          <div
+                            className="h-full bg-emerald-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Complete social follows and first stake to activate your
+                        10% bonus.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="hidden text-right sm:block">
+                      <span className="block text-[10px] leading-tight text-slate-500 uppercase">
+                        Time Left
+                      </span>
+                      <span className="font-mono text-xs font-bold text-emerald-400">
+                        {bonusData.daysRemaining}d left
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => router.push('/dashboard/onboarding')}
+                      className="h-8 rounded-lg px-2 text-[10px] text-emerald-400 hover:bg-emerald-500/20"
+                    >
+                      Complete
+                      <ArrowUpRight className="ml-1 h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
         <main
           id="main-content"
-          className="px-3 pt-0 pb-8 sm:px-4 sm:pt-0 sm:pb-10 md:px-5 md:pt-0 md:pb-12 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:px-6 lg:pt-0 lg:pb-0"
+          className="px-3 pt-6 pb-8 sm:px-4 sm:pt-6 sm:pb-10 md:px-5 md:pt-8 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-8 lg:pb-0"
         >
           {children}
         </main>
