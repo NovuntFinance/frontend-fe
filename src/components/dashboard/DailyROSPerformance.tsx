@@ -157,13 +157,13 @@ export function DailyROSPerformance() {
         <div
           className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
           style={{
-            background: '#0D162C',
+            background: 'var(--app-page-bg)',
             boxShadow: `
-              inset 8px 8px 16px rgba(0, 0, 0, 0.5),
-              inset -8px -8px 16px rgba(255, 255, 255, 0.05),
-              inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-              inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-              0 0 0 1px rgba(255, 255, 255, 0.03)
+              inset 8px 8px 16px var(--app-shadow-dark),
+              inset -8px -8px 16px var(--app-shadow-light),
+              inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+              inset -2px -2px 4px var(--app-shadow-light),
+              0 0 0 1px var(--app-border)
             `,
           }}
         >
@@ -171,23 +171,23 @@ export function DailyROSPerformance() {
           <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
             <div
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
-              style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+              style={{ background: 'var(--app-overlay)' }}
             >
               <TrendingUp
                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                style={{ color: 'rgba(255, 255, 255, 0.95)', filter: 'none' }}
+                style={{ color: 'var(--app-text-primary)', filter: 'none' }}
               />
             </div>
             <div className="min-w-0 flex-1">
               <p
                 className="text-xs font-medium sm:text-sm lg:text-xs"
-                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
+                style={{ color: 'var(--app-text-secondary)', filter: 'none' }}
               >
                 Daily ROS Performance
               </p>
               <p
                 className="text-[10px] sm:text-xs lg:text-[10px]"
-                style={{ color: 'rgba(255, 255, 255, 0.5)', filter: 'none' }}
+                style={{ color: 'var(--app-text-muted)', filter: 'none' }}
               >
                 {rangeLabel}
               </p>
@@ -195,7 +195,7 @@ export function DailyROSPerformance() {
             {/* Time range pills - same style as second image (pill, muted) */}
             <div
               className="flex rounded-lg p-0.5"
-              style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+              style={{ background: 'var(--app-overlay)' }}
             >
               {timeRanges.map((range) => (
                 <button
@@ -210,8 +210,8 @@ export function DailyROSPerformance() {
                         : 'transparent',
                     color:
                       selectedRange === range
-                        ? 'rgba(255, 255, 255, 0.95)'
-                        : 'rgba(255, 255, 255, 0.5)',
+                        ? 'var(--app-text-primary)'
+                        : 'var(--app-text-muted)',
                     filter: 'none',
                   }}
                 >
@@ -237,7 +237,7 @@ export function DailyROSPerformance() {
                 </span>
                 <span
                   className="text-[10px] sm:text-xs lg:text-[10px]"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)', filter: 'none' }}
+                  style={{ color: 'var(--app-text-muted)', filter: 'none' }}
                 >
                   avg in {selectedRange}
                 </span>
@@ -328,7 +328,7 @@ export function DailyROSPerformance() {
                             x={pt.x}
                             y={pt.y - 10}
                             textAnchor="middle"
-                            fill="rgba(255,255,255,0.95)"
+                            fill="var(--app-text-primary)"
                             fontSize="10"
                             fontWeight="600"
                           >
@@ -346,7 +346,7 @@ export function DailyROSPerformance() {
             {chartData.length > 0 && !isLoading && !error && (
               <div
                 className="absolute right-0 bottom-0 left-0 flex text-[10px] font-medium sm:text-xs"
-                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                style={{ color: 'var(--app-text-muted)' }}
               >
                 {xAxisLabels.map((label, i) => (
                   <span

@@ -45,82 +45,108 @@
 
 :root {
   --radius: 0.625rem;
-  /* Novunt Brand Colors - Light Mode */
-  --background: oklch(1 0 0); /* White */
-  --foreground: oklch(0.25 0.05 250); /* Dark blue-gray */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.05 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.05 250);
-  /* Novunt Deep Blue Primary */
-  --primary: oklch(0.35 0.12 250); /* #1e3a8a deep blue */
-  --primary-foreground: oklch(1 0 0); /* White */
-  /* Novunt Gold Secondary */
-  --secondary: oklch(0.75 0.15 65); /* #f59e0b gold */
-  --secondary-foreground: oklch(0.35 0.12 250); /* Deep blue text */
-  --muted: oklch(0.96 0.01 250);
-  --muted-foreground: oklch(0.55 0.05 250);
-  /* Bright Blue Accent */
-  --accent: oklch(0.6 0.2 250); /* #3b82f6 */
-  --accent-foreground: oklch(1 0 0);
+  /* Light mode: primary background #F5F5F5 */
+  --background: #f5f5f5;
+  --foreground: #0a0a0a;
+  --card: #ebebeb;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  /* Accent palette: #0D162C (navy) and #009BF2 (blue) */
+  --primary: #0d162c;
+  --primary-foreground: #ffffff;
+  --secondary: #e5e5e5;
+  --secondary-foreground: #0d162c;
+  --muted: #e0e0e0;
+  --muted-foreground: rgba(0, 0, 0, 0.6);
+  --accent: #009bf2;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.01 250);
-  --input: oklch(0.9 0.01 250);
-  --ring: oklch(0.6 0.2 250); /* Bright blue ring */
-  /* Charts with Novunt colors */
-  --chart-1: oklch(0.35 0.12 250); /* Deep blue */
-  --chart-2: oklch(0.75 0.15 65); /* Gold */
-  --chart-3: oklch(0.6 0.2 250); /* Bright blue */
-  --chart-4: oklch(0.7 0.12 160); /* Teal */
-  --chart-5: oklch(0.65 0.18 40); /* Orange */
-  /* Sidebar with Novunt branding */
-  --sidebar: oklch(0.98 0.01 250);
-  --sidebar-foreground: oklch(0.35 0.12 250);
-  --sidebar-primary: oklch(0.35 0.12 250); /* Deep blue */
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.01 250);
-  --sidebar-accent-foreground: oklch(0.35 0.12 250);
-  --sidebar-border: oklch(0.9 0.01 250);
-  --sidebar-ring: oklch(0.6 0.2 250);
+  --border: rgba(0, 0, 0, 0.1);
+  --input: #e0e0e0;
+  --ring: #009bf2;
+  /* Charts */
+  --chart-1: #0d162c;
+  --chart-2: #009bf2;
+  --chart-3: oklch(0.6 0.2 250);
+  --chart-4: oklch(0.7 0.12 160);
+  --chart-5: oklch(0.65 0.18 40);
+  /* Sidebar */
+  --sidebar: #eeeeee;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #0d162c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e0e0e0;
+  --sidebar-accent-foreground: #0d162c;
+  --sidebar-border: rgba(0, 0, 0, 0.1);
+  --sidebar-ring: #009bf2;
+  /* App/dashboard theme tokens (light) */
+  --app-page-bg: #f5f5f5;
+  --app-surface: #ebebeb;
+  --app-surface-raised: #ffffff;
+  --app-accent: #009bf2;
+  --app-accent-alt: #0d162c;
+  --app-text-primary: #0a0a0a;
+  --app-text-secondary: rgba(0, 0, 0, 0.7);
+  --app-text-muted: rgba(0, 0, 0, 0.5);
+  --app-border: rgba(0, 0, 0, 0.08);
+  --app-border-strong: rgba(0, 0, 0, 0.15);
+  --app-shadow-dark: rgba(0, 0, 0, 0.12);
+  --app-shadow-light: rgba(255, 255, 255, 0.9);
+  --app-overlay: rgba(0, 0, 0, 0.05);
+  --app-overlay-hover: rgba(0, 0, 0, 0.08);
 }
 
 .dark {
   /* Novunt Brand Colors - Dark Mode */
-  --background: oklch(0.15 0.05 250); /* Dark blue-gray */
+  --background: oklch(0.15 0.05 250); /* #0D162C-alike dark blue-gray */
   --foreground: oklch(0.98 0.01 250); /* Off-white */
-  --card: oklch(0.2 0.05 250); /* Slightly lighter dark */
+  --card: oklch(0.2 0.05 250);
   --card-foreground: oklch(0.98 0.01 250);
   --popover: oklch(0.2 0.05 250);
   --popover-foreground: oklch(0.98 0.01 250);
-  /* Novunt Blue - Brighter in dark mode */
-  --primary: oklch(0.65 0.2 250); /* Bright blue #3b82f6 */
-  --primary-foreground: oklch(0.15 0.05 250); /* Dark text */
-  /* Novunt Gold - Same in dark mode */
-  --secondary: oklch(0.75 0.15 65); /* Gold */
-  --secondary-foreground: oklch(0.15 0.05 250); /* Dark text */
+  --primary: oklch(0.65 0.2 250);
+  --primary-foreground: oklch(0.15 0.05 250);
+  --secondary: oklch(0.75 0.15 65);
+  --secondary-foreground: oklch(0.15 0.05 250);
   --muted: oklch(0.25 0.05 250);
   --muted-foreground: oklch(0.7 0.05 250);
-  --accent: oklch(0.75 0.15 65); /* Gold accent in dark mode */
+  --accent: oklch(0.75 0.15 65);
   --accent-foreground: oklch(0.15 0.05 250);
   --destructive: oklch(0.7 0.19 22);
   --border: oklch(0.3 0.05 250);
   --input: oklch(0.25 0.05 250);
-  --ring: oklch(0.65 0.2 250); /* Bright blue ring */
+  --ring: oklch(0.65 0.2 250);
   /* Dark mode charts */
-  --chart-1: oklch(0.65 0.2 250); /* Bright blue */
-  --chart-2: oklch(0.75 0.15 65); /* Gold */
-  --chart-3: oklch(0.55 0.18 250); /* Medium blue */
-  --chart-4: oklch(0.7 0.12 160); /* Teal */
-  --chart-5: oklch(0.65 0.18 40); /* Orange */
+  --chart-1: oklch(0.65 0.2 250);
+  --chart-2: oklch(0.75 0.15 65);
+  --chart-3: oklch(0.55 0.18 250);
+  --chart-4: oklch(0.7 0.12 160);
+  --chart-5: oklch(0.65 0.18 40);
   /* Dark sidebar */
   --sidebar: oklch(0.18 0.05 250);
   --sidebar-foreground: oklch(0.95 0.01 250);
-  --sidebar-primary: oklch(0.65 0.2 250); /* Bright blue */
+  --sidebar-primary: oklch(0.65 0.2 250);
   --sidebar-primary-foreground: oklch(0.98 0.01 250);
   --sidebar-accent: oklch(0.25 0.05 250);
   --sidebar-accent-foreground: oklch(0.95 0.01 250);
   --sidebar-border: oklch(0.3 0.05 250);
   --sidebar-ring: oklch(0.65 0.2 250);
+  /* App/dashboard theme tokens (dark) */
+  --app-page-bg: #0d162c;
+  --app-surface: #131b2e;
+  --app-surface-raised: #1a2332;
+  --app-accent: #009bf2;
+  --app-accent-alt: #009bf2;
+  --app-text-primary: rgba(255, 255, 255, 0.95);
+  --app-text-secondary: rgba(255, 255, 255, 0.7);
+  --app-text-muted: rgba(255, 255, 255, 0.5);
+  --app-border: rgba(255, 255, 255, 0.05);
+  --app-border-strong: rgba(255, 255, 255, 0.1);
+  --app-shadow-dark: rgba(0, 0, 0, 0.5);
+  --app-shadow-light: rgba(255, 255, 255, 0.05);
+  --app-overlay: rgba(255, 255, 255, 0.05);
+  --app-overlay-hover: rgba(255, 255, 255, 0.1);
 }
 
 @layer base {

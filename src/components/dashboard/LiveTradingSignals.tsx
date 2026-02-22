@@ -21,18 +21,13 @@ const getTimeAgo = (minutes: number): string => {
   return `${hours}h ${remainingMins}m ago`;
 };
 
-/** Dark neumorphic (like DAILY ROS / ACTIVE STAKES cards) */
-const NEU_SURFACE = '#131B2E';
-const NEU_TEXT = '#009BF2';
-const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+/** Theme-aware neumorphic (uses CSS variables for light/dark) */
 const NEU_CARD_SHADOW = `
-  inset 8px 8px 16px ${NEU_SHADOW_DARK},
-  inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-  inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-  inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-  0 0 0 1px rgba(255, 255, 255, 0.03)
+  inset 8px 8px 16px var(--app-shadow-dark),
+  inset -8px -8px 16px var(--app-shadow-light),
+  inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+  inset -2px -2px 4px var(--app-shadow-light),
+  0 0 0 1px var(--app-border)
 `;
 
 const getMarketTypeBadge = (type: MarketType) => {
@@ -71,19 +66,19 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
       <div className="flex items-center gap-1.5">
         <div
           className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
-          style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+          style={{ background: 'var(--app-overlay)' }}
         >
           {trade.direction === 'LONG' ? (
-            <TrendingUp className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
+            <TrendingUp className="h-3 w-3" style={{ color: 'var(--app-text-primary)' }} />
           ) : (
-            <TrendingDown className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
+            <TrendingDown className="h-3 w-3" style={{ color: 'var(--app-text-primary)' }} />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+          <p className="truncate text-[11px] font-medium" style={{ color: 'var(--app-text-secondary)' }}>
             {trade.symbol} {trade.direction}
           </p>
-          <p className="text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+          <p className="text-[9px]" style={{ color: 'var(--app-text-muted)' }}>
             {getTimeAgo(trade.minutesAgo)} • {getMarketTypeBadge(trade.marketType).label}
           </p>
         </div>
@@ -119,7 +114,7 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
           {trade.profitUSD >= 0 ? '$' : '-$'}
           {Math.abs(trade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
-        <span className="text-[9px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+        <span className="text-[9px] font-medium" style={{ color: 'var(--app-text-muted)' }}>
           {trade.isProfitable ? 'Profitable' : 'Closed'}
         </span>
       </div>
@@ -267,17 +262,17 @@ export function LiveTradingSignals() {
   return (
     <Card
       className="group relative overflow-hidden rounded-2xl border-0 transition-shadow duration-300 hover:shadow-xl"
-      style={{ background: NEU_SURFACE, boxShadow: NEU_CARD_SHADOW }}
+      style={{ background: 'var(--app-surface)', boxShadow: NEU_CARD_SHADOW }}
     >
       <CardContent className="relative p-3 sm:p-4">
         <div className="min-h-[72px]">
           {trades.length === 0 && !error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: NEU_TEXT_MUTED }}>
-              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: NEU_TEXT }} />
+            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: 'var(--app-text-muted)' }}>
+              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: 'var(--app-accent)' }} />
               <p className="text-xs">Loading...</p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: NEU_TEXT_MUTED }}>
+            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: 'var(--app-text-muted)' }}>
               <p>{error}</p>
             </div>
           ) : isLargeScreen && tradesToShow.length > 0 ? (
@@ -293,7 +288,7 @@ export function LiveTradingSignals() {
                 {tradesToShow.map((trade) => (
                   <div
                     key={trade.id}
-                    className="rounded-lg border border-white/5 bg-black/10 p-2"
+                    className="rounded-lg border bg-black/10 p-2 dark:border-white/5" style={{ borderColor: 'var(--app-border)' }}
                   >
                     <TradeRow trade={trade} />
                   </div>

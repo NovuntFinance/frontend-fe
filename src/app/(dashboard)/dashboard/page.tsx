@@ -625,13 +625,13 @@ export default function DashboardPage() {
                 <div
                   className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
                   style={{
-                    background: '#0D162C',
+                    background: 'var(--app-page-bg)',
                     boxShadow: `
-                      inset 8px 8px 16px rgba(0, 0, 0, 0.5),
-                      inset -8px -8px 16px rgba(255, 255, 255, 0.05),
-                      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                      inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                      0 0 0 1px rgba(255, 255, 255, 0.03)
+                      inset 8px 8px 16px var(--app-shadow-dark),
+                      inset -8px -8px 16px var(--app-shadow-light),
+                      inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+                      inset -2px -2px 4px var(--app-shadow-light),
+                      0 0 0 1px var(--app-border)
                     `,
                   }}
                 >
@@ -650,13 +650,13 @@ export default function DashboardPage() {
                             <div
                               className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'var(--app-overlay)',
                               }}
                             >
                               <Wallet
                                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  color: 'var(--app-text-primary)',
                                   filter: 'none',
                                 }}
                               />
@@ -665,7 +665,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-xs font-medium sm:text-sm lg:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  color: 'var(--app-text-secondary)',
                                   filter: 'none',
                                 }}
                               >
@@ -674,7 +674,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-[10px] sm:text-xs lg:text-[10px]"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'var(--app-text-muted)',
                                   filter: 'none',
                                 }}
                               >
@@ -695,7 +695,7 @@ export default function DashboardPage() {
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--app-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -726,13 +726,13 @@ export default function DashboardPage() {
                             <div
                               className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'var(--app-overlay)',
                               }}
                             >
                               <TrendingUp
                                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  color: 'var(--app-text-primary)',
                                   filter: 'none',
                                 }}
                               />
@@ -741,7 +741,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-xs font-medium sm:text-sm lg:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  color: 'var(--app-text-secondary)',
                                   filter: 'none',
                                 }}
                               >
@@ -750,7 +750,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-[10px] sm:text-xs lg:text-[10px]"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'var(--app-text-muted)',
                                   filter: 'none',
                                 }}
                               >
@@ -771,7 +771,7 @@ export default function DashboardPage() {
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--app-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -802,13 +802,13 @@ export default function DashboardPage() {
                             <div
                               className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'var(--app-overlay)',
                               }}
                             >
                               <ArrowDownRight
                                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  color: 'var(--app-text-primary)',
                                   filter: 'none',
                                 }}
                               />
@@ -817,7 +817,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-xs font-medium sm:text-sm lg:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  color: 'var(--app-text-secondary)',
                                   filter: 'none',
                                 }}
                               >
@@ -826,7 +826,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-[10px] sm:text-xs lg:text-[10px]"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'var(--app-text-muted)',
                                   filter: 'none',
                                 }}
                               >
@@ -847,7 +847,7 @@ export default function DashboardPage() {
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--app-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -878,13 +878,13 @@ export default function DashboardPage() {
                             <div
                               className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'var(--app-overlay)',
                               }}
                             >
                               <ArrowUpRight
                                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  color: 'var(--app-text-primary)',
                                   filter: 'none',
                                 }}
                               />
@@ -893,7 +893,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-xs font-medium sm:text-sm lg:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  color: 'var(--app-text-secondary)',
                                   filter: 'none',
                                 }}
                               >
@@ -902,7 +902,7 @@ export default function DashboardPage() {
                               <p
                                 className="text-[10px] sm:text-xs lg:text-[10px]"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'var(--app-text-muted)',
                                   filter: 'none',
                                 }}
                               >
@@ -923,7 +923,7 @@ export default function DashboardPage() {
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--app-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -956,13 +956,228 @@ export default function DashboardPage() {
                           width: currentIndex === index ? '24px' : '8px',
                           background:
                             currentIndex === index
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(255, 255, 255, 0.3)',
+                              ? 'var(--app-text-secondary)'
+                              : 'var(--app-text-muted)',
                         }}
                         aria-label={`Go to ${stat}`}
                       />
                     ))}
                   </div>
+                </div>
+              </div>
+              {/* Feature Buttons Grid - 8 circular buttons, directly under stats carousel */}
+              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-6">
+                <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
+                  {[
+                    {
+                      id: 'welcome-bonus',
+                      label: '10% Bonus',
+                      icon: Gift,
+                      href: '/dashboard/onboarding',
+                    },
+                    {
+                      id: 'nxp-gamification',
+                      label: 'NXP',
+                      icon: Sparkles,
+                      href: '/dashboard/achievements',
+                    },
+                    {
+                      id: 'rank',
+                      label: 'Rank',
+                      icon: Trophy,
+                      href: '#',
+                    },
+                    {
+                      id: 'wallet-address',
+                      label: 'Wallet',
+                      icon: CreditCard,
+                      href: '/dashboard/wallets',
+                    },
+                    {
+                      id: 'community',
+                      label: 'Team',
+                      icon: Users,
+                      href: '/dashboard/team',
+                    },
+                    {
+                      id: 'staking-streak',
+                      label: 'Streak',
+                      icon: Flame,
+                      href: '/dashboard',
+                    },
+                    {
+                      id: 'knowledge-base',
+                      label: 'Help',
+                      icon: BookOpen,
+                      href: '/dashboard/knowledge-base',
+                    },
+                    {
+                      id: 'settings',
+                      label: 'Settings',
+                      icon: Settings,
+                      href: '/dashboard/settings',
+                    },
+                  ].map((button, index) => {
+                    const IconComponent = button.icon;
+
+                    const isSettings = button.id === 'settings';
+                    const isStreak = button.id === 'staking-streak';
+                    const isRank = button.id === 'rank';
+                    const buttonContent = (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                          className="flex flex-col items-center gap-1.5"
+                        >
+                          {/* Circular neumorphic button */}
+                          <div
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                            style={{
+                              background:
+                                hoveredButtonIndex === index
+                                  ? 'var(--app-accent)'
+                                  : 'var(--app-surface)',
+                              boxShadow: `
+                            6px 6px 12px var(--app-shadow-dark),
+                            -6px -6px 12px var(--app-shadow-light),
+                            0 0 0 1px var(--app-border)
+                          `,
+                            }}
+                            onMouseEnter={(e) => {
+                              setHoveredButtonIndex(index);
+                              e.currentTarget.style.boxShadow = `
+                            8px 8px 16px var(--app-shadow-dark),
+                            -8px -8px 16px var(--app-shadow-light),
+                            0 0 0 1px var(--app-border-strong),
+                            0 0 20px rgba(0, 155, 242, 0.2)
+                          `;
+                              e.currentTarget.style.transform =
+                                'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              setHoveredButtonIndex(null);
+                              e.currentTarget.style.boxShadow = `
+                            6px 6px 12px var(--app-shadow-dark),
+                            -6px -6px 12px var(--app-shadow-light),
+                            0 0 0 1px var(--app-border)
+                          `;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseDown={(e) => {
+                              e.currentTarget.style.boxShadow = `
+                            inset 3px 3px 6px var(--app-shadow-dark),
+                            inset -3px -3px 6px var(--app-shadow-light)
+                          `;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseUp={(e) => {
+                              e.currentTarget.style.boxShadow = `
+                            8px 8px 16px var(--app-shadow-dark),
+                            -8px -8px 16px var(--app-shadow-light),
+                            0 0 0 1px var(--app-border-strong),
+                            0 0 20px rgba(0, 155, 242, 0.2)
+                          `;
+                            }}
+                          >
+                            <motion.div
+                              animate={{
+                                y: [0, -2, 0],
+                                scale: [1, 1.02, 1],
+                              }}
+                              transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                                delay: index * 0.3,
+                              }}
+                            >
+                              <IconComponent
+                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                                style={{
+                                  color:
+                                    hoveredButtonIndex === index
+                                      ? 'var(--primary-foreground)'
+                                      : 'var(--app-accent)',
+                                  filter: 'none',
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                          {/* Label */}
+                          <span
+                            className="text-center text-[10px] font-medium sm:text-xs"
+                            style={{ color: 'var(--app-accent)', filter: 'none' }}
+                          >
+                            {button.label}
+                          </span>
+                        </motion.button>
+                    );
+
+                    return (
+                      <React.Fragment key={button.id}>
+                        {isSettings ? (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.dispatchEvent(
+                                new CustomEvent('openProfileModal', {
+                                  bubbles: true,
+                                })
+                              );
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                window.dispatchEvent(
+                                  new CustomEvent('openProfileModal', {
+                                    bubbles: true,
+                                  })
+                                );
+                              }
+                            }}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </div>
+                        ) : isStreak ? (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setStreakModalOpen(true)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setStreakModalOpen(true);
+                              }
+                            }}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </div>
+                        ) : isRank ? (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setRankModalOpen(true)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setRankModalOpen(true);
+                              }
+                            }}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                          >
+                            {buttonContent}
+                          </div>
+                        ) : (
+                          <Link href={button.href}>{buttonContent}</Link>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>

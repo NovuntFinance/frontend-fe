@@ -13,11 +13,7 @@ import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
 import { fmt4 } from '@/utils/formatters';
 
-const NEU_SURFACE = '#131B2E';
-const NEU_TEXT = 'rgba(255, 255, 255, 0.95)';
-const NEU_TEXT_MUTED = 'rgba(255, 255, 255, 0.5)';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+/* Theme-aware: use var(--app-surface), var(--app-text-*), var(--app-shadow-*), var(--app-border) */
 const ACCENT_PURPLE = '#a855f7';
 const ACCENT_GREEN = '#22c55e';
 const ACCENT_BLUE = '#009BF2';
@@ -57,13 +53,13 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
       <div
         className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
         style={{
-          background: NEU_SURFACE,
+          background: 'var(--app-surface)',
           boxShadow: `
-            inset 8px 8px 16px ${NEU_SHADOW_DARK},
-            inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-            inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-            inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-            0 0 0 1px rgba(255, 255, 255, 0.03)
+            inset 8px 8px 16px var(--app-shadow-dark),
+            inset -8px -8px 16px var(--app-shadow-light),
+            inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+            inset -2px -2px 4px var(--app-shadow-light),
+            0 0 0 1px var(--app-border)
           `,
         }}
       >
@@ -88,7 +84,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
               </p>
               <p
                 className="text-xs sm:text-sm"
-                style={{ color: NEU_TEXT_MUTED }}
+                style={{ color: 'var(--app-text-muted)' }}
               >
                 {isRegistrationBonus
                   ? 'Registration Bonus'
@@ -112,12 +108,11 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
         {/* Progress to target ROS */}
         <div className="mb-4 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
-            <span style={{ color: NEU_TEXT }}>
+            <span style={{ color: 'var(--app-text-primary)' }}>
               Progress to {targetROSPercent}% ROS
             </span>
-            <span style={{ color: NEU_TEXT }}>
-              {typeof stake.currentROSPercent === 'number' &&
-              typeof stake.targetROSPercent === 'number'
+            <span style={{ color: 'var(--app-text-primary)' }}>
+              {typeof stake.currentROSPercent === 'number' && typeof stake.targetROSPercent === 'number'
                 ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% ROS`
                 : `${stake.progressToTarget || '0%'} of ${targetROSPercent}% ROS`}
             </span>
@@ -159,10 +154,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
                 Total Earned
               </span>
             </div>
-            <p
-              className="text-base font-bold sm:text-lg"
-              style={{ color: NEU_TEXT }}
-            >
+            <p className="text-base font-bold sm:text-lg" style={{ color: 'var(--app-text-primary)' }}>
               ${fmt4(stake.totalEarned)}
             </p>
           </div>
@@ -182,10 +174,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
                 Target
               </span>
             </div>
-            <p
-              className="text-base font-bold sm:text-lg"
-              style={{ color: NEU_TEXT }}
-            >
+            <p className="text-base font-bold sm:text-lg" style={{ color: 'var(--app-text-primary)' }}>
               ${fmt4(stake.targetReturn)}
             </p>
           </div>
@@ -193,14 +182,11 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
 
         {/* Remaining */}
         <div className="flex items-center justify-between text-xs sm:text-sm">
-          <span
-            className="flex items-center gap-1.5"
-            style={{ color: NEU_TEXT_MUTED }}
-          >
+          <span className="flex items-center gap-1.5" style={{ color: 'var(--app-text-muted)' }}>
             <Clock className="h-3.5 w-3.5" />
             Remaining
           </span>
-          <span className="font-medium" style={{ color: NEU_TEXT }}>
+          <span className="font-medium" style={{ color: 'var(--app-text-primary)' }}>
             ${fmt4(stake.remainingToTarget)}
           </span>
         </div>
@@ -237,11 +223,11 @@ export function ActiveStakesCard() {
             onClick={goToStakes}
             className="w-full cursor-pointer rounded-2xl p-5 text-left transition-opacity hover:opacity-95 sm:p-6"
             style={{
-              background: NEU_SURFACE,
+              background: 'var(--app-surface)',
               boxShadow: `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.03)
+                inset 8px 8px 16px var(--app-shadow-dark),
+                inset -8px -8px 16px var(--app-shadow-light),
+                0 0 0 1px var(--app-border)
               `,
             }}
           >
@@ -253,12 +239,12 @@ export function ActiveStakesCard() {
             onClick={goToStakes}
             className="w-full cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
             style={{
-              background: NEU_SURFACE,
-              color: NEU_TEXT_MUTED,
+              background: 'var(--app-surface)',
+              color: 'var(--app-text-muted)',
               boxShadow: `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.03)
+                inset 8px 8px 16px var(--app-shadow-dark),
+                inset -8px -8px 16px var(--app-shadow-light),
+                0 0 0 1px var(--app-border)
               `,
             }}
           >
@@ -268,11 +254,11 @@ export function ActiveStakesCard() {
           <div
             className="rounded-2xl p-6 text-center sm:p-8"
             style={{
-              background: NEU_SURFACE,
+              background: 'var(--app-surface)',
               boxShadow: `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.03)
+                inset 8px 8px 16px var(--app-shadow-dark),
+                inset -8px -8px 16px var(--app-shadow-light),
+                0 0 0 1px var(--app-border)
               `,
             }}
           >

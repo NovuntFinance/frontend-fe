@@ -195,13 +195,13 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         <div
           className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
           style={{
-            background: '#0D162C',
+            background: 'var(--app-page-bg)',
             boxShadow: `
-              inset 8px 8px 16px rgba(0, 0, 0, 0.5),
-              inset -8px -8px 16px rgba(255, 255, 255, 0.05),
-              inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-              inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-              0 0 0 1px rgba(255, 255, 255, 0.03)
+              inset 8px 8px 16px var(--app-shadow-dark),
+              inset -8px -8px 16px var(--app-shadow-light),
+              inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+              inset -2px -2px 4px var(--app-shadow-light),
+              0 0 0 1px var(--app-border)
             `,
           }}
         >
@@ -232,7 +232,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                     {/* Icon - same size/shape as Total Deposit card */}
                     <div
                       className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
-                      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                      style={{ background: 'var(--app-overlay)' }}
                     >
                       {(() => {
                         const Icon = getTransactionIcon(
@@ -242,7 +242,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                           <Icon
                             className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
                             style={{
-                              color: 'rgba(255, 255, 255, 0.95)',
+                              color: 'var(--app-text-primary)',
                               filter: 'none',
                             }}
                           />
@@ -254,7 +254,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                       <p
                         className="truncate text-xs font-medium capitalize sm:text-sm lg:text-xs"
                         style={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--app-text-secondary)',
                           filter: 'none',
                         }}
                       >
@@ -263,7 +263,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                       <p
                         className="text-[10px] sm:text-xs lg:text-[10px]"
                         style={{
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'var(--app-text-muted)',
                           filter: 'none',
                         }}
                       >
@@ -309,7 +309,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   <p
                     className="mt-1.5 text-[10px] font-medium capitalize sm:text-xs lg:text-[10px]"
                     style={{
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--app-text-muted)',
                       filter: 'none',
                     }}
                   >

@@ -13,10 +13,7 @@ import { LoadingStates } from '@/components/ui/loading-states';
 import { useStakingStreak } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
-const NEU_BG = '#131B2E';
-const NEU_BG_PRIMARY = '#0D162C';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+/* Theme-aware: use CSS variables */
 
 interface StakingStreakModalProps {
   open: boolean;
@@ -36,11 +33,11 @@ export function StakingStreakModal({ open, onOpenChange }: StakingStreakModalPro
           'max-w-[calc(100%-2rem)] sm:max-w-md'
         )}
         style={{
-          background: NEU_BG,
+          background: 'var(--app-surface)',
           boxShadow: `
-            16px 16px 32px ${NEU_SHADOW_DARK},
-            -16px -16px 32px ${NEU_SHADOW_LIGHT},
-            0 0 0 1px rgba(255, 255, 255, 0.05)
+            16px 16px 32px var(--app-shadow-dark),
+            -16px -16px 32px var(--app-shadow-light),
+            0 0 0 1px var(--app-border)
           `,
         }}
       >
@@ -58,13 +55,13 @@ export function StakingStreakModal({ open, onOpenChange }: StakingStreakModalPro
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  boxShadow: `inset 4px 4px 8px ${NEU_SHADOW_DARK}, inset -4px -4px 8px ${NEU_SHADOW_LIGHT}`,
+                  background: 'var(--app-overlay)',
+                  boxShadow: 'inset 4px 4px 8px var(--app-shadow-dark), inset -4px -4px 8px var(--app-shadow-light)',
                 }}
               >
                 <Clock
                   className="h-5 w-5"
-                  style={{ color: '#009BF2', filter: 'none' }}
+                  style={{ color: 'var(--app-accent)', filter: 'none' }}
                 />
               </div>
               <div>
@@ -93,7 +90,7 @@ export function StakingStreakModal({ open, onOpenChange }: StakingStreakModalPro
                     <div
                       key={i}
                       className="h-10 flex-1 rounded-lg animate-pulse"
-                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                      style={{ background: 'var(--app-overlay)' }}
                     />
                   ))}
                 </div>
@@ -108,7 +105,7 @@ export function StakingStreakModal({ open, onOpenChange }: StakingStreakModalPro
                     transition={{ duration: 0.3 }}
                     className="text-3xl font-black sm:text-4xl"
                     style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
+                      color: 'var(--app-text-primary)',
                       background: 'linear-gradient(135deg, #009BF2, #06b6d4)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -119,7 +116,7 @@ export function StakingStreakModal({ open, onOpenChange }: StakingStreakModalPro
                   </motion.span>
                   <span
                     className="text-sm font-semibold"
-                    style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                    style={{ color: 'var(--app-text-secondary)' }}
                   >
                     days
                   </span>

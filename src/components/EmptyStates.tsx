@@ -71,14 +71,14 @@ export function EmptyState({
             }
             style={
               variant === 'neumorphic'
-                ? { background: 'rgba(255, 255, 255, 0.05)' }
+                ? { background: 'var(--app-overlay)' }
                 : undefined
             }
           >
             <span
               style={
                 variant === 'neumorphic'
-                  ? { color: 'rgba(255, 255, 255, 0.95)' }
+                  ? { color: 'var(--app-text-primary)' }
                   : undefined
               }
             >
@@ -103,7 +103,7 @@ export function EmptyState({
         }
         style={
           variant === 'neumorphic'
-            ? { color: 'rgba(255, 255, 255, 0.95)' }
+            ? { color: 'var(--app-text-primary)' }
             : undefined
         }
       >
@@ -124,7 +124,7 @@ export function EmptyState({
           }
           style={
             variant === 'neumorphic'
-              ? { color: 'rgba(255, 255, 255, 0.5)' }
+              ? { color: 'var(--app-text-muted)' }
               : undefined
           }
         >
@@ -147,7 +147,7 @@ export function EmptyState({
                 background:
                   'linear-gradient(135deg, var(--neu-bg-secondary) 0%, rgba(0, 155, 242, 0.12) 100%)',
                 boxShadow:
-                  '6px 6px 12px rgba(0, 0, 0, 0.5), -6px -6px 12px rgba(255, 255, 255, 0.05), 0 0 20px rgba(0, 155, 242, 0.2)',
+                  '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light), 0 0 20px rgba(0, 155, 242, 0.2)',
                 color: 'var(--neu-accent)',
               }}
             >

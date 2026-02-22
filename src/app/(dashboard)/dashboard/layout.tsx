@@ -155,12 +155,12 @@ export default function DashboardLayout({
     <DashboardGuard>
       <div
         className="min-h-screen lg:h-screen lg:flex lg:flex-col"
-        style={{ background: '#0D162C' }}
+        style={{ background: 'var(--app-page-bg)' }}
       >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
         <header
           className="sticky top-0 z-30 shrink-0 py-1"
-          style={{ background: '#0D162C' }}
+          style={{ background: 'var(--app-page-bg)' }}
         >
           <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
             {/* Profile Section - Left side */}
@@ -175,9 +175,9 @@ export default function DashboardLayout({
                       className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
                       style={{
                         boxShadow:
-                          '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                        background: '#131B2E',
-                        border: '1px solid rgba(255,255,255,0.05)',
+                          '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                        background: 'var(--app-surface)',
+                        border: '1px solid var(--app-border)',
                       }}
                     >
                       {user?.avatar && isBadgeIcon(user.avatar) ? (
@@ -195,8 +195,8 @@ export default function DashboardLayout({
                           <AvatarFallback
                             className="text-sm font-medium"
                             style={{
-                              background: '#131B2E',
-                              color: 'rgba(255,255,255,0.95)',
+                              background: 'var(--app-surface)',
+                              color: 'var(--app-text-primary)',
                             }}
                           >
                             {user?.firstName?.[0]}
@@ -208,7 +208,7 @@ export default function DashboardLayout({
                     <span
                       className="text-sm font-medium [filter:none]"
                       style={{
-                        color: 'rgba(255,255,255,0.95)',
+                        color: 'var(--app-text-primary)',
                         filter: 'none',
                       }}
                     >
@@ -218,11 +218,12 @@ export default function DashboardLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-56 border border-white/10 p-2"
+                  className="w-56 border p-2 dark:border-white/10"
                   style={{
-                    background: '#131B2E',
+                    background: 'var(--app-surface)',
+                    borderColor: 'var(--app-border)',
                     boxShadow:
-                      '8px 8px 16px rgba(0,0,0,0.5), -8px -8px 16px rgba(255,255,255,0.05)',
+                      '8px 8px 16px var(--app-shadow-dark), -8px -8px 16px var(--app-shadow-light)',
                   }}
                 >
                   <DropdownMenuItem
@@ -230,12 +231,12 @@ export default function DashboardLayout({
                       setProfileDropdownOpen(false);
                       setProfileModalOpen(true);
                     }}
-                    className="cursor-pointer rounded-md focus:bg-white/10"
-                    style={{ color: '#009BF2', filter: 'none' }}
+                    className="cursor-pointer rounded-md focus:bg-black/5 dark:focus:bg-white/10"
+                    style={{ color: 'var(--app-accent)', filter: 'none' }}
                   >
                     <User
                       className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
+                      style={{ color: 'var(--app-accent)', filter: 'none' }}
                     />
                     Profile
                   </DropdownMenuItem>
@@ -246,17 +247,17 @@ export default function DashboardLayout({
                         setNotificationCenterOpen(true);
                       }, 100);
                     }}
-                    className="relative cursor-pointer rounded-md focus:bg-white/10"
-                    style={{ color: '#009BF2', filter: 'none' }}
+                    className="relative cursor-pointer rounded-md focus:bg-white/10 dark:focus:bg-white/10"
+                    style={{ color: 'var(--app-accent)', filter: 'none' }}
                   >
                     <Bell
                       className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
+                      style={{ color: 'var(--app-accent)', filter: 'none' }}
                     />
                     <span className="flex-1">Notifications</span>
                     <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-1 bg-white/10" />
+                  <DropdownMenuSeparator className="my-1 bg-black/5 dark:bg-white/10" />
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer rounded-md text-red-400 focus:bg-red-500/10 focus:text-red-400"
@@ -275,10 +276,10 @@ export default function DashboardLayout({
                 className={`flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
                 style={{
                   boxShadow:
-                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                  background: '#131B2E',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  color: '#009BF2',
+                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                  background: 'var(--app-surface)',
+                  border: '1px solid var(--app-border)',
+                  color: 'var(--app-accent)',
                   filter: 'none',
                 }}
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
@@ -295,10 +296,10 @@ export default function DashboardLayout({
                 className={`relative flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
                 style={{
                   boxShadow:
-                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                  background: '#131B2E',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  color: '#009BF2',
+                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                  background: 'var(--app-surface)',
+                  border: '1px solid var(--app-border)',
+                  color: 'var(--app-accent)',
                   filter: 'none',
                 }}
                 aria-label="Open customer support"

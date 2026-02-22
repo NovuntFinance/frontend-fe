@@ -11,10 +11,7 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
-const NEU_SURFACE = '#131B2E';
-const NEU_TEXT = '#009BF2';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+/* Theme-aware: use CSS variables (--app-surface, --app-accent, etc.) */
 
 interface QuickAction {
   id: string;
@@ -87,19 +84,19 @@ export function QuickActions() {
           <div
             className="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 sm:h-16 sm:w-16"
             style={{
-              background: hoveredIndex === index ? NEU_TEXT : NEU_SURFACE,
+              background: hoveredIndex === index ? 'var(--app-accent)' : 'var(--app-surface)',
               boxShadow: `
-                8px 8px 16px ${NEU_SHADOW_DARK},
-                -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.05)
+                8px 8px 16px var(--app-shadow-dark),
+                -8px -8px 16px var(--app-shadow-light),
+                0 0 0 1px var(--app-border)
               `,
             }}
             onMouseEnter={(e) => {
               setHoveredIndex(index);
               e.currentTarget.style.boxShadow = `
-                10px 10px 20px ${NEU_SHADOW_DARK},
-                -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.08),
+                10px 10px 20px var(--app-shadow-dark),
+                -10px -10px 20px var(--app-shadow-light),
+                0 0 0 1px var(--app-border-strong),
                 0 0 20px rgba(0, 155, 242, 0.2)
               `;
               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -107,24 +104,24 @@ export function QuickActions() {
             onMouseLeave={(e) => {
               setHoveredIndex(null);
               e.currentTarget.style.boxShadow = `
-                8px 8px 16px ${NEU_SHADOW_DARK},
-                -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.05)
+                8px 8px 16px var(--app-shadow-dark),
+                -8px -8px 16px var(--app-shadow-light),
+                0 0 0 1px var(--app-border)
               `;
               e.currentTarget.style.transform = 'translateY(0)';
             }}
             onMouseDown={(e) => {
               e.currentTarget.style.boxShadow = `
-                inset 4px 4px 8px ${NEU_SHADOW_DARK},
-                inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
+                inset 4px 4px 8px var(--app-shadow-dark),
+                inset -4px -4px 8px var(--app-shadow-light)
               `;
               e.currentTarget.style.transform = 'translateY(0)';
             }}
             onMouseUp={(e) => {
               e.currentTarget.style.boxShadow = `
-                10px 10px 20px ${NEU_SHADOW_DARK},
-                -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                0 0 0 1px rgba(255, 255, 255, 0.08),
+                10px 10px 20px var(--app-shadow-dark),
+                -10px -10px 20px var(--app-shadow-light),
+                0 0 0 1px var(--app-border-strong),
                 0 0 20px rgba(0, 155, 242, 0.2)
               `;
             }}
@@ -143,16 +140,17 @@ export function QuickActions() {
             >
               <action.icon
                 className="h-6 w-6 transition-colors duration-200 sm:h-7 sm:w-7"
-                {...(hoveredIndex === index
-                  ? { color: NEU_SURFACE }
-                  : { color: NEU_TEXT })}
+                style={{
+                  color: hoveredIndex === index ? 'var(--primary-foreground)' : 'var(--app-accent)',
+                  filter: 'none',
+                }}
               />
             </motion.div>
           </div>
           {/* Label */}
           <span
             className="text-xs font-medium sm:text-sm"
-            style={{ color: NEU_TEXT, filter: 'none' }}
+            style={{ color: 'var(--app-accent)', filter: 'none' }}
           >
             {action.label}
           </span>
