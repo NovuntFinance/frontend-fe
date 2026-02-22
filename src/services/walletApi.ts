@@ -181,17 +181,23 @@ export interface DefaultWithdrawalAddress {
 
 export interface SetDefaultAddressRequest {
   address: string;
-  network: 'BEP20'; // MANDATORY: Must be BEP20 for compliance
-  twoFACode?: string; // Required for setting/updating address
+  network?: 'BEP20'; // Defaults to BEP20
+  emailOtp: string; // Required: 6-digit OTP from email
+  twoFACode?: string; // Required when 2FA is enabled
+  'cf-turnstile-response'?: string;
+  turnstileToken?: string;
 }
 
 export interface WithdrawalRequest {
   amount: number;
   walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
   network?: 'BEP20'; // Optional, defaults to BEP20 (only supported network)
-  twoFACode: string; // Required
+  twoFACode: string; // Required when 2FA is enabled
+  emailOtp: string; // Required: 6-digit OTP from email
+  idempotencyKey?: string; // Required by backend; auto-generated if not provided
   /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
   turnstileToken?: string;
+  'cf-turnstile-response'?: string;
 }
 
 export interface WithdrawalResponse {
@@ -318,6 +324,48 @@ export const walletApi = {
   },
 
   /**
+   * Request withdrawal OTP
+   * POST /api/v1/enhanced-transactions/withdrawal/request-otp
+   */
+  async requestWithdrawalOtp(data: {
+    amount?: number;
+    'cf-turnstile-response'?: string;
+    turnstileToken?: string;
+  }): Promise<{ success: boolean; message: string; expiresIn?: number }> {
+    const payload: Record<string, unknown> = {};
+    if (data.amount !== undefined) payload.amount = data.amount;
+    const turnstile =
+      data['cf-turnstile-response'] || (data as any).turnstileToken;
+    if (turnstile) payload['cf-turnstile-response'] = turnstile;
+
+    return api.post<{ success: boolean; message: string; expiresIn?: number }>(
+      '/enhanced-transactions/withdrawal/request-otp',
+      payload
+    );
+  },
+
+  /**
+   * Request wallet default address change OTP
+   * POST /api/v1/wallet/withdrawal/default-address/request-otp
+   */
+  async requestWalletAddressChangeOtp(data: {
+    address?: string;
+    'cf-turnstile-response'?: string;
+    turnstileToken?: string;
+  }): Promise<{ success: boolean; message: string; expiresIn?: number }> {
+    const payload: Record<string, unknown> = {};
+    if (data.address) payload.address = data.address;
+    const turnstile =
+      data['cf-turnstile-response'] || (data as any).turnstileToken;
+    if (turnstile) payload['cf-turnstile-response'] = turnstile;
+
+    return api.post<{ success: boolean; message: string; expiresIn?: number }>(
+      '/wallets/withdrawal/default-address/request-otp',
+      payload
+    );
+  },
+
+  /**
    * Get default withdrawal address
    * GET /api/v1/wallets/withdrawal/default-address
    */
@@ -345,13 +393,21 @@ export const walletApi = {
   /**
    * Create withdrawal request (requires 2FA)
    * POST /api/v1/enhanced-transactions/withdrawal/create
+   * Idempotency-Key header required by backend
    */
   async createWithdrawal(
     payload: WithdrawalRequest
   ): Promise<WithdrawalResponse> {
+    const idempotencyKey =
+      payload.idempotencyKey ??
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `wd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const body = { ...payload, idempotencyKey };
     const response = await api.post<WithdrawalResponse>(
       '/enhanced-transactions/withdrawal/create',
-      payload
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
     );
     return response;
   },

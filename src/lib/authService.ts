@@ -322,45 +322,84 @@ export const authService = {
   /**
    * 9. Change password (requires authentication)
    * POST /better-auth/change-password [Protected]
-   * @param payload - Current password, new password, confirm password
+   * @param payload - Current password, new password, email OTP, 2FA (if enabled), Turnstile
    * @returns Success message
    */
   updatePassword: async (
     payload: ChangePasswordRequest
   ): Promise<InternalGenericResponse> => {
+    const body: Record<string, unknown> = {
+      currentPassword: payload.currentPassword,
+      newPassword: payload.newPassword,
+      emailOtp: payload.emailOtp,
+      ...(payload.twoFACode && { twoFACode: payload.twoFACode }),
+    };
+    const turnstile =
+      payload['cf-turnstile-response'] || payload.turnstileToken;
+    if (turnstile) body['cf-turnstile-response'] = turnstile;
     return api.post<InternalGenericResponse>(
       '/better-auth/change-password',
-      payload
+      body
     );
   },
 
   /**
-   * 10. Request password reset
+   * 10. Request password reset OTP
    * POST /better-auth/request-password-reset
-   * @param payload - Email address
-   * @returns Success message
+   * @param payload - Email + Turnstile token
+   * @returns Success message (same whether email exists or not, for security)
    */
   requestPasswordReset: async (
     payload: RequestPasswordResetRequest
   ): Promise<InternalGenericResponse> => {
+    const body: Record<string, unknown> = { email: payload.email };
+    const turnstile =
+      payload['cf-turnstile-response'] || payload.turnstileToken;
+    if (turnstile) body['cf-turnstile-response'] = turnstile;
     return api.post<InternalGenericResponse>(
       '/better-auth/request-password-reset',
-      payload
+      body
     );
   },
 
   /**
-   * 11. Reset password with reset token
+   * 11. Reset password with OTP (breaking change: no token from email link)
    * POST /better-auth/reset-password
-   * @param payload - Email, reset token, new password, confirm password
+   * @param payload - Email + OTP + new password + Turnstile
    * @returns Success message
    */
   resetPassword: async (
     payload: ResetPasswordRequest
   ): Promise<InternalGenericResponse> => {
+    const body: Record<string, unknown> = {
+      email: payload.email,
+      otp: payload.otp,
+      newPassword: payload.newPassword,
+    };
+    const turnstile =
+      payload['cf-turnstile-response'] || payload.turnstileToken;
+    if (turnstile) body['cf-turnstile-response'] = turnstile;
     return api.post<InternalGenericResponse>(
       '/better-auth/reset-password',
-      payload
+      body
+    );
+  },
+
+  /**
+   * Request change password OTP (user must be logged in)
+   * POST /better-auth/change-password/request-otp
+   */
+  requestChangePasswordOtp: async (payload: {
+    'cf-turnstile-response'?: string;
+    turnstileToken?: string;
+  }): Promise<{ success: boolean; message: string; expiresIn?: number }> => {
+    const body: Record<string, unknown> = {};
+    const turnstile =
+      payload['cf-turnstile-response'] || payload.turnstileToken;
+    if (turnstile) body['cf-turnstile-response'] = turnstile;
+    return api.post<{ success: boolean; message: string; expiresIn?: number }>(
+      '/better-auth/change-password/request-otp',
+      body
     );
   },
 

@@ -9,7 +9,11 @@ export interface TransferRequest {
   recipientEmail?: string; // Email address (optional if recipientUsername or recipientId provided)
   amount: number; // Required: Positive number, minimum 1 USDT
   memo?: string; // Optional: Note for the transfer
-  twoFACode: string; // Required: 6-digit 2FA code from authenticator app
+  twoFACode: string; // Required when 2FA is enabled
+  emailOtp: string; // Required: 6-digit OTP from email
+  idempotencyKey?: string; // Required by backend; auto-generated if not provided
+  'cf-turnstile-response'?: string; // Cloudflare Turnstile
+  turnstileToken?: string;
 }
 
 export interface TransferResponse {

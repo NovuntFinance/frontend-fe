@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
+  Mail,
 } from 'lucide-react';
 import {
   resetPasswordSchema,
@@ -21,29 +22,32 @@ import {
 import { useResetPassword } from '@/lib/mutations';
 import { NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
+import { NeuField } from '@/components/auth/NeuField';
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
 import styles from '@/styles/auth.module.css';
 
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
-  const email = searchParams.get('email'); // Email might be in URL
+  const emailParam = searchParams.get('email');
 
   const resetPasswordMutation = useResetPassword();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [tokenError, setTokenError] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
     setError,
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      token: token || '',
+      email: emailParam || '',
+      otp: '',
       password: '',
       confirmPassword: '',
     },
@@ -54,93 +58,54 @@ function ResetPasswordContent() {
     ? calculatePasswordStrength(password)
     : null;
 
-  // Validate token on mount
+  // Pre-fill email from URL
   useEffect(() => {
-    if (!token) {
-      setTokenError(true);
+    if (emailParam) {
+      setValue('email', emailParam);
     }
-  }, [token]);
+  }, [emailParam, setValue]);
 
-  // Handle form submission
+  // Handle form submission - Backend expects { email, otp, newPassword }
   const onSubmit = async (data: ResetPasswordFormData) => {
-    try {
-      // Transform form data to match API payload
-      // Backend expects email, otpCode (token), newPassword, confirmPassword
-      if (!email) {
-        setError('root', {
-          message: 'Email is required. Please use the link from your email.',
-        });
-        return;
-      }
-
-      await resetPasswordMutation.mutateAsync({
-        email: email,
-        otpCode: data.token, // Token from URL is the OTP code
-        newPassword: data.password,
-        confirmPassword: data.confirmPassword,
+    const turnstileToken = turnstileRef.current?.getToken();
+    if (!turnstileToken) {
+      setError('root', {
+        message: 'Please complete the security verification',
       });
+      return;
+    }
+
+    try {
+      await resetPasswordMutation.mutateAsync({
+        email: data.email,
+        otp: data.otp,
+        newPassword: data.password,
+        'cf-turnstile-response': turnstileToken,
+      });
+      turnstileRef.current?.reset();
 
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push('/login?reset=true');
       }, 2000);
     } catch (error: unknown) {
+      const err = error as { response?: { data?: { code?: string; message?: string } } };
+      const code = err?.response?.data?.code;
+      if (code === 'TURNSTILE_FAILED') {
+        turnstileRef.current?.reset();
+      }
       const message =
         error &&
         typeof error === 'object' &&
         'message' in error &&
         typeof (error as { message?: string }).message === 'string'
           ? (error as { message: string }).message
-          : 'Failed to reset password';
+          : err?.response?.data?.message || 'Failed to reset password';
       setError('root', {
         message,
       });
     }
   };
-
-  // If token is missing or invalid
-  if (tokenError) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h1
-            className="text-2xl font-bold tracking-tight"
-            style={{ color: 'var(--neu-text)' }}
-          >
-            Invalid Reset Link
-          </h1>
-          <p className={styles.neuTextSecondary}>
-            This password reset link is invalid or has expired
-          </p>
-        </div>
-
-        <div className={`${styles.neuAuthCard} p-6`}>
-          <p className={`mb-3 text-sm font-medium ${styles.neuLabel}`}>
-            What can you do?
-          </p>
-          <p className={`text-sm ${styles.neuTextSecondary}`}>
-            • Password reset links expire after 1 hour
-          </p>
-          <p className={`text-sm ${styles.neuTextSecondary}`}>
-            • The link can only be used once
-          </p>
-          <p className={`text-sm ${styles.neuTextSecondary}`}>
-            • Make sure you&apos;re using the latest email
-          </p>
-          <div className="mt-6">
-            <Link
-              href="/forgot-password"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3.5 no-underline`}
-            >
-              <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Request New Reset Link
-              </span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // If password reset is successful
   if (resetPasswordMutation.isSuccess) {
@@ -192,8 +157,37 @@ function ResetPasswordContent() {
 
       <div className={`${styles.neuAuthCard} p-6 sm:p-8`}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <input type="hidden" {...register('token')} />
           <div className="space-y-4">
+            <NeuField
+              id="email"
+              label="Email Address"
+              icon={Mail}
+              type="email"
+              autoComplete="email"
+              error={errors.email}
+              register={register}
+              registerName="email"
+            />
+            <div>
+              <label
+                htmlFor="otp"
+                className={`mb-1 block text-sm font-medium ${styles.neuLabel}`}
+              >
+                Verification code (6 digits)
+              </label>
+              <input
+                id="otp"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                className={`w-full rounded-xl border bg-white/5 px-4 py-3 font-mono text-lg tracking-[0.4em] ${styles.neuInput}`}
+                {...register('otp')}
+              />
+              {errors.otp && (
+                <p className="mt-1 text-sm text-red-400">{errors.otp.message}</p>
+              )}
+            </div>
             <NeuPasswordField
               id="password"
               label="New Password"
@@ -221,6 +215,7 @@ function ResetPasswordContent() {
               showPassword={showConfirmPassword}
               onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
             />
+            <TurnstileWidget widgetRef={turnstileRef} size="compact" />
             <div className={styles.neuTermsSurface}>
               <p className={`mb-2 text-sm font-medium ${styles.neuLabel}`}>
                 Password must contain:
@@ -249,6 +244,17 @@ function ResetPasswordContent() {
               <ArrowRight className="h-4 w-4 text-white" />
             </button>
             <Link
+              href="/forgot-password"
+              className={`${styles.neuBtnBack} flex items-center justify-center rounded-xl py-3`}
+            >
+              <span
+                className="text-sm font-semibold"
+                style={{ color: 'var(--neu-text)' }}
+              >
+                Request new code
+              </span>
+            </Link>
+            <Link
               href="/login"
               className={`${styles.neuBtnBack} flex items-center justify-center rounded-xl py-3`}
             >
@@ -272,7 +278,7 @@ function ResetPasswordContent() {
 
 /**
  * Reset Password Page
- * Set new password using reset token
+ * Set new password using email + OTP (breaking change: no longer uses token from email link)
  */
 export default function ResetPasswordPage() {
   return (

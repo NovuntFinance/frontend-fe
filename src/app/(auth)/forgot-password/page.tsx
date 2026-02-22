@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,8 @@ import {
 import { z } from 'zod';
 import { useRequestPasswordReset } from '@/lib/mutations';
 import { NeuField } from '@/components/auth/NeuField';
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import styles from '@/styles/auth.module.css';
 
 const forgotPasswordSchema = z.object({
@@ -33,6 +35,8 @@ function ForgotPasswordContent() {
   const searchParams = useSearchParams();
   const forgotPasswordMutation = useRequestPasswordReset();
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const { cooldownSeconds, isOnCooldown, triggerCooldown } = useOtpCooldown();
 
   const {
     register,
@@ -57,20 +61,41 @@ function ForgotPasswordContent() {
 
   // Handle form submission
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    try {
-      await forgotPasswordMutation.mutateAsync(data);
-      setSubmittedEmail(data.email);
-    } catch (error: unknown) {
-      const message =
-        error &&
-        typeof error === 'object' &&
-        'message' in error &&
-        typeof (error as { message?: string }).message === 'string'
-          ? (error as { message: string }).message
-          : 'Failed to send reset email';
+    const turnstileToken = turnstileRef.current?.getToken();
+    if (!turnstileToken) {
       setError('root', {
-        message,
+        message: 'Please complete the security verification',
       });
+      return;
+    }
+
+    try {
+      await forgotPasswordMutation.mutateAsync({
+        ...data,
+        'cf-turnstile-response': turnstileToken,
+      });
+      setSubmittedEmail(data.email);
+      turnstileRef.current?.reset();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { code?: string; waitSeconds?: number } } };
+      if (triggerCooldown(error)) {
+        setError('root', {
+          message: 'Please wait before requesting a new code',
+        });
+      } else if (err?.response?.data?.code === 'SUPPORT_REQUIRED') {
+        setError('root', {
+          message: 'Too many attempts. Please contact support or try again later.',
+        });
+      } else {
+        const message =
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof (error as { message?: string }).message === 'string'
+            ? (error as { message: string }).message
+            : 'Failed to send reset email';
+        setError('root', { message });
+      }
     }
   };
 
@@ -116,7 +141,7 @@ function ForgotPasswordContent() {
               1. Check your email inbox for a message from Novunt
             </p>
             <p className={`text-sm ${styles.neuTextSecondary}`}>
-              2. Click the reset link in the email (valid for 1 hour)
+              2. Enter the 6-digit code from the email on the reset page
             </p>
             <p className={`text-sm ${styles.neuTextSecondary}`}>
               3. Create a new strong password for your account
@@ -124,11 +149,19 @@ function ForgotPasswordContent() {
           </div>
           <div className="mt-6 flex flex-col gap-3">
             <Link
-              href="/login"
+              href={`/reset-password?email=${encodeURIComponent(submittedEmail)}`}
               className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3.5 no-underline`}
             >
-              <ArrowLeft className="h-4 w-4 text-white" />
               <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Enter verification code & reset password
+              </span>
+            </Link>
+            <Link
+              href="/login"
+              className={`${styles.neuBtnBack} flex w-full items-center justify-center gap-2 rounded-xl py-3.5 no-underline`}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm font-bold tracking-wider uppercase">
                 Back to Log In
               </span>
             </Link>
@@ -177,20 +210,23 @@ function ForgotPasswordContent() {
               register={register}
               registerName="email"
             />
+            <TurnstileWidget widgetRef={turnstileRef} size="compact" />
           </div>
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="submit"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || forgotPasswordMutation.isPending ? styles.neuBtnDisabled : ''}`}
-              disabled={isSubmitting || forgotPasswordMutation.isPending}
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || forgotPasswordMutation.isPending || isOnCooldown ? styles.neuBtnDisabled : ''}`}
+              disabled={isSubmitting || forgotPasswordMutation.isPending || isOnCooldown}
             >
               {(isSubmitting || forgotPasswordMutation.isPending) && (
                 <Loader2 className="h-4 w-4 animate-spin text-white" />
               )}
               <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Send Reset Link
+                {isOnCooldown
+                  ? `Resend in ${cooldownSeconds}s`
+                  : 'Send verification code'}
               </span>
-              <Send className="h-4 w-4 text-white" />
+              {!isOnCooldown && <Send className="h-4 w-4 text-white" />}
             </button>
           </div>
         </form>

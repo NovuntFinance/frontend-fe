@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useAuth } from '@/hooks/useAuth';
-import { useUpdateProfile } from '@/lib/mutations';
+import { useUpdateProfile, useChangePassword, useRequestChangePasswordOtp } from '@/lib/mutations';
 import { useProfile } from '@/lib/queries';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -56,6 +56,10 @@ import {
 import { Wallet, Copy, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MoratoriumCountdown } from '@/components/wallet/MoratoriumCountdown';
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/auth/TurnstileWidget';
+import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
+import { walletApi } from '@/services/walletApi';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 
 // Profile edit schema
 const profileEditSchema = z.object({
@@ -151,6 +155,24 @@ export function ProfileEditModal({
     undefined
   );
 
+  // Change password state (OTP flow per security handoff)
+  const changePasswordMutation = useChangePassword();
+  const requestChangePasswordOtp = useRequestChangePasswordOtp();
+  const [changePasswordOtp, setChangePasswordOtp] = useState('');
+  const [changePassword2FA, setChangePassword2FA] = useState('');
+  const [changePasswordOtpSent, setChangePasswordOtpSent] = useState(false);
+  const changePasswordTurnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const {
+    cooldownSeconds: changePasswordCooldownSeconds,
+    isOnCooldown: changePasswordIsOnCooldown,
+    triggerCooldown: changePasswordTriggerCooldown,
+  } = useOtpCooldown();
+  const {
+    cooldownSeconds: withdrawalAddressCooldownSeconds,
+    isOnCooldown: withdrawalAddressIsOnCooldown,
+    triggerCooldown: withdrawalAddressTriggerCooldown,
+  } = useOtpCooldown();
+
   // Withdrawal address state
   const { data: withdrawalAddressData, isLoading: withdrawalAddressLoading } =
     useDefaultWithdrawalAddress();
@@ -159,7 +181,12 @@ export function ProfileEditModal({
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
   const [withdrawalAddress2FA, setWithdrawalAddress2FA] = useState('');
+  const [withdrawalAddressOtp, setWithdrawalAddressOtp] = useState('');
+  const [withdrawalAddressOtpSent, setWithdrawalAddressOtpSent] = useState(false);
+  const [withdrawalAddressRequestingOtp, setWithdrawalAddressRequestingOtp] =
+    useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
+  const withdrawalAddressTurnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   // Profile edit form
   const {
@@ -388,19 +415,69 @@ export function ProfileEditModal({
     }
   };
 
-  const onSubmitPassword = async (data: ChangePasswordFormData) => {
+  const handleSendChangePasswordOtp = async () => {
+    const turnstileToken = changePasswordTurnstileRef.current?.getToken();
+    if (!turnstileToken) {
+      toast.error('Security verification required', {
+        description: 'Please complete the security check',
+      });
+      return;
+    }
     try {
-      // TODO: Implement password change API call
-      console.log('Change password:', {
+      await requestChangePasswordOtp.mutateAsync({
+        'cf-turnstile-response': turnstileToken,
+      });
+      setChangePasswordOtpSent(true);
+      changePasswordTurnstileRef.current?.reset();
+    } catch (err: unknown) {
+      changePasswordTriggerCooldown(err);
+      // Other errors handled by mutation
+    }
+  };
+
+  const onSubmitPassword = async (data: ChangePasswordFormData) => {
+    if (!changePasswordOtpSent || !changePasswordOtp || changePasswordOtp.length !== 6) {
+      toast.error('Verification required', {
+        description: 'Please request and enter the verification code from your email',
+      });
+      return;
+    }
+
+    const userHas2FA = user?.twoFAEnabled ?? false;
+    if (userHas2FA && (!changePassword2FA || changePassword2FA.length !== 6)) {
+      toast.error('2FA required', {
+        description: 'Please enter your 2FA code',
+      });
+      return;
+    }
+
+    const turnstileToken = changePasswordTurnstileRef.current?.getToken();
+    if (!turnstileToken) {
+      toast.error('Security verification required', {
+        description: 'Please complete the security check',
+      });
+      return;
+    }
+
+    try {
+      await changePasswordMutation.mutateAsync({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
+        emailOtp: changePasswordOtp,
+        twoFACode: userHas2FA ? changePassword2FA : undefined,
+        'cf-turnstile-response': turnstileToken,
       });
-      toast.success('Password changed successfully!');
       resetPasswordForm();
+      setChangePasswordOtp('');
+      setChangePassword2FA('');
+      setChangePasswordOtpSent(false);
       setActiveTab('personal');
-    } catch (error) {
-      console.error('Password change error:', error);
-      toast.error('Failed to change password. Please try again.');
+      changePasswordTurnstileRef.current?.reset();
+    } catch (err: any) {
+      if (err?.response?.data?.code === 'TURNSTILE_FAILED') {
+        changePasswordTurnstileRef.current?.reset();
+      }
+      // Error handled by mutation
     }
   };
 
@@ -931,6 +1008,71 @@ export function ProfileEditModal({
                 )}
               </div>
 
+              {/* Step 1: Send verification code */}
+              <div className="space-y-2">
+                <Label className="text-white/90">Step 1: Get verification code</Label>
+                <TurnstileWidget
+                  widgetRef={changePasswordTurnstileRef}
+                  size="compact"
+                />
+                {!changePasswordOtpSent ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendChangePasswordOtp}
+                    disabled={
+                      requestChangePasswordOtp.isPending ||
+                      changePasswordIsOnCooldown
+                    }
+                    className="w-full border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
+                  >
+                    {requestChangePasswordOtp.isPending ? (
+                      <>
+                        <NovuntSpinner size="sm" className="mr-2" />
+                        Sending...
+                      </>
+                    ) : changePasswordIsOnCooldown ? (
+                      `Resend in ${changePasswordCooldownSeconds}s`
+                    ) : (
+                      'Send verification code'
+                    )}
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="changePasswordOtp" className="text-white/90">
+                      Email verification code
+                    </Label>
+                    <Input
+                      id="changePasswordOtp"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={changePasswordOtp}
+                      onChange={(e) =>
+                        setChangePasswordOtp(e.target.value.replace(/\D/g, ''))
+                      }
+                      className="border-white/20 bg-white/10 font-mono text-center tracking-widest text-white placeholder:text-white/50"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-white/60">
+                  A 6-digit code will be sent to your email
+                </p>
+              </div>
+
+              {/* 2FA (when user has it enabled) */}
+              {user?.twoFAEnabled && (
+                <div className="space-y-2">
+                  <Label className="text-white/90">2FA code</Label>
+                  <TwoFactorInput
+                    value={changePassword2FA}
+                    onChange={setChangePassword2FA}
+                    onComplete={() => {}}
+                  />
+                </div>
+              )}
+
               {/* Submit Button */}
               <div className="flex justify-end gap-3 pt-4">
                 <Button
@@ -946,7 +1088,12 @@ export function ProfileEditModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isPasswordSubmitting}
+                  disabled={
+                    isPasswordSubmitting ||
+                    !changePasswordOtpSent ||
+                    changePasswordOtp.length !== 6 ||
+                    (user?.twoFAEnabled && changePassword2FA.length !== 6)
+                  }
                   className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white shadow-lg shadow-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/70 active:scale-[0.98]"
                 >
                   {isPasswordSubmitting ? (
@@ -1002,6 +1149,8 @@ export function ProfileEditModal({
                             setNewWithdrawalAddress(
                               withdrawalAddressData.address || ''
                             );
+                            setWithdrawalAddressOtp('');
+                            setWithdrawalAddressOtpSent(false);
                           }}
                           className="border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
                         >
@@ -1102,6 +1251,15 @@ export function ProfileEditModal({
                       return;
                     }
                     if (
+                      !withdrawalAddressOtpSent ||
+                      withdrawalAddressOtp.length !== 6
+                    ) {
+                      toast.error('Verification code required', {
+                        description: 'Please request and enter the code from your email.',
+                      });
+                      return;
+                    }
+                    if (
                       !withdrawalAddress2FA ||
                       withdrawalAddress2FA.length !== 6
                     ) {
@@ -1110,16 +1268,26 @@ export function ProfileEditModal({
                       });
                       return;
                     }
+                    const turnstileToken =
+                      withdrawalAddressTurnstileRef.current?.getToken();
+                    if (!turnstileToken) {
+                      toast.error('Security verification required');
+                      return;
+                    }
                     setWithdrawalAddress(
                       {
                         address: newWithdrawalAddress,
                         network: 'BEP20',
+                        emailOtp: withdrawalAddressOtp,
                         twoFACode: withdrawalAddress2FA,
+                        'cf-turnstile-response': turnstileToken,
                       },
                       {
                         onSuccess: () => {
                           setIsEditingAddress(false);
                           setWithdrawalAddress2FA('');
+                          setWithdrawalAddressOtp('');
+                          setWithdrawalAddressOtpSent(false);
                           toast.success(
                             'Withdrawal address updated successfully!'
                           );
@@ -1202,17 +1370,100 @@ export function ProfileEditModal({
                             withdrawalAddressData.address || ''
                           );
                           setWithdrawalAddress2FA('');
+                          setWithdrawalAddressOtp('');
+                          setWithdrawalAddressOtpSent(false);
                         }}
                         className="border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
                       >
                         Cancel
                       </Button>
                     )}
+                    <div className="space-y-2">
+                      <Label className="text-white/90">
+                        Step 1: Get verification code
+                      </Label>
+                      <TurnstileWidget
+                        widgetRef={withdrawalAddressTurnstileRef}
+                        size="compact"
+                      />
+                      {!withdrawalAddressOtpSent ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={async () => {
+                            if (!validateBEP20Address(newWithdrawalAddress)) {
+                              toast.error('Invalid address');
+                              return;
+                            }
+                            const token =
+                              withdrawalAddressTurnstileRef.current?.getToken();
+                            if (!token) {
+                              toast.error('Please complete the security check');
+                              return;
+                            }
+                            setWithdrawalAddressRequestingOtp(true);
+                            try {
+                              await walletApi.requestWalletAddressChangeOtp({
+                                address: newWithdrawalAddress,
+                                'cf-turnstile-response': token,
+                              });
+                              setWithdrawalAddressOtpSent(true);
+                              withdrawalAddressTurnstileRef.current?.reset();
+                              toast.success('Verification code sent');
+                            } catch (err: unknown) {
+                              if (withdrawalAddressTriggerCooldown(err)) {
+                                toast.error('Please wait before requesting a new code');
+                              } else {
+                                toast.error('Could not send code');
+                              }
+                            } finally {
+                              setWithdrawalAddressRequestingOtp(false);
+                            }
+                          }}
+                          disabled={
+                            withdrawalAddressRequestingOtp ||
+                            !newWithdrawalAddress ||
+                            withdrawalAddressIsOnCooldown
+                          }
+                          className="w-full border-white/20 bg-white/5 text-white/90 hover:bg-white/10"
+                        >
+                          {withdrawalAddressRequestingOtp
+                            ? 'Sending...'
+                            : withdrawalAddressIsOnCooldown
+                              ? `Resend in ${withdrawalAddressCooldownSeconds}s`
+                              : 'Send verification code'}
+                        </Button>
+                      ) : (
+                        <div>
+                          <Label
+                            htmlFor="withdrawalOtp"
+                            className="text-white/90"
+                          >
+                            Email verification code
+                          </Label>
+                          <Input
+                            id="withdrawalOtp"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={withdrawalAddressOtp}
+                            onChange={(e) =>
+                              setWithdrawalAddressOtp(
+                                e.target.value.replace(/\D/g, '')
+                              )
+                            }
+                            className="mt-2 font-mono text-center tracking-widest"
+                          />
+                        </div>
+                      )}
+                    </div>
                     <Button
                       type="submit"
                       disabled={
                         isSettingAddress ||
                         !newWithdrawalAddress ||
+                        !withdrawalAddressOtpSent ||
+                        withdrawalAddressOtp.length !== 6 ||
                         !withdrawalAddress2FA
                       }
                       className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/70 active:scale-[0.98]"

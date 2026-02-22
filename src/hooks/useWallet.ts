@@ -323,9 +323,16 @@ export function useSetDefaultWithdrawalAddress() {
   return useMutation({
     mutationFn: (payload: {
       address: string;
-      network: 'BEP20';
+      network?: 'BEP20';
+      emailOtp: string;
       twoFACode?: string;
-    }) => walletApi.setDefaultWithdrawalAddress(payload),
+      'cf-turnstile-response'?: string;
+      turnstileToken?: string;
+    }) =>
+      walletApi.setDefaultWithdrawalAddress({
+        ...payload,
+        network: payload.network ?? 'BEP20',
+      }),
     onSuccess: async (response) => {
       // API client may return unwrapped { address, hasDefaultAddress, ... } or wrapped { data }
       const data = response?.data ?? response;
@@ -427,8 +434,10 @@ export function useCreateWithdrawal() {
       amount: number;
       walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
       network?: 'BEP20'; // Only BEP20 is supported
-      twoFACode: string; // Required
+      twoFACode: string; // Required when 2FA is enabled
+      emailOtp: string; // Required: 6-digit OTP from email
       turnstileToken?: string; // Cloudflare Turnstile; required when backend has TURNSTILE_SECRET_KEY set
+      'cf-turnstile-response'?: string;
     }) => walletApi.createWithdrawal(payload),
     onSuccess: (response) => {
       // Invalidate wallet queries
@@ -493,6 +502,19 @@ export function useCreateWithdrawal() {
       } else if (code === 'INVALID_ADDRESS') {
         toast.error('Invalid address', {
           description: message,
+        });
+      } else if (code === 'SUPPORT_REQUIRED') {
+        toast.error('Too many attempts', {
+          description:
+            'Please contact support or try again later.',
+        });
+      } else if (
+        code === 'INVALID_EMAIL_OTP' ||
+        code === 'INVALID_OTP'
+      ) {
+        toast.error('Invalid verification code', {
+          description:
+            message || 'Invalid or expired code. Please request a new one.',
         });
       } else if (code === '2FA_REQUIRED' || code === '2FA_CODE_INVALID') {
         toast.error('2FA Error', {

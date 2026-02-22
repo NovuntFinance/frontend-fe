@@ -53,6 +53,8 @@ import {
   useSetDefaultWithdrawalAddress,
   useWallet,
 } from '@/hooks/useWallet';
+import { walletApi } from '@/services/walletApi';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { useWalletBalance } from '@/lib/queries';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -97,12 +99,27 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     'form'
   );
   const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [requestingOtp, setRequestingOtp] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [withdrawalResult, setWithdrawalResult] = useState<any>(null);
   const [addressToSet, setAddressToSet] = useState('');
   const [setup2FACode, setSetup2FACode] = useState('');
+  const [setupEmailOtp, setSetupEmailOtp] = useState('');
+  const [setupOtpSent, setSetupOtpSent] = useState(false);
+  const [setupRequestingOtp, setSetupRequestingOtp] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null); // Address detected from error response
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const setupTurnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const { cooldownSeconds, isOnCooldown, triggerCooldown, resetCooldown } =
+    useOtpCooldown();
+  const {
+    cooldownSeconds: setupCooldownSeconds,
+    isOnCooldown: setupIsOnCooldown,
+    triggerCooldown: setupTriggerCooldown,
+    resetCooldown: setupResetCooldown,
+  } = useOtpCooldown();
 
   // API hooks
   const queryClient = useQueryClient();
@@ -185,11 +202,17 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       reset();
       setStep('form');
       setTwoFactorCode('');
+      setEmailOtp('');
+      setOtpSent(false);
       setSetup2FACode('');
+      setSetupEmailOtp('');
+      setSetupOtpSent(false);
       setAddressToSet('');
       setWithdrawalResult(null);
+      resetCooldown();
+      setupResetCooldown();
     }
-  }, [open, reset]);
+  }, [open, reset, resetCooldown, setupResetCooldown]);
 
   // Prevent setup step if address is already set
   // Also handle case where backend says address exists but GET didn't return it
@@ -330,6 +353,14 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       return;
     }
 
+    // Check if email OTP is provided
+    if (!emailOtp || emailOtp.length !== 6 || !/^\d{6}$/.test(emailOtp)) {
+      toast.error('Verification code required', {
+        description: 'Please enter the 6-digit code sent to your email',
+      });
+      return;
+    }
+
     // Check if 2FA code is provided
     if (!twoFactorCode || twoFactorCode.length !== 6) {
       toast.error('2FA code required', {
@@ -339,15 +370,68 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       return;
     }
 
-    // Submit withdrawal with 2FA code
+    // Submit withdrawal with OTP and 2FA code
     // Backend will use default address automatically (BEP20 only)
-    await handleWithdrawalSubmit(data.amount, twoFactorCode);
+    await handleWithdrawalSubmit(data.amount, twoFactorCode, undefined, emailOtp);
+  };
+
+  const handleSendVerificationCode = async () => {
+    if (!amount || amount < minWithdrawal) {
+      toast.error('Invalid amount', {
+        description: `Minimum withdrawal is ${minWithdrawal} USDT`,
+      });
+      return;
+    }
+
+    const turnstileToken = turnstileRef.current?.getToken();
+    if (!turnstileToken) {
+      toast.error('Security verification required', {
+        description: 'Please complete the security check',
+      });
+      return;
+    }
+
+    setRequestingOtp(true);
+    try {
+      await walletApi.requestWithdrawalOtp({
+        amount,
+        'cf-turnstile-response': turnstileToken,
+      });
+      setOtpSent(true);
+      turnstileRef.current?.reset();
+      toast.success('Verification code sent', {
+        description: 'Check your email for the 6-digit code',
+      });
+    } catch (err: any) {
+      const errorData = err?.response?.data || err?.responseData;
+      if (triggerCooldown(err)) {
+        toast.error('Please wait', {
+          description:
+            errorData?.message || 'Please wait before requesting a new code',
+        });
+      } else if (errorData?.code === 'TURNSTILE_FAILED') {
+        turnstileRef.current?.reset();
+        toast.error('Security check failed');
+      } else if (errorData?.code === 'SUPPORT_REQUIRED') {
+        toast.error('Too many attempts', {
+          description: 'Please contact support or try again later',
+        });
+      } else {
+        toast.error('Could not send code', {
+          description:
+            errorData?.message || 'Please wait a moment and try again',
+        });
+      }
+    } finally {
+      setRequestingOtp(false);
+    }
   };
 
   const handleWithdrawalSubmit = async (
     amount: number,
     twoFACode: string,
-    customAddress?: string
+    customAddress?: string,
+    otp?: string
   ) => {
     try {
       // Build withdrawal payload
@@ -358,12 +442,15 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         walletAddress?: string;
         network: 'BEP20';
         twoFACode: string;
+        emailOtp: string;
         turnstileToken?: string;
+        'cf-turnstile-response'?: string;
       } = {
         amount,
         network: 'BEP20', // Only BEP20 is supported
         twoFACode,
-        ...(turnstileToken ? { turnstileToken } : {}),
+        emailOtp: otp!,
+        ...(turnstileToken ? { turnstileToken, 'cf-turnstile-response': turnstileToken } : {}),
       };
 
       // Only include walletAddress if user provided a custom address different from default
@@ -432,7 +519,14 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       return;
     }
 
-    await handleWithdrawalSubmit(amount, code);
+    if (!emailOtp || emailOtp.length !== 6) {
+      toast.error('Verification code required', {
+        description: 'Please enter the 6-digit code from your email',
+      });
+      return;
+    }
+
+    await handleWithdrawalSubmit(amount, code, undefined, emailOtp);
   };
 
   // Use withdrawal limits API balance, fallback to wallet balance if not available or is 0
@@ -578,6 +672,90 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     })()}
                 </div>
 
+                {/* Step 1: Send verification code for address setup */}
+                <div>
+                  <Label>Step 1: Get verification code</Label>
+                  <TurnstileWidget
+                    widgetRef={setupTurnstileRef}
+                    size="compact"
+                  />
+                  {!setupOtpSent ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-2 w-full"
+                      onClick={async () => {
+                        if (!addressToSet) {
+                          toast.error('Address required');
+                          return;
+                        }
+                        const token = setupTurnstileRef.current?.getToken();
+                        if (!token) {
+                          toast.error('Please complete the security check');
+                          return;
+                        }
+                        setSetupRequestingOtp(true);
+                        try {
+                          await walletApi.requestWalletAddressChangeOtp({
+                            address: addressToSet,
+                            'cf-turnstile-response': token,
+                          });
+                          setSetupOtpSent(true);
+                          setupTurnstileRef.current?.reset();
+                          toast.success('Verification code sent');
+                        } catch (err: any) {
+                          const errData = err?.response?.data || err?.responseData;
+                          if (setupTriggerCooldown(err)) {
+                            toast.error('Please wait before requesting a new code');
+                          } else if (errData?.code === 'TURNSTILE_FAILED') {
+                            setupTurnstileRef.current?.reset();
+                            toast.error('Security check failed');
+                          } else if (errData?.code === 'SUPPORT_REQUIRED') {
+                            toast.error('Too many attempts. Please contact support');
+                          } else {
+                            toast.error('Could not send code');
+                          }
+                        } finally {
+                          setSetupRequestingOtp(false);
+                        }
+                      }}
+                          disabled={
+                            setupRequestingOtp ||
+                            !addressToSet ||
+                            addressToSet.startsWith('T') ||
+                            setupIsOnCooldown
+                          }
+                    >
+                          {setupRequestingOtp ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : setupIsOnCooldown ? (
+                            `Resend in ${setupCooldownSeconds}s`
+                          ) : (
+                            'Send verification code'
+                          )}
+                    </Button>
+                  ) : (
+                    <div className="mt-2">
+                      <Label htmlFor="setup-otp">Email verification code</Label>
+                      <Input
+                        id="setup-otp"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="000000"
+                        value={setupEmailOtp}
+                        onChange={(e) =>
+                          setSetupEmailOtp(e.target.value.replace(/\D/g, ''))
+                        }
+                        className="mt-2 font-mono text-center tracking-widest"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* 2FA Input for Setup */}
                 <div>
                   <Label htmlFor="setup-2fa">2FA Code (Required)</Label>
@@ -591,6 +769,20 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             description:
                               'Please enter or generate a wallet address',
                           });
+                          return;
+                        }
+
+                        if (!setupOtpSent || setupEmailOtp.length !== 6) {
+                          toast.error('Verification code required', {
+                            description: 'Please enter the 6-digit code from your email',
+                          });
+                          return;
+                        }
+
+                        const turnstileToken =
+                          setupTurnstileRef.current?.getToken();
+                        if (!turnstileToken) {
+                          toast.error('Please complete the security check');
                           return;
                         }
 
@@ -621,8 +813,10 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         try {
                           const response = await setDefaultAddress.mutateAsync({
                             address: addressToSet,
-                            network: 'BEP20', // Explicitly set BEP20
-                            twoFACode: code, // 2FA code in request body
+                            network: 'BEP20',
+                            emailOtp: setupEmailOtp,
+                            twoFACode: code,
+                            'cf-turnstile-response': turnstileToken,
                           });
                           // Update cache immediately with response data if available
                           if (response?.data) {
@@ -647,6 +841,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                           setStep('form');
                           setAddressToSet('');
                           setSetup2FACode('');
+                          setSetupEmailOtp('');
+                          setSetupOtpSent(false);
                         } catch (error) {
                           // Error handled by mutation
                         }
@@ -737,12 +933,25 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         return;
                       }
 
+                      const turnstileToken =
+                        setupTurnstileRef.current?.getToken();
+                      if (!turnstileToken) {
+                        toast.error('Please complete the security check');
+                        return;
+                      }
+                      if (!setupOtpSent || setupEmailOtp.length !== 6) {
+                        toast.error('Verification code required');
+                        return;
+                      }
+
                       // Set the address (network defaults to BEP20 on backend)
                       try {
                         const response = await setDefaultAddress.mutateAsync({
                           address: addressToSet,
-                          network: 'BEP20', // Explicitly set BEP20
-                          twoFACode: setup2FACode, // 2FA code in request body
+                          network: 'BEP20',
+                          emailOtp: setupEmailOtp,
+                          twoFACode: setup2FACode,
+                          'cf-turnstile-response': turnstileToken,
                         });
                         // Update cache immediately with response data if available
                         if (response?.data) {
@@ -774,6 +983,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     disabled={
                       setDefaultAddress.isPending ||
                       !addressToSet ||
+                      !setupOtpSent ||
+                      setupEmailOtp.length !== 6 ||
                       setup2FACode.length !== 6
                     }
                     className="flex-1"
@@ -1050,6 +1261,57 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                 {/* Cloudflare Turnstile */}
                 <TurnstileWidget widgetRef={turnstileRef} size="normal" />
 
+                {/* Send verification code - must complete before OTP + 2FA */}
+                {!otpSent ? (
+                  <div>
+                    <Label>Step 1: Get verification code</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-2 w-full"
+                      onClick={handleSendVerificationCode}
+                        disabled={
+                        requestingOtp ||
+                        !amount ||
+                        amount < minWithdrawal ||
+                        !hasDefaultAddress ||
+                        isOnCooldown
+                      }
+                    >
+                      {requestingOtp ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : isOnCooldown ? (
+                        `Resend in ${cooldownSeconds}s`
+                      ) : (
+                        'Send verification code'
+                      )}
+                    </Button>
+                    <p className="text-muted-foreground mt-2 text-xs">
+                      A 6-digit code will be sent to your email
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="emailOtp">Email verification code</Label>
+                    <Input
+                      id="emailOtp"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={emailOtp}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '');
+                        setEmailOtp(v);
+                      }}
+                      className="mt-2 font-mono text-center tracking-widest"
+                    />
+                  </div>
+                )}
+
                 {/* 2FA Input */}
                 <div>
                   <Label htmlFor="twoFACode">2FA Code (Required)</Label>
@@ -1106,6 +1368,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                     isLocked ||
                     !amount ||
                     amount < minWithdrawal ||
+                    !otpSent ||
+                    emailOtp.length !== 6 ||
                     twoFactorCode.length !== 6
                   }
                   className="w-full"

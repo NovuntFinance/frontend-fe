@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   Shield,
   Clock,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
@@ -22,9 +24,14 @@ import { useWalletBalance } from '@/lib/queries';
 import { useDebounce } from '@/hooks/useDebounce';
 import { transferApi } from '@/services/transferApi';
 import type { TransferResponse } from '@/types/transfer';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queries';
 import { useTransferLimits } from '@/hooks/useTransferLimits';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { fmt4 } from '@/utils/formatters';
 
 interface TransferModalProps {
@@ -59,9 +66,17 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpExpiresIn, setOtpExpiresIn] = useState<number | null>(null);
+  const [requestingOtp, setRequestingOtp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const turnstileConfirmRef = useRef<TurnstileWidgetHandle | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const { cooldownSeconds, isOnCooldown, triggerCooldown, resetCooldown } =
+    useOtpCooldown();
   const [transferResponse, setTransferResponse] =
     useState<TransferResponse | null>(null);
 
@@ -85,10 +100,14 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       setAmount('');
       setMemo('');
       setTwoFACode('');
+      setEmailOtp('');
+      setOtpSent(false);
+      setOtpExpiresIn(null);
       setError('');
+      resetCooldown();
       refetch();
     }
-  }, [isOpen, refetch]);
+  }, [isOpen, refetch, resetCooldown]);
 
   // Search users with debounce
   // Only shows past recipients from transfer history
@@ -131,7 +150,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     setError('');
   };
 
-  const handleProceedTo2FA = () => {
+  const handleSendVerificationCode = async () => {
     const validation = transferApi.validateTransferAmount(
       parseFloat(amount),
       availableBalance
@@ -142,17 +161,83 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       return;
     }
 
+    const turnstileToken =
+      turnstileRef.current?.getToken() || undefined;
+    if (!turnstileToken) {
+      setError('Please complete the security verification');
+      return;
+    }
+
     setError('');
-    setStep('2fa');
+    setRequestingOtp(true);
+
+    try {
+      const identifier = selectedUser
+        ? selectedUser.email && selectedUser.email.includes('@')
+          ? { recipientEmail: selectedUser.email }
+          : selectedUser.userId && /^[0-9a-fA-F]{24}$/.test(selectedUser.userId)
+            ? { recipientId: selectedUser.userId }
+            : { recipientUsername: selectedUser.username }
+        : {};
+
+      const response = await transferApi.requestTransferOtp({
+        ...identifier,
+        amount: parseFloat(amount),
+        'cf-turnstile-response': turnstileToken,
+      });
+
+      setOtpSent(true);
+      setOtpExpiresIn(response.expiresIn ?? 600);
+      setStep('2fa');
+      turnstileRef.current?.reset();
+      toast.success('Verification code sent', {
+        description: 'Check your email for the 6-digit code',
+      });
+    } catch (err: any) {
+      const errorData = err?.response?.data || err?.responseData || err;
+      if (triggerCooldown(err)) {
+        setError(
+          errorData?.message || 'Please wait before requesting a new code'
+        );
+      } else if (errorData?.code === 'TURNSTILE_FAILED') {
+        turnstileRef.current?.reset();
+        setError('Security check failed. Please try again.');
+      } else if (errorData?.code === 'SUPPORT_REQUIRED') {
+        setError(
+          'Too many failed attempts. Please contact support or try again later.'
+        );
+      } else {
+        setError(
+          errorData?.message ||
+            transferApi.formatErrorMessage(err) ||
+            'Could not send verification code'
+        );
+      }
+    } finally {
+      setRequestingOtp(false);
+    }
   };
 
   const handleSubmitTransfer = async () => {
     if (!selectedUser) return;
 
+    // Validate email OTP
+    if (!emailOtp || emailOtp.length !== 6 || !/^\d{6}$/.test(emailOtp)) {
+      setError('Please enter the 6-digit verification code from your email');
+      return;
+    }
+
     // Validate 2FA code
     const twoFAValidation = transferApi.validate2FACode(twoFACode);
     if (!twoFAValidation.isValid) {
       setError(twoFAValidation.error || 'Invalid 2FA code');
+      return;
+    }
+
+    const turnstileToken =
+      turnstileConfirmRef.current?.getToken() || undefined;
+    if (!turnstileToken) {
+      setError('Please complete the security verification');
       return;
     }
 
@@ -166,6 +251,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
         amount: parseFloat(amount),
         memo: memo || undefined,
         twoFACode: twoFACode,
+        emailOtp: emailOtp,
+        'cf-turnstile-response': turnstileToken,
       };
 
       // If selectedUser has an email and it looks like one, use email
@@ -204,6 +291,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       refetch();
     } catch (err: any) {
+      const errorData = err?.response?.data || err?.responseData || err;
+      if (errorData?.code === 'TURNSTILE_FAILED') {
+        turnstileConfirmRef.current?.reset();
+      }
       const errorMessage = transferApi.formatErrorMessage(err);
       setError(errorMessage);
 
@@ -212,8 +303,9 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
         duration: 5000,
       });
 
-      // Clear 2FA code on error to allow retry
+      // Clear codes on error to allow retry
       setTwoFACode('');
+      setEmailOtp('');
     } finally {
       setLoading(false);
     }
@@ -555,6 +647,9 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       </div>
                     )}
 
+                    {/* Cloudflare Turnstile */}
+                    <TurnstileWidget widgetRef={turnstileRef} size="compact" />
+
                     {error && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -572,12 +667,32 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         Back
                       </Button>
                       <Button
-                        onClick={handleProceedTo2FA}
-                        disabled={!amount || parseFloat(amount) < MIN_TRANSFER}
+                        onClick={handleSendVerificationCode}
+                        disabled={
+                          !amount ||
+                          parseFloat(amount) < MIN_TRANSFER ||
+                          requestingOtp ||
+                          isOnCooldown
+                        }
                         className="bg-accent hover:bg-accent/90 w-full flex-1 sm:w-auto"
                         size="lg"
                       >
-                        Continue
+                        {requestingOtp ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : isOnCooldown ? (
+                          <>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Resend in {cooldownSeconds}s
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send verification code
+                          </>
+                        )}
                       </Button>
                     </div>
                   </motion.div>
@@ -672,6 +787,40 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         </div>
                       </div>
 
+                      {/* Email OTP Input */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <Mail className="text-accent h-5 w-5" />
+                          <Label
+                            htmlFor="emailOtp"
+                            className="text-base font-semibold"
+                          >
+                            Email verification code
+                          </Label>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="emailOtp"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={6}
+                            placeholder="000000"
+                            value={emailOtp}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              setEmailOtp(value);
+                              setError('');
+                            }}
+                            className="bg-background/50 focus:border-accent focus:ring-accent/20 h-14 border-2 text-center font-mono text-2xl tracking-[0.4em] focus:ring-2"
+                            autoFocus
+                          />
+                        </div>
+                        <p className="text-muted-foreground text-center text-xs">
+                          Enter the 6-digit code sent to your email
+                        </p>
+                      </div>
+
                       {/* 2FA Code Input - Redesigned */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-center gap-2">
@@ -699,7 +848,6 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               setError('');
                             }}
                             className="bg-background/50 focus:border-accent focus:ring-accent/20 h-16 border-2 text-center font-mono text-3xl tracking-[0.5em] focus:ring-2"
-                            autoFocus
                           />
                           {twoFACode.length > 0 && (
                             <motion.div
@@ -719,6 +867,12 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                           </p>
                         </div>
                       </div>
+
+                      {/* Cloudflare Turnstile for submit */}
+                      <TurnstileWidget
+                        widgetRef={turnstileConfirmRef}
+                        size="compact"
+                      />
 
                       {error && (
                         <Alert
@@ -745,7 +899,11 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       </Button>
                       <Button
                         onClick={handleSubmitTransfer}
-                        disabled={loading || twoFACode.length !== 6}
+                        disabled={
+                          loading ||
+                          emailOtp.length !== 6 ||
+                          twoFACode.length !== 6
+                        }
                         className="bg-accent hover:bg-accent/90 shadow-accent/20 w-full flex-1 border-2 border-transparent shadow-lg sm:w-auto"
                         size="lg"
                       >

@@ -638,9 +638,24 @@ export function useRequestPasswordReset() {
     },
     onError: (error: unknown) => {
       console.error('[useRequestPasswordReset] Request failed:', error);
-      toast.error('Request failed', {
-        description: extractErrorMessage(error, 'Could not send reset code'),
-      });
+      const err = error as {
+        response?: { data?: { code?: string; waitSeconds?: number } };
+      };
+      const code = err?.response?.data?.code;
+      const waitSeconds = err?.response?.data?.waitSeconds;
+      if (code === 'SUPPORT_REQUIRED') {
+        toast.error('Too many attempts', {
+          description: 'Please contact support or try again later.',
+        });
+      } else if (typeof waitSeconds === 'number' && waitSeconds > 0) {
+        toast.error('Please wait', {
+          description: `Please wait ${waitSeconds} seconds before requesting a new code`,
+        });
+      } else {
+        toast.error('Request failed', {
+          description: extractErrorMessage(error, 'Could not send reset code'),
+        });
+      }
     },
   });
 }
@@ -664,16 +679,69 @@ export function useResetPassword() {
     },
     onError: (error: unknown) => {
       console.error('[useResetPassword] Reset failed:', error);
-      toast.error('Reset failed', {
-        description: extractErrorMessage(error, 'Invalid or expired OTP code'),
-      });
+      const err = error as { response?: { data?: { code?: string } } };
+      if (err?.response?.data?.code === 'SUPPORT_REQUIRED') {
+        toast.error('Too many attempts', {
+          description: 'Please contact support or try again later.',
+        });
+      } else {
+        toast.error('Reset failed', {
+          description: extractErrorMessage(
+            error,
+            'Invalid or expired OTP code'
+          ),
+        });
+      }
     },
   });
 }
 
 /**
- * Update password
- * Phase 1: PATCH /auth/password
+ * Request change password OTP
+ * BetterAuth: POST /better-auth/change-password/request-otp
+ */
+export function useRequestChangePasswordOtp() {
+  return useMutation({
+    mutationFn: async (payload: {
+      'cf-turnstile-response'?: string;
+      turnstileToken?: string;
+    }) => authService.requestChangePasswordOtp(payload),
+    onSuccess: (response) => {
+      toast.success('Verification code sent', {
+        description:
+          response.message || 'Check your email for the 6-digit code',
+      });
+    },
+    onError: (error: unknown) => {
+      const err = error as {
+        response?: { data?: { code?: string; waitSeconds?: number } };
+      };
+      const code = err?.response?.data?.code;
+      const waitSeconds = err?.response?.data?.waitSeconds;
+      if (code === 'TURNSTILE_FAILED') {
+        toast.error('Security check failed', {
+          description: 'Please complete the verification and try again.',
+        });
+      } else if (code === 'SUPPORT_REQUIRED') {
+        toast.error('Too many attempts', {
+          description: 'Please contact support or try again later.',
+        });
+      } else if (typeof waitSeconds === 'number' && waitSeconds > 0) {
+        toast.error('Please wait', {
+          description: `Please wait ${waitSeconds} seconds before requesting a new code`,
+        });
+      } else {
+        toast.error('Could not send code', {
+          description: extractErrorMessage(error, 'Please try again later'),
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Update password (requires OTP + 2FA when enabled)
+ * BetterAuth: POST /better-auth/change-password
  */
 export function useChangePassword() {
   return useMutation({

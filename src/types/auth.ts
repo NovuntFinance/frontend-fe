@@ -68,20 +68,31 @@ export interface RefreshTokenRequest {
 
 export interface RequestPasswordResetRequest {
   email: string;
+  /** Cloudflare Turnstile token - use cf-turnstile-response or turnstileToken */
+  'cf-turnstile-response'?: string;
+  turnstileToken?: string;
 }
 
-// Phase 1 password reset uses OTP code, not token
+// Phase 1 password reset uses email + OTP (breaking change: no longer uses token from email link)
 export interface ResetPasswordRequest {
   email: string;
-  otpCode: string;
+  otp: string; // 6-digit OTP from email (backend uses 'otp', not otpCode)
   newPassword: string;
-  confirmPassword: string;
+  confirmPassword?: string; // Optional for backend, used for client-side validation
+  /** Cloudflare Turnstile token */
+  'cf-turnstile-response'?: string;
+  turnstileToken?: string;
 }
 
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
-  confirmPassword: string;
+  confirmPassword?: string;
+  emailOtp: string; // 6-digit OTP from email
+  twoFACode?: string; // Required when user has 2FA enabled
+  /** Cloudflare Turnstile token */
+  'cf-turnstile-response'?: string;
+  turnstileToken?: string;
 }
 
 export interface RevokeTokenRequest {
@@ -440,6 +451,16 @@ export const ERROR_MESSAGES: Record<string, string> = {
   SERVER_ERROR: 'Server error. Please try again later.',
   NETWORK_ERROR: 'Network error. Please check your connection.',
   CORS_ERROR: 'Unable to connect to the server. Please contact support.',
+
+  // Security handoff error codes
+  TURNSTILE_FAILED: 'Security check failed. Please try again.',
+  INVALID_EMAIL_OTP: 'Invalid or expired verification code.',
+  INVALID_2FA_CODE: 'Invalid 2FA code. Please try again.',
+  '2FA_REQUIRED': '2FA code is required.',
+  OTP_SEND_FAILED: 'Could not send code. Please wait and try again.',
+  INVALID_OTP: 'Invalid or expired verification code.',
+  SUPPORT_REQUIRED:
+    'Too many failed attempts. Please contact support or try again later.',
 };
 
 // ============================================================================
