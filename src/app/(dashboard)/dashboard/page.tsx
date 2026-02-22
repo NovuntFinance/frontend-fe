@@ -583,7 +583,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen lg:h-full lg:min-h-0">
-      <div className="space-y-1 sm:space-y-2 lg:grid lg:h-full lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+      <div className="space-y-1 sm:space-y-2 lg:grid lg:h-full lg:min-h-0 lg:grid-cols-3 lg:gap-4 lg:space-y-0">
         {/* Column 1 - Balance, quick actions, stats carousel (Registration Bonus is in modal via 10% Bonus button) */}
         <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
           <div className="lg:max-w-md lg:max-w-none">

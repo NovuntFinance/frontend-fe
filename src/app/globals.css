@@ -171,6 +171,7 @@
 /* Dashboard: force 100vh cap on large screens so layout is compact (works even if Tailwind lg: classes differ in build) */
 @media (min-width: 1024px) {
   .dashboard-viewport-cap {
+    height: 100vh;
     max-height: 100vh;
     overflow: hidden;
   }
