@@ -1035,18 +1035,18 @@ export default function DashboardPage() {
                         transition={{ delay: 0.3 + index * 0.05 }}
                         className="flex flex-col items-center gap-1.5"
                       >
-                        {/* Circular neumorphic button */}
+                        {/* Circular neumorphic button - use literals so neumorphic look works on live (no dependency on undefined CSS vars) */}
                         <div
                           className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
                           style={{
                             background:
                               hoveredButtonIndex === index
-                                ? 'var(--app-accent)'
-                                : 'var(--app-surface)',
+                                ? NEU_TEXT
+                                : NEU_SURFACE,
                             boxShadow: `
-                            6px 6px 12px var(--app-shadow-dark),
-                            -6px -6px 12px var(--app-shadow-light),
-                            0 0 0 1px var(--app-border)
+                            6px 6px 12px ${NEU_SHADOW_DARK},
+                            -6px -6px 12px ${NEU_SHADOW_LIGHT},
+                            0 0 0 1px rgba(255, 255, 255, 0.05)
                           `,
                           }}
                           onMouseEnter={(e) => {
