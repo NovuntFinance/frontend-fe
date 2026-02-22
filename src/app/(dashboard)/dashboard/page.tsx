@@ -1040,8 +1040,9 @@ export default function DashboardPage() {
                   const isStreak = button.id === 'staking-streak';
                   const isRank = button.id === 'rank';
                   const isWelcomeBonus = button.id === 'welcome-bonus';
+                  // Visual content only (no interactive element) to avoid nested button hydration
                   const buttonContent = (
-                    <motion.button
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 + index * 0.05 }}
@@ -1127,30 +1128,22 @@ export default function DashboardPage() {
                       >
                         {button.label}
                       </span>
-                    </motion.button>
+                    </motion.div>
                   );
 
                   return (
                     <React.Fragment key={button.id}>
                       {isWelcomeBonus ? (
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           onClick={() => openModal('registration-bonus')}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              openModal('registration-bonus');
-                            }
-                          }}
                           className="cursor-pointer border-0 bg-transparent p-0 text-left"
                         >
                           {buttonContent}
-                        </div>
+                        </button>
                       ) : isSettings ? (
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             window.dispatchEvent(
@@ -1159,50 +1152,26 @@ export default function DashboardPage() {
                               })
                             );
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              window.dispatchEvent(
-                                new CustomEvent('openProfileModal', {
-                                  bubbles: true,
-                                })
-                              );
-                            }
-                          }}
                           className="cursor-pointer border-0 bg-transparent p-0 text-left"
                         >
                           {buttonContent}
-                        </div>
+                        </button>
                       ) : isStreak ? (
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           onClick={() => setStreakModalOpen(true)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setStreakModalOpen(true);
-                            }
-                          }}
                           className="cursor-pointer border-0 bg-transparent p-0 text-left"
                         >
                           {buttonContent}
-                        </div>
+                        </button>
                       ) : isRank ? (
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           onClick={() => setRankModalOpen(true)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setRankModalOpen(true);
-                            }
-                          }}
                           className="cursor-pointer border-0 bg-transparent p-0 text-left"
                         >
                           {buttonContent}
-                        </div>
+                        </button>
                       ) : (
                         <Link href={button.href}>{buttonContent}</Link>
                       )}

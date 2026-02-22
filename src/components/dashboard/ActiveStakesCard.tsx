@@ -8,7 +8,6 @@ import { useUIStore } from '@/store/uiStore';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import type { Stake } from '@/lib/queries/stakingQueries';
 import neuStyles from '@/styles/neumorphic.module.css';
-import neuStyles from '@/styles/neumorphic.module.css';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
@@ -233,12 +232,10 @@ export function ActiveStakesCard() {
         transition={{ delay: 0.42 }}
       >
         {isLoading ? (
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={goToStakes}
-            onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 transition-opacity hover:opacity-95 sm:p-6"
+            className="w-full cursor-pointer rounded-2xl p-5 text-left transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               boxShadow: `
@@ -249,14 +246,12 @@ export function ActiveStakesCard() {
             }}
           >
             <LoadingStates.Card height="h-48" />
-          </div>
+          </button>
         ) : error ? (
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={goToStakes}
-            onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
+            className="w-full cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               color: NEU_TEXT_MUTED,
@@ -268,7 +263,7 @@ export function ActiveStakesCard() {
             }}
           >
             Unable to load stakes. Try again later.
-          </div>
+          </button>
         ) : count === 0 ? (
           <div
             className="rounded-2xl p-6 text-center sm:p-8"
