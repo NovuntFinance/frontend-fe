@@ -62,6 +62,70 @@ const getMarketTypeBadge = (type: MarketType) => {
 };
 
 const ROTATE_INTERVAL_MS = 5000;
+const LARGE_SCREEN_ROWS = 2;
+
+function TradeRow({ trade }: { trade: TradingSignal }) {
+  return (
+    <div className="w-full space-y-1">
+      {/* Row 1: Icon + Symbol + metadata */}
+      <div className="flex items-center gap-1.5">
+        <div
+          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
+          style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+        >
+          {trade.direction === 'LONG' ? (
+            <TrendingUp className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
+          ) : (
+            <TrendingDown className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            {trade.symbol} {trade.direction}
+          </p>
+          <p className="text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+            {getTimeAgo(trade.minutesAgo)} • {getMarketTypeBadge(trade.marketType).label}
+          </p>
+        </div>
+      </div>
+      {/* Row 2: Entry | Exit compact */}
+      <div className="grid grid-cols-2 gap-2 rounded border border-white/5 bg-black/20 px-2 py-1.5">
+        <div>
+          <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Entry</p>
+          <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+            {trade.entryPrice.toFixed(trade.symbol.includes('JPY') ? 3 : 5)}
+          </p>
+          <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
+            @ {new Date(trade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+          </p>
+        </div>
+        <div>
+          <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Exit</p>
+          <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+            {trade.exitPrice.toFixed(trade.symbol.includes('JPY') ? 3 : 5)}
+          </p>
+          <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
+            @ {new Date(trade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+          </p>
+        </div>
+      </div>
+      {/* Row 3: P/L + status */}
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <span
+          className="text-sm font-bold"
+          style={{ color: trade.isProfitable ? '#22c55e' : '#ef4444' }}
+        >
+          {trade.isProfitable ? '+' : ''}
+          {trade.profitUSD >= 0 ? '$' : '-$'}
+          {Math.abs(trade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+        <span className="text-[9px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+          {trade.isProfitable ? 'Profitable' : 'Closed'}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function LiveTradingSignals() {
   const [trades, setTrades] = useState<TradingSignal[]>([]);
@@ -69,6 +133,7 @@ export function LiveTradingSignals() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date());
   const [error, setError] = useState<string | null>(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
   // Fetch trading signals from backend
   const loadSignals = async () => {
@@ -157,6 +222,15 @@ export function LiveTradingSignals() {
     }
   };
 
+  // Large screen: show 4 rows (lg breakpoint)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = () => setIsLargeScreen(mq.matches);
+    handler();
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // Load signals on mount and refresh every 30 seconds
   useEffect(() => {
     loadSignals();
@@ -175,9 +249,9 @@ export function LiveTradingSignals() {
     if (trades.length > 0) setCurrentIndex(0);
   }, [tradesKey, trades.length]);
 
-  // Auto-rotate through trades every 5s (same as Recent Activity)
+  // Auto-rotate every 5s (same on small and large screens)
   useEffect(() => {
-    if (trades.length === 0 || trades.length <= 1) return;
+    if (trades.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % trades.length);
     }, ROTATE_INTERVAL_MS);
@@ -185,6 +259,10 @@ export function LiveTradingSignals() {
   }, [trades.length]);
 
   const currentTrade = trades.length > 0 ? trades[currentIndex] : null;
+  // Large screens: show 2 rows at a time, sliding window from currentIndex (same rotation as small)
+  const tradesToShow = isLargeScreen && trades.length > 0
+    ? Array.from({ length: LARGE_SCREEN_ROWS }, (_, i) => trades[(currentIndex + i) % trades.length])
+    : [];
 
   return (
     <Card
@@ -202,6 +280,26 @@ export function LiveTradingSignals() {
             <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: NEU_TEXT_MUTED }}>
               <p>{error}</p>
             </div>
+          ) : isLargeScreen && tradesToShow.length > 0 ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col gap-2"
+              >
+                {tradesToShow.map((trade) => (
+                  <div
+                    key={trade.id}
+                    className="rounded-lg border border-white/5 bg-black/10 p-2"
+                  >
+                    <TradeRow trade={trade} />
+                  </div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
           ) : currentTrade ? (
             <AnimatePresence mode="wait">
               <motion.div
@@ -210,67 +308,9 @@ export function LiveTradingSignals() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="w-full space-y-1"
+                className="w-full"
               >
-                {/* Row 1: Icon + Symbol + metadata */}
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
-                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
-                  >
-                    {currentTrade.direction === 'LONG' ? (
-                      <TrendingUp className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      {currentTrade.symbol} {currentTrade.direction}
-                    </p>
-                    <p className="text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                      {getTimeAgo(currentTrade.minutesAgo)} • {getMarketTypeBadge(currentTrade.marketType).label}
-                    </p>
-                  </div>
-                </div>
-                {/* Row 2: Entry | Exit compact */}
-                <div className="grid grid-cols-2 gap-2 rounded border border-white/5 bg-black/20 px-2 py-1.5">
-                  <div>
-                    <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Entry</p>
-                    <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                      {currentTrade.entryPrice.toFixed(currentTrade.symbol.includes('JPY') ? 3 : 5)}
-                    </p>
-                    <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
-                      @ {new Date(currentTrade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Exit</p>
-                    <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                      {currentTrade.exitPrice.toFixed(currentTrade.symbol.includes('JPY') ? 3 : 5)}
-                    </p>
-                    <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
-                      @ {new Date(currentTrade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                    </p>
-                  </div>
-                </div>
-                {/* Row 3: P/L + status */}
-                <div className="flex items-center justify-between gap-2 pt-0.5">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-sm font-bold"
-                    style={{ color: currentTrade.isProfitable ? '#22c55e' : '#ef4444' }}
-                  >
-                    {currentTrade.isProfitable ? '+' : ''}
-                    {currentTrade.profitUSD >= 0 ? '$' : '-$'}
-                    {Math.abs(currentTrade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </motion.span>
-                  <span className="text-[9px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                    {currentTrade.isProfitable ? 'Profitable' : 'Closed'}
-                  </span>
-                </div>
+                <TradeRow trade={currentTrade} />
               </motion.div>
             </AnimatePresence>
           ) : null}

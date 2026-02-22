@@ -1040,8 +1040,9 @@ export default function DashboardPage() {
                   const isStreak = button.id === 'staking-streak';
                   const isRank = button.id === 'rank';
                   const isWelcomeBonus = button.id === 'welcome-bonus';
+                  // Visual content only (no interactive element) to avoid nested button hydration
                   const buttonContent = (
-                    <motion.button
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 + index * 0.05 }}
@@ -1127,7 +1128,7 @@ export default function DashboardPage() {
                       >
                         {button.label}
                       </span>
-                    </motion.button>
+                    </motion.div>
                   );
 
                   return (
@@ -1212,24 +1213,24 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-0"
+            className="space-y-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
           >
-            {/* Active Stakes - Neumorphic card directly under Daily ROS Performance */}
+            {/* Active Stakes - shown here on small screens only; on lg it moves to column 2 */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-2 lg:mt-0"
+              className="mt-2 lg:mt-0 lg:hidden"
             >
               <ActiveStakesCard />
             </motion.div>
 
-            {/* Live Trading Signals & Live Platform Activity - dark neumorphic, side by side, below Active Stakes */}
+            {/* Live Trading Signals & Live Platform Activity - on lg they stack and share column height equally (50/50) */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.42 }}
-              className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2"
+              className="mt-2 grid grid-cols-1 gap-3 lg:mt-0 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
             >
               <LiveTradingSignals />
               <LivePlatformActivities />

@@ -8,7 +8,6 @@ import { useUIStore } from '@/store/uiStore';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import type { Stake } from '@/lib/queries/stakingQueries';
 import neuStyles from '@/styles/neumorphic.module.css';
-import neuStyles from '@/styles/neumorphic.module.css';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
@@ -212,7 +211,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
 
 /**
  * Neumorphic Active Stakes card(s). Renders directly under Daily ROS Performance.
- * Shows section title "Active Stakes (N)" and one neumorphic card per active stake.
+ * One neumorphic card per active stake; full width to align with other dashboard cards.
  */
 export function ActiveStakesCard() {
   const router = useRouter();
@@ -226,30 +225,17 @@ export function ActiveStakesCard() {
   const handleHeaderClick = count === 0 ? openCreateStakeModal : goToStakes;
 
   return (
-    <div className="lg:max-w-md">
+    <div className="w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.42 }}
       >
-        <h2
-          role="button"
-          tabIndex={0}
-          onClick={handleHeaderClick}
-          onKeyDown={(e) => e.key === 'Enter' && handleHeaderClick()}
-          className="mb-3 cursor-pointer text-base font-semibold transition-opacity hover:opacity-90 sm:text-lg"
-          style={{ color: NEU_TEXT }}
-        >
-          Active Stakes ({count})
-        </h2>
-
         {isLoading ? (
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={goToStakes}
-            onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 transition-opacity hover:opacity-95 sm:p-6"
+            className="w-full cursor-pointer rounded-2xl p-5 text-left transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               boxShadow: `
@@ -260,14 +246,12 @@ export function ActiveStakesCard() {
             }}
           >
             <LoadingStates.Card height="h-48" />
-          </div>
+          </button>
         ) : error ? (
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={goToStakes}
-            onKeyDown={(e) => e.key === 'Enter' && goToStakes()}
-            className="cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
+            className="w-full cursor-pointer rounded-2xl p-5 text-center text-sm transition-opacity hover:opacity-95 sm:p-6"
             style={{
               background: NEU_SURFACE,
               color: NEU_TEXT_MUTED,
@@ -279,7 +263,7 @@ export function ActiveStakesCard() {
             }}
           >
             Unable to load stakes. Try again later.
-          </div>
+          </button>
         ) : count === 0 ? (
           <div
             className="rounded-2xl p-6 text-center sm:p-8"
