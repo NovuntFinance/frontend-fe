@@ -24,11 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
 import { useDisable2FA } from '@/lib/mutations';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BadgeAvatar } from '@/components/ui/BadgeAvatar';
 import { getUserAvatarUrl, isBadgeIcon } from '@/lib/avatar-utils';
 import { Button } from '@/components/ui/button';
@@ -154,7 +150,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="min-h-screen lg:h-screen lg:flex lg:flex-col"
+        className="min-h-screen lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden"
         style={{ background: '#0D162C' }}
       >
         {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
@@ -415,88 +411,88 @@ export default function DashboardLayout({
         {!isOnboardingPage &&
           ((progress >= 40 && progress < 60) ||
             (progress >= 60 && progress < 100 && !!bonusData)) && (
-          <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
-            {/* Wallet Setup Banner (40% <= Progress < 60%) */}
-            {progress >= 40 && progress < 60 && (
-              <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
-                    <Wallet className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-amber-500">
-                      WALLET SETUP REQUIRED
-                    </h4>
-                    <p className="text-xs text-amber-400/80">
-                      Whitelist your BEP20 withdrawal address to unlock
-                      transfers & withdrawals.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => router.push('/dashboard/onboarding')}
-                  className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
-                >
-                  Whitelist
-                  <ArrowUpRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {/* Registration Bonus Progress Banner (Unlocked but active) */}
-            {progress >= 60 && progress < 100 && bonusData && (
-              <div className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 backdrop-blur-xl transition-all hover:bg-emerald-500/10">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold tracking-widest text-emerald-500/80 uppercase">
-                        Registration Bonus: {progress}%
-                      </span>
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-emerald-500/10">
-                        <div
-                          className="h-full bg-emerald-500"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
+            <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
+              {/* Wallet Setup Banner (40% <= Progress < 60%) */}
+              {progress >= 40 && progress < 60 && (
+                <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
+                      <Wallet className="h-5 w-5" />
                     </div>
-                    <p className="text-[10px] text-slate-400">
-                      Complete social follows and first stake to activate your
-                      10% bonus.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden text-right sm:block">
-                    <span className="block text-[10px] leading-tight text-slate-500 uppercase">
-                      Time Left
-                    </span>
-                    <span className="font-mono text-xs font-bold text-emerald-400">
-                      {bonusData.daysRemaining}d left
-                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-500">
+                        WALLET SETUP REQUIRED
+                      </h4>
+                      <p className="text-xs text-amber-400/80">
+                        Whitelist your BEP20 withdrawal address to unlock
+                        transfers & withdrawals.
+                      </p>
+                    </div>
                   </div>
                   <Button
                     size="sm"
-                    variant="ghost"
                     onClick={() => router.push('/dashboard/onboarding')}
-                    className="h-8 rounded-lg px-2 text-[10px] text-emerald-400 hover:bg-emerald-500/20"
+                    className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
                   >
-                    Complete
-                    <ArrowUpRight className="ml-1 h-3 w-3" />
+                    Whitelist
+                    <ArrowUpRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+
+              {/* Registration Bonus Progress Banner (Unlocked but active) */}
+              {progress >= 60 && progress < 100 && bonusData && (
+                <div className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 backdrop-blur-xl transition-all hover:bg-emerald-500/10">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold tracking-widest text-emerald-500/80 uppercase">
+                          Registration Bonus: {progress}%
+                        </span>
+                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-emerald-500/10">
+                          <div
+                            className="h-full bg-emerald-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Complete social follows and first stake to activate your
+                        10% bonus.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="hidden text-right sm:block">
+                      <span className="block text-[10px] leading-tight text-slate-500 uppercase">
+                        Time Left
+                      </span>
+                      <span className="font-mono text-xs font-bold text-emerald-400">
+                        {bonusData.daysRemaining}d left
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => router.push('/dashboard/onboarding')}
+                      className="h-8 rounded-lg px-2 text-[10px] text-emerald-400 hover:bg-emerald-500/20"
+                    >
+                      Complete
+                      <ArrowUpRight className="ml-1 h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
         <main
           id="main-content"
-          className="px-3 pt-0 pb-8 sm:px-4 sm:pt-0 sm:pb-10 md:px-5 md:pt-0 md:pb-12 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:px-6 lg:pt-0 lg:pb-0"
+          className="px-3 pt-0 pb-8 sm:px-4 sm:pt-0 sm:pb-10 md:px-5 md:pt-0 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-0 lg:pb-0"
         >
           {children}
         </main>
