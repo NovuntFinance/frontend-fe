@@ -114,8 +114,12 @@ export function middleware(request: NextRequest) {
     }
 
     // Regular protected routes (dashboard, profile, etc.)
-    // No token - redirect to login
+    // No access token - allow if refreshToken exists so client can refresh and restore session
+    const refreshToken = request.cookies.get('refreshToken')?.value;
     if (!token) {
+      if (refreshToken) {
+        return NextResponse.next();
+      }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       loginUrl.searchParams.set('reason', 'auth_required');
@@ -126,8 +130,6 @@ export function middleware(request: NextRequest) {
     // Let the frontend's axios interceptor handle token refresh
     // This prevents the redirect loop between middleware and frontend
     if (isTokenExpired(token)) {
-      const refreshToken = request.cookies.get('refreshToken')?.value;
-
       if (refreshToken) {
         // Has refresh token - let the page load and axios will refresh
         console.log(

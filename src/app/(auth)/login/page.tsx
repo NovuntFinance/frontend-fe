@@ -489,15 +489,18 @@ function LoginPageContent() {
           </span>
         </button>
 
-        {/* Sign Up Link */}
+        {/* Forgot password & Sign up links */}
         <p className="pb-2 text-center">
+          <Link href="/forgot-password" className={`text-sm ${styles.neuLink}`}>
+            Forgot password?
+          </Link>
           <span
-            className="text-sm"
+            className="mx-2 text-sm"
             style={{
               color: 'var(--neu-text-muted, rgba(226, 232, 240, 0.55))',
             }}
           >
-            Don&apos;t have an account?{' '}
+            ·
           </span>
           <Link href="/signup" className={onboardingStyles.loginLink}>
             Sign up
@@ -549,7 +552,7 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-2">
       {/* Title */}
       <h1
         className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
@@ -643,27 +646,17 @@ function LoginPageContent() {
               register={register}
               registerName="email"
             />
-            <div className="space-y-1.5">
-              <div className="flex justify-end">
-                <Link
-                  href="/forgot-password"
-                  className={`text-sm ${styles.neuLink}`}
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <NeuPasswordField
-                id="password"
-                label="Password"
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                error={errors.password}
-                register={register}
-                registerName="password"
-                showPassword={showPassword}
-                onToggle={() => setShowPassword(!showPassword)}
-              />
-            </div>
+            <NeuPasswordField
+              id="password"
+              label="Password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              error={errors.password}
+              register={register}
+              registerName="password"
+              showPassword={showPassword}
+              onToggle={() => setShowPassword(!showPassword)}
+            />
 
             <div className="flex items-center space-x-2">
               <input

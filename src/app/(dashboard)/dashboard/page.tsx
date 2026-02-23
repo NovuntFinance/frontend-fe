@@ -1145,7 +1145,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Column 2 - Activity, daily ROS (feature grid only in Column 1) */}
+        {/* Column 2 - Stake card, Activity, daily ROS (stake above recent activity, below feature buttons) */}
         <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1153,6 +1153,26 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
             className="space-y-0"
           >
+            {/* Active Stakes - same container as other cards (neumorphic, spacing, padding, #0D162C) */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32 }}
+              className="mt-5 sm:mt-6"
+            >
+              <div
+                className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
+                style={{
+                  background: '#0D162C',
+                  boxShadow:
+                    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+                  border: '1px solid var(--app-border)',
+                }}
+              >
+                <ActiveStakesCard embedded />
+              </div>
+            </motion.div>
+
             {/* Recent Activity - standard spacing between cards */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1179,7 +1199,7 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Column 3 - Active stakes, live signals, live platform activities */}
+        {/* Column 3 - Live signals, live platform activities (stake card is in column 2 above recent activity) */}
         <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1187,16 +1207,6 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
             className="space-y-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
           >
-            {/* Active Stakes - shown here on small screens only; on lg it moves to column 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-2 lg:mt-0 lg:hidden"
-            >
-              <ActiveStakesCard />
-            </motion.div>
-
             {/* Live Trading Signals & Live Platform Activity - on lg they stack and share column height equally (50/50) */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}

@@ -151,10 +151,10 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="min-h-screen lg:flex lg:h-screen lg:flex-col"
+        className="flex min-h-full flex-col lg:h-full"
         style={{ background: 'var(--app-page-bg)' }}
       >
-        {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
+        {/* Secondary Header Bar (Profile Icon + Info Marquee) — below safe-area via body padding */}
         <header
           className="sticky top-0 z-30 shrink-0 py-1"
           style={{
@@ -173,39 +173,45 @@ export default function DashboardLayout({
               >
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
-                    <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
-                      style={{
-                        boxShadow:
-                          '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
-                        background: 'var(--app-surface)',
-                        border: '1px solid var(--app-border)',
-                      }}
-                    >
-                      {user?.avatar && isBadgeIcon(user.avatar) ? (
-                        <BadgeAvatar
-                          badgeIcon={user.avatar}
-                          size="md"
-                          className="shrink-0"
-                        />
-                      ) : (
-                        <Avatar className="h-full w-full overflow-hidden rounded-full">
-                          <AvatarImage
-                            src={getUserAvatarUrl(user) ?? undefined}
-                            alt={`${displayName}`}
+                    <div className="relative shrink-0">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
+                        style={{
+                          boxShadow:
+                            '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                          background: 'var(--app-surface)',
+                          border: '1px solid var(--app-border)',
+                        }}
+                      >
+                        {user?.avatar && isBadgeIcon(user.avatar) ? (
+                          <BadgeAvatar
+                            badgeIcon={user.avatar}
+                            size="md"
+                            className="shrink-0"
                           />
-                          <AvatarFallback
-                            className="text-sm font-medium"
-                            style={{
-                              background: 'var(--app-surface)',
-                              color: 'var(--app-text-primary)',
-                            }}
-                          >
-                            {displayName[0]?.toUpperCase()}
-                            {user?.lastName?.[0] || user?.lname?.[0] || ''}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
+                        ) : (
+                          <Avatar className="h-full w-full overflow-hidden rounded-full">
+                            <AvatarImage
+                              src={getUserAvatarUrl(user) ?? undefined}
+                              alt={`${displayName}`}
+                            />
+                            <AvatarFallback
+                              className="text-sm font-medium"
+                              style={{
+                                background: 'var(--app-surface)',
+                                color: 'var(--app-text-primary)',
+                              }}
+                            >
+                              {displayName[0]?.toUpperCase()}
+                              {user?.lastName?.[0] || user?.lname?.[0] || ''}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
+                      <NotificationBadge
+                        noBackground
+                        className="-top-0.5 right-0"
+                      />
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
                       <span

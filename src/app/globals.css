@@ -153,8 +153,27 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  /*
+   * PWA / standalone viewport: use dvh so height is correct when browser chrome
+   * shows/hides. Safe-area insets prevent content under status bar or home indicator.
+   */
+  html {
+    scroll-behavior: smooth;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+    box-sizing: border-box;
+    /* Safe-area insets for PWA standalone (notch, status bar, home indicator) */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
     /* PWA optimizations */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -164,11 +183,6 @@
     overscroll-behavior-y: contain;
     /* Better touch targets */
     touch-action: manipulation;
-  }
-
-  /* Smooth scrolling for anchor links */
-  html {
-    scroll-behavior: smooth;
   }
 
   /* Better tap highlights for touch devices */
