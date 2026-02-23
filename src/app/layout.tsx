@@ -120,7 +120,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <div className="flex min-h-full flex-col">
+        <div className="flex min-h-screen flex-col">
           <Providers>{children}</Providers>
         </div>
         <PWARegister />
