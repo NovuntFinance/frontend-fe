@@ -192,7 +192,7 @@ export default function OnboardingCarousel({
 
   return (
     <div
-      className={`${styles.neuBase} relative flex min-h-full flex-col items-center justify-between overflow-hidden px-6 py-10`}
+      className={`${styles.neuBase} relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden px-6 py-10`}
     >
       {/* Subtle ambient glow */}
       <div

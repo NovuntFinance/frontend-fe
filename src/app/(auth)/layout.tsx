@@ -21,7 +21,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className={`${onboardingStyles.neuBase} relative flex min-h-screen flex-col items-center justify-between overflow-x-hidden overflow-y-auto px-6 py-10`}
+      className={`${onboardingStyles.neuBase} relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden px-6 py-10`}
     >
       {/* Subtle ambient glow */}
       <div
@@ -29,7 +29,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
       />
 
       {/* ── Main Content ── */}
-      <div className="z-10 flex w-full max-w-md grow flex-col items-center justify-center gap-4">
+      <div className="z-10 flex w-full max-w-md grow flex-col items-center justify-center gap-10">
         {/* Logo Section */}
         <div className="flex flex-col items-center gap-6">
           {/* Raised Icon Container */}

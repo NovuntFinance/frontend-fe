@@ -308,7 +308,7 @@ function SignupPageContent() {
   }, [currentStep, isLoading, setFooterContent, handlePrevious, handleNext]);
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-4">
       {/* Title */}
       <h1
         className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
