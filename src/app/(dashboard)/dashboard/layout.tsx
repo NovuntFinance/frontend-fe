@@ -19,7 +19,6 @@ import {
   Users,
 } from 'lucide-react';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { useDashboardOverview } from '@/lib/queries';
@@ -55,11 +54,7 @@ import { RegistrationBonusModal } from '@/components/registration-bonus/Registra
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
-import {
-  IoSunnyOutline,
-  IoMoonOutline,
-  IoHeadsetOutline,
-} from 'react-icons/io5';
+import { IoHeadsetOutline } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
 
 /**
@@ -109,7 +104,6 @@ export default function DashboardLayout({
       );
     };
   }, []);
-  const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useUser();
   const displayName = user?.firstName || user?.fname || 'User';
@@ -208,10 +202,7 @@ export default function DashboardLayout({
                           </Avatar>
                         )}
                       </div>
-                      <NotificationBadge
-                        noBackground
-                        className="-top-0.5 right-0"
-                      />
+                      <NotificationBadge className="-top-0.5 right-0" />
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
                       <span
@@ -290,28 +281,8 @@ export default function DashboardLayout({
               </DropdownMenu>
             </div>
 
-            {/* Theme Toggle and Customer Support - Right side (neumorphic) */}
+            {/* Customer Support - Right side (neumorphic) */}
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className={`flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                style={{
-                  boxShadow:
-                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
-                  background: 'var(--app-surface)',
-                  border: '1px solid var(--app-border)',
-                  color: 'var(--app-accent)',
-                  filter: 'none',
-                }}
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? (
-                  <IoSunnyOutline className="h-5 w-5" />
-                ) : (
-                  <IoMoonOutline className="h-5 w-5" />
-                )}
-              </button>
-
               <button
                 onClick={() => setAssistantOpen(true)}
                 className={`relative flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}

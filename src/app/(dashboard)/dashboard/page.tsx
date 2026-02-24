@@ -682,7 +682,10 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                              style={{
+                                color: 'var(--app-text-primary)',
+                                filter: 'none',
+                              }}
                             >
                               {balanceVisible
                                 ? `$${(totalEarned ?? 0).toLocaleString(
@@ -752,7 +755,10 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                              style={{
+                                color: 'var(--app-text-primary)',
+                                filter: 'none',
+                              }}
                             >
                               {balanceVisible
                                 ? `$${(totalStaked ?? 0).toLocaleString(
@@ -822,7 +828,10 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                              style={{
+                                color: 'var(--app-text-primary)',
+                                filter: 'none',
+                              }}
                             >
                               {balanceVisible
                                 ? `$${(totalDeposited ?? 0).toLocaleString(
@@ -892,7 +901,10 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                              style={{
+                                color: 'var(--app-text-primary)',
+                                filter: 'none',
+                              }}
                             >
                               {balanceVisible
                                 ? `$${(totalWithdrawn ?? 0).toLocaleString(
@@ -909,16 +921,27 @@ export default function DashboardPage() {
                       )}
                     </AnimatePresence>
                   </div>
-                  {/* Carousel Indicators — neumorphic slider */}
-                  <NeumorphicCarouselDots
-                    count={stats.length}
-                    currentIndex={currentIndex}
-                    onSelect={(index) => {
-                      setCurrentIndex(index);
-                      setCurrentStat(stats[index]);
-                    }}
-                    ariaLabelPrefix="Go to stat"
-                  />
+                  {/* Carousel Indicators */}
+                  <div className="mt-3 flex items-center justify-center gap-1.5">
+                    {stats.map((stat, index) => (
+                      <button
+                        key={stat}
+                        onClick={() => {
+                          setCurrentIndex(index);
+                          setCurrentStat(stats[index]);
+                        }}
+                        className="h-1.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: currentIndex === index ? '24px' : '8px',
+                          background:
+                            currentIndex === index
+                              ? 'var(--app-text-secondary)'
+                              : 'var(--app-text-muted)',
+                        }}
+                        aria-label={`Go to ${stat}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
               {/* Feature Buttons Grid - 8 circular buttons, neumorphic card */}
@@ -1066,7 +1089,22 @@ export default function DashboardPage() {
 
                       return (
                         <React.Fragment key={button.id}>
-                          {isSettings ? (
+                          {isWelcomeBonus ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openModal('registration-bonus')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openModal('registration-bonus');
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isSettings ? (
                             <div
                               role="button"
                               tabIndex={0}
@@ -1150,22 +1188,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Column 2 - Stake card, Activity, daily ROS */}
-        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 2 - Activity, daily ROS */}
+        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="flex flex-col gap-5"
           >
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32 }}
-            >
-              <ActiveStakesCard embedded />
-            </motion.div>
-
+            {/* Recent Activity */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
