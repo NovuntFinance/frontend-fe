@@ -2,6 +2,9 @@
   "name": "novunt-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbo",
@@ -22,7 +25,6 @@
     "analyze:bundle": "node scripts/analyze-bundle.js",
     "validate": "node scripts/pre-push-validation.js",
     "validate:pre-push": "node scripts/pre-push-validation.js",
-    "prepush": "npm run lint && npm run typecheck && npm run build",
     "security-scan": "node scripts/security-scan.js",
     "security-smoke-test": "node scripts/security-smoke-test.js",
     "security-audit": "npm audit --audit-level=high",

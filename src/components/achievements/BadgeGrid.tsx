@@ -5,12 +5,12 @@
 
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BadgeCard } from './BadgeCard';
-import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import { EmptyStates } from '@/components/EmptyStates';
 import { cn } from '@/lib/utils';
+import badgeStyles from '@/styles/badge-card.module.css';
 import type {
   Badge,
   BadgeDefinition,
@@ -124,18 +124,19 @@ export function BadgeGrid({
   }, [activeCategory]);
 
   return (
-    <div className="space-y-4">
-      {/* Category Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+    <div>
+      {/* Category filter tabs – neumorphic: inactive = raised, active = inset */}
+      <div className={badgeStyles.badgeCatalogTabs} role="tablist">
         {(Object.keys(categoryLabels) as BadgeCategory[]).map((category) => (
           <button
             key={category}
+            type="button"
+            role="tab"
+            aria-selected={activeCategory === category}
             onClick={() => setActiveCategory(category)}
             className={cn(
-              'rounded-lg px-4 py-2 font-medium whitespace-nowrap transition-colors',
-              activeCategory === category
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              badgeStyles.badgeCatalogTab,
+              activeCategory === category && badgeStyles.badgeCatalogTab_active
             )}
           >
             {categoryLabels[category]} ({groupedBadges[category].length})
@@ -146,7 +147,7 @@ export function BadgeGrid({
       {/* Badge Grid */}
       {displayedBadges.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={badgeStyles.badgeSectionGrid}>
             {visibleBadges.map((badge) => {
               const earnedBadge = earnedBadgesMap.get(badge.badgeType);
               const progress = progressMap.get(badge.badgeType);
@@ -163,11 +164,11 @@ export function BadgeGrid({
             })}
           </div>
           {hasMore && (
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="outline"
+            <div className="flex justify-center">
+              <button
+                type="button"
                 onClick={() => setShowAll(!showAll)}
-                className="gap-2"
+                className={badgeStyles.badgeSectionMoreBtn}
               >
                 {showAll ? (
                   <>
@@ -180,7 +181,7 @@ export function BadgeGrid({
                     <ChevronDown className="h-4 w-4" />
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           )}
         </>

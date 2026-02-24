@@ -18,6 +18,7 @@ import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transa
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
+import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -199,39 +200,9 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
             border: '1px solid var(--app-border)',
           }}
         >
-          {/* Content Section - Always show same layout: real data, skeleton, or placeholder so card is never empty */}
+          {/* Content Section - Real data or placeholder (no skeleton; show placeholder while loading) */}
           <div className="min-h-[80px]">
-            {isLoading ? (
-              /* Full skeleton – same structure as one transaction so card never looks empty */
-              <div className="w-full">
-                <div className="mb-4 flex items-center gap-3">
-                  <div
-                    className="h-8 w-8 shrink-0 animate-pulse rounded-lg sm:h-9 sm:w-9"
-                    style={{ background: 'rgba(0, 155, 242, 0.2)' }}
-                  />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div
-                      className="h-3 w-24 animate-pulse rounded"
-                      style={{ background: 'rgba(0, 155, 242, 0.25)' }}
-                    />
-                    <div
-                      className="h-2.5 w-32 animate-pulse rounded"
-                      style={{ background: 'rgba(0, 155, 242, 0.2)' }}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div
-                    className="h-7 w-28 animate-pulse rounded sm:h-8"
-                    style={{ background: 'rgba(0, 155, 242, 0.25)' }}
-                  />
-                  <div
-                    className="h-3 w-16 shrink-0 animate-pulse rounded"
-                    style={{ background: 'rgba(0, 155, 242, 0.2)' }}
-                  />
-                </div>
-              </div>
-            ) : safeTransactions.length === 0 ? (
+            {isLoading || safeTransactions.length === 0 ? (
               /* Placeholder row – card always shows content, never empty */
               <div
                 className="w-full cursor-pointer"
@@ -277,7 +248,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                 <div className="flex items-baseline justify-between gap-3">
                   <p
                     className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                    style={{ color: 'rgba(0, 155, 242, 0.5)', filter: 'none' }}
+                    style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                   >
                     +$0.00
                   </p>
@@ -365,7 +336,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                           transition={{ duration: 0.3 }}
                           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                           style={{
-                            color: isOutgoing ? '#ef4444' : '#009BF2',
+                            color: isOutgoing ? '#ef4444' : 'var(--app-text-primary)',
                             filter: 'none',
                           }}
                         >
@@ -388,6 +359,14 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
               </AnimatePresence>
             ) : null}
           </div>
+          {safeTransactions.length > 1 && (
+            <NeumorphicCarouselDots
+              count={safeTransactions.length}
+              currentIndex={currentIndex}
+              onSelect={setCurrentIndex}
+              ariaLabelPrefix="Go to activity"
+            />
+          )}
         </div>
       </motion.div>
     </div>

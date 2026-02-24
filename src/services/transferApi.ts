@@ -42,38 +42,6 @@ export const transferApi = {
   },
 
   /**
-   * Request transfer OTP
-   * POST /api/v1/transfer/request-otp
-   * Sends 6-digit OTP to user's email (expires in 10 minutes)
-   */
-  async requestTransferOtp(data: {
-    recipientId?: string;
-    recipientUsername?: string;
-    recipientEmail?: string;
-    amount: number;
-    'cf-turnstile-response'?: string;
-    turnstileToken?: string;
-  }): Promise<{ success: boolean; message: string; expiresIn?: number }> {
-    const payload: Record<string, unknown> = {
-      amount: data.amount,
-      ...(data.recipientId && { recipientId: data.recipientId }),
-      ...(data.recipientUsername && {
-        recipientUsername: data.recipientUsername,
-      }),
-      ...(data.recipientEmail && { recipientEmail: data.recipientEmail }),
-    };
-    const turnstile =
-      data['cf-turnstile-response'] || (data as any).turnstileToken;
-    if (turnstile) payload['cf-turnstile-response'] = turnstile;
-
-    return apiRequest<{
-      success: boolean;
-      message: string;
-      expiresIn?: number;
-    }>('post', '/transfer/request-otp', payload);
-  },
-
-  /**
    * Transfer Funds
    * POST /api/v1/transfer
    */
@@ -85,30 +53,14 @@ export const transferApi = {
       hasMemo: !!data.memo,
     });
 
-    const idempotencyKey =
-      data.idempotencyKey ??
-      (typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `tf-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    const payload: Record<string, unknown> = {
+    const response = await apiRequest<TransferResponse>('post', '/transfer', {
       recipientId: data.recipientId,
       recipientUsername: data.recipientUsername?.toLowerCase(),
       recipientEmail: data.recipientEmail?.toLowerCase().trim(),
       amount: data.amount,
       memo: data.memo,
       twoFACode: data.twoFACode,
-      emailOtp: data.emailOtp,
-      idempotencyKey,
-    };
-    const turnstile = data['cf-turnstile-response'] || data.turnstileToken;
-    if (turnstile) payload['cf-turnstile-response'] = turnstile;
-
-    const response = await apiRequest<TransferResponse>(
-      'post',
-      '/transfer',
-      payload,
-      { headers: { 'Idempotency-Key': idempotencyKey as string } }
-    );
+    });
 
     console.log('[transferApi] Transfer successful:', {
       txId: response.txId,
@@ -367,23 +319,12 @@ export const transferApi = {
    */
   formatErrorMessage(error: any): string {
     // Handle specific error codes
-    const code = error?.code || error?.response?.data?.code;
-    if (code) {
-      switch (code) {
-        case 'SUPPORT_REQUIRED':
-          return 'Too many failed attempts. Please contact support or try again later.';
-        case 'TURNSTILE_FAILED':
-          return 'Security check failed. Please try again.';
-        case 'INVALID_EMAIL_OTP':
-        case 'INVALID_OTP':
-          return 'Invalid or expired verification code.';
+    if (error?.code) {
+      switch (error.code) {
         case 'INSUFFICIENT_BALANCE':
           return 'Insufficient balance for this transfer';
         case '2FA_CODE_INVALID':
-        case 'INVALID_2FA_CODE':
           return 'Invalid 2FA code. Please enter the 6-digit code from your authenticator app.';
-        case '2FA_REQUIRED':
-          return '2FA code is required.';
         case 'DUPLICATE_TRANSFER_REQUEST':
           return 'Duplicate transfer detected. Please wait a moment before trying again.';
         case 'SUSPICIOUS_ACTIVITY_DETECTED':

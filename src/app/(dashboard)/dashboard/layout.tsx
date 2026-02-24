@@ -518,7 +518,7 @@ export default function DashboardLayout({
         {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
         <main
           id="main-content"
-          className="px-3 pt-6 pb-8 sm:px-4 sm:pt-6 sm:pb-10 md:px-5 md:pt-8 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-8 lg:pb-0"
+          className="px-3 pt-6 pb-24 sm:px-4 sm:pt-6 sm:pb-24 md:px-5 md:pt-8 md:pb-24 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-8 lg:pb-0"
         >
           {children}
         </main>
@@ -579,6 +579,9 @@ export default function DashboardLayout({
           isOpen={assistantOpen}
           onClose={() => setAssistantOpen(false)}
         />
+
+        {/* Bottom navigation — Stake, Wallet, Dashboard (logo), Team, NXP */}
+        <HorizontalNav />
       </div>
     </DashboardGuard>
   );

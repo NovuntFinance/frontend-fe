@@ -1,0 +1,597 @@
+/* Wallet page – strict two-color neumorphic: #0D162C + #009BF2 only.
+   Mobile-first. Hierarchy via opacity; depth via dual shadows. No other colors.
+   #FFFFFF only for subtle labels/highlights at low opacity. */
+
+.walletPage {
+  --wallet-bg: #0d162c;
+  --wallet-accent: #009bf2;
+  --wallet-accent-rgb: 0, 155, 242;
+  /* Typography: accent for headings/primary values; white low-opacity for supporting labels */
+  --wallet-text: rgba(var(--wallet-accent-rgb), 0.95);
+  --wallet-text-secondary: rgba(var(--wallet-accent-rgb), 0.75);
+  --wallet-text-muted: rgba(var(--wallet-accent-rgb), 0.55);
+  --wallet-label: rgba(255, 255, 255, 0.55);
+  --wallet-border: rgba(var(--wallet-accent-rgb), 0.08);
+  --wallet-focus-ring: rgba(var(--wallet-accent-rgb), 0.2);
+  /* Depth – dual shadows only, no glow */
+  --wallet-shadow-dark: rgba(0, 0, 0, 0.45);
+  --wallet-shadow-light: rgba(255, 255, 255, 0.04);
+  /* Raised hover / inset active */
+  --wallet-shadow-raised-hover:
+    10px 10px 20px var(--wallet-shadow-dark),
+    -10px -10px 20px var(--wallet-shadow-light);
+  --wallet-shadow-inset:
+    inset 5px 5px 10px var(--wallet-shadow-dark),
+    inset -5px -5px 10px var(--wallet-shadow-light);
+  --wallet-shadow-inset-press:
+    inset 6px 6px 12px var(--wallet-shadow-dark),
+    inset -6px -6px 12px var(--wallet-shadow-light);
+  /* Design tokens: 16–24px radius, 200–300ms transitions */
+  --wallet-radius-sm: 16px;
+  --wallet-radius-md: 18px;
+  --wallet-radius-lg: 24px;
+  --wallet-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --wallet-transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  background: var(--wallet-bg);
+  min-height: 100%;
+  color: var(--wallet-text);
+}
+
+/* NXP section root: same design tokens when used outside .walletPage (e.g. achievements page) */
+.nxpSectionRoot {
+  --wallet-bg: #0d162c;
+  --wallet-accent: #009bf2;
+  --wallet-accent-rgb: 0, 155, 242;
+  --wallet-text: rgba(var(--wallet-accent-rgb), 0.95);
+  --wallet-text-secondary: rgba(var(--wallet-accent-rgb), 0.75);
+  --wallet-text-muted: rgba(var(--wallet-accent-rgb), 0.55);
+  --wallet-label: rgba(255, 255, 255, 0.55);
+  --wallet-border: rgba(var(--wallet-accent-rgb), 0.08);
+  --wallet-focus-ring: rgba(var(--wallet-accent-rgb), 0.2);
+  --wallet-shadow-dark: rgba(0, 0, 0, 0.45);
+  --wallet-shadow-light: rgba(255, 255, 255, 0.04);
+  --wallet-shadow-raised-hover:
+    10px 10px 20px var(--wallet-shadow-dark),
+    -10px -10px 20px var(--wallet-shadow-light);
+  --wallet-shadow-inset:
+    inset 5px 5px 10px var(--wallet-shadow-dark),
+    inset -5px -5px 10px var(--wallet-shadow-light);
+  --wallet-shadow-inset-press:
+    inset 6px 6px 12px var(--wallet-shadow-dark),
+    inset -6px -6px 12px var(--wallet-shadow-light);
+  --wallet-radius-sm: 16px;
+  --wallet-radius-md: 18px;
+  --wallet-radius-lg: 24px;
+  --wallet-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --wallet-transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--wallet-bg);
+  color: var(--wallet-text);
+  border-radius: var(--wallet-radius-lg);
+}
+
+/* Centered max-width container – wallets page only.
+   Non–edge-to-edge desktop: generous gutters, fluid width, modern vertical rhythm. */
+.pageContainer {
+  width: 100%;
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+  /* Responsive gutters */
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 640px) {
+  .pageContainer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .pageContainer {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .pageContainer {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+/* Vertical rhythm: section spacing between major blocks */
+.pageContainerInner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 640px) {
+  .pageContainerInner {
+    gap: 32px;
+  }
+}
+@media (min-width: 1024px) {
+  .pageContainerInner {
+    gap: 40px;
+  }
+}
+
+/* Raised card – soft outer dual shadow; interaction states for neumorphic feel */
+.cardRaised {
+  background: var(--wallet-bg);
+  border-radius: var(--wallet-radius-md);
+  box-shadow:
+    8px 8px 16px var(--wallet-shadow-dark),
+    -8px -8px 16px var(--wallet-shadow-light);
+  border: 1px solid var(--wallet-border);
+  transition:
+    box-shadow var(--wallet-transition),
+    transform var(--wallet-transition),
+    border-color var(--wallet-transition);
+}
+
+.cardRaised:hover {
+  box-shadow: var(--wallet-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+
+.cardRaised:active {
+  box-shadow: var(--wallet-shadow-inset);
+  transform: translateY(0);
+}
+
+.cardRaised:focus-visible {
+  outline: none;
+  box-shadow:
+    8px 8px 16px var(--wallet-shadow-dark),
+    -8px -8px 16px var(--wallet-shadow-light),
+    0 0 0 2px var(--wallet-focus-ring);
+  border-color: rgba(var(--wallet-accent-rgb), 0.25);
+}
+
+/* Inset – form fields, pressed state */
+.cardInset {
+  background: var(--wallet-bg);
+  border-radius: var(--wallet-radius-sm);
+  box-shadow: var(--wallet-shadow-inset);
+  border: 1px solid var(--wallet-border);
+  transition: box-shadow var(--wallet-transition);
+}
+
+.labelUppercase {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wallet-label);
+}
+
+.balanceValue {
+  font-weight: 700;
+  color: var(--wallet-accent);
+}
+
+/* ---------- NXP layout (match reference: mobile stacked, desktop horizontal) ---------- */
+
+/* Mobile: single card containing status + progress + breakdown (reference image 1) */
+.nxpMobileCard {
+  composes: cardRaised;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nxpStatusBlock {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.nxpStatusIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--wallet-shadow-inset);
+  border: 1px solid var(--wallet-border);
+  background: var(--wallet-bg);
+  color: var(--wallet-accent);
+}
+
+.nxpStatusLabel {
+  composes: labelUppercase;
+  margin-top: 4px;
+}
+
+.nxpTotalLine {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px 6px;
+}
+
+/* Mobile: "3,800 Total" on one line, "NXP" on the next (reference image 1) */
+.nxpStatusBlock .nxpTotalLine {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.nxpTotalValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+  line-height: 1.2;
+}
+
+.nxpTotalUnit {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+  line-height: 1.2;
+}
+
+.nxpLevelBadge {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--wallet-accent);
+  margin-top: 4px;
+  border-radius: var(--wallet-radius-sm);
+  background: var(--wallet-bg);
+  box-shadow:
+    6px 6px 12px var(--wallet-shadow-dark),
+    -6px -6px 12px var(--wallet-shadow-light);
+  border: 1px solid var(--wallet-border);
+  transition:
+    box-shadow var(--wallet-transition),
+    transform var(--wallet-transition);
+}
+
+.nxpLevelBadge:hover {
+  box-shadow: var(--wallet-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+
+.nxpLevelBadge:active {
+  box-shadow: var(--wallet-shadow-inset-press);
+  transform: translateY(0);
+}
+
+/* Progress block – inside mobile card (no extra card styling) */
+.nxpMobileCard .nxpProgressBlock {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.nxpProgressBlock {
+  padding: 16px 20px;
+}
+
+.nxpProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.nxpProgressLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--wallet-label);
+}
+
+.nxpProgressPct {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--wallet-accent);
+}
+
+.nxpProgressBarTrack {
+  height: 10px;
+  border-radius: var(--wallet-radius-sm);
+  background: var(--wallet-bg);
+  box-shadow: var(--wallet-shadow-inset);
+  border: 1px solid var(--wallet-border);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.nxpProgressBarFill {
+  height: 100%;
+  border-radius: var(--wallet-radius-sm);
+  background: var(--wallet-accent);
+  transition: width var(--wallet-transition-slow);
+}
+
+.nxpNextReward {
+  composes: labelUppercase;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Mobile: "NXP BREAKDOWN" title inside the single card */
+.nxpBreakdownTitleMobile {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wallet-accent);
+  margin: 0;
+  margin-top: 4px;
+}
+
+/* Desktop: wrapper for breakdown section (below overview card) */
+.nxpBreakdownDesktopWrap {
+  margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .nxpBreakdownDesktopWrap {
+    margin-top: 28px;
+  }
+}
+
+/* NXP Breakdown section */
+.nxpBreakdownSection {
+  margin-top: 24px;
+}
+
+.nxpBreakdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.nxpBreakdownTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--wallet-accent);
+}
+
+.nxpBreakdownTitleIcon {
+  color: var(--wallet-accent);
+  flex-shrink: 0;
+}
+
+.nxpViewDetails {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--wallet-accent);
+  background: var(--wallet-bg);
+  border: 1px solid var(--wallet-border);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--wallet-radius-sm);
+  box-shadow:
+    6px 6px 12px var(--wallet-shadow-dark),
+    -6px -6px 12px var(--wallet-shadow-light);
+  transition:
+    box-shadow var(--wallet-transition),
+    transform var(--wallet-transition),
+    border-color var(--wallet-transition);
+}
+
+.nxpViewDetails:hover {
+  box-shadow: var(--wallet-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+
+.nxpViewDetails:active {
+  box-shadow: var(--wallet-shadow-inset-press);
+  transform: translateY(0);
+}
+
+.nxpViewDetails:focus-visible {
+  outline: none;
+  box-shadow:
+    6px 6px 12px var(--wallet-shadow-dark),
+    -6px -6px 12px var(--wallet-shadow-light),
+    0 0 0 2px var(--wallet-focus-ring);
+  border-color: rgba(var(--wallet-accent-rgb), 0.25);
+}
+
+.nxpViewDetails:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* Breakdown cards – mobile 2x2, desktop 4 in a row */
+.nxpBreakdownGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .nxpBreakdownGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+.nxpBreakdownCard {
+  composes: cardRaised;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 0;
+}
+
+.nxpBreakdownCardIcon {
+  color: var(--wallet-accent);
+  flex-shrink: 0;
+}
+
+.nxpBreakdownCardLabel {
+  composes: labelUppercase;
+  font-size: 0.65rem;
+}
+
+.nxpBreakdownCardValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+}
+
+.nxpBreakdownCardAccent {
+  width: 24px;
+  height: 2px;
+  background: var(--wallet-accent);
+  border-radius: 1px;
+  margin-top: auto;
+}
+
+/* Desktop: single horizontal overview card */
+.nxpOverviewCard {
+  composes: cardRaised;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px 32px;
+}
+
+.nxpOverviewRank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nxpOverviewRankCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    6px 6px 12px var(--wallet-shadow-dark),
+    -6px -6px 12px var(--wallet-shadow-light);
+  border: 1px solid rgba(var(--wallet-accent-rgb), 0.12);
+  background: var(--wallet-bg);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+}
+
+.nxpOverviewRankLabel {
+  composes: labelUppercase;
+  font-size: 0.6rem;
+}
+
+.nxpOverviewCenter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nxpOverviewBalanceLabel {
+  composes: labelUppercase;
+}
+
+.nxpOverviewBalance {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.nxpOverviewBalanceValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+}
+
+.nxpOverviewBalanceUnit {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--wallet-accent);
+  align-self: flex-start;
+}
+
+.nxpOverviewProgressLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--wallet-accent);
+  margin-top: 4px;
+}
+
+.nxpOverviewCta {
+  font-size: 0.75rem;
+  color: var(--wallet-label);
+  margin-top: 4px;
+}
+
+.nxpOverviewRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.nxpOverviewNextLabel {
+  composes: labelUppercase;
+}
+
+.nxpOverviewNextValue {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.nxpOverviewNextValueNum {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--wallet-accent);
+}
+
+.nxpOverviewNextValueUnit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--wallet-accent);
+}
+
+.nxpOverviewNextPct {
+  composes: labelUppercase;
+  font-size: 0.6rem;
+}
+
+/* Hide mobile-only / desktop-only blocks */
+.nxpMobileOnly {
+  display: block;
+}
+
+.nxpDesktopOnly {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .nxpMobileOnly {
+    display: none;
+  }
+
+  .nxpDesktopOnly {
+    display: block;
+  }
+}

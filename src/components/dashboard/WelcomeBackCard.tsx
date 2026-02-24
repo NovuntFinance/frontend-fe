@@ -15,16 +15,12 @@ import { openShareModal } from '@/store/shareModalStore';
 import { useActiveStakes } from '@/lib/queries';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 
-const CARD_BG = '#009BF2';
-const CARD_TEXT = '#0D162C';
-const CARD_TEXT_MUTED = 'rgba(13, 22, 44, 0.75)';
-const DARK_BG = '#0D162C';
-const LIGHT_BLUE = '#009BF2';
-const LIGHT_BLUE_MUTED = 'rgba(0, 155, 242, 0.85)';
-/* Match auth/onboarding neumorphic system (onboarding.module.css, auth.module.css) */
-const NEU_SHADOW_DARK = 'rgba(4, 8, 18, 0.7)';
-const NEU_SHADOW_LIGHT = 'rgba(25, 40, 72, 0.5)';
-const NEU_GLOW = 'rgba(0, 155, 242, 0.35)';
+const NEU_BG = '#0D162C';
+const NEU_SURFACE = '#131B2E';
+const NEU_TEXT = '#009BF2';
+const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
+const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
+const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
 
 interface WelcomeBackCardProps {
   user: any;
@@ -69,14 +65,14 @@ export function WelcomeBackCard({
     : 'Stakeholder';
 
   const content = (
-    <div className="relative z-10 p-5 sm:p-6">
+    <div className="relative z-10 p-3 sm:p-4 lg:p-3 xl:p-4">
       {/* Balance and actions aligned horizontally */}
       <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-3">
         {/* Portfolio value - Left side */}
         <div className="min-w-0 flex-1">
           <p
             className="mb-1.5 text-xs font-bold sm:mb-2 sm:text-sm lg:mb-1.5 lg:text-xs"
-            style={{ color: CARD_TEXT_MUTED }}
+            style={{ color: NEU_TEXT_MUTED }}
           >
             Total Portfolio Value
           </p>
@@ -87,7 +83,7 @@ export function WelcomeBackCard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
               className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
-              style={{ color: CARD_TEXT, filter: 'none' }}
+              style={{ color: NEU_TEXT, filter: 'none' }}
             >
               $
               {totalPortfolioValue.toLocaleString('en-US', {
@@ -102,7 +98,7 @@ export function WelcomeBackCard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
               className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
-              style={{ color: CARD_TEXT_MUTED, filter: 'none' }}
+              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
             >
               ••••••••
             </motion.div>
@@ -111,20 +107,21 @@ export function WelcomeBackCard({
 
         {/* Right side: % badge + Share + Eye */}
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3 lg:gap-2">
-          {/* Extruded neumorphic % badge */}
+          {/* Inset neumorphic % badge with double border */}
           {lastWeekProfitChange !== 0 && (
             <div
               className="flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 lg:px-3 lg:py-1.5"
               style={{
-                background: DARK_BG,
+                background: NEU_SURFACE,
                 boxShadow: `
-                    6px 6px 14px ${NEU_SHADOW_DARK},
-                    -6px -6px 14px ${NEU_SHADOW_LIGHT},
-                    0 0 10px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.05)
+                    inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                    inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                    inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                    0 0 0 1px rgba(255, 255, 255, 0.03)
                   `,
                 border: 'none',
-                color: LIGHT_BLUE,
+                color: NEU_TEXT,
                 fontSize: '0.75rem',
                 fontWeight: 600,
               }}
@@ -155,49 +152,45 @@ export function WelcomeBackCard({
                   }}
                   className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
                   style={{
-                    background: DARK_BG,
-                    color: LIGHT_BLUE,
+                    background: NEU_SURFACE,
+                    color: NEU_TEXT,
                     boxShadow: `
-                        8px 8px 20px ${NEU_SHADOW_DARK},
-                        -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                        0 0 12px ${NEU_GLOW},
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                        8px 8px 16px ${NEU_SHADOW_DARK},
+                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.05)
                       `,
                     border: 'none',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.boxShadow = `
-                        10px 10px 24px ${NEU_SHADOW_DARK},
-                        -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                        0 0 16px ${NEU_GLOW},
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                        10px 10px 20px ${NEU_SHADOW_DARK},
+                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.08),
+                        0 0 20px rgba(0, 155, 242, 0.2)
                       `;
                     e.currentTarget.style.transform = 'translateY(-2px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.boxShadow = `
-                        8px 8px 20px ${NEU_SHADOW_DARK},
-                        -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                        0 0 12px ${NEU_GLOW},
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                        8px 8px 16px ${NEU_SHADOW_DARK},
+                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.05)
                       `;
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                   onMouseDown={(e) => {
                     e.currentTarget.style.boxShadow = `
-                        6px 6px 12px ${NEU_SHADOW_DARK},
-                        -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                        0 0 10px ${NEU_GLOW},
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.04)
+                        inset 4px 4px 8px ${NEU_SHADOW_DARK},
+                        inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
                       `;
-                    e.currentTarget.style.transform = 'translateY(1px)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                   }}
                   onMouseUp={(e) => {
                     e.currentTarget.style.boxShadow = `
-                        10px 10px 24px ${NEU_SHADOW_DARK},
-                        -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                        0 0 16px ${NEU_GLOW},
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                        10px 10px 20px ${NEU_SHADOW_DARK},
+                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                        0 0 0 1px rgba(255, 255, 255, 0.08),
+                        0 0 20px rgba(0, 155, 242, 0.2)
                       `;
                   }}
                 >
@@ -214,49 +207,45 @@ export function WelcomeBackCard({
               onClick={() => setBalanceVisible(!balanceVisible)}
               className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
               style={{
-                background: DARK_BG,
-                color: LIGHT_BLUE,
+                background: NEU_SURFACE,
+                color: NEU_TEXT,
                 boxShadow: `
-                    8px 8px 20px ${NEU_SHADOW_DARK},
-                    -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                    0 0 12px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                    8px 8px 16px ${NEU_SHADOW_DARK},
+                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.05)
                   `,
                 border: 'none',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = `
-                    10px 10px 24px ${NEU_SHADOW_DARK},
-                    -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                    0 0 16px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                    10px 10px 20px ${NEU_SHADOW_DARK},
+                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.08),
+                    0 0 20px rgba(0, 155, 242, 0.2)
                   `;
                 e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.boxShadow = `
-                    8px 8px 20px ${NEU_SHADOW_DARK},
-                    -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                    0 0 12px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                    8px 8px 16px ${NEU_SHADOW_DARK},
+                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.05)
                   `;
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
               onMouseDown={(e) => {
                 e.currentTarget.style.boxShadow = `
-                    6px 6px 12px ${NEU_SHADOW_DARK},
-                    -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                    0 0 10px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.04)
+                    inset 4px 4px 8px ${NEU_SHADOW_DARK},
+                    inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
                   `;
-                e.currentTarget.style.transform = 'translateY(1px)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
               onMouseUp={(e) => {
                 e.currentTarget.style.boxShadow = `
-                    10px 10px 24px ${NEU_SHADOW_DARK},
-                    -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                    0 0 16px ${NEU_GLOW},
-                    inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                    10px 10px 20px ${NEU_SHADOW_DARK},
+                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                    0 0 0 1px rgba(255, 255, 255, 0.08),
+                    0 0 20px rgba(0, 155, 242, 0.2)
                   `;
               }}
             >
@@ -271,8 +260,8 @@ export function WelcomeBackCard({
       </div>
 
       {/* Daily ROS and Active Stakes - Bottom section */}
-      <div className="mt-5 grid grid-cols-2 gap-4">
-        {/* Daily ROS - Clickable */}
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 lg:mt-3 lg:gap-4">
+        {/* Daily ROS - Clickable with double border inset */}
         <button
           onClick={() => {
             const handleScroll = () => {
@@ -293,61 +282,65 @@ export function WelcomeBackCard({
               setTimeout(handleScroll, 300);
             }
           }}
-          className="rounded-xl p-4 text-left transition-all duration-200 sm:p-5"
+          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
           style={{
-            background: DARK_BG,
+            background: NEU_SURFACE,
             boxShadow: `
-                8px 8px 20px ${NEU_SHADOW_DARK},
-                -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                0 0 12px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
               `,
             border: 'none',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.boxShadow = `
-                10px 10px 24px ${NEU_SHADOW_DARK},
-                -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                0 0 16px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
               `;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.boxShadow = `
-                8px 8px 20px ${NEU_SHADOW_DARK},
-                -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                0 0 12px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
               `;
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.boxShadow = `
-                6px 6px 12px ${NEU_SHADOW_DARK},
-                -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                0 0 10px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.04)
+                inset 12px 12px 24px ${NEU_SHADOW_DARK},
+                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
               `;
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.boxShadow = `
-                10px 10px 24px ${NEU_SHADOW_DARK},
-                -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                0 0 16px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
               `;
           }}
         >
           <p
             className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
-            style={{ color: LIGHT_BLUE_MUTED }}
+            style={{ color: NEU_TEXT_MUTED }}
           >
             DAILY ROS
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-              style={{ color: LIGHT_BLUE, filter: 'none' }}
+              style={{ color: NEU_TEXT, filter: 'none' }}
             >
               $
               {dailyROS.toLocaleString('en-US', {
@@ -358,70 +351,74 @@ export function WelcomeBackCard({
           ) : (
             <p
               className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-              style={{ color: LIGHT_BLUE_MUTED, filter: 'none' }}
+              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
             >
               ••••••
             </p>
           )}
         </button>
 
-        {/* Active Stakes - Clickable */}
+        {/* Active Stakes - Clickable with double border inset */}
         <button
           onClick={() => router.push('/dashboard/stakes')}
-          className="rounded-xl p-4 text-left transition-all duration-200 sm:p-5"
+          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
           style={{
-            background: DARK_BG,
+            background: NEU_SURFACE,
             boxShadow: `
-                8px 8px 20px ${NEU_SHADOW_DARK},
-                -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                0 0 12px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
               `,
             border: 'none',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.boxShadow = `
-                10px 10px 24px ${NEU_SHADOW_DARK},
-                -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                0 0 16px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
               `;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.boxShadow = `
-                8px 8px 20px ${NEU_SHADOW_DARK},
-                -8px -8px 20px ${NEU_SHADOW_LIGHT},
-                0 0 12px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.06)
+                inset 8px 8px 16px ${NEU_SHADOW_DARK},
+                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.03)
               `;
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.boxShadow = `
-                6px 6px 12px ${NEU_SHADOW_DARK},
-                -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                0 0 10px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.04)
+                inset 12px 12px 24px ${NEU_SHADOW_DARK},
+                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
               `;
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.boxShadow = `
-                10px 10px 24px ${NEU_SHADOW_DARK},
-                -10px -10px 24px ${NEU_SHADOW_LIGHT},
-                0 0 16px ${NEU_GLOW},
-                inset 1px 1px 0 rgba(255, 255, 255, 0.08)
+                inset 10px 10px 20px ${NEU_SHADOW_DARK},
+                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
+                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.05)
               `;
           }}
         >
           <p
             className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
-            style={{ color: LIGHT_BLUE_MUTED }}
+            style={{ color: NEU_TEXT_MUTED }}
           >
             ACTIVE STAKES
           </p>
           <p
             className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-            style={{ color: LIGHT_BLUE, filter: 'none' }}
+            style={{ color: NEU_TEXT, filter: 'none' }}
           >
             {activeStakesCount} {activeStakesCount === 1 ? 'Asset' : 'Assets'}
           </p>
@@ -438,28 +435,25 @@ export function WelcomeBackCard({
     <div
       className="group relative overflow-hidden rounded-3xl transition-all duration-300 lg:max-w-md lg:rounded-2xl"
       style={{
-        background: CARD_BG,
+        background: NEU_SURFACE,
         boxShadow: `
-          8px 8px 24px ${NEU_SHADOW_DARK},
-          -8px -8px 24px ${NEU_SHADOW_LIGHT},
-          0 0 18px ${NEU_GLOW},
-          inset 1px 1px 0 rgba(255, 255, 255, 0.12)
+          12px 12px 24px ${NEU_SHADOW_DARK},
+          -12px -12px 24px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.05)
         `,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = `
-          10px 10px 28px ${NEU_SHADOW_DARK},
-          -10px -10px 28px ${NEU_SHADOW_LIGHT},
-          0 0 24px ${NEU_GLOW},
-          inset 1px 1px 0 rgba(255, 255, 255, 0.15)
+          14px 14px 28px ${NEU_SHADOW_DARK},
+          -14px -14px 28px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.08)
         `;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = `
-          8px 8px 24px ${NEU_SHADOW_DARK},
-          -8px -8px 24px ${NEU_SHADOW_LIGHT},
-          0 0 18px ${NEU_GLOW},
-          inset 1px 1px 0 rgba(255, 255, 255, 0.12)
+          12px 12px 24px ${NEU_SHADOW_DARK},
+          -12px -12px 24px ${NEU_SHADOW_LIGHT},
+          0 0 0 1px rgba(255, 255, 255, 0.05)
         `;
       }}
     >

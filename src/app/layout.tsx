@@ -109,7 +109,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log('[RootLayout] Rendering root layout');
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning={true} className="antialiased">
@@ -120,9 +119,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <div className="flex min-h-screen flex-col">
-          <Providers>{children}</Providers>
-        </div>
+        <Providers>{children}</Providers>
         <PWARegister />
         <PWAInstallPrompt />
       </body>

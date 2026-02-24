@@ -39,6 +39,7 @@ import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { LivePlatformActivities } from '@/components/dashboard/LivePlatformActivities';
+import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
@@ -569,15 +570,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen lg:h-full lg:min-h-0">
-      <div className="space-y-1 sm:space-y-2 lg:grid lg:h-full lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+      <div className="space-y-5 lg:grid lg:h-full lg:grid-cols-3 lg:gap-5 lg:space-y-0">
         {/* Column 1 - Balance, quick actions, stats carousel (Registration Bonus is in modal via 10% Bonus button) */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <div className="lg:max-w-md lg:max-w-none">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-0"
+              className="flex flex-col gap-5"
             >
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -595,12 +596,11 @@ export default function DashboardPage() {
                 />
               </motion.div>
 
-              {/* Quick Actions - Neumorphic card, standard spacing from welcome card */}
+              {/* Quick Actions - Neumorphic card */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="mt-5 sm:mt-6"
               >
                 <div
                   className="rounded-2xl p-5 sm:p-6"
@@ -615,8 +615,8 @@ export default function DashboardPage() {
                 </div>
               </motion.div>
 
-              {/* Stats Carousel Card - same neumorphic card as Quick Actions, #0D162C, standard padding */}
-              <div className="mt-5 sm:mt-6">
+              {/* Stats Carousel Card */}
+              <div>
                 <div
                   className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
                   style={{
@@ -682,7 +682,7 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: '#009BF2', filter: 'none' }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalEarned ?? 0).toLocaleString(
@@ -752,7 +752,7 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: '#009BF2', filter: 'none' }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalStaked ?? 0).toLocaleString(
@@ -822,7 +822,7 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: '#009BF2', filter: 'none' }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalDeposited ?? 0).toLocaleString(
@@ -892,7 +892,7 @@ export default function DashboardPage() {
                               transition={{ duration: 0.2 }}
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{ color: '#009BF2', filter: 'none' }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalWithdrawn ?? 0).toLocaleString(
@@ -909,31 +909,20 @@ export default function DashboardPage() {
                       )}
                     </AnimatePresence>
                   </div>
-                  {/* Carousel Indicators */}
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    {stats.map((stat, index) => (
-                      <button
-                        key={stat}
-                        onClick={() => {
-                          setCurrentIndex(index);
-                          setCurrentStat(stats[index]);
-                        }}
-                        className="h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: currentIndex === index ? '24px' : '8px',
-                          background:
-                            currentIndex === index
-                              ? '#009BF2'
-                              : 'rgba(0, 155, 242, 0.35)',
-                        }}
-                        aria-label={`Go to ${stat}`}
-                      />
-                    ))}
-                  </div>
+                  {/* Carousel Indicators — neumorphic slider */}
+                  <NeumorphicCarouselDots
+                    count={stats.length}
+                    currentIndex={currentIndex}
+                    onSelect={(index) => {
+                      setCurrentIndex(index);
+                      setCurrentStat(stats[index]);
+                    }}
+                    ariaLabelPrefix="Go to stat"
+                  />
                 </div>
               </div>
-              {/* Feature Buttons Grid - 8 circular buttons, neumorphic card, standard spacing */}
-              <div className="mt-5 flex justify-center sm:mt-6">
+              {/* Feature Buttons Grid - 8 circular buttons, neumorphic card */}
+              <div className="flex justify-center">
                 <div
                   className="w-full max-w-md rounded-2xl p-5 sm:p-6"
                   style={{
@@ -999,6 +988,7 @@ export default function DashboardPage() {
                       const isSettings = button.id === 'settings';
                       const isStreak = button.id === 'staking-streak';
                       const isRank = button.id === 'rank';
+                      const isWelcomeBonus = button.id === 'welcome-bonus';
                       const buttonContent = (
                         <motion.button
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -1132,6 +1122,21 @@ export default function DashboardPage() {
                             >
                               {buttonContent}
                             </div>
+                          ) : isWelcomeBonus ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openModal('registration-bonus')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openModal('registration-bonus');
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
                           ) : (
                             <Link href={button.href}>{buttonContent}</Link>
                           )}
@@ -1145,40 +1150,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Column 2 - Stake card, Activity, daily ROS (stake above recent activity, below feature buttons) */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 2 - Stake card, Activity, daily ROS */}
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-0"
+            className="flex flex-col gap-5"
           >
-            {/* Active Stakes - same container as other cards (neumorphic, spacing, padding, #0D162C) */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.32 }}
-              className="mt-5 sm:mt-6"
             >
-              <div
-                className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
-                style={{
-                  background: '#0D162C',
-                  boxShadow:
-                    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-                  border: '1px solid var(--app-border)',
-                }}
-              >
-                <ActiveStakesCard embedded />
-              </div>
+              <ActiveStakesCard embedded />
             </motion.div>
 
-            {/* Recent Activity - standard spacing between cards */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="mt-5 sm:mt-6"
             >
               <ActivityFeed
                 transactions={transactions || []}
@@ -1186,12 +1177,10 @@ export default function DashboardPage() {
               />
             </motion.div>
 
-            {/* Daily ROS Performance - standard spacing between cards */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.38 }}
-              className="mt-5 sm:mt-6"
               id="daily-ros"
             >
               <DailyROSPerformance />
@@ -1199,24 +1188,16 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Column 3 - Live signals, live platform activities (stake card is in column 2 above recent activity) */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 3 - Live Trading Signals & Live Platform Activities */}
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+            className="grid grid-cols-1 gap-5 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
           >
-            {/* Live Trading Signals & Live Platform Activity - on lg they stack and share column height equally (50/50) */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42 }}
-              className="mt-2 grid grid-cols-1 gap-3 lg:mt-0 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
-            >
-              <LiveTradingSignals />
-              <LivePlatformActivities />
-            </motion.div>
+            <LiveTradingSignals />
+            <LivePlatformActivities />
           </motion.div>
         </div>
       </div>

@@ -14,15 +14,6 @@ const normalizeRole = (role?: string | null) =>
     .replace(/([a-z])([A-Z])/g, '$1_$2')
     .replace(/[-\s_]/g, '') ?? '';
 
-/** Cookie domain so session persists on both novunt.com and www.novunt.com */
-function getAuthCookieDomain(): string {
-  if (typeof window === 'undefined') return '';
-  const h = window.location.hostname.toLowerCase();
-  if (h === 'novunt.com' || h.endsWith('.novunt.com'))
-    return '; domain=.novunt.com';
-  return '';
-}
-
 interface AuthState {
   // State
   user: User | null;
@@ -77,10 +68,9 @@ export const useAuthStore = create<AuthState>()(
           // CRITICAL: Secure flag required for HTTPS (production) - cookies without it may not persist
           const secureFlag =
             window.location?.protocol === 'https:' ? '; Secure' : '';
-          const domain = getAuthCookieDomain();
-          document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domain}`;
-          document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domain}`;
-          document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domain}`;
+          document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+          document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+          document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
         }
 
         set({
@@ -104,12 +94,11 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         tokenManager.clearTokens();
 
-        // Clear cookies (use same domain as set so they are actually removed)
+        // Clear cookies
         if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-          const domain = getAuthCookieDomain();
-          document.cookie = `auth_token=; path=/; max-age=0${domain}`;
-          document.cookie = `authToken=; path=/; max-age=0${domain}`;
-          document.cookie = `refreshToken=; path=/; max-age=0${domain}`;
+          document.cookie = 'auth_token=; path=/; max-age=0';
+          document.cookie = 'authToken=; path=/; max-age=0';
+          document.cookie = 'refreshToken=; path=/; max-age=0';
         }
 
         set({
@@ -125,12 +114,11 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => {
         tokenManager.clearTokens();
 
-        // Clear cookies (use same domain as set so they are actually removed)
+        // Clear cookies
         if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-          const domain = getAuthCookieDomain();
-          document.cookie = `auth_token=; path=/; max-age=0${domain}`;
-          document.cookie = `authToken=; path=/; max-age=0${domain}`;
-          document.cookie = `refreshToken=; path=/; max-age=0${domain}`;
+          document.cookie = 'auth_token=; path=/; max-age=0';
+          document.cookie = 'authToken=; path=/; max-age=0';
+          document.cookie = 'refreshToken=; path=/; max-age=0';
         }
 
         set({
@@ -236,9 +224,8 @@ export const useAuthStore = create<AuthState>()(
 
               // Clear only the expired accessToken from localStorage and cookies
               localStorage.removeItem('accessToken');
-              const domainClear = getAuthCookieDomain();
-              document.cookie = `auth_token=; path=/; max-age=0${domainClear}`;
-              document.cookie = `authToken=; path=/; max-age=0${domainClear}`;
+              document.cookie = 'auth_token=; path=/; max-age=0';
+              document.cookie = 'authToken=; path=/; max-age=0';
 
               // Keep refreshToken, user data - axios interceptor will attempt refresh
               console.log(
@@ -260,10 +247,9 @@ export const useAuthStore = create<AuthState>()(
               localStorage.removeItem('user');
 
               // Clear all cookies
-              const domainClearAll = getAuthCookieDomain();
-              document.cookie = `auth_token=; path=/; max-age=0${domainClearAll}`;
-              document.cookie = `authToken=; path=/; max-age=0${domainClearAll}`;
-              document.cookie = `refreshToken=; path=/; max-age=0${domainClearAll}`;
+              document.cookie = 'auth_token=; path=/; max-age=0';
+              document.cookie = 'authToken=; path=/; max-age=0';
+              document.cookie = 'refreshToken=; path=/; max-age=0';
             }
           } else {
             console.log('[AuthStore] ✅ Token from state is valid');
@@ -276,11 +262,10 @@ export const useAuthStore = create<AuthState>()(
                 window.location?.protocol === 'https:'
                   ? '; Secure'
                   : '';
-              const domainSync = getAuthCookieDomain();
-              document.cookie = `auth_token=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domainSync}`;
-              document.cookie = `authToken=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domainSync}`;
+              document.cookie = `auth_token=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+              document.cookie = `authToken=${state.token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
               if (state.refreshToken) {
-                document.cookie = `refreshToken=${state.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}${domainSync}`;
+                document.cookie = `refreshToken=${state.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
               }
               console.log(
                 '[AuthStore] ✅ Synced token to cookies for middleware'
@@ -352,9 +337,8 @@ export const useAuthStore = create<AuthState>()(
                   '[AuthStore] ✅ Cookie refreshToken exists - keeping it for token refresh'
                 );
                 // Keep the refreshToken cookie, only clear expired accessToken
-                const domainExpired = getAuthCookieDomain();
-                document.cookie = `auth_token=; path=/; max-age=0${domainExpired}`;
-                document.cookie = `authToken=; path=/; max-age=0${domainExpired}`;
+                document.cookie = 'auth_token=; path=/; max-age=0';
+                document.cookie = 'authToken=; path=/; max-age=0';
 
                 // Store refreshToken in state for axios interceptor
                 state.refreshToken = cookieRefreshToken;
@@ -368,10 +352,9 @@ export const useAuthStore = create<AuthState>()(
                 console.log(
                   '[AuthStore] ❌ No cookie refreshToken - clearing all cookies'
                 );
-                const domainNoRefresh = getAuthCookieDomain();
-                document.cookie = `auth_token=; path=/; max-age=0${domainNoRefresh}`;
-                document.cookie = `authToken=; path=/; max-age=0${domainNoRefresh}`;
-                document.cookie = `refreshToken=; path=/; max-age=0${domainNoRefresh}`;
+                document.cookie = 'auth_token=; path=/; max-age=0';
+                document.cookie = 'authToken=; path=/; max-age=0';
+                document.cookie = 'refreshToken=; path=/; max-age=0';
               }
             }
           } else {

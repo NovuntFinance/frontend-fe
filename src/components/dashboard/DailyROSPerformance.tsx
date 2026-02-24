@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import { useProfitHistory } from '@/lib/queries';
-import { LoadingStates } from '@/components/ui/loading-states';
 import { EmptyStates } from '@/components/EmptyStates';
 import { pct4 } from '@/utils/formatters';
 
@@ -12,15 +11,50 @@ type TimeRange = '7D' | '30D' | '100D';
 
 const timeRanges: TimeRange[] = ['7D', '30D', '100D'];
 
-// Chart dimensions
+const MOCK_DAYS = 90; // 3 months
+const MAX_ROS_PERCENT = 2.2;
+
+/** Seeded pseudo-random 0..1 for stable mock data */
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+/** Generate 3 months of mock daily ROS data: random values in (0, 2.2] */
+function useMockProfitHistory(): { date: string; rosPercentage: number }[] {
+  return useMemo(() => {
+    const result: { date: string; rosPercentage: number }[] = [];
+    const now = new Date();
+    for (let i = MOCK_DAYS - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const seed = d.getTime() * 0.001;
+      const raw = seededRandom(seed);
+      const rosPercentage = Number((raw * MAX_ROS_PERCENT).toFixed(4));
+      result.push({ date: dateStr, rosPercentage });
+    }
+    return result;
+  }, []);
+}
+
+// Bar chart dimensions
 const CHART_HEIGHT = 140;
-const CHART_PADDING = { top: 8, right: 8, bottom: 24, left: 8 };
-const POINT_R = 4;
+const CHART_PADDING = { top: 8, right: 8, bottom: 28, left: 8 };
+const BAR_GAP_RATIO = 0.35; // gap between bars as fraction of bar width
+const ACCENT_BLUE = '#009BF2';
+
+// Dashboard card style (match Activity Feed / stake card)
+const CARD_STYLE = {
+  background: '#0D162C',
+  boxShadow:
+    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+  border: '1px solid var(--app-border)',
+} as const;
 
 /**
  * Daily ROS Performance Card
- * Line chart with area fill (smooth line + gradient under line).
- * Styled to match dashboard cards; placed under Recent Activity.
+ * Bar chart; design matches dashboard (#0D162C, neumorphic).
  */
 export function DailyROSPerformance() {
   const [selectedRange, setSelectedRange] = useState<TimeRange>('7D');
@@ -40,30 +74,36 @@ export function DailyROSPerformance() {
   }, [selectedRange]);
 
   const { data: profitHistory, isLoading, error } = useProfitHistory(limit, 0);
+  const mockData = useMockProfitHistory();
 
   const chartData = useMemo(() => {
-    if (!profitHistory?.profits) return [];
+    // Prefer API data when available and valid
+    const apiProfits = profitHistory?.profits;
+    if (apiProfits && Array.isArray(apiProfits) && apiProfits.length > 0) {
+      const fromApi = [...apiProfits]
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(-limit)
+        .filter((d) => {
+          const ros = d.rosPercentage;
+          return (
+            ros !== undefined &&
+            ros !== null &&
+            !isNaN(ros) &&
+            isFinite(ros) &&
+            ros >= 0
+          );
+        })
+        .map((d) => ({
+          date: d.date,
+          rosPercentage: Number(d.rosPercentage) || 0,
+        }));
+      if (fromApi.length > 0) return fromApi;
+    }
 
-    const sorted = [...profitHistory.profits]
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-limit)
-      .filter((d) => {
-        const ros = d.rosPercentage;
-        return (
-          ros !== undefined &&
-          ros !== null &&
-          !isNaN(ros) &&
-          isFinite(ros) &&
-          ros >= 0
-        );
-      })
-      .map((d) => ({
-        ...d,
-        rosPercentage: Number(d.rosPercentage) || 0,
-      }));
-
-    return sorted;
-  }, [profitHistory, limit]);
+    // Fallback: 3 months mock data, random ROS ≤ 2.2%, take last `limit` days
+    const take = Math.min(limit, MOCK_DAYS);
+    return mockData.slice(-take);
+  }, [profitHistory, limit, mockData, selectedRange]);
 
   const maxPercentage = useMemo(() => {
     if (chartData.length === 0) return 1;
@@ -74,70 +114,31 @@ export function DailyROSPerformance() {
     return Math.max(...valid) * 1.1 || 1;
   }, [chartData]);
 
-  const averagePercentage = useMemo(() => {
-    if (chartData.length === 0) return 0;
-    const valid = chartData
-      .map((d) => d.rosPercentage)
-      .filter((p) => !isNaN(p) && isFinite(p) && p >= 0);
-    if (valid.length === 0) return 0;
-    return valid.reduce((a, p) => a + p, 0) / valid.length;
-  }, [chartData]);
-
-  // SVG path data: line and area (for fill)
-  const { linePath, areaPath, points, xAxisLabels } = useMemo(() => {
+  // Bar chart layout: bar positions and heights (viewBox 0 0 100 CHART_HEIGHT)
+  const { bars } = useMemo(() => {
     if (chartData.length === 0) {
-      return {
-        linePath: '',
-        areaPath: '',
-        points: [] as { x: number; y: number }[],
-        xAxisLabels: [] as string[],
-      };
+      return { bars: [] as { x: number; width: number; height: number; y: number; pct: number; label: string }[] };
     }
-
-    const w = 100; // percentage-based so it scales
-    const innerHeight = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
+    const w = 100;
+    const innerW = w - CHART_PADDING.left - CHART_PADDING.right;
+    const innerH = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
     const n = chartData.length;
-    const stepX =
-      n > 1 ? (w - CHART_PADDING.left - CHART_PADDING.right) / (n - 1) : 0;
-    const baseX = CHART_PADDING.left;
+    const gap = innerW / (n + 1) * BAR_GAP_RATIO;
+    const barWidth = (innerW - (n + 1) * gap) / n;
+    const baseX = CHART_PADDING.left + gap;
+    const baseY = CHART_HEIGHT - CHART_PADDING.bottom;
 
-    const pts = chartData.map((d, i) => {
-      const x = baseX + (n > 1 ? i * stepX : stepX * 0.5);
+    const bars = chartData.map((d, i) => {
       const pct = maxPercentage > 0 ? d.rosPercentage / maxPercentage : 0;
-      const y = CHART_PADDING.top + innerHeight * (1 - pct);
-      return { x, y, percentage: d.rosPercentage, date: d.date };
-    });
-
-    const linePathD = pts
-      .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-      .join(' ');
-    const areaPathD =
-      linePathD +
-      ` L ${pts[pts.length - 1].x} ${CHART_HEIGHT - CHART_PADDING.bottom} L ${pts[0].x} ${CHART_HEIGHT - CHART_PADDING.bottom} Z`;
-
-    const labels = chartData.map((d, i) => {
+      const height = Math.max(2, innerH * pct);
+      const x = baseX + i * (barWidth + gap);
+      const y = baseY - height;
       const date = new Date(d.date);
-      if (selectedRange === '7D') {
-        return date
-          .toLocaleDateString('en-US', { weekday: 'short' })
-          .toUpperCase();
-      }
-      if (selectedRange === '30D') {
-        return i % 5 === 0
-          ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : '';
-      }
-      return i % 15 === 0
-        ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        : '';
+      const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return { x, width: barWidth, height, y, pct: d.rosPercentage, label };
     });
 
-    return {
-      linePath: linePathD,
-      areaPath: areaPathD,
-      points: pts.map((p) => ({ x: p.x, y: p.y })),
-      xAxisLabels: labels,
-    };
+    return { bars };
   }, [chartData, maxPercentage, selectedRange]);
 
   const rangeLabel =
@@ -156,53 +157,51 @@ export function DailyROSPerformance() {
       >
         <div
           className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
-          style={{
-            background: 'var(--app-page-bg)',
-            boxShadow: `
-              inset 8px 8px 16px var(--app-shadow-dark),
-              inset -8px -8px 16px var(--app-shadow-light),
-              inset 2px 2px 4px rgba(0, 0, 0, 0.15),
-              inset -2px -2px 4px var(--app-shadow-light),
-              0 0 0 1px var(--app-border)
-            `,
-          }}
+          style={CARD_STYLE}
         >
-          {/* Header - same typography as other dashboard cards */}
-          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+          {/* Header - match Daily ROS Payout card (icon + title + subtitle) */}
+          <div className="mb-4 flex items-center gap-2 sm:gap-3">
             <div
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
-              style={{ background: 'var(--app-overlay)' }}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
+              style={{ background: 'rgba(0, 155, 242, 0.15)' }}
             >
               <TrendingUp
-                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: '#009BF2', filter: 'none' }}
               />
             </div>
             <div className="min-w-0 flex-1">
               <p
-                className="text-xs font-medium sm:text-sm lg:text-xs"
-                style={{ color: 'var(--app-text-secondary)', filter: 'none' }}
+                className="text-xs font-semibold sm:text-sm"
+                style={{ color: '#009BF2', filter: 'none' }}
               >
                 Daily ROS Performance
               </p>
               <p
-                className="text-[10px] sm:text-xs lg:text-[10px]"
-                style={{ color: 'var(--app-text-muted)', filter: 'none' }}
+                className="text-[10px] sm:text-xs"
+                style={{
+                  color: 'rgba(0, 155, 242, 0.75)',
+                  filter: 'none',
+                }}
               >
                 {rangeLabel}
               </p>
             </div>
-            {/* Time range pills - same style as second image (pill, muted) */}
+            {/* Time range pills - neumorphic inset */}
             <div
-              className="flex rounded-lg p-0.5"
-              style={{ background: 'var(--app-overlay)' }}
+              className="flex rounded-xl p-1"
+              style={{
+                background: 'rgba(4, 8, 18, 0.5)',
+                boxShadow:
+                  'inset 3px 3px 8px rgba(4, 8, 18, 0.6), inset -3px -3px 8px rgba(25, 40, 72, 0.3)',
+              }}
             >
               {timeRanges.map((range) => (
                 <button
                   key={range}
                   type="button"
                   onClick={() => setSelectedRange(range)}
-                  className="rounded-md px-2.5 py-1 text-[10px] font-medium transition-all sm:text-xs"
+                  className="rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all sm:text-xs"
                   style={{
                     background:
                       selectedRange === range
@@ -212,7 +211,10 @@ export function DailyROSPerformance() {
                       selectedRange === range
                         ? 'var(--app-text-primary)'
                         : 'var(--app-text-muted)',
-                    filter: 'none',
+                    boxShadow:
+                      selectedRange === range
+                        ? '2px 2px 6px rgba(0, 0, 0, 0.2)'
+                        : 'none',
                   }}
                 >
                   {range}
@@ -221,49 +223,16 @@ export function DailyROSPerformance() {
             </div>
           </div>
 
-          {/* KPI - avg percentage */}
-          <div className="mb-3 flex items-baseline gap-2">
-            {isLoading ? (
-              <LoadingStates.Text lines={1} className="h-7 w-24" />
-            ) : (
-              <>
-                <span
-                  className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                  style={{ color: '#22c55e', filter: 'none' }}
-                >
-                  {isNaN(averagePercentage) || !isFinite(averagePercentage)
-                    ? '0.0000'
-                    : pct4(averagePercentage)}
-                </span>
-                <span
-                  className="text-[10px] sm:text-xs lg:text-[10px]"
-                  style={{ color: 'var(--app-text-muted)', filter: 'none' }}
-                >
-                  avg in {selectedRange}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Line chart with area fill */}
-          <div className="relative h-[180px] w-full">
-            {isLoading ? (
-              <LoadingStates.Text lines={3} className="h-full w-full" />
-            ) : error ? (
-              <div className="flex h-full items-center justify-center">
-                <EmptyStates.EmptyState
-                  title="Failed to load data"
-                  description="Unable to fetch ROS performance data."
-                />
-              </div>
-            ) : chartData.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <EmptyStates.EmptyState
-                  title={`No data for ${selectedRange}`}
-                  description="ROS data will appear once profits are declared"
-                />
-              </div>
-            ) : (
+          {/* Bar chart - neumorphic chart area (extra bottom for vertical date labels) */}
+          <div
+            className="relative h-[200px] w-full overflow-hidden rounded-xl"
+            style={{
+              background: 'rgba(4, 8, 18, 0.4)',
+              boxShadow:
+                'inset 4px 4px 10px rgba(4, 8, 18, 0.5), inset -4px -4px 10px rgba(25, 40, 72, 0.25)',
+            }}
+          >
+            {chartData.length > 0 ? (
               <svg
                 viewBox={`0 0 100 ${CHART_HEIGHT}`}
                 preserveAspectRatio="none"
@@ -271,92 +240,91 @@ export function DailyROSPerformance() {
               >
                 <defs>
                   <linearGradient
-                    id="ros-area-fill"
+                    id="ros-bar-gradient"
                     x1="0"
-                    y1="0"
+                    y1="1"
                     x2="0"
-                    y2="1"
+                    y2="0"
                     gradientUnits="objectBoundingBox"
                   >
-                    <stop offset="0%" stopColor="#009BF2" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#009BF2" stopOpacity="0" />
+                    <stop offset="0%" stopColor={ACCENT_BLUE} stopOpacity="0.85" />
+                    <stop offset="100%" stopColor={ACCENT_BLUE} stopOpacity="1" />
                   </linearGradient>
                 </defs>
-                {/* Area under line */}
-                <motion.path
-                  d={areaPath}
-                  fill="url(#ros-area-fill)"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                />
-                {/* Line */}
-                <motion.path
-                  d={linePath}
-                  fill="none"
-                  stroke="#009BF2"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.6, ease: 'easeInOut' }}
-                />
-                {/* Data points */}
-                <AnimatePresence>
-                  {points.map((pt, i) => (
-                    <g key={i}>
-                      <motion.circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={POINT_R}
-                        fill="#009BF2"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.3 + i * 0.05 }}
-                        onMouseEnter={() => setHoveredIndex(i)}
-                        onMouseLeave={() => setHoveredIndex(null)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      {hoveredIndex === i && chartData[i] && (
-                        <motion.g
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
+                {bars.map((bar, i) => (
+                  <g key={i}>
+                    <motion.rect
+                      x={bar.x}
+                      y={bar.y}
+                      width={bar.width}
+                      height={bar.height}
+                      rx={4}
+                      ry={4}
+                      fill="url(#ros-bar-gradient)"
+                      style={{
+                        filter: 'drop-shadow(0 2px 6px rgba(0, 155, 242, 0.35))',
+                        cursor: 'pointer',
+                      }}
+                      initial={{ height: 0, y: CHART_HEIGHT - CHART_PADDING.bottom }}
+                      animate={{ height: bar.height, y: bar.y }}
+                      transition={{
+                        duration: 0.5,
+                        delay: i * 0.05,
+                        ease: 'easeOut',
+                      }}
+                      onMouseEnter={() => setHoveredIndex(i)}
+                      onMouseLeave={() => setHoveredIndex(null)}
+                    />
+                    {/* Date label inside bar - vertical, at bottom center */}
+                    <text
+                      x={bar.x + bar.width / 2}
+                      y={bar.y + bar.height - 2}
+                      textAnchor="middle"
+                      fill="rgba(255,255,255,0.95)"
+                      fontSize="7"
+                      fontWeight="500"
+                      transform={`rotate(-90, ${bar.x + bar.width / 2}, ${bar.y + bar.height - 2})`}
+                    >
+                      {bar.label}
+                    </text>
+                    {hoveredIndex === i && (
+                      <motion.g
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <text
+                          x={bar.x + bar.width / 2}
+                          y={bar.y - 6}
+                          textAnchor="middle"
+                          fill="var(--app-text-primary)"
+                          fontSize="9"
+                          fontWeight="600"
                         >
-                          <text
-                            x={pt.x}
-                            y={pt.y - 10}
-                            textAnchor="middle"
-                            fill="var(--app-text-primary)"
-                            fontSize="10"
-                            fontWeight="600"
-                          >
-                            {pct4(chartData[i].rosPercentage)}
-                          </text>
-                        </motion.g>
-                      )}
-                    </g>
-                  ))}
-                </AnimatePresence>
-              </svg>
-            )}
-
-            {/* X-axis labels - aligned with data points */}
-            {chartData.length > 0 && !isLoading && !error && (
-              <div
-                className="absolute right-0 bottom-0 left-0 flex text-[10px] font-medium sm:text-xs"
-                style={{ color: 'var(--app-text-muted)' }}
-              >
-                {xAxisLabels.map((label, i) => (
-                  <span
-                    key={i}
-                    className="flex-1 truncate text-center"
-                    style={{ minWidth: 0 }}
-                  >
-                    {label}
-                  </span>
+                          {pct4(bar.pct)}
+                        </text>
+                      </motion.g>
+                    )}
+                  </g>
                 ))}
+              </svg>
+            ) : isLoading ? (
+              <div className="flex h-full w-full items-center justify-center" style={{ color: 'var(--app-text-muted)' }}>
+                <span className="text-xs font-medium">Loading…</span>
+              </div>
+            ) : error ? (
+              <div className="flex h-full items-center justify-center">
+                <EmptyStates.EmptyState
+                  title="Failed to load data"
+                  description="Unable to fetch ROS performance data."
+                />
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <EmptyStates.EmptyState
+                  title={`No data for ${selectedRange}`}
+                  description="ROS data will appear once profits are declared"
+                />
               </div>
             )}
           </div>

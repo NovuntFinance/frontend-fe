@@ -132,11 +132,7 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z
   .object({
-    email: z.string().email('Please enter a valid email address'),
-    otp: z
-      .string()
-      .length(6, 'Verification code must be 6 digits')
-      .regex(/^[0-9]+$/, 'Verification code must contain only numbers'),
+    token: z.string().min(1, 'Reset token is required'),
     password: passwordSchema,
     confirmPassword: z.string(),
   })

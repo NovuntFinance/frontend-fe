@@ -1,47 +1,78 @@
 /**
- * Wallet Dashboard Component
- * Ultra-modern wallet overview with glassmorphism and animations
- * Based on Backend TRD: FRONTEND_WALLET_IMPLEMENTATION_PHASE1.md
+ * Wallet Dashboard – Neumorphic layout matching reference
+ * Mobile: stacked (Total Balance → Wallets → Actions → Capabilities → Earned/Staked → Whitelist → Recent Tx)
+ * Desktop: two columns (left: balance + actions + whitelist; right: wallets + earned/staked), bottom: recent tx
  */
 
 'use client';
 
 import React, { useState, useCallback, memo } from 'react';
-import { motion } from 'framer-motion';
 import {
   TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
   Eye,
   EyeOff,
   DollarSign,
   Wallet as WalletIcon,
+  Check,
+  ArrowDownRight,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { WithdrawalModal } from './WithdrawalModal';
 import { WithdrawalAddressManager } from './WithdrawalAddressManager';
 import { TransferModal } from './modals/TransferModal';
 import { WalletBreakdown } from './WalletBreakdown';
-import { StatCard } from './StatCard';
 import { WalletDashboardSkeleton } from './WalletDashboardSkeleton';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { walletLogger } from '@/lib/logger';
-import { prefersReducedMotion } from '@/lib/accessibility';
-import { slideUp, hoverAnimation } from '@/design-system/animations';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { useActiveStakes, useDashboardOverview } from '@/lib/queries';
+import { formatCurrency } from '@/lib/utils/wallet';
+import neuStyles from '@/styles/neumorphic.module.css';
+import walletStyles from '@/styles/wallet-page.module.css';
 
-/**
- * Wallet Capabilities Component - Staking Streak Template
- */
+/* Hierarchy via #009BF2 opacity only – no other colors */
+const NEU_ACCENT = 'rgba(0,155,242,0.95)';
+const NEU_MUTED = 'rgba(0,155,242,0.55)';
+const NEU_HIGHLIGHT = 'rgba(0,155,242,0.85)'; /* e.g. positive change */
+
+type StatCardItem = {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
+};
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  balanceVisible,
+  carousel,
+}: StatCardItem & { balanceVisible: boolean; carousel?: boolean }) {
+  return (
+    <div
+      className={`rounded-[18px] p-4 ${neuStyles['neu-card']} ${
+        carousel ? 'min-w-[260px] flex-shrink-0 snap-center' : ''
+      }`}
+    >
+      <div className="mb-1 flex items-center gap-2">
+        <Icon className="h-4 w-4" style={{ color: 'var(--neu-accent)' }} />
+        <p className={walletStyles.labelUppercase} style={{ color: NEU_MUTED }}>
+          {label}
+        </p>
+      </div>
+      <p className="text-lg font-bold sm:text-xl" style={{ color: NEU_ACCENT }}>
+        {balanceVisible
+          ? `$${formatCurrency(value, { showCurrency: false })}`
+          : '••••'}
+      </p>
+    </div>
+  );
+}
+
 const WalletCapabilities = memo(function WalletCapabilities({
   canStake,
   canWithdraw,
@@ -51,85 +82,40 @@ const WalletCapabilities = memo(function WalletCapabilities({
   canWithdraw: boolean;
   canTransfer: boolean;
 }) {
+  const items = [
+    { label: 'Can Stake Assets', enabled: canStake },
+    { label: 'Can Withdraw Funds', enabled: canWithdraw },
+    { label: 'Can Transfer Assets', enabled: canTransfer },
+  ];
   return (
-    <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-amber-500/10 to-transparent" />
-
-      {/* Animated Floating Blob */}
-      <motion.div
-        animate={{
-          x: [0, -15, 0],
-          y: [0, 10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-orange-500/30 blur-2xl"
-      />
-
-      <CardHeader className="relative p-4 sm:p-6">
-        <div className="mb-2 flex items-center gap-2 sm:gap-3">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: -10 }}
-            className="rounded-xl bg-gradient-to-br from-orange-500/30 to-amber-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-          >
-            <DollarSign className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-              Wallet Capabilities
-            </CardTitle>
-            <CardDescription className="text-[10px] sm:text-xs">
-              Your wallet permissions
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-muted-foreground mb-2 text-xs sm:text-sm">
-              Can Stake
-            </p>
+    <div className={`rounded-[18px] p-4 ${neuStyles['neu-card']}`}>
+      <p
+        className={`mb-3 ${walletStyles.labelUppercase}`}
+        style={{ color: NEU_MUTED }}
+      >
+        Wallet Capabilities
+      </p>
+      <ul className="space-y-2">
+        {items.map(({ label, enabled }) => (
+          <li key={label} className="flex items-center gap-3">
             <div
-              className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${canStake ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted text-muted-foreground'}`}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+              style={{
+                background: enabled ? 'var(--neu-accent)' : 'var(--neu-bg)',
+                boxShadow: 'var(--neu-shadow-inset)',
+                color: enabled ? 'var(--neu-bg)' : NEU_MUTED,
+              }}
             >
-              {canStake ? '✓' : '✗'}
+              {enabled && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
             </div>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-2 text-xs sm:text-sm">
-              Can Withdraw
-            </p>
-            <div
-              className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${canWithdraw ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted text-muted-foreground'}`}
-            >
-              {canWithdraw ? '✓' : '✗'}
-            </div>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-2 text-xs sm:text-sm">
-              Can Transfer
-            </p>
-            <div
-              className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${canTransfer ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted text-muted-foreground'}`}
-            >
-              {canTransfer ? '✓' : '✗'}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <span style={{ color: NEU_ACCENT }}>{label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 });
 
-/**
- * Wallet Dashboard Component
- */
 export function WalletDashboard() {
   const { wallet, isLoading, error, refetch } = useWallet();
   const { data: activeStakes } = useActiveStakes();
@@ -139,8 +125,6 @@ export function WalletDashboard() {
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
 
-  // Get statistics directly from backend - no calculations needed
-  // Backend provides all statistics in wallet.statistics
   const baseStatistics = wallet?.statistics || {
     totalDeposited: 0,
     totalWithdrawn: 0,
@@ -151,14 +135,11 @@ export function WalletDashboard() {
     totalEarned: 0,
   };
 
-  // Calculate totalStaked similar to dashboard page
-  // Priority: overview > activeStakes calculation > wallet statistics
   const activeStakesArray = Array.isArray(activeStakes)
     ? activeStakes
     : (activeStakes as any)?.data?.activeStakes ||
       (activeStakes as any)?.activeStakes ||
       [];
-
   const totalStakedFromOverview = overview?.staking?.totalStaked;
   const totalStakedFromActiveStakes =
     activeStakesArray.length > 0
@@ -167,27 +148,18 @@ export function WalletDashboard() {
           return sum + (isNaN(amount) ? 0 : amount);
         }, 0)
       : 0;
-
   const calculatedTotalStaked =
     totalStakedFromOverview ??
     totalStakedFromActiveStakes ??
     baseStatistics.totalStaked ??
     0;
-
-  // Merge statistics with calculated totalStaked
-  const statistics = {
-    ...baseStatistics,
-    totalStaked: calculatedTotalStaked,
-  };
+  const statistics = { ...baseStatistics, totalStaked: calculatedTotalStaked };
 
   const toggleBalanceVisibility = useCallback(() => {
     setBalanceVisible((prev) => !prev);
   }, []);
 
-  if (isLoading) {
-    return <WalletDashboardSkeleton />;
-  }
-
+  if (isLoading) return <WalletDashboardSkeleton />;
   if (error) {
     walletLogger.error('Failed to load wallet', error);
     return (
@@ -198,161 +170,133 @@ export function WalletDashboard() {
       />
     );
   }
+  if (!wallet) return null;
 
-  if (!wallet) {
-    return null;
-  }
-
-  // Debug logging for statistics cards (development only)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WalletDashboard] Statistics Cards Data:', {
-      statistics,
-      walletStatistics: wallet?.statistics,
-    });
-  }
-
-  const reducedMotion = prefersReducedMotion();
+  const statCards: StatCardItem[] = [
+    { label: 'Total Earned', value: statistics.totalEarned, icon: DollarSign },
+    { label: 'Total Staked', value: statistics.totalStaked, icon: WalletIcon },
+    {
+      label: 'Total Deposited',
+      value: statistics.totalDeposited,
+      icon: ArrowDownRight,
+    },
+    {
+      label: 'Total Withdrawn',
+      value: statistics.totalWithdrawn,
+      icon: ArrowUpRight,
+    },
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Main Balance Card - Staking Streak Template */}
-      <motion.div {...slideUp(0.1)}>
-        <Card className="bg-card/50 group relative overflow-visible border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-          {/* Animated Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
-
-          {/* Animated Floating Blob */}
-          {!reducedMotion && (
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-purple-500/30 blur-2xl"
-            />
-          )}
-
-          <CardHeader className="relative p-4 sm:p-6">
-            <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  {...hoverAnimation()}
-                  className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+      {/* Top section: balance (mobile = one card; desktop = left column) */}
+      <div className="lg:grid lg:grid-cols-12 lg:gap-6">
+        {/* Left column on desktop: Total balance + actions + whitelist */}
+        <div className="lg:col-span-7 lg:space-y-6">
+          {/* Total Balance / Total Available Balance */}
+          <div className={`rounded-[18px] p-4 sm:p-6 ${neuStyles['neu-card']}`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p
+                  className={`mb-1 ${walletStyles.labelUppercase}`}
+                  style={{ color: NEU_MUTED }}
                 >
-                  <WalletIcon className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                    Total Balance
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs">
-                    Your complete wallet balance
-                  </CardDescription>
+                  Total Balance
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className="text-2xl font-bold sm:text-3xl lg:text-4xl"
+                    style={{ color: NEU_ACCENT }}
+                  >
+                    {balanceVisible
+                      ? `$${wallet.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '••••••'}
+                  </span>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleBalanceVisibility}
-                className="h-8 w-8 shrink-0 rounded-full"
-                aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
-              >
-                {balanceVisible ? (
-                  <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
-                ) : (
-                  <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                )}
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-            {/* Balance Display */}
-            <div className="mb-4 flex w-full min-w-0 items-baseline gap-2 sm:mb-6 sm:gap-3">
-              {balanceVisible ? (
-                <motion.span
-                  initial={reducedMotion ? false : { opacity: 0, scale: 0.5 }}
-                  animate={reducedMotion ? false : { opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  key={wallet.totalBalance}
-                  className="overflow-visible bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-2xl leading-tight font-black whitespace-nowrap text-transparent sm:text-3xl md:text-4xl lg:text-5xl"
-                  style={{ wordBreak: 'keep-all' }}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleBalanceVisibility}
+                  className="flex h-9 w-9 items-center justify-center rounded-[16px] transition-[box-shadow,transform,opacity] duration-[250ms] hover:opacity-90 focus:ring-2 focus:ring-[var(--neu-focus-ring)] focus:outline-none"
+                  style={{
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-inset)',
+                    color: 'var(--neu-accent)',
+                  }}
+                  aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
                 >
-                  $
-                  {wallet.totalBalance.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </motion.span>
-              ) : (
-                <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-2xl font-black text-transparent sm:text-3xl md:text-4xl lg:text-5xl">
-                  ••••••
-                </span>
-              )}
+                  {balanceVisible ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
+          </div>
 
+          {/* Wallet breakdown: Funded + Earning (mobile: under balance; desktop: moved to right column below) */}
+          <div className="lg:hidden">
             <WalletBreakdown wallet={wallet} balanceVisible={balanceVisible} />
+          </div>
 
-            <div className="mt-6">
-              <QuickActions />
-            </div>
+          {/* Quick Actions: always circular, more vertical spacing on small screens */}
+          <div className="py-4 sm:py-0">
+            <QuickActions />
+          </div>
 
-            <div className="mt-6">
-              <WalletCapabilities
-                canStake={wallet.canStake}
-                canWithdraw={wallet.canWithdraw}
-                canTransfer={wallet.canTransfer}
+          {/* Wallet Capabilities – mobile only in flow; desktop we show in right column */}
+          <div className="lg:hidden">
+            <WalletCapabilities
+              canStake={wallet.canStake}
+              canWithdraw={wallet.canWithdraw}
+              canTransfer={wallet.canTransfer}
+            />
+          </div>
+
+          {/* Total Earned, Staked, Deposited, Withdrawn – mobile: one row, carousel scroll */}
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+            {statCards.map((card) => (
+              <StatCard
+                key={card.label}
+                {...card}
+                balanceVisible={balanceVisible}
+                carousel
               />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            ))}
+          </div>
 
-      {/* Statistics Cards - 2x2 Grid Matching Dashboard */}
-      <motion.div
-        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4"
-      >
-        <StatCard
-          label="Total Earned"
-          value={statistics.totalEarned}
-          icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="emerald"
-        />
-        <StatCard
-          label="Total Staked"
-          value={statistics.totalStaked}
-          icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="orange"
-        />
-        <StatCard
-          label="Total Deposited"
-          value={statistics.totalDeposited}
-          icon={<ArrowDownRight className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="purple"
-        />
-        <StatCard
-          label="Total Withdrawn"
-          value={statistics.totalWithdrawn}
-          icon={<ArrowUpRight className="h-5 w-5 sm:h-6 sm:w-6" />}
-          colorTheme="blue"
-        />
-      </motion.div>
+          {/* Withdrawal Whitelist */}
+          <WithdrawalAddressManager />
+        </div>
 
-      {/* Security Whitelist Section - Hardened V2 */}
-      <motion.div {...slideUp(0.3)}>
-        <WithdrawalAddressManager />
-      </motion.div>
+        {/* Right column on desktop only: Funded + Earning, Total Earned, Total Staked, Total Deposited, Total Withdrawn, Capabilities */}
+        <div className="hidden lg:col-span-5 lg:block lg:space-y-4">
+          <div className="hidden lg:block">
+            <WalletBreakdown wallet={wallet} balanceVisible={balanceVisible} />
+          </div>
+          <div className="hidden lg:block">
+            <WalletCapabilities
+              canStake={wallet.canStake}
+              canWithdraw={wallet.canWithdraw}
+              canTransfer={wallet.canTransfer}
+            />
+          </div>
 
-      {/* Modals */}
+          {/* Total Earned, Staked, Deposited, Withdrawn – desktop: 2x2 grid */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {statCards.map((card) => (
+              <StatCard
+                key={card.label}
+                {...card}
+                balanceVisible={balanceVisible}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
       <WithdrawalModal
         open={withdrawalModalOpen}
         onOpenChange={setWithdrawalModalOpen}
