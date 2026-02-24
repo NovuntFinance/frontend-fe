@@ -1,0 +1,817 @@
+/* Badge Card – strict neumorphic: #0D162C + #009BF2 + #FFFFFF (opacity only).
+   Mobile-first. Single reusable component styling. */
+
+/* Section wrapper (e.g. "Your Badges") – same tokens, background for grid */
+.badgeSectionRoot {
+  --badge-bg: #0d162c;
+  --badge-accent: #009bf2;
+  --badge-accent-rgb: 0, 155, 242;
+  --badge-label: rgba(255, 255, 255, 0.55);
+  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
+  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
+  --badge-shadow-light: rgba(255, 255, 255, 0.04);
+  --badge-shadow-raised:
+    8px 8px 16px var(--badge-shadow-dark),
+    -8px -8px 16px var(--badge-shadow-light);
+  --badge-shadow-raised-hover:
+    10px 10px 20px var(--badge-shadow-dark),
+    -10px -10px 20px var(--badge-shadow-light);
+  --badge-shadow-inset:
+    inset 5px 5px 10px var(--badge-shadow-dark),
+    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-radius-sm: 16px;
+  --badge-radius-md: 18px;
+  --badge-radius-lg: 24px;
+  --badge-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--badge-bg);
+  border-radius: var(--badge-radius-lg);
+  padding: 20px 0 0;
+  color: var(--badge-accent);
+}
+@media (min-width: 640px) {
+  .badgeSectionRoot {
+    padding: 24px 0 0;
+  }
+}
+
+.badgeSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+@media (min-width: 640px) {
+  .badgeSectionHeader {
+    margin-bottom: 20px;
+  }
+}
+
+.badgeSectionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--badge-shadow-inset);
+  border: 1px solid var(--badge-border);
+  background: var(--badge-bg);
+  color: var(--badge-accent);
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .badgeSectionIcon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.badgeSectionTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--badge-accent);
+  margin: 0;
+  line-height: 1.25;
+}
+@media (min-width: 640px) {
+  .badgeSectionTitle {
+    font-size: 1.25rem;
+  }
+}
+
+.badgeSectionSubtitle {
+  font-size: 0.8rem;
+  color: var(--badge-label);
+  margin: 2px 0 0;
+  line-height: 1.3;
+}
+
+/* Grid: mobile single column, then 2–4 columns */
+.badgeSectionGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 640px) {
+  .badgeSectionGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .badgeSectionGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+@media (min-width: 1280px) {
+  .badgeSectionGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.badgeSectionMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  border: 1px solid var(--badge-border);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--badge-accent);
+  cursor: pointer;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition);
+}
+.badgeSectionMoreBtn:hover {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+.badgeSectionMoreBtn:active {
+  box-shadow: var(--badge-shadow-inset);
+  transform: translateY(0);
+}
+.badgeSectionMoreBtn:focus-visible {
+  outline: none;
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light),
+    0 0 0 2px rgba(var(--badge-accent-rgb), 0.2);
+}
+
+/* Catalog filter tabs – inactive = raised, active = inset */
+.badgeCatalogTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+@media (min-width: 640px) {
+  .badgeCatalogTabs {
+    margin-bottom: 24px;
+  }
+}
+
+.badgeCatalogTab {
+  padding: 10px 16px;
+  border-radius: var(--badge-radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--badge-border);
+  background: var(--badge-bg);
+  color: var(--badge-label);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition),
+    color var(--badge-transition);
+}
+.badgeCatalogTab:hover {
+  color: var(--badge-accent);
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+.badgeCatalogTab:active {
+  box-shadow: var(--badge-shadow-inset);
+  transform: translateY(0);
+}
+.badgeCatalogTab:focus-visible {
+  outline: none;
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light),
+    0 0 0 2px rgba(var(--badge-accent-rgb), 0.2);
+}
+
+.badgeCatalogTab_active {
+  color: var(--badge-accent);
+  box-shadow: var(--badge-shadow-inset);
+  border-color: rgba(var(--badge-accent-rgb), 0.2);
+}
+.badgeCatalogTab_active:hover {
+  box-shadow: var(--badge-shadow-inset);
+  transform: none;
+}
+.badgeCatalogTab_active:focus-visible {
+  box-shadow:
+    var(--badge-shadow-inset),
+    0 0 0 2px rgba(var(--badge-accent-rgb), 0.2);
+}
+
+/* NXP History – transaction list, same tokens as badge sections */
+.nxpHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .nxpHistoryList {
+    gap: 14px;
+  }
+}
+
+.nxpHistoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition);
+}
+.nxpHistoryRow:hover {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+@media (min-width: 640px) {
+  .nxpHistoryRow {
+    padding: 16px 18px;
+  }
+}
+
+.nxpHistoryRowIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--badge-shadow-inset);
+  border: 1px solid var(--badge-border);
+  background: var(--badge-bg);
+  color: var(--badge-accent);
+}
+
+.nxpHistoryRowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.nxpHistoryRowDesc {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--badge-accent);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (min-width: 640px) {
+  .nxpHistoryRowDesc {
+    font-size: 0.9375rem;
+  }
+}
+
+.nxpHistorySourcePill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--badge-bg);
+  box-shadow: var(--badge-shadow-inset);
+  border: 1px solid var(--badge-border);
+  color: rgba(var(--badge-accent-rgb), 0.85);
+}
+
+.nxpHistoryRowDate {
+  font-size: 0.75rem;
+  color: var(--badge-label);
+}
+
+.nxpHistoryAmount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--badge-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .nxpHistoryAmount {
+    font-size: 1.125rem;
+  }
+}
+
+.nxpHistoryActions {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+@media (min-width: 640px) {
+  .nxpHistoryActions {
+    padding-top: 12px;
+  }
+}
+
+.nxpHistoryPagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--badge-border);
+}
+
+.nxpHistoryPaginationText {
+  font-size: 0.75rem;
+  color: var(--badge-label);
+}
+
+.nxpHistoryPaginationBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.nxpHistoryPageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  border: 1px solid var(--badge-border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--badge-accent);
+  cursor: pointer;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition),
+    opacity var(--badge-transition);
+}
+.nxpHistoryPageBtn:hover:not(:disabled) {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+.nxpHistoryPageBtn:active:not(:disabled) {
+  box-shadow: var(--badge-shadow-inset);
+  transform: translateY(0);
+}
+.nxpHistoryPageBtn:focus-visible {
+  outline: none;
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light),
+    0 0 0 2px rgba(var(--badge-accent-rgb), 0.2);
+}
+.nxpHistoryPageBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nxpHistoryEmpty {
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.nxpHistoryEmptyIcon {
+  margin: 0 auto 12px;
+  color: var(--badge-label);
+}
+
+.nxpHistoryEmptyTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--badge-accent);
+  margin: 0 0 8px;
+}
+
+.nxpHistoryEmptyText {
+  font-size: 0.875rem;
+  color: var(--badge-label);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.nxpHistoryErrorTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--badge-accent);
+  margin: 0 0 8px;
+}
+
+.nxpHistoryErrorText {
+  font-size: 0.875rem;
+  color: var(--badge-label);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.badgeCardRoot {
+  --badge-bg: #0d162c;
+  --badge-accent: #009bf2;
+  --badge-accent-rgb: 0, 155, 242;
+  --badge-label: rgba(255, 255, 255, 0.55);
+  --badge-label-strong: rgba(255, 255, 255, 0.75);
+  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
+  --badge-focus-ring: rgba(var(--badge-accent-rgb), 0.2);
+  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
+  --badge-shadow-light: rgba(255, 255, 255, 0.04);
+  --badge-shadow-raised:
+    8px 8px 16px var(--badge-shadow-dark),
+    -8px -8px 16px var(--badge-shadow-light);
+  --badge-shadow-raised-hover:
+    10px 10px 20px var(--badge-shadow-dark),
+    -10px -10px 20px var(--badge-shadow-light);
+  --badge-shadow-inset:
+    inset 5px 5px 10px var(--badge-shadow-dark),
+    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-shadow-inset-press:
+    inset 6px 6px 12px var(--badge-shadow-dark),
+    inset -6px -6px 12px var(--badge-shadow-light);
+  --badge-radius-sm: 16px;
+  --badge-radius-md: 18px;
+  --badge-radius-lg: 24px;
+  --badge-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  background: var(--badge-bg);
+  border-radius: var(--badge-radius-md);
+  box-shadow: var(--badge-shadow-raised);
+  border: 1px solid var(--badge-border);
+  padding: 16px;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition),
+    border-color var(--badge-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .badgeCardRoot {
+    padding: 20px;
+  }
+}
+
+.badgeCardRoot:hover {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-2px);
+}
+
+.badgeCardRoot:active {
+  box-shadow: var(--badge-shadow-inset);
+  transform: translateY(0);
+}
+
+.badgeCardRoot:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--badge-shadow-raised),
+    0 0 0 2px var(--badge-focus-ring);
+  border-color: rgba(var(--badge-accent-rgb), 0.25);
+}
+
+/* Icon circle – slightly inset */
+.badgeIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  box-shadow: var(--badge-shadow-inset);
+  border: 1px solid var(--badge-border);
+  background: var(--badge-bg);
+  color: var(--badge-accent);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+@media (min-width: 640px) {
+  .badgeIconWrap {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    font-size: 2rem;
+  }
+}
+
+/* Top row: earned status (right) */
+.badgeTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.badgeEarnedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  border: 1px solid var(--badge-border);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--badge-accent);
+  flex-shrink: 0;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition);
+}
+
+.badgeEarnedChip:hover {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+
+.badgeEarnedChip:active {
+  box-shadow: var(--badge-shadow-inset-press);
+  transform: translateY(0);
+}
+
+.badgeEarnedChipIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--badge-accent);
+  flex-shrink: 0;
+}
+
+/* Rarity pill – subtly raised, accent/white hierarchy only */
+.badgeRarityPill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--badge-bg);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  border: 1px solid var(--badge-border);
+  margin-bottom: 12px;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition);
+}
+
+.badgeRarityPill_legendary {
+  color: var(--badge-accent);
+  border-color: rgba(var(--badge-accent-rgb), 0.25);
+}
+
+.badgeRarityPill_epic {
+  color: rgba(var(--badge-accent-rgb), 0.9);
+  border-color: rgba(var(--badge-accent-rgb), 0.15);
+}
+
+.badgeRarityPill_rare {
+  color: rgba(var(--badge-accent-rgb), 0.75);
+  border-color: var(--badge-border);
+}
+
+.badgeRarityPill_common {
+  color: var(--badge-label);
+  border-color: var(--badge-border);
+}
+
+/* Title – accent */
+.badgeTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--badge-accent);
+  margin: 0 0 6px;
+}
+
+@media (min-width: 640px) {
+  .badgeTitle {
+    font-size: 1.125rem;
+  }
+}
+
+/* Description – white low opacity */
+.badgeDescription {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--badge-label);
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .badgeDescription {
+    font-size: 0.8125rem;
+    margin-bottom: 16px;
+  }
+}
+
+/* NXP panel – inset */
+.badgeNxpPanel {
+  background: var(--badge-bg);
+  border-radius: var(--badge-radius-sm);
+  box-shadow: var(--badge-shadow-inset);
+  border: 1px solid var(--badge-border);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  transition: box-shadow var(--badge-transition);
+}
+
+@media (min-width: 640px) {
+  .badgeNxpPanel {
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+}
+
+.badgeNxpLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--badge-label);
+  margin-bottom: 2px;
+}
+
+.badgeNxpValue {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--badge-accent);
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .badgeNxpValue {
+    font-size: 1.25rem;
+  }
+}
+
+/* Will earn (unearned) – same inset panel, muted value */
+.badgeNxpValueMuted {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(var(--badge-accent-rgb), 0.6);
+}
+
+/* Date earned – supporting text */
+.badgeDate {
+  font-size: 0.7rem;
+  color: var(--badge-label);
+  margin-bottom: 10px;
+}
+
+/* Action link – accent, subtle */
+.badgeAction {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--badge-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition:
+    opacity var(--badge-transition),
+    color var(--badge-transition);
+}
+
+.badgeAction:hover {
+  opacity: 0.9;
+  color: var(--badge-accent);
+}
+
+.badgeAction:focus-visible {
+  outline: none;
+  text-decoration: underline;
+}
+
+.badgeAction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* View Details button – softly raised (optional, if we add it) */
+.badgeViewDetails {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 8px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light);
+  border: 1px solid var(--badge-border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--badge-accent);
+  cursor: pointer;
+  transition:
+    box-shadow var(--badge-transition),
+    transform var(--badge-transition),
+    border-color var(--badge-transition);
+}
+
+.badgeViewDetails:hover {
+  box-shadow: var(--badge-shadow-raised-hover);
+  transform: translateY(-1px);
+}
+
+.badgeViewDetails:active {
+  box-shadow: var(--badge-shadow-inset-press);
+  transform: translateY(0);
+}
+
+.badgeViewDetails:focus-visible {
+  outline: none;
+  box-shadow:
+    6px 6px 12px var(--badge-shadow-dark),
+    -6px -6px 12px var(--badge-shadow-light),
+    0 0 0 2px var(--badge-focus-ring);
+  border-color: rgba(var(--badge-accent-rgb), 0.25);
+}
+
+/* Progress bar (unearned) – track inset, fill accent */
+.badgeProgressWrap {
+  margin-bottom: 12px;
+}
+
+.badgeProgressLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 0.7rem;
+  color: var(--badge-label);
+}
+
+.badgeProgressTrack {
+  height: 6px;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-bg);
+  box-shadow: var(--badge-shadow-inset);
+  overflow: hidden;
+}
+
+.badgeProgressFill {
+  height: 100%;
+  border-radius: var(--badge-radius-sm);
+  background: var(--badge-accent);
+  transition: width var(--badge-transition);
+}
+
+/* Lock icon (unearned) – top right */
+.badgeLockWrap {
+  color: var(--badge-label);
+  flex-shrink: 0;
+}
+
+/* Unearned card – reduced elevation, no hover lift */
+.badgeCardRoot_unearned {
+  opacity: 0.85;
+}
+
+.badgeCardRoot_unearned:hover {
+  transform: none;
+}
+
+.badgeCardRoot_unearned:active {
+  box-shadow: var(--badge-shadow-raised);
+}
