@@ -17,9 +17,8 @@ import {
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
-import { LoadingStates } from '@/components/ui/loading-states';
-import { EmptyStates } from '@/components/EmptyStates';
 import { useUIStore } from '@/store/uiStore';
+import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -193,31 +192,77 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         transition={{ delay: 0.5 }}
       >
         <div
-          className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+          className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
           style={{
             background: '#0D162C',
-            boxShadow: `
-              inset 8px 8px 16px rgba(0, 0, 0, 0.5),
-              inset -8px -8px 16px rgba(255, 255, 255, 0.05),
-              inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-              inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-              0 0 0 1px rgba(255, 255, 255, 0.03)
-            `,
+            boxShadow:
+              '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+            border: '1px solid var(--app-border)',
           }}
         >
-          {/* Content Section - Single Activity Display (matches Total Deposit card typography) */}
+          {/* Content Section - Real data or placeholder (no skeleton; show placeholder while loading) */}
           <div className="min-h-[80px]">
-            {isLoading ? (
-              <LoadingStates.Text lines={1} className="h-8 sm:h-10" />
-            ) : safeTransactions.length === 0 ? (
-              <EmptyStates.EmptyTransactions
-                variant="neumorphic"
-                compact
-                action={{
-                  label: 'Make Your First Deposit',
-                  onClick: () => openModal('deposit'),
+            {isLoading || safeTransactions.length === 0 ? (
+              /* Placeholder row – card always shows content, never empty */
+              <div
+                className="w-full cursor-pointer"
+                onClick={() => openModal('deposit')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal('deposit');
+                  }
                 }}
-              />
+                role="button"
+                tabIndex={0}
+                aria-label="No activity yet, make a deposit to get started"
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
+                    style={{ background: 'rgba(0, 155, 242, 0.15)' }}
+                  >
+                    <Wallet
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      style={{ color: '#009BF2', filter: 'none' }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate text-xs font-semibold sm:text-sm"
+                      style={{ color: '#009BF2', filter: 'none' }}
+                    >
+                      No activity yet
+                    </p>
+                    <p
+                      className="text-[10px] sm:text-xs"
+                      style={{
+                        color: 'rgba(0, 155, 242, 0.75)',
+                        filter: 'none',
+                      }}
+                    >
+                      Deposit or stake to see your activity here
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p
+                    className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                    style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                  >
+                    +$0.00
+                  </p>
+                  <p
+                    className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
+                    style={{
+                      color: 'rgba(0, 155, 242, 0.6)',
+                      filter: 'none',
+                    }}
+                  >
+                    —
+                  </p>
+                </div>
+              </div>
             ) : currentTransaction ? (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -228,11 +273,11 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   transition={{ duration: 0.3 }}
                   className="w-full"
                 >
-                  <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
-                    {/* Icon - same size/shape as Total Deposit card */}
+                  <div className="mb-4 flex items-center gap-3">
+                    {/* Icon - design accent */}
                     <div
-                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
-                      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
+                      style={{ background: 'rgba(0, 155, 242, 0.15)' }}
                     >
                       {(() => {
                         const Icon = getTransactionIcon(
@@ -240,30 +285,24 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                         );
                         return (
                           <Icon
-                            className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                            style={{
-                              color: 'rgba(255, 255, 255, 0.95)',
-                              filter: 'none',
-                            }}
+                            className="h-4 w-4 sm:h-5 sm:w-5"
+                            style={{ color: '#009BF2', filter: 'none' }}
                           />
                         );
                       })()}
                     </div>
-                    {/* Label + subtitle - same font size/color as Total Deposit card */}
+                    {/* Label + subtitle - design colors */}
                     <div className="min-w-0 flex-1">
                       <p
-                        className="truncate text-xs font-medium capitalize sm:text-sm lg:text-xs"
-                        style={{
-                          color: 'rgba(255, 255, 255, 0.7)',
-                          filter: 'none',
-                        }}
+                        className="truncate text-xs font-semibold capitalize sm:text-sm"
+                        style={{ color: '#009BF2', filter: 'none' }}
                       >
                         {getTransactionTypeLabel(currentTransaction)}
                       </p>
                       <p
-                        className="text-[10px] sm:text-xs lg:text-[10px]"
+                        className="text-[10px] sm:text-xs"
                         style={{
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'rgba(0, 155, 242, 0.75)',
                           filter: 'none',
                         }}
                       >
@@ -285,40 +324,49 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                       </p>
                     </div>
                   </div>
-                  {/* Amount - same font size/shape as Total Deposit; green for +, red for - */}
-                  {(() => {
-                    const isOutgoing =
-                      isOutgoingTransaction(currentTransaction);
-                    return (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                        style={{
-                          color: isOutgoing ? '#ef4444' : '#22c55e',
-                          filter: 'none',
-                        }}
-                      >
-                        {isOutgoing ? '-' : '+'}
-                        {formatCurrency(currentTransaction.amount)}
-                      </motion.div>
-                    );
-                  })()}
-                  {/* Status - same muted style as card subtitle */}
-                  <p
-                    className="mt-1.5 text-[10px] font-medium capitalize sm:text-xs lg:text-[10px]"
-                    style={{
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      filter: 'none',
-                    }}
-                  >
-                    {currentTransaction.status}
-                  </p>
+                  {/* Amount and status on one row so card stays compact */}
+                  <div className="flex items-baseline justify-between gap-3">
+                    {(() => {
+                      const isOutgoing =
+                        isOutgoingTransaction(currentTransaction);
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                          style={{
+                            color: isOutgoing ? '#ef4444' : 'var(--app-text-primary)',
+                            filter: 'none',
+                          }}
+                        >
+                          {isOutgoing ? '-' : '+'}
+                          {formatCurrency(currentTransaction.amount)}
+                        </motion.div>
+                      );
+                    })()}
+                    <p
+                      className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
+                      style={{
+                        color: 'rgba(0, 155, 242, 0.75)',
+                        filter: 'none',
+                      }}
+                    >
+                      {currentTransaction.status}
+                    </p>
+                  </div>
                 </motion.div>
               </AnimatePresence>
             ) : null}
           </div>
+          {safeTransactions.length > 1 && (
+            <NeumorphicCarouselDots
+              count={safeTransactions.length}
+              currentIndex={currentIndex}
+              onSelect={setCurrentIndex}
+              ariaLabelPrefix="Go to activity"
+            />
+          )}
         </div>
       </motion.div>
     </div>

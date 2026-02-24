@@ -52,6 +52,8 @@ export function EmptyState({
 }: EmptyStateProps) {
   const isCompact = variant === 'neumorphic' && compact;
 
+  const isPlatformStyle = variant === 'neumorphic';
+
   const content = (
     <>
       {!isCompact && (
@@ -63,22 +65,24 @@ export function EmptyState({
         >
           <div
             className={
-              variant === 'neumorphic'
+              isPlatformStyle
                 ? isCompact
                   ? 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9'
-                  : 'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full sm:h-16 sm:w-16'
-                : 'bg-muted text-muted-foreground flex h-16 w-16 items-center justify-center rounded-full'
+                  : 'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg sm:h-14 sm:w-14'
+                : isCompact
+                  ? 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9'
+                  : 'bg-muted text-muted-foreground flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full sm:h-16 sm:w-16'
             }
             style={
-              variant === 'neumorphic'
-                ? { background: 'rgba(255, 255, 255, 0.05)' }
+              isPlatformStyle
+                ? { background: 'rgba(0, 155, 242, 0.15)' }
                 : undefined
             }
           >
             <span
               style={
-                variant === 'neumorphic'
-                  ? { color: 'rgba(255, 255, 255, 0.95)' }
+                isPlatformStyle
+                  ? { color: '#009BF2', filter: 'none' }
                   : undefined
               }
             >
@@ -102,8 +106,8 @@ export function EmptyState({
             : 'mb-2 text-lg font-semibold'
         }
         style={
-          variant === 'neumorphic'
-            ? { color: 'rgba(255, 255, 255, 0.95)' }
+          isPlatformStyle
+            ? { color: '#009BF2', filter: 'none' }
             : undefined
         }
       >
@@ -116,15 +120,15 @@ export function EmptyState({
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.3 }}
           className={
-            variant === 'neumorphic'
+            isPlatformStyle
               ? isCompact
                 ? 'mb-3 line-clamp-2 max-w-md text-xs'
                 : 'mb-6 max-w-md text-sm'
               : 'text-muted-foreground mb-6 max-w-md text-sm'
           }
           style={
-            variant === 'neumorphic'
-              ? { color: 'rgba(255, 255, 255, 0.5)' }
+            isPlatformStyle
+              ? { color: 'rgba(0, 155, 242, 0.75)', filter: 'none' }
               : undefined
           }
         >
@@ -138,17 +142,16 @@ export function EmptyState({
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.3 }}
         >
-          {variant === 'neumorphic' ? (
+          {isPlatformStyle ? (
             <button
               type="button"
               onClick={action.onClick}
-              className={`${neuStyles['neu-button-accent']} inline-flex cursor-pointer items-center justify-center rounded-xl border transition-all duration-200 outline-none hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--neu-bg-primary)] active:translate-y-0 ${isCompact ? 'px-4 py-2 text-sm font-medium' : 'px-6 py-3 font-semibold'}`}
+              className="inline-flex cursor-pointer items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[#009BF2]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D162C] active:scale-[0.98]"
               style={{
-                background:
-                  'linear-gradient(135deg, var(--neu-bg-secondary) 0%, rgba(0, 155, 242, 0.12) 100%)',
+                background: '#009BF2',
+                color: '#fff',
                 boxShadow:
-                  '6px 6px 12px rgba(0, 0, 0, 0.5), -6px -6px 12px rgba(255, 255, 255, 0.05), 0 0 20px rgba(0, 155, 242, 0.2)',
-                color: 'var(--neu-accent)',
+                  '0 4px 14px rgba(0, 155, 242, 0.35), 0 0 0 1px rgba(0, 155, 242, 0.2)',
               }}
             >
               {action.label}
@@ -161,7 +164,7 @@ export function EmptyState({
     </>
   );
 
-  if (variant === 'neumorphic') {
+  if (isPlatformStyle) {
     return (
       <div
         className={`flex flex-col items-center justify-center text-center ${className ?? ''} ${isCompact ? 'py-3 sm:py-4' : 'py-8 sm:py-10'}`}

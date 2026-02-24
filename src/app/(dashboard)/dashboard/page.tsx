@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { slideUp } from '@/design-system/animations';
 import {
   Wallet,
   TrendingUp,
@@ -12,13 +11,10 @@ import {
   DollarSign,
   Users,
   Clock,
-  Calendar,
-  TrendingDown,
   Circle,
   Star,
   Gift,
   Send,
-  Check,
   Award,
   CreditCard,
   Settings,
@@ -35,14 +31,6 @@ import {
   useDashboardOverview,
 } from '@/lib/queries';
 import { useTransactionHistory } from '@/hooks/useWallet';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
 import { ActiveStakesCard } from '@/components/dashboard/ActiveStakesCard';
@@ -51,12 +39,11 @@ import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { LivePlatformActivities } from '@/components/dashboard/LivePlatformActivities';
+import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
-import { AchievementsSummaryCard } from '@/components/achievements/AchievementsSummaryCard';
-import { ReferralMetricsCard } from '@/components/referral/ReferralMetricsCard';
 import { useUIStore } from '@/store/uiStore';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
@@ -582,16 +569,16 @@ export default function DashboardPage() {
   const isRefetching = false; // Can be connected to refetch state
 
   return (
-    <div className="min-h-[100dvh] min-h-screen lg:h-full lg:min-h-0">
-      <div className="space-y-1 sm:space-y-2 lg:grid lg:h-full lg:min-h-0 lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+    <div className="min-h-screen lg:h-full lg:min-h-0">
+      <div className="space-y-5 lg:grid lg:h-full lg:grid-cols-3 lg:gap-5 lg:space-y-0">
         {/* Column 1 - Balance, quick actions, stats carousel (Registration Bonus is in modal via 10% Bonus button) */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <div className="lg:max-w-md lg:max-w-none">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-0"
+              className="flex flex-col gap-5"
             >
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -606,33 +593,37 @@ export default function DashboardPage() {
                   totalPortfolioValue={totalPortfolioValue}
                   totalEarnings={totalEarnings}
                   lastWeekProfitChange={0}
-                  noCard={true}
                 />
               </motion.div>
 
-              {/* Quick Actions - Directly under balance card */}
+              {/* Quick Actions - Neumorphic card */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="mt-2"
               >
-                <QuickActions />
+                <div
+                  className="rounded-2xl p-5 sm:p-6"
+                  style={{
+                    background: '#0D162C',
+                    boxShadow:
+                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+                    border: '1px solid var(--app-border)',
+                  }}
+                >
+                  <QuickActions />
+                </div>
               </motion.div>
 
               {/* Stats Carousel Card */}
-              <div className="mt-2">
+              <div>
                 <div
-                  className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+                  className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
                   style={{
                     background: '#0D162C',
-                    boxShadow: `
-                      inset 8px 8px 16px rgba(0, 0, 0, 0.5),
-                      inset -8px -8px 16px rgba(255, 255, 255, 0.05),
-                      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                      inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                      0 0 0 1px rgba(255, 255, 255, 0.03)
-                    `,
+                    boxShadow:
+                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+                    border: '1px solid var(--app-border)',
                   }}
                 >
                   <div className="min-h-[80px]">
@@ -646,35 +637,29 @@ export default function DashboardPage() {
                           transition={{ duration: 0.3 }}
                           className="w-full"
                         >
-                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                          <div className="mb-4 flex items-center gap-3">
                             <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'rgba(0, 155, 242, 0.15)',
                               }}
                             >
                               <Wallet
-                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
-                                  filter: 'none',
-                                }}
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p
-                                className="text-xs font-medium sm:text-sm lg:text-xs"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
-                                  filter: 'none',
-                                }}
+                                className="text-xs font-semibold sm:text-sm"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               >
                                 Total Earned
                               </p>
                               <p
-                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                className="text-[10px] sm:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'rgba(0, 155, 242, 0.75)',
                                   filter: 'none',
                                 }}
                               >
@@ -683,21 +668,21 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           {isLoading ? (
-                            <LoadingStates.Text
-                              lines={1}
-                              className="h-8 sm:h-10"
+                            <div
+                              className="h-8 w-28 animate-pulse rounded sm:h-9"
+                              style={{
+                                background: 'rgba(0, 155, 242, 0.25)',
+                              }}
+                              aria-hidden
                             />
                           ) : (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.98 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.3 }}
+                              transition={{ duration: 0.2 }}
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
-                                filter: 'none',
-                              }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalEarned ?? 0).toLocaleString(
@@ -722,35 +707,29 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                          <div className="mb-4 flex items-center gap-3">
                             <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'rgba(0, 155, 242, 0.15)',
                               }}
                             >
                               <TrendingUp
-                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
-                                  filter: 'none',
-                                }}
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p
-                                className="text-xs font-medium sm:text-sm lg:text-xs"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
-                                  filter: 'none',
-                                }}
+                                className="text-xs font-semibold sm:text-sm"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               >
                                 Total Staked
                               </p>
                               <p
-                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                className="text-[10px] sm:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'rgba(0, 155, 242, 0.75)',
                                   filter: 'none',
                                 }}
                               >
@@ -759,21 +738,21 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           {isLoading ? (
-                            <LoadingStates.Text
-                              lines={1}
-                              className="h-8 sm:h-10"
+                            <div
+                              className="h-8 w-28 animate-pulse rounded sm:h-9"
+                              style={{
+                                background: 'rgba(0, 155, 242, 0.25)',
+                              }}
+                              aria-hidden
                             />
                           ) : (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.98 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.3 }}
+                              transition={{ duration: 0.2 }}
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
-                                filter: 'none',
-                              }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalStaked ?? 0).toLocaleString(
@@ -798,35 +777,29 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                          <div className="mb-4 flex items-center gap-3">
                             <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'rgba(0, 155, 242, 0.15)',
                               }}
                             >
                               <ArrowDownRight
-                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
-                                  filter: 'none',
-                                }}
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p
-                                className="text-xs font-medium sm:text-sm lg:text-xs"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
-                                  filter: 'none',
-                                }}
+                                className="text-xs font-semibold sm:text-sm"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               >
                                 Total Deposited
                               </p>
                               <p
-                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                className="text-[10px] sm:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'rgba(0, 155, 242, 0.75)',
                                   filter: 'none',
                                 }}
                               >
@@ -835,21 +808,21 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           {isLoading ? (
-                            <LoadingStates.Text
-                              lines={1}
-                              className="h-8 sm:h-10"
+                            <div
+                              className="h-8 w-28 animate-pulse rounded sm:h-9"
+                              style={{
+                                background: 'rgba(0, 155, 242, 0.25)',
+                              }}
+                              aria-hidden
                             />
                           ) : (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.98 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.3 }}
+                              transition={{ duration: 0.2 }}
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
-                                filter: 'none',
-                              }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalDeposited ?? 0).toLocaleString(
@@ -874,35 +847,29 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-1.5 flex items-center gap-2 sm:gap-3">
+                          <div className="mb-4 flex items-center gap-3">
                             <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg sm:h-8 sm:w-8 lg:h-7 lg:w-7"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                background: 'rgba(0, 155, 242, 0.15)',
                               }}
                             >
                               <ArrowUpRight
-                                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.95)',
-                                  filter: 'none',
-                                }}
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p
-                                className="text-xs font-medium sm:text-sm lg:text-xs"
-                                style={{
-                                  color: 'rgba(255, 255, 255, 0.7)',
-                                  filter: 'none',
-                                }}
+                                className="text-xs font-semibold sm:text-sm"
+                                style={{ color: '#009BF2', filter: 'none' }}
                               >
                                 Total Withdrawn
                               </p>
                               <p
-                                className="text-[10px] sm:text-xs lg:text-[10px]"
+                                className="text-[10px] sm:text-xs"
                                 style={{
-                                  color: 'rgba(255, 255, 255, 0.5)',
+                                  color: 'rgba(0, 155, 242, 0.75)',
                                   filter: 'none',
                                 }}
                               >
@@ -911,21 +878,21 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           {isLoading ? (
-                            <LoadingStates.Text
-                              lines={1}
-                              className="h-8 sm:h-10"
+                            <div
+                              className="h-8 w-28 animate-pulse rounded sm:h-9"
+                              style={{
+                                background: 'rgba(0, 155, 242, 0.25)',
+                              }}
+                              aria-hidden
                             />
                           ) : (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.98 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.3 }}
+                              transition={{ duration: 0.2 }}
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                              style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
-                                filter: 'none',
-                              }}
+                              style={{ color: 'var(--app-text-primary)', filter: 'none' }}
                             >
                               {balanceVisible
                                 ? `$${(totalWithdrawn ?? 0).toLocaleString(
@@ -942,267 +909,267 @@ export default function DashboardPage() {
                       )}
                     </AnimatePresence>
                   </div>
-                  {/* Carousel Indicators */}
-                  <div className="mt-3 flex items-center justify-center gap-1.5">
-                    {stats.map((stat, index) => (
-                      <button
-                        key={stat}
-                        onClick={() => {
-                          setCurrentIndex(index);
-                          setCurrentStat(stats[index]);
-                        }}
-                        className="h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: currentIndex === index ? '24px' : '8px',
-                          background:
-                            currentIndex === index
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(255, 255, 255, 0.3)',
-                        }}
-                        aria-label={`Go to ${stat}`}
-                      />
-                    ))}
-                  </div>
+                  {/* Carousel Indicators — neumorphic slider */}
+                  <NeumorphicCarouselDots
+                    count={stats.length}
+                    currentIndex={currentIndex}
+                    onSelect={(index) => {
+                      setCurrentIndex(index);
+                      setCurrentStat(stats[index]);
+                    }}
+                    ariaLabelPrefix="Go to stat"
+                  />
                 </div>
               </div>
+              {/* Feature Buttons Grid - 8 circular buttons, neumorphic card */}
+              <div className="flex justify-center">
+                <div
+                  className="w-full max-w-md rounded-2xl p-5 sm:p-6"
+                  style={{
+                    background: '#0D162C',
+                    boxShadow:
+                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+                    border: '1px solid var(--app-border)',
+                  }}
+                >
+                  <div className="grid grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
+                    {[
+                      {
+                        id: 'welcome-bonus',
+                        label: '10% Bonus',
+                        icon: Gift,
+                        href: '/dashboard/onboarding',
+                      },
+                      {
+                        id: 'nxp-gamification',
+                        label: 'NXP',
+                        icon: Sparkles,
+                        href: '/dashboard/achievements',
+                      },
+                      {
+                        id: 'rank',
+                        label: 'Rank',
+                        icon: Trophy,
+                        href: '#',
+                      },
+                      {
+                        id: 'wallet-address',
+                        label: 'Wallet',
+                        icon: CreditCard,
+                        href: '/dashboard/wallets',
+                      },
+                      {
+                        id: 'community',
+                        label: 'Team',
+                        icon: Users,
+                        href: '/dashboard/team',
+                      },
+                      {
+                        id: 'staking-streak',
+                        label: 'Streak',
+                        icon: Flame,
+                        href: '/dashboard',
+                      },
+                      {
+                        id: 'knowledge-base',
+                        label: 'Help',
+                        icon: BookOpen,
+                        href: '/dashboard/knowledge-base',
+                      },
+                      {
+                        id: 'settings',
+                        label: 'Settings',
+                        icon: Settings,
+                        href: '/dashboard/settings',
+                      },
+                    ].map((button, index) => {
+                      const IconComponent = button.icon;
 
-              {/* Feature Buttons Grid - 8 circular buttons, directly under stats carousel */}
-              <div className="mt-2 flex justify-center px-2 sm:px-4 lg:mt-6">
-                <div className="grid w-full max-w-md grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
-                  {[
-                    {
-                      id: 'welcome-bonus',
-                      label: '10% Bonus',
-                      icon: Gift,
-                      href: '/dashboard/onboarding',
-                    },
-                    {
-                      id: 'nxp-gamification',
-                      label: 'NXP',
-                      icon: Sparkles,
-                      href: '/dashboard/achievements',
-                    },
-                    {
-                      id: 'rank',
-                      label: 'Rank',
-                      icon: Trophy,
-                      href: '#',
-                    },
-                    {
-                      id: 'wallet-address',
-                      label: 'Wallet',
-                      icon: CreditCard,
-                      href: '/dashboard/wallets',
-                    },
-                    {
-                      id: 'community',
-                      label: 'Team',
-                      icon: Users,
-                      href: '/dashboard/team',
-                    },
-                    {
-                      id: 'staking-streak',
-                      label: 'Streak',
-                      icon: Flame,
-                      href: '/dashboard',
-                    },
-                    {
-                      id: 'knowledge-base',
-                      label: 'Help',
-                      icon: BookOpen,
-                      href: '/dashboard/knowledge-base',
-                    },
-                    {
-                      id: 'settings',
-                      label: 'Settings',
-                      icon: Settings,
-                      href: '/dashboard/settings',
-                    },
-                  ].map((button, index) => {
-                    const IconComponent = button.icon;
-                    const NEU_SURFACE = '#131B2E';
-                    const NEU_TEXT = '#009BF2';
-                    const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-                    const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
-
-                    const isSettings = button.id === 'settings';
-                    const isStreak = button.id === 'staking-streak';
-                    const isRank = button.id === 'rank';
-                    const buttonContent = (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 + index * 0.05 }}
-                        className="flex flex-col items-center gap-1.5"
-                      >
-                        {/* Circular neumorphic button - use literals so neumorphic look works on live (no dependency on undefined CSS vars) */}
-                        <div
-                          className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
-                          style={{
-                            background:
-                              hoveredButtonIndex === index
-                                ? NEU_TEXT
-                                : NEU_SURFACE,
-                            boxShadow: `
-                            6px 6px 12px ${NEU_SHADOW_DARK},
-                            -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                            0 0 0 1px rgba(255, 255, 255, 0.05)
-                          `,
-                          }}
-                          onMouseEnter={(e) => {
-                            setHoveredButtonIndex(index);
-                            e.currentTarget.style.boxShadow = `
-                            8px 8px 16px ${NEU_SHADOW_DARK},
-                            -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                            0 0 0 1px rgba(255, 255, 255, 0.08),
-                            0 0 20px rgba(0, 155, 242, 0.2)
-                          `;
-                            e.currentTarget.style.transform =
-                              'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            setHoveredButtonIndex(null);
-                            e.currentTarget.style.boxShadow = `
-                            6px 6px 12px ${NEU_SHADOW_DARK},
-                            -6px -6px 12px ${NEU_SHADOW_LIGHT},
-                            0 0 0 1px rgba(255, 255, 255, 0.05)
-                          `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseDown={(e) => {
-                            e.currentTarget.style.boxShadow = `
-                            inset 3px 3px 6px ${NEU_SHADOW_DARK},
-                            inset -3px -3px 6px ${NEU_SHADOW_LIGHT}
-                          `;
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          onMouseUp={(e) => {
-                            e.currentTarget.style.boxShadow = `
-                            8px 8px 16px ${NEU_SHADOW_DARK},
-                            -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                            0 0 0 1px rgba(255, 255, 255, 0.08),
-                            0 0 20px rgba(0, 155, 242, 0.2)
-                          `;
-                          }}
+                      const isSettings = button.id === 'settings';
+                      const isStreak = button.id === 'staking-streak';
+                      const isRank = button.id === 'rank';
+                      const isWelcomeBonus = button.id === 'welcome-bonus';
+                      const buttonContent = (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                          className="flex flex-col items-center gap-1.5"
                         >
-                          <motion.div
-                            animate={{
-                              y: [0, -2, 0],
-                              scale: [1, 1.02, 1],
+                          {/* Circular neumorphic button */}
+                          <div
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                            style={{
+                              background:
+                                hoveredButtonIndex === index
+                                  ? '#009BF2'
+                                  : 'rgba(25, 40, 72, 0.6)',
+                              boxShadow:
+                                '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border)',
                             }}
-                            transition={{
-                              duration: 5,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                              delay: index * 0.3,
+                            onMouseEnter={(e) => {
+                              setHoveredButtonIndex(index);
+                              e.currentTarget.style.boxShadow =
+                                '8px 8px 16px rgba(4, 8, 18, 0.7), -8px -8px 16px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border), 0 0 20px rgba(0, 155, 242, 0.25)';
+                              e.currentTarget.style.transform =
+                                'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              setHoveredButtonIndex(null);
+                              e.currentTarget.style.boxShadow =
+                                '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseDown={(e) => {
+                              e.currentTarget.style.boxShadow =
+                                'inset 3px 3px 6px rgba(4, 8, 18, 0.7), inset -3px -3px 6px rgba(25, 40, 72, 0.5)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            onMouseUp={(e) => {
+                              e.currentTarget.style.boxShadow =
+                                '8px 8px 16px rgba(4, 8, 18, 0.7), -8px -8px 16px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border), 0 0 20px rgba(0, 155, 242, 0.25)';
                             }}
                           >
-                            <IconComponent
-                              className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                              style={{
-                                color:
-                                  hoveredButtonIndex === index
-                                    ? NEU_SURFACE
-                                    : NEU_TEXT,
-                                filter: 'none',
+                            <motion.div
+                              animate={{
+                                y: [0, -2, 0],
+                                scale: [1, 1.02, 1],
                               }}
-                            />
-                          </motion.div>
-                        </div>
-                        {/* Label */}
-                        <span
-                          className="text-center text-[10px] font-medium sm:text-xs"
-                          style={{ color: NEU_TEXT, filter: 'none' }}
-                        >
-                          {button.label}
-                        </span>
-                      </motion.button>
-                    );
+                              transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                                delay: index * 0.3,
+                              }}
+                            >
+                              <IconComponent
+                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
+                                style={{
+                                  color:
+                                    hoveredButtonIndex === index
+                                      ? '#0D162C'
+                                      : '#009BF2',
+                                  filter: 'none',
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                          {/* Label */}
+                          <span
+                            className="text-center text-[10px] font-medium sm:text-xs"
+                            style={{ color: '#009BF2', filter: 'none' }}
+                          >
+                            {button.label}
+                          </span>
+                        </motion.button>
+                      );
 
-                    return (
-                      <React.Fragment key={button.id}>
-                        {isSettings ? (
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.dispatchEvent(
-                                new CustomEvent('openProfileModal', {
-                                  bubbles: true,
-                                })
-                              );
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
+                      return (
+                        <React.Fragment key={button.id}>
+                          {isSettings ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
                                 e.preventDefault();
                                 window.dispatchEvent(
                                   new CustomEvent('openProfileModal', {
                                     bubbles: true,
                                   })
                                 );
-                              }
-                            }}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </div>
-                        ) : isStreak ? (
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => setStreakModalOpen(true)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setStreakModalOpen(true);
-                              }
-                            }}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </div>
-                        ) : isRank ? (
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => setRankModalOpen(true)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setRankModalOpen(true);
-                              }
-                            }}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                          >
-                            {buttonContent}
-                          </div>
-                        ) : (
-                          <Link href={button.href}>{buttonContent}</Link>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  window.dispatchEvent(
+                                    new CustomEvent('openProfileModal', {
+                                      bubbles: true,
+                                    })
+                                  );
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isStreak ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setStreakModalOpen(true)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setStreakModalOpen(true);
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isRank ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setRankModalOpen(true)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setRankModalOpen(true);
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isWelcomeBonus ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openModal('registration-bonus')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openModal('registration-bonus');
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : (
+                            <Link href={button.href}>{buttonContent}</Link>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
 
-        {/* Column 2 - activity, daily ROS, Active Stakes (lg only) */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 2 - Stake card, Activity, daily ROS */}
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-0"
+            className="flex flex-col gap-5"
           >
-            {/* Recent Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32 }}
+            >
+              <ActiveStakesCard embedded />
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="mt-2"
             >
               <ActivityFeed
                 transactions={transactions || []}
@@ -1210,57 +1177,27 @@ export default function DashboardPage() {
               />
             </motion.div>
 
-            {/* Daily ROS Performance - Directly under Recent Activity */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.38 }}
-              className="mt-2"
               id="daily-ros"
             >
               <DailyROSPerformance />
             </motion.div>
-
-            {/* Active Stakes - under Daily ROS Performance on large screens only */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-2 hidden lg:block"
-            >
-              <ActiveStakesCard />
-            </motion.div>
           </motion.div>
         </div>
 
-        {/* Column 3 - Active stakes (small screens), live signals, live platform activities */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 3 - Live Trading Signals & Live Platform Activities */}
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+            className="grid grid-cols-1 gap-5 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
           >
-            {/* Active Stakes - shown here on small screens only; on lg it moves to column 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-2 lg:mt-0 lg:hidden"
-            >
-              <ActiveStakesCard />
-            </motion.div>
-
-            {/* Live Trading Signals & Live Platform Activity - on lg they stack and share column height equally (50/50) */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42 }}
-              className="mt-2 grid grid-cols-1 gap-3 lg:mt-0 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
-            >
-              <LiveTradingSignals />
-              <LivePlatformActivities />
-            </motion.div>
+            <LiveTradingSignals />
+            <LivePlatformActivities />
           </motion.div>
         </div>
       </div>

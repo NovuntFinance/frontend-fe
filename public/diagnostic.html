@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Novunt Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #444; }
+        pre { background: #000; padding: 10px; border-left: 3px solid #00ff00; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Novunt Frontend Diagnostic Tool</h1>
+    <div id="results"></div>
+    
+    <h2>Actions:</h2>
+    <button onclick="clearAllStorage()">Clear All Storage</button>
+    <button onclick="checkAPI()">Test API Connection</button>
+    <button onclick="location.reload()">Reload Page</button>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = msg;
+            results.appendChild(div);
+        }
+        
+        function runDiagnostics() {
+            results.innerHTML = '<h2>Running Diagnostics...</h2>';
+            
+            // 1. Check localStorage
+            log('\n📦 Checking localStorage:', 'info');
+            const authStorage = localStorage.getItem('novunt-auth-storage');
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            if (authStorage) {
+                try {
+                    const parsed = JSON.parse(authStorage);
+                    log('✅ Auth storage exists', 'success');
+                    log(`  - isAuthenticated: ${parsed.state?.isAuthenticated}`, 'info');
+                    log(`  - has user: ${!!parsed.state?.user}`, 'info');
+                    log(`  - has token: ${!!parsed.state?.token}`, 'info');
+                } catch (e) {
+                    log('❌ Auth storage corrupted: ' + e.message, 'error');
+                }
+            } else {
+                log('⚠️ No auth storage found', 'warning');
+            }
+            
+            log(`  - accessToken: ${accessToken ? 'EXISTS' : 'NULL'}`, accessToken ? 'success' : 'warning');
+            log(`  - refreshToken: ${refreshToken ? 'EXISTS' : 'NULL'}`, refreshToken ? 'success' : 'warning');
+            
+            // 2. Check cookies
+            log('\n🍪 Checking cookies:', 'info');
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            log(`  Found ${cookies.length} cookies`, 'info');
+            cookies.forEach(c => {
+                const [key] = c.split('=');
+                if (key.includes('auth') || key.includes('token') || key.includes('Token')) {
+                    log(`  - ${key}`, 'info');
+                }
+            });
+            
+            // 3. Check sessionStorage
+            log('\n📝 Checking sessionStorage:', 'info');
+            log(`  Keys: ${sessionStorage.length}`, 'info');
+            
+            // 4. Check window object
+            log('\n🪟 Checking window globals:', 'info');
+            log(`  - __NOVUNT_API_URL__: ${window.__NOVUNT_API_URL__ || 'not set'}`, 'info');
+            log(`  - __NOVUNT_ENV_VAR__: ${window.__NOVUNT_ENV_VAR__ || 'not set'}`, 'info');
+            
+            // 5. Check environment
+            log('\n🌍 Environment:', 'info');
+            log(`  - Protocol: ${window.location.protocol}`, 'info');
+            log(`  - Host: ${window.location.host}`, 'info');
+            log(`  - Pathname: ${window.location.pathname}`, 'info');
+            
+            // 6. Check console errors
+            log('\n📋 Check browser console for errors (F12 > Console tab)', 'warning');
+        }
+        
+        function clearAllStorage() {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.cookie.split(";").forEach(c => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                log('\n✅ All storage cleared!', 'success');
+                log('Now reload the page (Ctrl+Shift+R)', 'info');
+            } catch (e) {
+                log('\n❌ Error clearing storage: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkAPI() {
+            log('\n🔌 Testing API connection...', 'info');
+            const apiUrl = 'https://api.novunt.com/api/v1/config';
+            
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                log(`✅ API Response: ${response.status} ${response.statusText}`, 'success');
+                log(`  Data: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
+            } catch (e) {
+                log(`❌ API Error: ${e.message}`, 'error');
+            }
+        }
+        
+        // Run diagnostics on load
+        runDiagnostics();
+    </script>
+</body>
+</html>

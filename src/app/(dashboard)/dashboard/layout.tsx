@@ -61,7 +61,6 @@ import {
   IoHeadsetOutline,
 } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
-import { LayoutDebug } from '@/components/debug/LayoutDebug';
 
 /**
  * Dashboard Layout
@@ -110,17 +109,10 @@ export default function DashboardLayout({
       );
     };
   }, []);
-
-  // Lock document to 100vh on large screens so only main scrolls (fixes expansion on live)
-  useEffect(() => {
-    const html = document.documentElement;
-    html.classList.add('dashboard-viewport-active');
-    return () => html.classList.remove('dashboard-viewport-active');
-  }, []);
-
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useUser();
+  const displayName = user?.firstName || user?.fname || 'User';
   const { data: overview } = useDashboardOverview();
   const { data: bonusResponse } = useRegistrationBonusStatus();
 
@@ -128,8 +120,6 @@ export default function DashboardLayout({
   const progress = bonusData?.progressPercentage || 0;
   const isLocked = progress < 60;
   const isOnboardingPage = pathname === '/dashboard/onboarding';
-  const isWalletPage = pathname?.includes('/wallets') ?? false;
-  const isTeamPage = pathname === '/dashboard/team';
 
   // Get weekly profit percentage
   const overviewData = overview as
@@ -160,15 +150,19 @@ export default function DashboardLayout({
 
   return (
     <DashboardGuard>
-      <LayoutDebug />
       <div
-        className="dashboard-viewport-cap min-h-[100dvh] min-h-screen lg:flex lg:h-[100dvh] lg:h-screen lg:max-h-[100dvh] lg:max-h-screen lg:flex-col lg:overflow-hidden"
-        style={{ background: '#0D162C' }}
+        className="flex min-h-full flex-col lg:h-full"
+        style={{ background: 'var(--app-page-bg)' }}
       >
-        {/* Secondary Header Bar (Profile Icon + Info Marquee) */}
+        {/* Secondary Header Bar (Profile Icon + Info Marquee) — below safe-area via body padding */}
         <header
           className="sticky top-0 z-30 shrink-0 py-1"
-          style={{ background: '#0D162C' }}
+          style={{
+            background: 'var(--app-surface)',
+            boxShadow:
+              '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5)',
+            borderBottom: '1px solid var(--app-border)',
+          }}
         >
           <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
             {/* Profile Section - Left side */}
@@ -179,58 +173,78 @@ export default function DashboardLayout({
               >
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
-                    <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
-                      style={{
-                        boxShadow:
-                          '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                        background: '#131B2E',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      {user?.avatar && isBadgeIcon(user.avatar) ? (
-                        <BadgeAvatar
-                          badgeIcon={user.avatar}
-                          size="md"
-                          className="shrink-0"
-                        />
-                      ) : (
-                        <Avatar className="h-full w-full overflow-hidden rounded-full">
-                          <AvatarImage
-                            src={getUserAvatarUrl(user) ?? undefined}
-                            alt={`${user?.firstName} ${user?.lastName}`}
+                    <div className="relative shrink-0">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
+                        style={{
+                          boxShadow:
+                            '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                          background: 'var(--app-surface)',
+                          border: '1px solid var(--app-border)',
+                        }}
+                      >
+                        {user?.avatar && isBadgeIcon(user.avatar) ? (
+                          <BadgeAvatar
+                            badgeIcon={user.avatar}
+                            size="md"
+                            className="shrink-0"
                           />
-                          <AvatarFallback
-                            className="text-sm font-medium"
-                            style={{
-                              background: '#131B2E',
-                              color: 'rgba(255,255,255,0.95)',
-                            }}
-                          >
-                            {user?.firstName?.[0]}
-                            {user?.lastName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
+                        ) : (
+                          <Avatar className="h-full w-full overflow-hidden rounded-full">
+                            <AvatarImage
+                              src={getUserAvatarUrl(user) ?? undefined}
+                              alt={`${displayName}`}
+                            />
+                            <AvatarFallback
+                              className="text-sm font-medium"
+                              style={{
+                                background: 'var(--app-surface)',
+                                color: 'var(--app-text-primary)',
+                              }}
+                            >
+                              {displayName[0]?.toUpperCase()}
+                              {user?.lastName?.[0] || user?.lname?.[0] || ''}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
+                      <NotificationBadge
+                        noBackground
+                        className="-top-0.5 right-0"
+                      />
                     </div>
-                    <span
-                      className="text-sm font-medium [filter:none]"
-                      style={{
-                        color: 'rgba(255,255,255,0.95)',
-                        filter: 'none',
-                      }}
-                    >
-                      {user?.firstName} {user?.lastName}
-                    </span>
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span
+                        className="text-sm font-medium [filter:none]"
+                        style={{
+                          color: 'var(--app-text-primary)',
+                          filter: 'none',
+                        }}
+                      >
+                        Hello, {displayName}.
+                      </span>
+                      <span
+                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                        style={{
+                          background: 'var(--app-accent)',
+                          color: 'var(--app-page-bg)',
+                          boxShadow:
+                            '2px 2px 6px rgba(4, 8, 18, 0.5), -1px -1px 4px rgba(25, 40, 72, 0.3)',
+                        }}
+                      >
+                        {user?.rank || 'Stakeholder'}
+                      </span>
+                    </div>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-56 border border-white/10 p-2"
+                  className="w-56 border p-2 dark:border-white/10"
                   style={{
-                    background: '#131B2E',
+                    background: 'var(--app-surface)',
+                    borderColor: 'var(--app-border)',
                     boxShadow:
-                      '8px 8px 16px rgba(0,0,0,0.5), -8px -8px 16px rgba(255,255,255,0.05)',
+                      '8px 8px 16px var(--app-shadow-dark), -8px -8px 16px var(--app-shadow-light)',
                   }}
                 >
                   <DropdownMenuItem
@@ -238,12 +252,12 @@ export default function DashboardLayout({
                       setProfileDropdownOpen(false);
                       setProfileModalOpen(true);
                     }}
-                    className="cursor-pointer rounded-md focus:bg-white/10"
-                    style={{ color: '#009BF2', filter: 'none' }}
+                    className="cursor-pointer rounded-md focus:bg-black/5 dark:focus:bg-white/10"
+                    style={{ color: 'var(--app-accent)', filter: 'none' }}
                   >
                     <User
                       className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
+                      style={{ color: 'var(--app-accent)', filter: 'none' }}
                     />
                     Profile
                   </DropdownMenuItem>
@@ -254,17 +268,17 @@ export default function DashboardLayout({
                         setNotificationCenterOpen(true);
                       }, 100);
                     }}
-                    className="relative cursor-pointer rounded-md focus:bg-white/10"
-                    style={{ color: '#009BF2', filter: 'none' }}
+                    className="relative cursor-pointer rounded-md focus:bg-white/10 dark:focus:bg-white/10"
+                    style={{ color: 'var(--app-accent)', filter: 'none' }}
                   >
                     <Bell
                       className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
+                      style={{ color: 'var(--app-accent)', filter: 'none' }}
                     />
                     <span className="flex-1">Notifications</span>
                     <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-1 bg-white/10" />
+                  <DropdownMenuSeparator className="my-1 bg-black/5 dark:bg-white/10" />
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer rounded-md text-red-400 focus:bg-red-500/10 focus:text-red-400"
@@ -283,10 +297,10 @@ export default function DashboardLayout({
                 className={`flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
                 style={{
                   boxShadow:
-                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                  background: '#131B2E',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  color: '#009BF2',
+                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                  background: 'var(--app-surface)',
+                  border: '1px solid var(--app-border)',
+                  color: 'var(--app-accent)',
                   filter: 'none',
                 }}
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
@@ -303,10 +317,10 @@ export default function DashboardLayout({
                 className={`relative flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
                 style={{
                   boxShadow:
-                    '6px 6px 12px rgba(0,0,0,0.5), -6px -6px 12px rgba(255,255,255,0.05)',
-                  background: '#131B2E',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  color: '#009BF2',
+                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
+                  background: 'var(--app-surface)',
+                  border: '1px solid var(--app-border)',
+                  color: 'var(--app-accent)',
                   filter: 'none',
                 }}
                 aria-label="Open customer support"
@@ -501,15 +515,10 @@ export default function DashboardLayout({
             </div>
           )}
 
-        {/* Page content - standard app spacing; wallet page uses its own centered container (no main padding) */}
+        {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
         <main
           id="main-content"
-          className={
-            'pt-0 pb-8 sm:pt-0 sm:pb-10 md:pt-0 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pt-0 lg:pb-0 ' +
-            (isWalletPage || isTeamPage
-              ? 'px-0'
-              : 'px-3 sm:px-4 md:px-5 lg:px-6')
-          }
+          className="px-3 pt-6 pb-24 sm:px-4 sm:pt-6 sm:pb-24 md:px-5 md:pt-8 md:pb-24 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-8 lg:pb-0"
         >
           {children}
         </main>
@@ -570,6 +579,9 @@ export default function DashboardLayout({
           isOpen={assistantOpen}
           onClose={() => setAssistantOpen(false)}
         />
+
+        {/* Bottom navigation — Stake, Wallet, Dashboard (logo), Team, NXP */}
+        <HorizontalNav />
       </div>
     </DashboardGuard>
   );

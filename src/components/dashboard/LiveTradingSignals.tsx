@@ -7,7 +7,6 @@ import {
   TrendingDown,
   RefreshCw,
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
 
 // Trading instrument types
@@ -21,19 +20,15 @@ const getTimeAgo = (minutes: number): string => {
   return `${hours}h ${remainingMins}m ago`;
 };
 
-/** Dark neumorphic (like DAILY ROS / ACTIVE STAKES cards) */
-const NEU_SURFACE = '#131B2E';
-const NEU_TEXT = '#009BF2';
-const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
-const NEU_CARD_SHADOW = `
-  inset 8px 8px 16px ${NEU_SHADOW_DARK},
-  inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-  inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-  inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-  0 0 0 1px rgba(255, 255, 255, 0.03)
-`;
+const ACCENT_BLUE = '#009BF2';
+
+/** Dashboard card style (match Activity Feed, Daily ROS, stake card) */
+const CARD_STYLE = {
+  background: '#0D162C',
+  boxShadow:
+    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+  border: '1px solid var(--app-border)',
+} as const;
 
 const getMarketTypeBadge = (type: MarketType) => {
   const badges = {
@@ -64,62 +59,71 @@ const getMarketTypeBadge = (type: MarketType) => {
 const ROTATE_INTERVAL_MS = 5000;
 const LARGE_SCREEN_ROWS = 2;
 
+/** Signal row: pair (no icon), entry/exit, then amount + status */
 function TradeRow({ trade }: { trade: TradingSignal }) {
+  const amountStr =
+    (trade.profitUSD >= 0 ? '+' : '') +
+    (trade.profitUSD >= 0 ? '$' : '-$') +
+    Math.abs(trade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const decimals = trade.symbol.includes('JPY') ? 3 : 5;
+  const entryTime = new Date(trade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const exitTime = new Date(trade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
   return (
-    <div className="w-full space-y-1">
-      {/* Row 1: Icon + Symbol + metadata */}
-      <div className="flex items-center gap-1.5">
-        <div
-          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
-          style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+    <div className="w-full">
+      {/* Pair + metadata — no icon */}
+      <div className="mb-3">
+        <p
+          className="truncate text-xs font-semibold sm:text-sm"
+          style={{ color: '#009BF2', filter: 'none' }}
         >
-          {trade.direction === 'LONG' ? (
-            <TrendingUp className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
-          ) : (
-            <TrendingDown className="h-3 w-3" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
-          )}
+          {trade.symbol} {trade.direction}
+        </p>
+        <p
+          className="text-[10px] sm:text-xs"
+          style={{ color: 'rgba(0, 155, 242, 0.75)', filter: 'none' }}
+        >
+          {getTimeAgo(trade.minutesAgo)} • {getMarketTypeBadge(trade.marketType).label}
+        </p>
+      </div>
+      {/* Entry and Exit */}
+      <div
+        className="mb-3 flex flex-col gap-2 rounded-lg px-3 py-2"
+        style={{
+          background: 'rgba(4, 8, 18, 0.4)',
+          boxShadow: 'inset 2px 2px 6px rgba(4, 8, 18, 0.4), inset -2px -2px 6px rgba(25, 40, 72, 0.2)',
+        }}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[9px] font-medium uppercase tracking-wide" style={{ color: ACCENT_BLUE }}>Entry</span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--app-text-primary)' }}>
+            {trade.entryPrice.toFixed(decimals)}
+          </span>
+          <span className="text-[9px]" style={{ color: 'var(--app-text-muted)' }}>@ {entryTime}</span>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            {trade.symbol} {trade.direction}
-          </p>
-          <p className="text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-            {getTimeAgo(trade.minutesAgo)} • {getMarketTypeBadge(trade.marketType).label}
-          </p>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[9px] font-medium uppercase tracking-wide" style={{ color: ACCENT_BLUE }}>Exit</span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--app-text-primary)' }}>
+            {trade.exitPrice.toFixed(decimals)}
+          </span>
+          <span className="text-[9px]" style={{ color: 'var(--app-text-muted)' }}>@ {exitTime}</span>
         </div>
       </div>
-      {/* Row 2: Entry | Exit compact */}
-      <div className="grid grid-cols-2 gap-2 rounded border border-white/5 bg-black/20 px-2 py-1.5">
-        <div>
-          <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Entry</p>
-          <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-            {trade.entryPrice.toFixed(trade.symbol.includes('JPY') ? 3 : 5)}
-          </p>
-          <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
-            @ {new Date(trade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-          </p>
-        </div>
-        <div>
-          <p className="text-[8px] font-medium uppercase tracking-wide" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>Exit</p>
-          <p className="truncate text-[10px] font-semibold" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-            {trade.exitPrice.toFixed(trade.symbol.includes('JPY') ? 3 : 5)}
-          </p>
-          <p className="text-[8px]" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
-            @ {new Date(trade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-          </p>
-        </div>
-      </div>
-      {/* Row 3: P/L + status */}
-      <div className="flex items-center justify-between gap-2 pt-0.5">
+      {/* P/L + status */}
+      <div className="flex items-baseline justify-between gap-3">
         <span
-          className="text-sm font-bold"
-          style={{ color: trade.isProfitable ? '#22c55e' : '#ef4444' }}
+          className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+          style={{
+            color: trade.isProfitable ? 'var(--app-text-primary)' : '#ef4444',
+            filter: 'none',
+          }}
         >
-          {trade.isProfitable ? '+' : ''}
-          {trade.profitUSD >= 0 ? '$' : '-$'}
-          {Math.abs(trade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {amountStr}
         </span>
-        <span className="text-[9px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+        <span
+          className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
+          style={{ color: 'rgba(0, 155, 242, 0.75)', filter: 'none' }}
+        >
           {trade.isProfitable ? 'Profitable' : 'Closed'}
         </span>
       </div>
@@ -265,19 +269,48 @@ export function LiveTradingSignals() {
     : [];
 
   return (
-    <Card
-      className="group relative overflow-hidden rounded-2xl border-0 transition-shadow duration-300 hover:shadow-xl"
-      style={{ background: NEU_SURFACE, boxShadow: NEU_CARD_SHADOW }}
+    <div
+      className="overflow-hidden rounded-2xl transition-shadow duration-300"
+      style={CARD_STYLE}
     >
-      <CardContent className="relative p-3 sm:p-4">
+      <div className="p-5 sm:p-6">
+        {/* Header - match Daily ROS Payout card */}
+        <div className="mb-4 flex items-center gap-3">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
+            style={{ background: 'rgba(0, 155, 242, 0.15)' }}
+          >
+            <TrendingUp
+              className="h-4 w-4 sm:h-5 sm:w-5"
+              style={{ color: '#009BF2', filter: 'none' }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
+              className="truncate text-xs font-semibold sm:text-sm"
+              style={{ color: '#009BF2', filter: 'none' }}
+            >
+              Live Trading Signals
+            </p>
+            <p
+              className="text-[10px] sm:text-xs"
+              style={{
+                color: 'rgba(0, 155, 242, 0.75)',
+                filter: 'none',
+              }}
+            >
+              Latest signals
+            </p>
+          </div>
+        </div>
         <div className="min-h-[72px]">
           {trades.length === 0 && !error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: NEU_TEXT_MUTED }}>
-              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: NEU_TEXT }} />
+            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: 'var(--app-text-muted)' }}>
+              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: ACCENT_BLUE }} />
               <p className="text-xs">Loading...</p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: NEU_TEXT_MUTED }}>
+            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: 'var(--app-text-muted)' }}>
               <p>{error}</p>
             </div>
           ) : isLargeScreen && tradesToShow.length > 0 ? (
@@ -288,15 +321,10 @@ export function LiveTradingSignals() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-4"
               >
                 {tradesToShow.map((trade) => (
-                  <div
-                    key={trade.id}
-                    className="rounded-lg border border-white/5 bg-black/10 p-2"
-                  >
-                    <TradeRow trade={trade} />
-                  </div>
+                  <TradeRow key={trade.id} trade={trade} />
                 ))}
               </motion.div>
             </AnimatePresence>
@@ -315,7 +343,7 @@ export function LiveTradingSignals() {
             </AnimatePresence>
           ) : null}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
