@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ViewportPageLayout } from '@/components/layout/ViewportPageLayout';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 /**
  * Layout for public/standalone pages (terms, privacy, about, etc.).
@@ -14,18 +15,20 @@ export default function PublicLayout({
   return (
     <ViewportPageLayout
       header={
-        <div className="flex flex-shrink-0 items-center border-b border-white/10 bg-black/20 px-4 py-3">
-          <Link
-            href="/"
-            className="text-primary text-sm font-medium hover:underline"
-          >
-            ← Back to home
-          </Link>
-        </div>
+        <PageContainer>
+          <div className="flex flex-shrink-0 items-center border-b border-white/10 bg-black/20 py-3">
+            <Link
+              href="/"
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              ← Back to home
+            </Link>
+          </div>
+        </PageContainer>
       }
-      mainClassName="p-4 md:p-6"
+      mainClassName="py-4 md:py-6"
     >
-      {children}
+      <PageContainer>{children}</PageContainer>
     </ViewportPageLayout>
   );
 }
