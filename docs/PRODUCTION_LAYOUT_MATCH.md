@@ -33,7 +33,16 @@ To compare **computed styles** between local and production and find spacing/hei
    - Console logs computed values: `height`, `minHeight`, `maxHeight`, `padding`, `margin`, `gap`, `lineHeight`, `fontFamily`, `overflow`, `boxSizing`.
 4. Compare the **Summary** object from local console with the same values in production DevTools (Computed tab for `.dashboard-viewport-cap`, `#main-content`, and the header). Fix the element(s) that differ with the **smallest possible CSS/layout change** (no new UI).
 
-## 4. Common causes of drift
+## 4. Deploy with clean cache (Vercel)
+
+After pushing layout fixes:
+
+1. Open the Vercel project → **Deployments**.
+2. Open the **latest deployment** (from your push) → **⋯** → **Redeploy**.
+3. Check **“Clear build cache and redeploy”** (or in **Settings → General → Build Cache** clear the cache, then trigger a new deploy).
+4. This forces a fresh `pnpm install --frozen-lockfile` and `next build` so production matches the lockfile and Node 20.
+
+## 5. Common causes of drift
 
 - **Fonts**: Root layout uses `next/font` (Inter). If production serves a different font or fallback, line-height can change; ensure the same font loads and set explicit `line-height` where needed.
 - **Images/icons**: Use explicit `width`/`height` (or `aspect-ratio`) to avoid layout shift.

@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Award, RefreshCw, XCircle, ChevronDown } from 'lucide-react';
+import { Award, XCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
@@ -18,9 +18,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { NXPCard } from '@/components/achievements/NXPCard';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { NxpOverview } from '@/components/wallet/NxpOverview';
+import type { NxpData } from '@/components/wallet/NxpOverview';
+import type { NXPBalance } from '@/types/achievements';
 import { BadgeCard } from '@/components/achievements/BadgeCard';
 import { BadgeGrid } from '@/components/achievements/BadgeGrid';
+import badgeStyles from '@/styles/badge-card.module.css';
 import { NXPHistory } from '@/components/achievements/NXPHistory';
 import {
   useEarnedBadges,
@@ -82,6 +86,38 @@ export default function AchievementsPage() {
     : earnedBadges.slice(0, INITIAL_BADGE_LIMIT);
   const hasMoreBadges = earnedBadges.length > INITIAL_BADGE_LIMIT;
 
+  /** Map backend NXP balance to NxpOverview shape (rank card + breakdown) */
+  function mapNxpBalanceToNxpData(b: NXPBalance): NxpData {
+    const currentLevelNXP = Math.pow(b.nxpLevel - 1, 2) * 100;
+    const nextLevelNXP = Math.pow(b.nxpLevel, 2) * 100;
+    const progressPercent =
+      nextLevelNXP > currentLevelNXP
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              ((b.totalNXP - currentLevelNXP) /
+                (nextLevelNXP - currentLevelNXP)) *
+                100
+            )
+          )
+        : 100;
+    return {
+      totalNxp: b.totalNXP,
+      level: b.nxpLevel,
+      progressPercent,
+      nextLevelNxp: nextLevelNXP,
+      nextRewardLabel: `Level ${b.nxpLevel + 1}`,
+      ctaText:
+        b.nxpToNextLevel > 0
+          ? `Gain ${b.nxpToNextLevel.toLocaleString()} more NXP to reach Level ${b.nxpLevel + 1}.`
+          : undefined,
+      fromBadges: b.breakdown?.fromBadges ?? 0,
+      fromRanks: b.breakdown?.fromRanks ?? 0,
+      milestones: b.breakdown?.fromMilestones ?? 0,
+    };
+  }
+
   const handleToggleDisplay = async (badgeId: string) => {
     try {
       await toggleBadgeMutation.mutateAsync(badgeId);
@@ -102,7 +138,11 @@ export default function AchievementsPage() {
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="space-y-4 sm:space-y-6">
           <LoadingStates.Card height="h-20" className="w-full" />
-          <LoadingStates.Grid items={2} columns={2} className="gap-3 sm:gap-4 md:gap-6" />
+          <LoadingStates.Grid
+            items={2}
+            columns={2}
+            className="gap-3 sm:gap-4 md:gap-6"
+          />
           <LoadingStates.Card height="h-96" />
         </div>
       </div>
@@ -118,7 +158,13 @@ export default function AchievementsPage() {
       <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
         <div className="flex min-h-[400px] items-center justify-center p-4">
           <UserFriendlyError
-            error={badgesError || progressError || catalogError || nxpError || new Error('Unable to fetch achievement data')}
+            error={
+              badgesError ||
+              progressError ||
+              catalogError ||
+              nxpError ||
+              new Error('Unable to fetch achievement data')
+            }
             onRetry={handleRefresh}
             variant="card"
             className="max-w-md"
@@ -130,66 +176,7 @@ export default function AchievementsPage() {
 
   return (
     <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <div className="space-y-4 sm:space-y-6">
-        {/* Page Header - Staking Streak Template */}
-        <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: -20 }}
-          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            {!reducedMotion && (
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-purple-500/30 blur-2xl"
-              />
-            )}
-
-            <CardHeader className="relative p-4 sm:p-6">
-              <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className="rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
-                  >
-                    <Award className="h-5 w-5 text-purple-500 sm:h-6 sm:w-6" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
-                      Achievements & Progress
-                    </CardTitle>
-                    <CardDescription className="text-xs leading-relaxed sm:text-sm">
-                      Track your accomplishments and earn experience points
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRefresh}
-                  className="h-9 gap-1.5 text-xs sm:h-10 sm:gap-2 sm:text-sm"
-                >
-                  <RefreshCw className="h-4 w-4 sm:h-4 sm:w-4" />
-                  <span className="xs:inline hidden">Refresh</span>
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-        </motion.div>
-
+      <PageContainer sectionSpacing>
         {/* Error Banner (if some queries failed but not all) */}
         {(badgesError || progressError || catalogError || nxpError) &&
           !hasCriticalError && (
@@ -205,14 +192,14 @@ export default function AchievementsPage() {
             </motion.div>
           )}
 
-        {/* NXP Card - Show backend data */}
+        {/* NXP Overview – rank, balance, progress, breakdown (moved from wallet page) */}
         {nxp ? (
           <motion.div
             initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={reducedMotion ? false : { opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <NXPCard nxp={nxp} />
+            <NxpOverview data={mapNxpBalanceToNxpData(nxp)} />
           </motion.div>
         ) : (
           nxpError && (
@@ -308,146 +295,85 @@ export default function AchievementsPage() {
           )
         )}
 
-        {/* Earned Badges Section */}
+        {/* Earned Badges Section – neumorphic, #0D162C + #009BF2 only */}
         {earnedBadges.length > 0 && (
           <motion.div
             initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={reducedMotion ? false : { opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className={badgeStyles.badgeSectionRoot}
           >
-            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-              {/* Animated Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-transparent" />
-
-              {/* Animated Floating Blob */}
-              {!reducedMotion && (
-                <motion.div
-                  animate={{
-                    x: [0, -15, 0],
-                    y: [0, 10, 0],
-                    scale: [1, 1.15, 1],
-                  }}
-                  transition={{
-                    duration: 6,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
+            <header className={badgeStyles.badgeSectionHeader}>
+              <div className={badgeStyles.badgeSectionIcon} aria-hidden>
+                <Award className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+              </div>
+              <div>
+                <h2 className={badgeStyles.badgeSectionTitle}>Your Badges</h2>
+                <p className={badgeStyles.badgeSectionSubtitle}>
+                  {earnedBadges.length} badge
+                  {earnedBadges.length !== 1 ? 's' : ''} earned
+                </p>
+              </div>
+            </header>
+            <div className={badgeStyles.badgeSectionGrid}>
+              {displayedBadges.map((badge) => (
+                <BadgeCard
+                  key={badge.badgeType}
+                  badge={badge}
+                  earned={true}
+                  onToggleDisplay={handleToggleDisplay}
                 />
-              )}
-
-              <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
-                  >
-                    <Award className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
-                      Your Badges
-                    </CardTitle>
-                    <CardDescription className="text-xs leading-relaxed sm:text-sm">
-                      {earnedBadges.length} badge
-                      {earnedBadges.length !== 1 ? 's' : ''} earned
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                  {displayedBadges.map((badge) => (
-                    <BadgeCard
-                      key={badge.badgeType}
-                      badge={badge}
-                      earned={true}
-                      onToggleDisplay={handleToggleDisplay}
-                    />
-                  ))}
-                </div>
-                {hasMoreBadges && (
-                  <div className="mt-4 flex justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAllBadges(!showAllBadges)}
-                      size="sm"
-                      className="gap-1.5 text-sm sm:gap-2 sm:text-base"
-                    >
-                      {showAllBadges ? (
-                        <>
-                          Show Less
-                          <ChevronDown className="h-4 w-4 rotate-180 sm:h-4 sm:w-4" />
-                        </>
-                      ) : (
-                        <>
-                          View More ({earnedBadges.length - INITIAL_BADGE_LIMIT}{' '}
-                          more)
-                          <ChevronDown className="h-4 w-4 sm:h-4 sm:w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+            {hasMoreBadges && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllBadges(!showAllBadges)}
+                  className={badgeStyles.badgeSectionMoreBtn}
+                >
+                  {showAllBadges ? (
+                    <>
+                      Show Less
+                      <ChevronDown className="h-4 w-4 rotate-180" />
+                    </>
+                  ) : (
+                    <>
+                      View More ({earnedBadges.length - INITIAL_BADGE_LIMIT}{' '}
+                      more)
+                      <ChevronDown className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
 
-        {/* Badge Catalog */}
+        {/* Badge Catalog – neumorphic, same background as Your Badges (#0D162C) */}
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
           animate={reducedMotion ? false : { opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className={badgeStyles.badgeSectionRoot}
         >
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            {!reducedMotion && (
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-              />
-            )}
-
-            <CardHeader className="relative p-4 sm:p-6">
-              <div className="mb-2 flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3"
-                >
-                  <Award className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl">
-                    Badge Catalog
-                  </CardTitle>
-                  <CardDescription className="text-xs leading-relaxed sm:text-sm">
-                    Explore all available badges and track your progress
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-              <BadgeGrid
-                earnedBadges={earnedBadges}
-                badgeCatalog={badgeCatalog}
-                badgeProgress={badgeProgress}
-                onToggleDisplay={handleToggleDisplay}
-              />
-            </CardContent>
-          </Card>
+          <header className={badgeStyles.badgeSectionHeader}>
+            <div className={badgeStyles.badgeSectionIcon} aria-hidden>
+              <Award className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+            </div>
+            <div>
+              <h2 className={badgeStyles.badgeSectionTitle}>Badge Catalog</h2>
+              <p className={badgeStyles.badgeSectionSubtitle}>
+                Explore all available badges and track your progress
+              </p>
+            </div>
+          </header>
+          <BadgeGrid
+            earnedBadges={earnedBadges}
+            badgeCatalog={badgeCatalog}
+            badgeProgress={badgeProgress}
+            onToggleDisplay={handleToggleDisplay}
+          />
         </motion.div>
 
         {/* NXP History */}
@@ -458,7 +384,7 @@ export default function AchievementsPage() {
         >
           <NXPHistory />
         </motion.div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

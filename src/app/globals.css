@@ -46,37 +46,51 @@
 :root {
   --radius: 0.625rem;
   /* Novunt Brand Colors - Light Mode */
-  --background: oklch(1 0 0); /* White */
-  --foreground: oklch(0.25 0.05 250); /* Dark blue-gray */
+  --background: oklch(1 0 0);
+  /* White */
+  --foreground: oklch(0.25 0.05 250);
+  /* Dark blue-gray */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.25 0.05 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.25 0.05 250);
   /* Novunt Deep Blue Primary */
-  --primary: oklch(0.35 0.12 250); /* #1e3a8a deep blue */
-  --primary-foreground: oklch(1 0 0); /* White */
+  --primary: oklch(0.35 0.12 250);
+  /* #1e3a8a deep blue */
+  --primary-foreground: oklch(1 0 0);
+  /* White */
   /* Novunt Gold Secondary */
-  --secondary: oklch(0.75 0.15 65); /* #f59e0b gold */
-  --secondary-foreground: oklch(0.35 0.12 250); /* Deep blue text */
+  --secondary: oklch(0.75 0.15 65);
+  /* #f59e0b gold */
+  --secondary-foreground: oklch(0.35 0.12 250);
+  /* Deep blue text */
   --muted: oklch(0.96 0.01 250);
   --muted-foreground: oklch(0.55 0.05 250);
   /* Bright Blue Accent */
-  --accent: oklch(0.6 0.2 250); /* #3b82f6 */
+  --accent: oklch(0.6 0.2 250);
+  /* #3b82f6 */
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.9 0.01 250);
   --input: oklch(0.9 0.01 250);
-  --ring: oklch(0.6 0.2 250); /* Bright blue ring */
+  --ring: oklch(0.6 0.2 250);
+  /* Bright blue ring */
   /* Charts with Novunt colors */
-  --chart-1: oklch(0.35 0.12 250); /* Deep blue */
-  --chart-2: oklch(0.75 0.15 65); /* Gold */
-  --chart-3: oklch(0.6 0.2 250); /* Bright blue */
-  --chart-4: oklch(0.7 0.12 160); /* Teal */
-  --chart-5: oklch(0.65 0.18 40); /* Orange */
+  --chart-1: oklch(0.35 0.12 250);
+  /* Deep blue */
+  --chart-2: oklch(0.75 0.15 65);
+  /* Gold */
+  --chart-3: oklch(0.6 0.2 250);
+  /* Bright blue */
+  --chart-4: oklch(0.7 0.12 160);
+  /* Teal */
+  --chart-5: oklch(0.65 0.18 40);
+  /* Orange */
   /* Sidebar with Novunt branding */
   --sidebar: oklch(0.98 0.01 250);
   --sidebar-foreground: oklch(0.35 0.12 250);
-  --sidebar-primary: oklch(0.35 0.12 250); /* Deep blue */
+  --sidebar-primary: oklch(0.35 0.12 250);
+  /* Deep blue */
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.95 0.01 250);
   --sidebar-accent-foreground: oklch(0.35 0.12 250);
@@ -86,36 +100,51 @@
 
 .dark {
   /* Novunt Brand Colors - Dark Mode */
-  --background: oklch(0.15 0.05 250); /* Dark blue-gray */
-  --foreground: oklch(0.98 0.01 250); /* Off-white */
-  --card: oklch(0.2 0.05 250); /* Slightly lighter dark */
+  --background: oklch(0.15 0.05 250);
+  /* Dark blue-gray */
+  --foreground: oklch(0.98 0.01 250);
+  /* Off-white */
+  --card: oklch(0.2 0.05 250);
+  /* Slightly lighter dark */
   --card-foreground: oklch(0.98 0.01 250);
   --popover: oklch(0.2 0.05 250);
   --popover-foreground: oklch(0.98 0.01 250);
   /* Novunt Blue - Brighter in dark mode */
-  --primary: oklch(0.65 0.2 250); /* Bright blue #3b82f6 */
-  --primary-foreground: oklch(0.15 0.05 250); /* Dark text */
+  --primary: oklch(0.65 0.2 250);
+  /* Bright blue #3b82f6 */
+  --primary-foreground: oklch(0.15 0.05 250);
+  /* Dark text */
   /* Novunt Gold - Same in dark mode */
-  --secondary: oklch(0.75 0.15 65); /* Gold */
-  --secondary-foreground: oklch(0.15 0.05 250); /* Dark text */
+  --secondary: oklch(0.75 0.15 65);
+  /* Gold */
+  --secondary-foreground: oklch(0.15 0.05 250);
+  /* Dark text */
   --muted: oklch(0.25 0.05 250);
   --muted-foreground: oklch(0.7 0.05 250);
-  --accent: oklch(0.75 0.15 65); /* Gold accent in dark mode */
+  --accent: oklch(0.75 0.15 65);
+  /* Gold accent in dark mode */
   --accent-foreground: oklch(0.15 0.05 250);
   --destructive: oklch(0.7 0.19 22);
   --border: oklch(0.3 0.05 250);
   --input: oklch(0.25 0.05 250);
-  --ring: oklch(0.65 0.2 250); /* Bright blue ring */
+  --ring: oklch(0.65 0.2 250);
+  /* Bright blue ring */
   /* Dark mode charts */
-  --chart-1: oklch(0.65 0.2 250); /* Bright blue */
-  --chart-2: oklch(0.75 0.15 65); /* Gold */
-  --chart-3: oklch(0.55 0.18 250); /* Medium blue */
-  --chart-4: oklch(0.7 0.12 160); /* Teal */
-  --chart-5: oklch(0.65 0.18 40); /* Orange */
+  --chart-1: oklch(0.65 0.2 250);
+  /* Bright blue */
+  --chart-2: oklch(0.75 0.15 65);
+  /* Gold */
+  --chart-3: oklch(0.55 0.18 250);
+  /* Medium blue */
+  --chart-4: oklch(0.7 0.12 160);
+  /* Teal */
+  --chart-5: oklch(0.65 0.18 40);
+  /* Orange */
   /* Dark sidebar */
   --sidebar: oklch(0.18 0.05 250);
   --sidebar-foreground: oklch(0.95 0.01 250);
-  --sidebar-primary: oklch(0.65 0.2 250); /* Bright blue */
+  --sidebar-primary: oklch(0.65 0.2 250);
+  /* Bright blue */
   --sidebar-primary-foreground: oklch(0.98 0.01 250);
   --sidebar-accent: oklch(0.25 0.05 250);
   --sidebar-accent-foreground: oklch(0.95 0.01 250);
@@ -129,18 +158,22 @@
   *::after {
     box-sizing: border-box;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   html,
   body {
     margin: 0;
     padding: 0;
   }
+
   html {
     height: 100%;
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-foreground;
     min-height: 100%;
@@ -191,6 +224,50 @@
   }
 }
 
+/* PageContainer: centered max-width layout (team page and any page using PageContainer) */
+.page-container {
+  width: 100%;
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .page-container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .page-container {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+.page-container--section-spacing {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 640px) {
+  .page-container--section-spacing {
+    gap: 32px;
+  }
+}
+@media (min-width: 1024px) {
+  .page-container--section-spacing {
+    gap: 40px;
+  }
+}
+
 /* Background image helper for landing page */
 .vault-bg {
   background-size: cover;
@@ -230,10 +307,12 @@
     transform: scale(1);
     opacity: 0.95;
   }
+
   50% {
     transform: scale(1.06);
     opacity: 1;
   }
+
   100% {
     transform: scale(1);
     opacity: 0.95;
@@ -268,5 +347,14 @@
 
   .mobile-scroll::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Hide scrollbar for swipeable carousels (e.g. wallet stats) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

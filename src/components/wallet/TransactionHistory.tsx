@@ -34,13 +34,6 @@ import {
 } from 'lucide-react';
 import { useTransactionHistory } from '@/hooks/useWallet';
 import { useUser } from '@/hooks/useUser';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -72,6 +65,7 @@ import type {
   Transaction,
   CategoryBreakdown,
 } from '@/types/enhanced-transaction';
+import neuStyles from '@/styles/neumorphic.module.css';
 
 /**
  * Transaction History Component
@@ -1009,225 +1003,155 @@ export function TransactionHistory() {
 
   return (
     <div ref={sectionRef} className="space-y-4 sm:space-y-6">
-      {/* Header - Staking Streak Template */}
+      {/* Header – Neumorphic panel (#0D162C + #009BF2) */}
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 20 }}
         animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-          {/* Animated Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent" />
-
-          {/* Animated Floating Blob */}
-          {!reducedMotion && (
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-blue-500/30 blur-2xl"
-            />
-          )}
-
-          <CardHeader className="relative p-4 sm:p-6">
-            <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+        <div className={neuStyles['neu-panel']}>
+          <div className="mb-4 flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] sm:h-12 sm:w-12"
+                style={{
+                  background: 'var(--neu-bg)',
+                  boxShadow: 'var(--neu-shadow-inset)',
+                  color: 'var(--neu-accent)',
+                }}
+              >
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2
+                  className="text-sm font-bold sm:text-base md:text-lg"
+                  style={{ color: 'var(--neu-text-primary)' }}
                 >
-                  <FileText className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                    Transaction History
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs">
-                    View all your deposits, withdrawals, and transfers
-                  </CardDescription>
-                </div>
+                  Transaction History
+                </h2>
+                <p
+                  className="text-[10px] sm:text-xs"
+                  style={{ color: 'var(--neu-text-muted)' }}
+                >
+                  View all your deposits, withdrawals, and transfers
+                </p>
               </div>
             </div>
-          </CardHeader>
+          </div>
 
-          {/* 🔍 DEBUG: Referral Bonus Verification Banner (development only) */}
-          {process.env.NODE_ENV === 'development' &&
-            (() => {
-              const referralBonuses = filteredTransactions.filter(
-                (tx) => tx.type === 'referral_bonus'
-              );
-
-              if (referralBonuses.length === 0) return null;
-
-              const incorrect = referralBonuses.filter((tx) =>
-                tx.description.toLowerCase().includes('earnings')
-              );
-
-              const correct = referralBonuses.filter((tx) =>
-                tx.description.toLowerCase().includes('stake')
-              );
-
-              const allCorrect = incorrect.length === 0;
-
-              return (
-                <CardContent className="relative border-t border-amber-500/20 bg-amber-500/5 p-4">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`rounded-lg p-2 ${allCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}
+          {/* Search and Date Filters – inset neumorphic inputs */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {/* Search Input */}
+              <div className="md:col-span-1">
+                <div className="relative">
+                  <Search
+                    className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                    style={{ color: 'var(--neu-text-muted)' }}
+                  />
+                  <Input
+                    placeholder="Search by amount, username, wallet address, TX ID, description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`${neuStyles['neu-input']} border-0 bg-transparent pr-9 pl-9`}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setDebouncedSearch('');
+                      }}
+                      className="absolute top-1/2 right-2 h-7 w-7 -translate-y-1/2 rounded-md transition-opacity hover:opacity-80"
+                      style={{ color: 'var(--neu-text-muted)' }}
                     >
-                      {allCorrect ? '✅' : '⚠️'}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="mb-1 text-sm font-semibold">
-                        {allCorrect
-                          ? '✅ Referral Bonus Verification: PASSED'
-                          : '⚠️ Referral Bonus Verification: ISSUES FOUND'}
-                      </h4>
-                      <div className="text-muted-foreground space-y-1 text-xs">
-                        <p>
-                          Found {referralBonuses.length} referral bonus
-                          transaction(s)
-                        </p>
-                        <p>
-                          ✅ Correct (mentions &quot;stake&quot;):{' '}
-                          {correct.length}
-                        </p>
-                        {incorrect.length > 0 && (
-                          <>
-                            <p className="font-semibold text-red-600">
-                              ❌ Incorrect (mentions &quot;earnings&quot;):{' '}
-                              {incorrect.length}
-                            </p>
-                            <p className="mt-2 text-xs text-red-600">
-                              These transactions should say &quot;from X&apos;s
-                              stake&quot; not &quot;from X&apos;s
-                              earnings&quot;. Backend cleanup may not have
-                              completed.
-                            </p>
-                          </>
-                        )}
-                        <p className="mt-2 text-xs opacity-70">
-                          This banner is only visible in development mode. Check
-                          browser console for detailed logs.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              );
-            })()}
-
-          {/* Search and Date Filters */}
-          <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                {/* Search Input */}
-                <div className="md:col-span-1">
-                  <div className="relative">
-                    <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                    <Input
-                      placeholder="Search by amount, username, wallet address, TX ID, description..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`pr-9 pl-9 ${searchQuery ? 'border-primary' : ''}`}
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
-                        onClick={() => {
-                          setSearchQuery('');
-                          setDebouncedSearch('');
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Date From */}
-                <div className="md:col-span-1">
-                  <div className="relative">
-                    <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                    <Input
-                      type="date"
-                      placeholder="Date from"
-                      value={filters.dateFrom || ''}
-                      onChange={(e) =>
-                        handleFilterChange(
-                          'dateFrom',
-                          e.target.value || undefined
-                        )
-                      }
-                      className={`pl-9 ${filters.dateFrom ? 'border-primary' : ''}`}
-                    />
-                  </div>
-                </div>
-
-                {/* Date To */}
-                <div className="md:col-span-1">
-                  <div className="relative">
-                    <Calendar className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                    <Input
-                      type="date"
-                      placeholder="Date to"
-                      value={filters.dateTo || ''}
-                      onChange={(e) =>
-                        handleFilterChange(
-                          'dateTo',
-                          e.target.value || undefined
-                        )
-                      }
-                      className={`pl-9 ${filters.dateTo ? 'border-primary' : ''}`}
-                      min={filters.dateFrom || undefined}
-                    />
-                  </div>
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Active Filters Badge and Clear Button */}
-              {hasActiveFilters && (
-                <div className="flex items-center justify-between border-t pt-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {
-                        [
-                          filters.category && 'Category',
-                          filters.search && 'Search',
-                          filters.dateFrom && 'Date From',
-                          filters.dateTo && 'Date To',
-                        ].filter(Boolean).length
-                      }{' '}
-                      filter
-                      {[
-                        filters.category && 'Category',
-                        filters.search && 'Search',
-                        filters.dateFrom && 'Date From',
-                        filters.dateTo && 'Date To',
-                      ].filter(Boolean).length !== 1
-                        ? 's'
-                        : ''}{' '}
-                      active
-                    </Badge>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    <X className="mr-2 h-4 w-4" />
-                    Clear All Filters
-                  </Button>
+              {/* Date From */}
+              <div className="md:col-span-1">
+                <div className="relative">
+                  <Calendar
+                    className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                    style={{ color: 'var(--neu-text-muted)' }}
+                  />
+                  <Input
+                    type="date"
+                    placeholder="Date from"
+                    value={filters.dateFrom || ''}
+                    onChange={(e) =>
+                      handleFilterChange(
+                        'dateFrom',
+                        e.target.value || undefined
+                      )
+                    }
+                    className={`${neuStyles['neu-input']} border-0 bg-transparent pl-9`}
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Date To */}
+              <div className="md:col-span-1">
+                <div className="relative">
+                  <Calendar
+                    className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                    style={{ color: 'var(--neu-text-muted)' }}
+                  />
+                  <Input
+                    type="date"
+                    placeholder="Date to"
+                    value={filters.dateTo || ''}
+                    onChange={(e) =>
+                      handleFilterChange('dateTo', e.target.value || undefined)
+                    }
+                    className={`${neuStyles['neu-input']} border-0 bg-transparent pl-9`}
+                    min={filters.dateFrom || undefined}
+                  />
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Active Filters Badge and Clear Button */}
+            {hasActiveFilters && (
+              <div
+                className="flex items-center justify-between pt-2"
+                style={{ borderTop: '1px solid var(--neu-border)' }}
+              >
+                <span className={`${neuStyles['neu-badge']} text-xs`}>
+                  {
+                    [
+                      filters.category && 'Category',
+                      filters.search && 'Search',
+                      filters.dateFrom && 'Date From',
+                      filters.dateTo && 'Date To',
+                    ].filter(Boolean).length
+                  }{' '}
+                  filter
+                  {[
+                    filters.category && 'Category',
+                    filters.search && 'Search',
+                    filters.dateFrom && 'Date From',
+                    filters.dateTo && 'Date To',
+                  ].filter(Boolean).length !== 1
+                    ? 's'
+                    : ''}{' '}
+                  active
+                </span>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className={`${neuStyles['neu-button']} flex items-center gap-2 text-sm`}
+                >
+                  <X className="h-4 w-4" />
+                  Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </motion.div>
 
       {/* Transaction List - Staking Streak Template */}
@@ -1239,73 +1163,65 @@ export function TransactionHistory() {
           animate={reducedMotion ? false : { opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            {!reducedMotion && (
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
-              />
-            )}
-
-            <CardHeader className="relative p-4 sm:p-6">
-              <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -10 }}
-                    className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                  >
-                    <FileText className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                      Transactions
-                    </CardTitle>
-                    <CardDescription className="text-[10px] sm:text-xs">
-                      {hasActiveFilters
-                        ? `${filteredTransactions.length} of ${data?.transactions?.length || 0} filtered`
-                        : `${data?.pagination?.totalItems || filteredTransactions.length} total transactions`}
-                    </CardDescription>
-                  </div>
+          <div className={neuStyles['neu-panel']}>
+            <div className="mb-4 flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] sm:h-12 sm:w-12"
+                  style={{
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-inset)',
+                    color: 'var(--neu-accent)',
+                  }}
+                >
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                {hasActiveFilters && (
-                  <Badge variant="secondary" className="text-xs">
-                    Filtered
-                  </Badge>
-                )}
+                <div className="min-w-0 flex-1">
+                  <h2
+                    className="text-sm font-bold sm:text-base md:text-lg"
+                    style={{ color: 'var(--neu-text-primary)' }}
+                  >
+                    Transactions
+                  </h2>
+                  <p
+                    className="text-[10px] sm:text-xs"
+                    style={{ color: 'var(--neu-text-muted)' }}
+                  >
+                    {hasActiveFilters
+                      ? `${filteredTransactions.length} of ${data?.transactions?.length || 0} filtered`
+                      : `${data?.pagination?.totalItems || filteredTransactions.length} total transactions`}
+                  </p>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="relative p-0 pt-0 sm:pt-0">
-              <div className="divide-border/50 divide-y">
-                {filteredTransactions.map((transaction, index) => (
-                  <TransactionItem
-                    key={transaction._id}
-                    transaction={transaction}
-                    index={index}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+              {hasActiveFilters && (
+                <span className={`${neuStyles['neu-badge']} text-xs`}>
+                  Filtered
+                </span>
+              )}
+            </div>
+            <div
+              className="space-y-2"
+              style={{ margin: '-8px 0 0', padding: '0' }}
+            >
+              {filteredTransactions.map((transaction, index) => (
+                <TransactionItem
+                  key={transaction._id}
+                  transaction={transaction}
+                  index={index}
+                />
+              ))}
+            </div>
+          </div>
 
           {/* Pagination - Mobile First */}
           {data.pagination &&
             data.pagination.totalPages > 1 &&
             !hasActiveFilters && (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-muted-foreground text-xs sm:text-sm">
+                <p
+                  className="text-xs sm:text-sm"
+                  style={{ color: 'var(--neu-text-muted)' }}
+                >
                   Showing{' '}
                   {(data.pagination.currentPage - 1) *
                     data.pagination.itemsPerPage +
@@ -1331,40 +1247,19 @@ export function TransactionHistory() {
           animate={reducedMotion ? false : { opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-gray-500/10 to-transparent" />
-
-            {/* Animated Floating Blob */}
-            {!reducedMotion && (
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-slate-500/30 blur-2xl"
-              />
-            )}
-
-            <CardContent className="relative p-0">
-              <EmptyStates.EmptyTransactions
-                action={
-                  hasActiveFilters
-                    ? {
-                        label: 'Clear Filters',
-                        onClick: clearFilters,
-                      }
-                    : undefined
-                }
-              />
-            </CardContent>
-          </Card>
+          <div className={neuStyles['neu-panel']}>
+            <EmptyStates.EmptyTransactions
+              variant="neumorphic"
+              action={
+                hasActiveFilters
+                  ? {
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    }
+                  : undefined
+              }
+            />
+          </div>
         </motion.div>
       )}
     </div>
@@ -1419,20 +1314,19 @@ function TransactionItem({
   return (
     <motion.div
       {...listItemAnimation(index)}
-      className="hover:bg-muted/50 group p-3 transition-colors sm:p-4"
+      className={`group rounded-[16px] p-3 transition-[box-shadow,transform] duration-[250ms] sm:p-4 ${neuStyles['neu-card']}`}
     >
       <div className="flex items-start justify-between gap-2 sm:items-center sm:gap-4">
         {/* Left: Icon & Details */}
         <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-4">
-          {/* Icon */}
+          {/* Icon – inset neumorphic */}
           <div
-            className={`shrink-0 rounded-lg p-2 sm:rounded-xl sm:p-3 ${
-              isPositive
-                ? 'bg-emerald-500/10'
-                : isNeutral
-                  ? 'bg-muted'
-                  : 'bg-red-500/10'
-            }`}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
+            style={{
+              background: 'var(--neu-bg)',
+              boxShadow: 'var(--neu-shadow-inset)',
+              color: 'var(--neu-accent)',
+            }}
           >
             <div className="h-4 w-4 sm:h-5 sm:w-5">{typeIcon}</div>
           </div>
@@ -1440,21 +1334,29 @@ function TransactionItem({
           {/* Details */}
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <p className="text-foreground text-sm font-semibold sm:text-base">
+              <p
+                className="text-sm font-semibold sm:text-base"
+                style={{ color: 'var(--neu-text-primary)' }}
+              >
                 {formatTransactionType(transaction.type, transaction.typeLabel)}
               </p>
-              <Badge
-                className={`${statusInfo.bgColor} ${statusInfo.color} text-[10px] sm:text-xs`}
+              <span
+                className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
               >
                 {statusInfo.label}
-              </Badge>
+              </span>
               {transaction.requiresAdminApproval && (
-                <Badge variant="outline" className="text-[10px] sm:text-xs">
+                <span
+                  className={`${neuStyles['neu-badge']} ${neuStyles['neu-badge-accent']} text-[10px] sm:text-xs`}
+                >
                   Pending Approval
-                </Badge>
+                </span>
               )}
             </div>
-            <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
+            <p
+              className="mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm"
+              style={{ color: 'var(--neu-text-muted)' }}
+            >
               {sanitizeDescriptionByType(
                 transaction.description,
                 transaction.type
@@ -1469,7 +1371,10 @@ function TransactionItem({
                   </Badge>
                 )}
             </p>
-            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs">
+            <div
+              className="flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs"
+              style={{ color: 'var(--neu-text-muted)' }}
+            >
               <span>{formatTransactionDate(transaction.timestamp)}</span>
               {transaction.reference && (
                 <span className="font-mono">
@@ -1482,9 +1387,9 @@ function TransactionItem({
                 </span>
               )}
               {transaction.metadata?.network && (
-                <Badge variant="outline" className="text-xs">
+                <span className={`${neuStyles['neu-badge']} text-xs`}>
                   {String(transaction.metadata.network)}
-                </Badge>
+                </span>
               )}
               {/* Show P2P username for transfers */}
               {transaction.fromUser?.username && (
@@ -1505,17 +1410,16 @@ function TransactionItem({
                       To: {maskWalletAddress(transaction.walletAddress)}
                     </span>
                     {transaction.metadata?.network && (
-                      <Badge variant="outline" className="text-xs">
+                      <span className={`${neuStyles['neu-badge']} text-xs`}>
                         {String(transaction.metadata.network)}
-                      </Badge>
+                      </span>
                     )}
                     {transaction.requiresAdminApproval && (
-                      <Badge
-                        variant="outline"
-                        className="border-amber-500 text-xs text-amber-600"
+                      <span
+                        className={`${neuStyles['neu-badge']} ${neuStyles['neu-badge-accent']} text-xs`}
                       >
                         Requires Approval
-                      </Badge>
+                      </span>
                     )}
                   </>
                 )}
@@ -1552,9 +1456,9 @@ function TransactionItem({
               {/* Show bonus-specific metadata */}
               {transaction.category === 'bonus' &&
                 transaction.metadata?.bonusType && (
-                  <Badge variant="outline" className="text-xs">
+                  <span className={`${neuStyles['neu-badge']} text-xs`}>
                     {String(transaction.metadata.bonusType).replace('_', ' ')}
-                  </Badge>
+                  </span>
                 )}
             </div>
           </div>
@@ -1564,13 +1468,14 @@ function TransactionItem({
         <div className="ml-2 flex shrink-0 items-center gap-2 sm:ml-4 sm:gap-3">
           <div className="text-right">
             <p
-              className={`text-sm font-bold sm:text-lg ${
-                isPositive
-                  ? 'text-emerald-500'
+              className="text-sm font-bold sm:text-lg"
+              style={{
+                color: isPositive
+                  ? 'var(--neu-accent)'
                   : isNeutral
-                    ? 'text-muted-foreground'
-                    : 'text-red-500'
-              }`}
+                    ? 'var(--neu-text-muted)'
+                    : 'var(--neu-text-secondary)',
+              }}
             >
               {formatAmountWithDirection(
                 transaction.amount,
@@ -1580,13 +1485,19 @@ function TransactionItem({
             {/* Show fee and net amount for withdrawals */}
             {transaction.type === 'withdrawal' && transaction.fee > 0 && (
               <>
-                <p className="text-muted-foreground text-xs">
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--neu-text-muted)' }}
+                >
                   Fee:{' '}
                   {formatCurrency(transaction.fee, { showCurrency: false })}
                 </p>
                 {transaction.netAmount &&
                   transaction.netAmount !== transaction.amount && (
-                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <p
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--neu-accent)' }}
+                    >
                       Net:{' '}
                       {formatCurrency(transaction.netAmount, {
                         showCurrency: false,
@@ -1597,7 +1508,7 @@ function TransactionItem({
             )}
             {/* Show fee for other transaction types */}
             {transaction.type !== 'withdrawal' && transaction.fee > 0 && (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs" style={{ color: 'var(--neu-text-muted)' }}>
                 Fee: {formatCurrency(transaction.fee, { showCurrency: false })}
               </p>
             )}
@@ -1639,46 +1550,51 @@ function getTransactionIcon(
   direction: 'in' | 'out' | 'neutral'
 ): React.ReactNode {
   const iconClass = 'h-full w-full';
+  const style = { color: 'var(--neu-accent)' };
 
-  // Map by type first
+  // Map by type first – single accent color for neumorphic design
   switch (type) {
     case 'deposit':
-      return <ArrowDownRight className={`${iconClass} text-emerald-500`} />;
+      return <ArrowDownRight className={iconClass} style={style} />;
     case 'withdrawal':
-      return <ArrowUpRight className={`${iconClass} text-red-500`} />;
+      return <ArrowUpRight className={iconClass} style={style} />;
     case 'transfer_out':
-      return <ArrowUpRight className={`${iconClass} text-purple-500`} />;
+      return <ArrowUpRight className={iconClass} style={style} />;
     case 'transfer_in':
-      return <ArrowDownRight className={`${iconClass} text-purple-500`} />;
+      return <ArrowDownRight className={iconClass} style={style} />;
     case 'stake':
-      return <TrendingUp className={`${iconClass} text-blue-500`} />;
+      return <TrendingUp className={iconClass} style={style} />;
     case 'unstake':
-      return <TrendingUp className={`${iconClass} text-orange-500`} />;
+      return <TrendingUp className={iconClass} style={style} />;
     case 'ros_payout':
     case 'stake_completion':
     case 'stake_pool_payout':
     case 'performance_pool_payout':
     case 'premium_pool_payout':
-      return <DollarSign className={`${iconClass} text-amber-500`} />;
+      return <DollarSign className={iconClass} style={style} />;
     case 'registration_bonus':
     case 'referral_bonus':
     case 'bonus_activation':
-      return <Gift className={`${iconClass} text-pink-500`} />;
+      return <Gift className={iconClass} style={style} />;
     case 'fee':
-      return <CreditCard className={`${iconClass} text-orange-500`} />;
+      return <CreditCard className={iconClass} style={style} />;
     case 'adjustment':
     case 'refund':
-      return <RefreshCw className={`${iconClass} text-slate-500`} />;
+      return <RefreshCw className={iconClass} style={style} />;
   }
 
-  // Fallback by direction
   if (direction === 'in') {
-    return <ArrowDownRight className={`${iconClass} text-emerald-500`} />;
+    return <ArrowDownRight className={iconClass} style={style} />;
   }
   if (direction === 'out') {
-    return <ArrowUpRight className={`${iconClass} text-red-500`} />;
+    return <ArrowUpRight className={iconClass} style={style} />;
   }
-  return <RefreshCw className={`${iconClass} text-muted-foreground`} />;
+  return (
+    <RefreshCw
+      className={iconClass}
+      style={{ color: 'var(--neu-text-muted)' }}
+    />
+  );
 }
 
 /**

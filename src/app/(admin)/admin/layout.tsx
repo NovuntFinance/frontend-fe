@@ -7,6 +7,7 @@ import AdminTopBar from '@/components/admin/AdminTopBar';
 import AdminGuard from '@/components/admin/AdminGuard';
 import { Setup2FA } from '@/components/admin/Setup2FA';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { adminAuthService } from '@/services/adminAuthService';
 import { rbacService } from '@/services/rbacService';
 import { adminService } from '@/services/adminService';
@@ -147,8 +148,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <AdminSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <AdminTopBar />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="mx-auto max-w-7xl">{children}</div>
+          <main className="flex-1 overflow-y-auto py-4 md:py-6">
+            <PageContainer>{children}</PageContainer>
           </main>
         </div>
       </div>

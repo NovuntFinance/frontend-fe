@@ -128,6 +128,8 @@ export default function DashboardLayout({
   const progress = bonusData?.progressPercentage || 0;
   const isLocked = progress < 60;
   const isOnboardingPage = pathname === '/dashboard/onboarding';
+  const isWalletPage = pathname?.includes('/wallets') ?? false;
+  const isTeamPage = pathname === '/dashboard/team';
 
   // Get weekly profit percentage
   const overviewData = overview as
@@ -499,10 +501,15 @@ export default function DashboardLayout({
             </div>
           )}
 
-        {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
+        {/* Page content - standard app spacing; wallet page uses its own centered container (no main padding) */}
         <main
           id="main-content"
-          className="px-3 pt-0 pb-8 sm:px-4 sm:pt-0 sm:pb-10 md:px-5 md:pt-0 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-0 lg:pb-0"
+          className={
+            'pt-0 pb-8 sm:pt-0 sm:pb-10 md:pt-0 md:pb-12 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pt-0 lg:pb-0 ' +
+            (isWalletPage || isTeamPage
+              ? 'px-0'
+              : 'px-3 sm:px-4 md:px-5 lg:px-6')
+          }
         >
           {children}
         </main>
