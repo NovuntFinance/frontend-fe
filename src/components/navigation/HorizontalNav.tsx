@@ -6,8 +6,21 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { TrendingUp, Wallet, Users, Star } from 'lucide-react';
 
-const ACCENT = '#009BF2'; /* platform light blue — used for menu items and accent */
-const BAR_BG = 'var(--app-surface)';
+const ACCENT = '#009BF2'; /* platform light blue */
+const DARK_NAVY = '#0D162C';
+
+/* Bar: dark blue neumorphic + glass (raised dual shadow) */
+const BAR_GLASS_BG = 'rgba(13, 22, 44, 0.88)';
+const BAR_GLASS_BLUR = 'blur(16px) saturate(150%)';
+const BAR_GLASS_BORDER = '1px solid rgba(0, 155, 242, 0.1)';
+const BAR_NEU_SHADOW =
+  '8px 8px 20px rgba(4, 8, 18, 0.6), -8px -8px 20px rgba(25, 40, 72, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04)';
+
+/* Icon extrude: neumorphic drop-shadows so icon looks raised */
+const ICON_EXTRUDE =
+  'drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)) drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.08))';
+const ICON_EXTRUDE_ACTIVE =
+  'drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)) drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.12)) drop-shadow(0 0 12px rgba(0, 155, 242, 0.5))';
 
 const NAV_ITEMS: {
   name: string;
@@ -49,29 +62,17 @@ export function HorizontalNav() {
         className="group relative flex items-center justify-center p-1"
         aria-label={`Go to ${item.name}`}
       >
-        <motion.div
-          className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 sm:h-12 sm:w-12"
+        <motion.span
+          className="flex items-center justify-center transition-colors duration-200"
           style={{
-            background: active ? ACCENT : 'var(--app-surface)',
-            boxShadow: active
-              ? `inset 2px 2px 4px rgba(0,0,0,0.25), inset -1px -1px 2px rgba(255,255,255,0.1), 0 0 12px rgba(0,155,242,0.3)`
-              : `4px 4px 8px var(--app-shadow-dark), -4px -4px 8px var(--app-shadow-light), 0 0 0 1px var(--app-border)`,
+            color: active ? '#fff' : ACCENT,
+            filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
           }}
-          whileHover={{ scale: 1.08, y: -2 }}
-          whileTap={{
-            scale: 0.92,
-          }}
+          whileHover={{ scale: 1.1, y: -2 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <span
-            className="flex items-center justify-center"
-            style={{
-              color: active ? '#fff' : ACCENT,
-              filter: active ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' : 'none',
-            }}
-          >
-            <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
-          </span>
-        </motion.div>
+          <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
+        </motion.span>
       </Link>
     );
   };
@@ -80,10 +81,9 @@ export function HorizontalNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 px-3"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)' }}
+      className="fixed right-0 bottom-0 left-0 z-50 w-full"
     >
-      <div className="relative mx-auto max-w-lg">
+      <div className="relative w-full">
         {/* Shadow wrapper — drop-shadow follows the masked notch shape */}
         <div
           style={{
@@ -91,19 +91,24 @@ export function HorizontalNav() {
               'drop-shadow(0 -4px 10px rgba(0,0,0,0.4)) drop-shadow(0 0 1px rgba(255,255,255,0.05))',
           }}
         >
-          {/* Single continuous bar with circular notch mask */}
+          {/* Bar — glassy; height includes safe area, content centered vertically */}
           <div
             style={{
-              height: 66,
-              background: BAR_BG,
-              borderRadius: '20px 20px 8px 8px',
+              minHeight: 'calc(66px + env(safe-area-inset-bottom, 0px))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: BAR_GLASS_BG,
+              backdropFilter: BAR_GLASS_BLUR,
+              WebkitBackdropFilter: BAR_GLASS_BLUR,
+              borderRadius: '20px 20px 0 0',
               WebkitMask: NOTCH_MASK,
               mask: NOTCH_MASK,
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.2)',
+              boxShadow: BAR_NEU_SHADOW,
+              border: BAR_GLASS_BORDER,
             }}
           >
-            <div className="flex h-full items-center px-3 sm:px-4">
+            <div className="flex w-full items-center px-3 sm:px-4">
               <div className="flex flex-1 justify-around">
                 {NAV_ITEMS.slice(0, 2).map(renderNavItem)}
               </div>
@@ -128,7 +133,7 @@ export function HorizontalNav() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
-            className="relative block focus-visible:ring-2 focus-visible:ring-[#009BF2]/50 focus:outline-none"
+            className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009BF2]/50"
             aria-label="Go to dashboard"
           >
             <motion.div

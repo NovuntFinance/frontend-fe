@@ -18,12 +18,12 @@ interface UIState {
   // Theme
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  
+
   // Sidebar
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
-  
+
   // Modals
   modals: Record<string, Modal>;
   openModal: (id: string, data?: unknown) => void;
@@ -31,20 +31,25 @@ interface UIState {
   closeAllModals: () => void;
   isModalOpen: (id: string) => boolean;
   getModalData: (id: string) => unknown;
-  
+
   // Loading states
   globalLoading: boolean;
   setGlobalLoading: (loading: boolean) => void;
-  
+
   // Mobile menu
   mobileMenuOpen: boolean;
   toggleMobileMenu: () => void;
   setMobileMenuOpen: (open: boolean) => void;
-  
+
   // Notifications panel
   notificationsPanelOpen: boolean;
   toggleNotificationsPanel: () => void;
   setNotificationsPanelOpen: (open: boolean) => void;
+
+  // Balance visibility (hide amounts across dashboard, wallet, etc.)
+  balanceVisible: boolean;
+  setBalanceVisible: (visible: boolean) => void;
+  toggleBalanceVisible: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -53,12 +58,13 @@ export const useUIStore = create<UIState>()(
       // Theme state
       theme: 'system',
       setTheme: (theme) => set({ theme }),
-      
+
       // Sidebar state
       sidebarOpen: true,
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebar: () =>
+        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      
+
       // Modals state
       modals: {},
       openModal: (id, data) =>
@@ -78,21 +84,31 @@ export const useUIStore = create<UIState>()(
       closeAllModals: () => set({ modals: {} }),
       isModalOpen: (id) => get().modals[id]?.isOpen ?? false,
       getModalData: (id) => get().modals[id]?.data,
-      
+
       // Global loading
       globalLoading: false,
       setGlobalLoading: (loading) => set({ globalLoading: loading }),
-      
+
       // Mobile menu
       mobileMenuOpen: false,
-      toggleMobileMenu: () => set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
+      toggleMobileMenu: () =>
+        set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
-      
+
       // Notifications panel
       notificationsPanelOpen: false,
       toggleNotificationsPanel: () =>
-        set((state) => ({ notificationsPanelOpen: !state.notificationsPanelOpen })),
-      setNotificationsPanelOpen: (open) => set({ notificationsPanelOpen: open }),
+        set((state) => ({
+          notificationsPanelOpen: !state.notificationsPanelOpen,
+        })),
+      setNotificationsPanelOpen: (open) =>
+        set({ notificationsPanelOpen: open }),
+
+      // Balance visibility – shared across dashboard, wallet, all cards
+      balanceVisible: true,
+      setBalanceVisible: (visible) => set({ balanceVisible: visible }),
+      toggleBalanceVisible: () =>
+        set((state) => ({ balanceVisible: !state.balanceVisible })),
     }),
     {
       name: 'novunt-ui-storage',
@@ -100,6 +116,7 @@ export const useUIStore = create<UIState>()(
       partialize: (state) => ({
         theme: state.theme,
         sidebarOpen: state.sidebarOpen,
+        balanceVisible: state.balanceVisible,
       }),
     }
   )

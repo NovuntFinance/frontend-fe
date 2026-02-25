@@ -28,6 +28,7 @@ import { walletLogger } from '@/lib/logger';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { useActiveStakes, useDashboardOverview } from '@/lib/queries';
 import { formatCurrency } from '@/lib/utils/wallet';
+import { useUIStore } from '@/store/uiStore';
 import neuStyles from '@/styles/neumorphic.module.css';
 import walletStyles from '@/styles/wallet-page.module.css';
 
@@ -121,7 +122,8 @@ export function WalletDashboard() {
   const { data: activeStakes } = useActiveStakes();
   const { data: overview } = useDashboardOverview();
 
-  const [balanceVisible, setBalanceVisible] = useState(true);
+  const balanceVisible = useUIStore((s) => s.balanceVisible);
+  const toggleBalanceVisible = useUIStore((s) => s.toggleBalanceVisible);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
 
@@ -156,8 +158,8 @@ export function WalletDashboard() {
   const statistics = { ...baseStatistics, totalStaked: calculatedTotalStaked };
 
   const toggleBalanceVisibility = useCallback(() => {
-    setBalanceVisible((prev) => !prev);
-  }, []);
+    toggleBalanceVisible();
+  }, [toggleBalanceVisible]);
 
   if (isLoading) return <WalletDashboardSkeleton />;
   if (error) {

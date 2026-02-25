@@ -2,15 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-} from 'lucide-react';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
-
-// Trading instrument types
-type MarketType = 'forex' | 'crypto' | 'metals' | 'commodities';
+import { formatErrorForLog } from '@/lib/error-utils';
 
 const getTimeAgo = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
@@ -20,8 +13,6 @@ const getTimeAgo = (minutes: number): string => {
   return `${hours}h ${remainingMins}m ago`;
 };
 
-const ACCENT_BLUE = '#009BF2';
-
 /** Dashboard card style (match Activity Feed, Daily ROS, stake card) */
 const CARD_STYLE = {
   background: '#0D162C',
@@ -30,91 +21,97 @@ const CARD_STYLE = {
   border: '1px solid var(--app-border)',
 } as const;
 
-const getMarketTypeBadge = (type: MarketType) => {
-  const badges = {
-    forex: {
-      label: 'Forex',
-      className:
-        'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30',
-    },
-    crypto: {
-      label: 'Crypto',
-      className:
-        'bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30',
-    },
-    metals: {
-      label: 'Metals',
-      className:
-        'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
-    },
-    commodities: {
-      label: 'Commodities',
-      className:
-        'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30',
-    },
-  };
-  return badges[type];
+const ROTATE_INTERVAL_MS = 5000;
+
+const formatTime = (dateStr: string) => {
+  try {
+    return new Date(dateStr).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return '';
+  }
 };
 
-const ROTATE_INTERVAL_MS = 5000;
-const LARGE_SCREEN_ROWS = 2;
-
-/** Signal row: pair (no icon), entry/exit, then amount + status */
+/** Minimal signal row: label + entry/exit + value (P/L + status) */
 function TradeRow({ trade }: { trade: TradingSignal }) {
   const amountStr =
     (trade.profitUSD >= 0 ? '+' : '') +
     (trade.profitUSD >= 0 ? '$' : '-$') +
-    Math.abs(trade.profitUSD).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    Math.abs(trade.profitUSD).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   const decimals = trade.symbol.includes('JPY') ? 3 : 5;
-  const entryTime = new Date(trade.entryTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  const exitTime = new Date(trade.exitTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const entryTimeStr = formatTime(trade.entryTime);
+  const exitTimeStr = formatTime(trade.exitTime);
 
   return (
-    <div className="w-full">
-      {/* Pair + metadata — no icon */}
-      <div className="mb-3">
+    <div className="w-full min-w-0">
+      <div className="mb-1.5">
         <p
-          className="truncate text-xs font-semibold sm:text-sm"
+          className="truncate text-left text-xs font-semibold sm:text-sm"
           style={{ color: '#009BF2', filter: 'none' }}
         >
           {trade.symbol} {trade.direction}
-        </p>
-        <p
-          className="text-[10px] sm:text-xs"
-          style={{ color: 'rgba(0, 155, 242, 0.75)', filter: 'none' }}
-        >
-          {getTimeAgo(trade.minutesAgo)} • {getMarketTypeBadge(trade.marketType).label}
+          <span
+            className="ml-1.5 font-normal"
+            style={{ color: 'rgba(0, 155, 242, 0.75)' }}
+          >
+            · {getTimeAgo(trade.minutesAgo)}
+          </span>
         </p>
       </div>
-      {/* Entry and Exit */}
+      {/* Compact Entry → Exit row with times */}
       <div
-        className="mb-3 flex flex-col gap-2 rounded-lg px-3 py-2"
-        style={{
-          background: 'rgba(4, 8, 18, 0.4)',
-          boxShadow: 'inset 2px 2px 6px rgba(4, 8, 18, 0.4), inset -2px -2px 6px rgba(25, 40, 72, 0.2)',
-        }}
+        className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs"
+        style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
       >
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[9px] font-medium uppercase tracking-wide" style={{ color: ACCENT_BLUE }}>Entry</span>
-          <span className="text-[10px] font-bold" style={{ color: 'var(--app-text-primary)' }}>
+        <span className="shrink-0">
+          Entry{' '}
+          <span
+            className="font-medium"
+            style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+          >
             {trade.entryPrice.toFixed(decimals)}
           </span>
-          <span className="text-[9px]" style={{ color: 'var(--app-text-muted)' }}>@ {entryTime}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[9px] font-medium uppercase tracking-wide" style={{ color: ACCENT_BLUE }}>Exit</span>
-          <span className="text-[10px] font-bold" style={{ color: 'var(--app-text-primary)' }}>
+          {entryTimeStr && (
+            <span
+              className="ml-0.5"
+              style={{ color: 'rgba(0, 155, 242, 0.6)' }}
+            >
+              @ {entryTimeStr}
+            </span>
+          )}
+        </span>
+        <span className="shrink-0" style={{ color: 'rgba(0, 155, 242, 0.5)' }}>
+          →
+        </span>
+        <span className="min-w-0 truncate">
+          Exit{' '}
+          <span
+            className="font-medium"
+            style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+          >
             {trade.exitPrice.toFixed(decimals)}
           </span>
-          <span className="text-[9px]" style={{ color: 'var(--app-text-muted)' }}>@ {exitTime}</span>
-        </div>
+          {exitTimeStr && (
+            <span
+              className="ml-0.5"
+              style={{ color: 'rgba(0, 155, 242, 0.6)' }}
+            >
+              @ {exitTimeStr}
+            </span>
+          )}
+        </span>
       </div>
-      {/* P/L + status */}
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-2">
         <span
           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
           style={{
-            color: trade.isProfitable ? 'var(--app-text-primary)' : '#ef4444',
+            color: 'rgba(255, 255, 255, 0.95)',
             filter: 'none',
           }}
         >
@@ -122,7 +119,7 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
         </span>
         <span
           className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-          style={{ color: 'rgba(0, 155, 242, 0.75)', filter: 'none' }}
+          style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
         >
           {trade.isProfitable ? 'Profitable' : 'Closed'}
         </span>
@@ -137,7 +134,6 @@ export function LiveTradingSignals() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date());
   const [error, setError] = useState<string | null>(null);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
   // Fetch trading signals from backend
   const loadSignals = async () => {
@@ -212,11 +208,10 @@ export function LiveTradingSignals() {
         );
         setError('Trading signals feature not available');
       } else {
-        console.error('[Trading Signals] ❌ Failed to load signals:', {
-          code: err?.code,
-          message: err?.message,
-          status: statusCode,
-        });
+        console.error(
+          '[Trading Signals] ❌ Failed to load signals:',
+          formatErrorForLog(error, { status: statusCode })
+        );
         setError('Unable to load trading signals');
       }
 
@@ -225,15 +220,6 @@ export function LiveTradingSignals() {
       setIsLoadingPrices(false);
     }
   };
-
-  // Large screen: show 4 rows (lg breakpoint)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const handler = () => setIsLargeScreen(mq.matches);
-    handler();
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   // Load signals on mount and refresh every 30 seconds
   useEffect(() => {
@@ -248,7 +234,10 @@ export function LiveTradingSignals() {
     return () => clearInterval(interval);
   }, []);
 
-  const tradesKey = React.useMemo(() => trades.map((t) => t.id).join(','), [trades]);
+  const tradesKey = React.useMemo(
+    () => trades.map((t) => t.id).join(','),
+    [trades]
+  );
   useEffect(() => {
     if (trades.length > 0) setCurrentIndex(0);
   }, [tradesKey, trades.length]);
@@ -263,10 +252,6 @@ export function LiveTradingSignals() {
   }, [trades.length]);
 
   const currentTrade = trades.length > 0 ? trades[currentIndex] : null;
-  // Large screens: show 2 rows at a time, sliding window from currentIndex (same rotation as small)
-  const tradesToShow = isLargeScreen && trades.length > 0
-    ? Array.from({ length: LARGE_SCREEN_ROWS }, (_, i) => trades[(currentIndex + i) % trades.length])
-    : [];
 
   return (
     <div
@@ -274,60 +259,41 @@ export function LiveTradingSignals() {
       style={CARD_STYLE}
     >
       <div className="p-5 sm:p-6">
-        {/* Header - match Daily ROS Payout card */}
-        <div className="mb-4 flex items-center gap-3">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-            style={{ background: 'rgba(0, 155, 242, 0.15)' }}
-          >
-            <TrendingUp
-              className="h-4 w-4 sm:h-5 sm:w-5"
-              style={{ color: '#009BF2', filter: 'none' }}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p
-              className="truncate text-xs font-semibold sm:text-sm"
-              style={{ color: '#009BF2', filter: 'none' }}
-            >
-              Live Trading Signals
-            </p>
-            <p
-              className="text-[10px] sm:text-xs"
-              style={{
-                color: 'rgba(0, 155, 242, 0.75)',
-                filter: 'none',
-              }}
-            >
-              Latest signals
-            </p>
-          </div>
-        </div>
-        <div className="min-h-[72px]">
+        <div className="min-h-[88px]">
           {trades.length === 0 && !error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center" style={{ color: 'var(--app-text-muted)' }}>
-              <RefreshCw className="mb-1.5 h-5 w-5 animate-spin" style={{ color: ACCENT_BLUE }} />
-              <p className="text-xs">Loading...</p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-4 text-center text-xs" style={{ color: 'var(--app-text-muted)' }}>
-              <p>{error}</p>
-            </div>
-          ) : isLargeScreen && tradesToShow.length > 0 ? (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col gap-4"
+            <>
+              <div className="mb-2">
+                <p
+                  className="text-left text-xs font-semibold sm:text-sm"
+                  style={{ color: '#009BF2', filter: 'none' }}
+                >
+                  Live Trading Signals
+                </p>
+              </div>
+              <p
+                className="text-left text-sm"
+                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
               >
-                {tradesToShow.map((trade) => (
-                  <TradeRow key={trade.id} trade={trade} />
-                ))}
-              </motion.div>
-            </AnimatePresence>
+                Loading...
+              </p>
+            </>
+          ) : error ? (
+            <>
+              <div className="mb-2">
+                <p
+                  className="text-left text-xs font-semibold sm:text-sm"
+                  style={{ color: '#009BF2', filter: 'none' }}
+                >
+                  Live Trading Signals
+                </p>
+              </div>
+              <p
+                className="text-left text-xs"
+                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
+              >
+                {error}
+              </p>
+            </>
           ) : currentTrade ? (
             <AnimatePresence mode="wait">
               <motion.div

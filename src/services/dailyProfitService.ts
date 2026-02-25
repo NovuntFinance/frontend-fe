@@ -1,5 +1,6 @@
 import { createAdminApi } from './adminService';
 import { adminAuthService } from './adminAuthService';
+import { formatErrorForLog } from '@/lib/error-utils';
 import axios from 'axios';
 import type {
   DeclareProfitRequest,
@@ -284,27 +285,12 @@ class DailyProfitService {
 
       // Enhanced error logging for non-404 errors
       if (process.env.NODE_ENV === 'development') {
-        const errorDetails: any = {
-          status,
-          message: message || 'Unknown error',
-          url: `${API_BASE_URL}/api/v1/daily-profit/history`,
-          params: { limit, offset },
-        };
-
-        // Only include error object if it has useful information
-        if (error?.response?.data) {
-          errorDetails.responseData = error.response.data;
-        }
-        if (error?.message) {
-          errorDetails.errorMessage = error.message;
-        }
-        if (error?.stack) {
-          errorDetails.stack = error.stack;
-        }
-
         console.error(
           '[dailyProfitService.getProfitHistory] Error:',
-          errorDetails
+          formatErrorForLog(error, {
+            url: `${API_BASE_URL}/api/v1/daily-profit/history`,
+            params: { limit, offset },
+          })
         );
       }
 

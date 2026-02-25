@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/lib/api';
+import { formatErrorForLog } from '@/lib/error-utils';
 import type {
   RegistrationBonusStatusResponse,
   ProcessStakeRequest,
@@ -73,7 +74,7 @@ export const registrationBonusApi = {
       } else {
         console.error(
           '❌ [registrationBonusApi] Failed to fetch status:',
-          error
+          formatErrorForLog(error)
         );
       }
       throw error;
@@ -96,7 +97,7 @@ export const registrationBonusApi = {
     } catch (error) {
       console.error(
         '[registrationBonusApi] Failed to complete social step:',
-        error
+        formatErrorForLog(error)
       );
       throw error;
     }
@@ -129,7 +130,10 @@ export const registrationBonusApi = {
       console.log('[registrationBonusApi] Stake processed:', response);
       return response;
     } catch (error: any) {
-      console.error('[registrationBonusApi] Failed to process stake:', error);
+      console.error(
+        '[registrationBonusApi] Failed to process stake:',
+        formatErrorForLog(error)
+      );
       throw error;
     }
   },
@@ -163,7 +167,7 @@ export const registrationBonusApi = {
     } catch (error: any) {
       console.error(
         '[registrationBonusApi] Failed to fetch payout history:',
-        error
+        formatErrorForLog(error)
       );
       throw error;
     }

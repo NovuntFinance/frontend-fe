@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
-  Wallet,
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
@@ -44,6 +43,11 @@ import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
 import { RankProgressModal } from '@/components/rank-progress/RankProgressModal';
 import { WelcomeBackCard } from '@/components/dashboard/WelcomeBackCard';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useUIStore } from '@/store/uiStore';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
@@ -56,7 +60,8 @@ import type { PlatformActivity } from '@/types/platformActivity';
  * Redesigned with premium animations and modern UI
  */
 export default function DashboardPage() {
-  const [balanceVisible, setBalanceVisible] = useState(true);
+  const balanceVisible = useUIStore((s) => s.balanceVisible);
+  const setBalanceVisible = useUIStore((s) => s.setBalanceVisible);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [currentStat, setCurrentStat] = useState<
     'earned' | 'staked' | 'deposited' | 'withdrawn'
@@ -626,7 +631,7 @@ export default function DashboardPage() {
                     border: '1px solid var(--app-border)',
                   }}
                 >
-                  <div className="min-h-[80px]">
+                  <div className="min-h-[64px]">
                     <AnimatePresence mode="wait">
                       {currentStat === 'earned' && (
                         <motion.div
@@ -637,35 +642,28 @@ export default function DashboardPage() {
                           transition={{ duration: 0.3 }}
                           className="w-full"
                         >
-                          <div className="mb-4 flex items-center gap-3">
-                            <div
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                              style={{
-                                background: 'rgba(0, 155, 242, 0.15)',
-                              }}
-                            >
-                              <Wallet
-                                className="h-4 w-4 sm:h-5 sm:w-5"
-                                style={{ color: '#009BF2', filter: 'none' }}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-xs font-semibold sm:text-sm"
-                                style={{ color: '#009BF2', filter: 'none' }}
+                          <div className="mb-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
+                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  aria-label="Total Earned. Tap for details."
+                                >
+                                  Total Earned
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                side="top"
+                                align="start"
+                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
                               >
-                                Total Earned
-                              </p>
-                              <p
-                                className="text-[10px] sm:text-xs"
-                                style={{
-                                  color: 'rgba(0, 155, 242, 0.75)',
-                                  filter: 'none',
-                                }}
-                              >
-                                Total earnings from all sources
-                              </p>
-                            </div>
+                                <p className="text-xs text-white/90">
+                                  Total earnings from all sources
+                                </p>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           {isLoading ? (
                             <div
@@ -683,7 +681,7 @@ export default function DashboardPage() {
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'var(--app-text-primary)',
+                                color: 'rgba(255, 255, 255, 0.95)',
                                 filter: 'none',
                               }}
                             >
@@ -710,35 +708,28 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-4 flex items-center gap-3">
-                            <div
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                              style={{
-                                background: 'rgba(0, 155, 242, 0.15)',
-                              }}
-                            >
-                              <TrendingUp
-                                className="h-4 w-4 sm:h-5 sm:w-5"
-                                style={{ color: '#009BF2', filter: 'none' }}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-xs font-semibold sm:text-sm"
-                                style={{ color: '#009BF2', filter: 'none' }}
+                          <div className="mb-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
+                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  aria-label="Total Staked. Tap for details."
+                                >
+                                  Total Staked
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                side="top"
+                                align="start"
+                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
                               >
-                                Total Staked
-                              </p>
-                              <p
-                                className="text-[10px] sm:text-xs"
-                                style={{
-                                  color: 'rgba(0, 155, 242, 0.75)',
-                                  filter: 'none',
-                                }}
-                              >
-                                Total amount staked across all stakes
-                              </p>
-                            </div>
+                                <p className="text-xs text-white/90">
+                                  Total amount staked across all stakes
+                                </p>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           {isLoading ? (
                             <div
@@ -756,7 +747,7 @@ export default function DashboardPage() {
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'var(--app-text-primary)',
+                                color: 'rgba(255, 255, 255, 0.95)',
                                 filter: 'none',
                               }}
                             >
@@ -783,35 +774,28 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-4 flex items-center gap-3">
-                            <div
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                              style={{
-                                background: 'rgba(0, 155, 242, 0.15)',
-                              }}
-                            >
-                              <ArrowDownRight
-                                className="h-4 w-4 sm:h-5 sm:w-5"
-                                style={{ color: '#009BF2', filter: 'none' }}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-xs font-semibold sm:text-sm"
-                                style={{ color: '#009BF2', filter: 'none' }}
+                          <div className="mb-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
+                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  aria-label="Total Deposited. Tap for details."
+                                >
+                                  Total Deposited
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                side="top"
+                                align="start"
+                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
                               >
-                                Total Deposited
-                              </p>
-                              <p
-                                className="text-[10px] sm:text-xs"
-                                style={{
-                                  color: 'rgba(0, 155, 242, 0.75)',
-                                  filter: 'none',
-                                }}
-                              >
-                                Total amount deposited to your wallet
-                              </p>
-                            </div>
+                                <p className="text-xs text-white/90">
+                                  Total amount deposited to your wallet
+                                </p>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           {isLoading ? (
                             <div
@@ -829,7 +813,7 @@ export default function DashboardPage() {
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'var(--app-text-primary)',
+                                color: 'rgba(255, 255, 255, 0.95)',
                                 filter: 'none',
                               }}
                             >
@@ -856,35 +840,28 @@ export default function DashboardPage() {
                           transition={{ duration: 0.4, ease: 'easeInOut' }}
                           className="w-full"
                         >
-                          <div className="mb-4 flex items-center gap-3">
-                            <div
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                              style={{
-                                background: 'rgba(0, 155, 242, 0.15)',
-                              }}
-                            >
-                              <ArrowUpRight
-                                className="h-4 w-4 sm:h-5 sm:w-5"
-                                style={{ color: '#009BF2', filter: 'none' }}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-xs font-semibold sm:text-sm"
-                                style={{ color: '#009BF2', filter: 'none' }}
+                          <div className="mb-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
+                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  aria-label="Total Withdrawn. Tap for details."
+                                >
+                                  Total Withdrawn
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                side="top"
+                                align="start"
+                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
                               >
-                                Total Withdrawn
-                              </p>
-                              <p
-                                className="text-[10px] sm:text-xs"
-                                style={{
-                                  color: 'rgba(0, 155, 242, 0.75)',
-                                  filter: 'none',
-                                }}
-                              >
-                                Total amount withdrawn from your wallet
-                              </p>
-                            </div>
+                                <p className="text-xs text-white/90">
+                                  Total amount withdrawn from your wallet
+                                </p>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           {isLoading ? (
                             <div
@@ -902,7 +879,7 @@ export default function DashboardPage() {
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'var(--app-text-primary)',
+                                color: 'rgba(255, 255, 255, 0.95)',
                                 filter: 'none',
                               }}
                             >
@@ -920,27 +897,6 @@ export default function DashboardPage() {
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
-                  {/* Carousel Indicators */}
-                  <div className="mt-3 flex items-center justify-center gap-1.5">
-                    {stats.map((stat, index) => (
-                      <button
-                        key={stat}
-                        onClick={() => {
-                          setCurrentIndex(index);
-                          setCurrentStat(stats[index]);
-                        }}
-                        className="h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: currentIndex === index ? '24px' : '8px',
-                          background:
-                            currentIndex === index
-                              ? 'var(--app-text-secondary)'
-                              : 'var(--app-text-muted)',
-                        }}
-                        aria-label={`Go to ${stat}`}
-                      />
-                    ))}
                   </div>
                 </div>
               </div>

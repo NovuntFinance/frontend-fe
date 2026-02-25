@@ -77,12 +77,20 @@ function getQuoteForProgress(progressPercent: number): string {
   return FOOD_FOR_THOUGHT_QUOTES[index] ?? FOOD_FOR_THOUGHT_QUOTES[0];
 }
 
+const MASK = '••••••';
+
 /** When true, card is rendered inside dashboard neumorphic container (#0D162C). */
 interface ActiveStakesCardProps {
   embedded?: boolean;
 }
 
-function SingleStakeCard({ stake }: { stake: Stake }) {
+function SingleStakeCard({
+  stake,
+  balanceVisible,
+}: {
+  stake: Stake;
+  balanceVisible: boolean;
+}) {
   const router = useRouter();
   const stakingConfig = useStakingConfig();
   const isRegistrationBonus =
@@ -136,7 +144,9 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
                 className="font-semibold sm:text-lg"
                 style={{ color: ACCENT_PURPLE }}
               >
-                ${fmt4(stake.amount)} USDT
+                {balanceVisible
+                  ? `$${fmt4(stake.amount)} USDT`
+                  : `${MASK} USDT`}
               </p>
               <p
                 className="text-xs sm:text-sm"
@@ -215,7 +225,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
               className="text-base font-bold sm:text-lg"
               style={{ color: 'var(--app-text-primary)' }}
             >
-              ${fmt4(stake.totalEarned)}
+              {balanceVisible ? `$${fmt4(stake.totalEarned)}` : MASK}
             </p>
           </div>
           <div
@@ -238,7 +248,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
               className="text-base font-bold sm:text-lg"
               style={{ color: 'var(--app-text-primary)' }}
             >
-              ${fmt4(stake.targetReturn)}
+              {balanceVisible ? `$${fmt4(stake.targetReturn)}` : MASK}
             </p>
           </div>
         </div>
@@ -256,7 +266,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
             className="font-medium"
             style={{ color: 'var(--app-text-primary)' }}
           >
-            ${fmt4(stake.remainingToTarget)}
+            {balanceVisible ? `$${fmt4(stake.remainingToTarget)}` : MASK}
           </span>
         </div>
       </div>
@@ -270,6 +280,7 @@ function SingleStakeCard({ stake }: { stake: Stake }) {
  */
 export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
   const router = useRouter();
+  const balanceVisible = useUIStore((s) => s.balanceVisible);
   const openModal = useUIStore((s) => s.openModal);
   const { data: dashboardData, isLoading, error } = useStakeDashboard();
 
@@ -335,12 +346,24 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
     'inset 4px 4px 10px var(--app-shadow-dark), inset -4px -4px 10px var(--app-shadow-light)';
 
   const metricCards = [
-    { label: 'STAKED', value: `$${fmt4(metrics.staked)}`, icon: Lock },
-    { label: 'TARGET', value: `$${fmt4(metrics.target)}`, icon: Target },
-    { label: 'EARNED', value: `$${fmt4(metrics.earned)}`, icon: TrendingUp },
+    {
+      label: 'STAKED',
+      value: balanceVisible ? `$${fmt4(metrics.staked)}` : MASK,
+      icon: Lock,
+    },
+    {
+      label: 'TARGET',
+      value: balanceVisible ? `$${fmt4(metrics.target)}` : MASK,
+      icon: Target,
+    },
+    {
+      label: 'EARNED',
+      value: balanceVisible ? `$${fmt4(metrics.earned)}` : MASK,
+      icon: TrendingUp,
+    },
     {
       label: 'LEFT',
-      value: `$${fmt4(metrics.left)}`,
+      value: balanceVisible ? `$${fmt4(metrics.left)}` : MASK,
       icon: Clock,
     },
   ] as const;
@@ -379,7 +402,7 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
           </button>
         ) : count === 0 ? (
           <div
-            className="rounded-2xl p-6 text-center sm:p-8"
+            className="rounded-2xl p-5 text-center sm:p-6"
             style={{
               background: 'var(--app-surface)',
               boxShadow: `
@@ -408,7 +431,7 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
         ) : (
           <div
             onClick={goToStakes}
-            className="cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-300 sm:min-h-[200px] sm:p-5"
+            className="cursor-pointer overflow-hidden rounded-2xl p-5 transition-all duration-300 sm:min-h-[200px] sm:p-6"
             style={cardWrapperStyle}
           >
             <div>

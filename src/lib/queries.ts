@@ -47,6 +47,7 @@ import type {
 } from '@/types/adminAnalytics';
 import type { RankAnalyticsResponse } from '@/types/rankAnalytics';
 import { useAuthStore } from '@/store/authStore';
+import { formatErrorForLog } from '@/lib/error-utils';
 import { getStakingStreak } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
 import { announcementsApi } from '@/services/announcementsApi';
@@ -2376,7 +2377,6 @@ export function useProfitHistory(limit: number = 30, offset: number = 0) {
         return response.data;
       } catch (error: any) {
         const status = error?.statusCode || error?.response?.status;
-        const message = error?.message || error?.response?.data?.message;
 
         // 404 is expected if no history exists yet - use warn instead of error
         if (status === 404) {
@@ -2386,26 +2386,9 @@ export function useProfitHistory(limit: number = 30, offset: number = 0) {
             );
           }
         } else {
-          // Enhanced error logging for non-404 errors
-          const errorDetails: any = {
-            status,
-            message: message || 'Unknown error',
-          };
-
-          // Only include error object if it has useful information
-          if (error?.response?.data) {
-            errorDetails.responseData = error.response.data;
-          }
-          if (error?.message) {
-            errorDetails.errorMessage = error.message;
-          }
-          if (error?.stack) {
-            errorDetails.stack = error.stack;
-          }
-
           console.error(
             '[useProfitHistory] ❌ Failed to fetch profit history:',
-            errorDetails
+            formatErrorForLog(error)
           );
         }
 

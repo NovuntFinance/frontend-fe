@@ -4,6 +4,7 @@
  */
 
 import apiClient from '@/lib/api';
+import { formatErrorForLog } from '@/lib/error-utils';
 import type {
   Notification,
   NotificationFilters,
@@ -138,7 +139,10 @@ export async function getUnreadCount(): Promise<number> {
       } else {
         // Log actual API errors (4xx, 5xx) only if they have meaningful content
         if (error && (error as any).response) {
-          console.error('[notificationApi.getUnreadCount] API error:', error);
+          console.error(
+            '[notificationApi.getUnreadCount] API error:',
+            formatErrorForLog(error)
+          );
         } else if (process.env.NODE_ENV === 'development') {
           console.debug(
             '[notificationApi.getUnreadCount] Network error (suppressed)'

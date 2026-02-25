@@ -43,7 +43,8 @@ import { NotificationBadge } from '@/components/notifications/NotificationBadge'
 import { DateFilteredNotificationList } from '@/components/notifications/DateFilteredNotificationList';
 import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings } from 'lucide-react';
+import { Settings, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
 import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
@@ -77,6 +78,9 @@ export default function DashboardLayout({
     'all'
   );
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
 
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {
@@ -146,16 +150,14 @@ export default function DashboardLayout({
     <DashboardGuard>
       <div
         className="flex min-h-full flex-col lg:h-full"
-        style={{ background: 'var(--app-page-bg)' }}
+        style={{ background: '#0d162c' }}
       >
-        {/* Secondary Header Bar (Profile Icon + Info Marquee) — below safe-area via body padding */}
+        {/* Header: dark blue bar — greeting, role, theme + support icons */}
         <header
-          className="sticky top-0 z-30 shrink-0 py-1"
+          className="sticky top-0 z-30 shrink-0 py-2"
           style={{
-            background: 'var(--app-surface)',
-            boxShadow:
-              '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5)',
-            borderBottom: '1px solid var(--app-border)',
+            background: '#0d162c',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
           <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
@@ -169,12 +171,10 @@ export default function DashboardLayout({
                   <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
                     <div className="relative shrink-0">
                       <div
-                        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${neuStyles['neu-icon-button']}`}
+                        className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
                         style={{
-                          boxShadow:
-                            '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
-                          background: 'var(--app-surface)',
-                          border: '1px solid var(--app-border)',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
                         }}
                       >
                         {user?.avatar && isBadgeIcon(user.avatar) ? (
@@ -190,10 +190,10 @@ export default function DashboardLayout({
                               alt={`${displayName}`}
                             />
                             <AvatarFallback
-                              className="text-sm font-medium"
+                              className="text-sm font-medium text-white"
                               style={{
-                                background: 'var(--app-surface)',
-                                color: 'var(--app-text-primary)',
+                                background: 'transparent',
+                                color: 'rgba(255, 255, 255, 0.9)',
                               }}
                             >
                               {displayName[0]?.toUpperCase()}
@@ -206,21 +206,16 @@ export default function DashboardLayout({
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
                       <span
-                        className="text-sm font-medium [filter:none]"
-                        style={{
-                          color: 'var(--app-text-primary)',
-                          filter: 'none',
-                        }}
+                        className="text-sm font-medium text-white"
+                        style={{ filter: 'none' }}
                       >
                         Hello, {displayName}.
                       </span>
                       <span
-                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase"
                         style={{
-                          background: 'var(--app-accent)',
-                          color: 'var(--app-page-bg)',
-                          boxShadow:
-                            '2px 2px 6px rgba(4, 8, 18, 0.5), -1px -1px 4px rgba(25, 40, 72, 0.3)',
+                          background: '#009bf2',
+                          filter: 'none',
                         }}
                       >
                         {user?.rank || 'Stakeholder'}
@@ -281,19 +276,25 @@ export default function DashboardLayout({
               </DropdownMenu>
             </div>
 
-            {/* Customer Support - Right side (neumorphic) */}
+            {/* Theme + Support - Right side (neumorphic) */}
             <div className="flex shrink-0 items-center gap-2">
               <button
+                type="button"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                aria-label="Toggle theme"
+                style={{ color: 'var(--neu-accent)', filter: 'none' }}
+              >
+                {themeMounted && theme === 'dark' ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+              </button>
+              <button
                 onClick={() => setAssistantOpen(true)}
-                className={`relative flex h-12 w-12 items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                style={{
-                  boxShadow:
-                    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)',
-                  background: 'var(--app-surface)',
-                  border: '1px solid var(--app-border)',
-                  color: 'var(--app-accent)',
-                  filter: 'none',
-                }}
+                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                style={{ color: 'var(--neu-accent)', filter: 'none' }}
                 aria-label="Open customer support"
               >
                 <IoHeadsetOutline className="h-5 w-5" />

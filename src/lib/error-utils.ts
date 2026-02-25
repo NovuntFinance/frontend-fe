@@ -217,6 +217,31 @@ export function getValidationErrors(
 }
 
 /**
+ * Format an error into a plain object for console logging.
+ * Use this instead of logging the raw error so you always get readable output (avoids "{}").
+ */
+export function formatErrorForLog(
+  error: unknown,
+  extra?: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    message: getErrorMessage(error, 'Unknown error'),
+    ...extra,
+  };
+  if (error != null && typeof error === 'object') {
+    const e = error as Record<string, unknown>;
+    if (e.code != null) out.code = e.code;
+    if (e.statusCode != null) out.status = e.statusCode;
+    if (e.response != null && typeof e.response === 'object') {
+      const res = e.response as Record<string, unknown>;
+      if (res.status != null) out.status = res.status;
+      if (res.data != null) out.responseData = res.data;
+    }
+  }
+  return out;
+}
+
+/**
  * Log error with context
  */
 export function logError(

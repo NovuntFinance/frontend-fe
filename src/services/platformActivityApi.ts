@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/lib/api';
+import { formatErrorForLog } from '@/lib/error-utils';
 import type {
   PlatformActivity,
   PlatformActivityResponse,
@@ -90,7 +91,10 @@ export class PlatformActivityService {
       );
       throw new Error('Invalid response format: missing data field (DEBUG_V2)');
     } catch (error: any) {
-      console.error('[Platform Activity] Error fetching activities:', error);
+      console.error(
+        '[Platform Activity] Error fetching activities:',
+        formatErrorForLog(error)
+      );
 
       // Return empty array on error (frontend will handle fallback)
       // Don't throw - let the component handle fallback gracefully

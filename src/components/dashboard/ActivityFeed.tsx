@@ -18,7 +18,6 @@ import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transa
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
-import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 
 // Support both enhanced and legacy transaction types
 type TransactionUnion = EnhancedTransaction | LegacyTransaction;
@@ -154,6 +153,7 @@ const isOutgoingTransaction = (tx: TransactionUnion): boolean => {
 export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
   const [currentIndex, setCurrentIndex] = useState(0);
+  const balanceVisible = useUIStore((s) => s.balanceVisible);
 
   // Memoize transactions to detect changes
   const transactionsKey = useMemo(
@@ -200,10 +200,9 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
             border: '1px solid var(--app-border)',
           }}
         >
-          {/* Content Section - Real data or placeholder (no skeleton; show placeholder while loading) */}
-          <div className="min-h-[80px]">
+          {/* Content Section - Minimal like Stats card: label + value only */}
+          <div className="min-h-[64px]">
             {isLoading || safeTransactions.length === 0 ? (
-              /* Placeholder row – card always shows content, never empty */
               <div
                 className="w-full cursor-pointer"
                 onClick={() => openModal('deposit')}
@@ -217,51 +216,26 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                 tabIndex={0}
                 aria-label="No activity yet, make a deposit to get started"
               >
-                <div className="mb-4 flex items-center gap-3">
-                  <div
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                    style={{ background: 'rgba(0, 155, 242, 0.15)' }}
-                  >
-                    <Wallet
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                      style={{ color: '#009BF2', filter: 'none' }}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="truncate text-xs font-semibold sm:text-sm"
-                      style={{ color: '#009BF2', filter: 'none' }}
-                    >
-                      No activity yet
-                    </p>
-                    <p
-                      className="text-[10px] sm:text-xs"
-                      style={{
-                        color: 'rgba(0, 155, 242, 0.75)',
-                        filter: 'none',
-                      }}
-                    >
-                      Deposit or stake to see your activity here
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-baseline justify-between gap-3">
+                <div className="mb-2">
                   <p
-                    className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                    style={{ color: 'var(--app-text-primary)', filter: 'none' }}
+                    className="text-left text-xs font-semibold sm:text-sm"
+                    style={{ color: '#009BF2', filter: 'none' }}
                   >
-                    +$0.00
-                  </p>
-                  <p
-                    className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-                    style={{
-                      color: 'rgba(0, 155, 242, 0.6)',
-                      filter: 'none',
-                    }}
-                  >
-                    —
+                    Recent Activity
                   </p>
                 </div>
+                <p
+                  className="text-left text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                  style={{ color: 'rgba(255, 255, 255, 0.95)', filter: 'none' }}
+                >
+                  +$0.00
+                </p>
+                <p
+                  className="mt-1 text-left text-[10px] sm:text-xs"
+                  style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
+                >
+                  Deposit or stake to see activity
+                </p>
               </div>
             ) : currentTransaction ? (
               <AnimatePresence mode="wait">
@@ -273,59 +247,24 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   transition={{ duration: 0.3 }}
                   className="w-full"
                 >
-                  <div className="mb-4 flex items-center gap-3">
-                    {/* Icon - design accent */}
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9"
-                      style={{ background: 'rgba(0, 155, 242, 0.15)' }}
+                  <div className="mb-2">
+                    <p
+                      className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
+                      style={{ color: '#009BF2', filter: 'none' }}
                     >
-                      {(() => {
-                        const Icon = getTransactionIcon(
-                          currentTransaction.type
-                        );
-                        return (
-                          <Icon
-                            className="h-4 w-4 sm:h-5 sm:w-5"
-                            style={{ color: '#009BF2', filter: 'none' }}
-                          />
-                        );
-                      })()}
-                    </div>
-                    {/* Label + subtitle - design colors */}
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className="truncate text-xs font-semibold capitalize sm:text-sm"
-                        style={{ color: '#009BF2', filter: 'none' }}
+                      {getTransactionTypeLabel(currentTransaction)}
+                      <span
+                        className="ml-1.5 font-normal"
+                        style={{ color: 'rgba(0, 155, 242, 0.75)' }}
                       >
-                        {getTransactionTypeLabel(currentTransaction)}
-                      </p>
-                      <p
-                        className="text-[10px] sm:text-xs"
-                        style={{
-                          color: 'rgba(0, 155, 242, 0.75)',
-                          filter: 'none',
-                        }}
-                      >
+                        ·{' '}
                         {formatRelativeTime(
                           getTransactionDate(currentTransaction)
                         )}
-                        {(() => {
-                          const reference = isEnhancedTransaction(
-                            currentTransaction
-                          )
-                            ? currentTransaction.reference
-                            : currentTransaction.reference;
-                          return reference ? (
-                            <span className="ml-1.5 font-mono">
-                              • {reference.slice(0, 8)}
-                            </span>
-                          ) : null;
-                        })()}
-                      </p>
-                    </div>
+                      </span>
+                    </p>
                   </div>
-                  {/* Amount and status on one row so card stays compact */}
-                  <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex items-baseline justify-between gap-2">
                     {(() => {
                       const isOutgoing =
                         isOutgoingTransaction(currentTransaction);
@@ -333,40 +272,37 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.98 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.2 }}
+                          key={currentTransaction.amount}
                           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                           style={{
-                            color: isOutgoing ? '#ef4444' : 'var(--app-text-primary)',
+                            color: isOutgoing
+                              ? '#ef4444'
+                              : 'rgba(255, 255, 255, 0.95)',
                             filter: 'none',
                           }}
                         >
                           {isOutgoing ? '-' : '+'}
-                          {formatCurrency(currentTransaction.amount)}
+                          {balanceVisible
+                            ? formatCurrency(currentTransaction.amount)
+                            : '••••••'}
                         </motion.div>
                       );
                     })()}
-                    <p
+                    <span
                       className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
                       style={{
-                        color: 'rgba(0, 155, 242, 0.75)',
+                        color: 'rgba(0, 155, 242, 0.7)',
                         filter: 'none',
                       }}
                     >
                       {currentTransaction.status}
-                    </p>
+                    </span>
                   </div>
                 </motion.div>
               </AnimatePresence>
             ) : null}
           </div>
-          {safeTransactions.length > 1 && (
-            <NeumorphicCarouselDots
-              count={safeTransactions.length}
-              currentIndex={currentIndex}
-              onSelect={setCurrentIndex}
-              ariaLabelPrefix="Go to activity"
-            />
-          )}
         </div>
       </motion.div>
     </div>

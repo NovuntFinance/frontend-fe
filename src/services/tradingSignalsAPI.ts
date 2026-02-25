@@ -8,6 +8,7 @@
  */
 
 import { api } from '@/lib/api';
+import { formatErrorForLog } from '@/lib/error-utils';
 
 export interface MarketPrice {
   symbol: string;
@@ -146,11 +147,10 @@ export const tradingSignalsAPI = {
           '[Trading Signals API] ⚠️ Network error fetching market prices - backend might be unavailable'
         );
       } else {
-        console.error('[Trading Signals API] Failed to fetch market prices:', {
-          code: err?.code,
-          message: err?.message,
-          status: err?.response?.status || err?.statusCode,
-        });
+        console.error(
+          '[Trading Signals API] Failed to fetch market prices:',
+          formatErrorForLog(error)
+        );
       }
       throw error;
     }
@@ -189,13 +189,13 @@ export const tradingSignalsAPI = {
         }
       } else {
         // Log actual API errors (4xx, 5xx) in all environments
-        console.error('[Trading Signals API] Failed to fetch signals:', {
-          code: err?.code,
-          message: err?.message,
-          status: err?.response?.status || err?.statusCode,
-          endpoint: '/trading-signals/signals',
-          limit,
-        });
+        console.error(
+          '[Trading Signals API] Failed to fetch signals:',
+          formatErrorForLog(error, {
+            endpoint: '/trading-signals/signals',
+            limit,
+          })
+        );
       }
       throw error;
     }
@@ -277,13 +277,10 @@ export const tradingSignalsAPI = {
       } else {
         console.error(
           '[Trading Signals API] Failed to fetch signals history:',
-          {
-            code: err?.code,
-            message: err?.message,
-            status: err?.response?.status || err?.statusCode,
+          formatErrorForLog(error, {
             endpoint: '/trading-signals/history',
             params,
-          }
+          })
         );
       }
       throw error;
@@ -317,11 +314,10 @@ export const tradingSignalsAPI = {
           '[Trading Signals API] ⚠️ Network error fetching statistics - backend might be unavailable'
         );
       } else {
-        console.error('[Trading Signals API] Failed to fetch statistics:', {
-          code: err?.code,
-          message: err?.message,
-          status: err?.response?.status || err?.statusCode,
-        });
+        console.error(
+          '[Trading Signals API] Failed to fetch statistics:',
+          formatErrorForLog(error)
+        );
       }
       throw error;
     }
@@ -357,12 +353,10 @@ export const tradingSignalsAPI = {
           { symbol }
         );
       } else {
-        console.error('[Trading Signals API] Failed to fetch price:', {
-          code: err?.code,
-          message: err?.message,
-          status: err?.response?.status || err?.statusCode,
-          symbol,
-        });
+        console.error(
+          '[Trading Signals API] Failed to fetch price:',
+          formatErrorForLog(error, { symbol })
+        );
       }
       throw error;
     }
@@ -401,11 +395,10 @@ export const tradingSignalsAPI = {
           '[Trading Signals API] ⚠️ Network error during health check - backend might be unavailable'
         );
       } else {
-        console.error('[Trading Signals API] Health check failed:', {
-          code: err?.code,
-          message: err?.message,
-          status: err?.response?.status || err?.statusCode,
-        });
+        console.error(
+          '[Trading Signals API] Health check failed:',
+          formatErrorForLog(error)
+        );
       }
       throw error;
     }

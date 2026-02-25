@@ -1,8 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Eye, EyeOff, TrendingUp, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye, EyeOff, Share2 } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Tooltip,
   TooltipContent,
@@ -10,17 +14,25 @@ import {
 } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { pct4 } from '@/utils/formatters';
 import { openShareModal } from '@/store/shareModalStore';
 import { useActiveStakes } from '@/lib/queries';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
+import neuStyles from '@/styles/neumorphic.module.css';
 
-const NEU_BG = '#0D162C';
-const NEU_SURFACE = '#131B2E';
-const NEU_TEXT = '#009BF2';
-const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.5)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.05)';
+// Platform neumorphic tokens (match Quick Actions, Stats, etc.)
+const NEU_RAISED_SHADOW =
+  '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)';
+const NEU_RAISED_HOVER =
+  '10px 10px 24px rgba(4, 8, 18, 0.75), -10px -10px 24px rgba(25, 40, 72, 0.55)';
+const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
+
+// Welcome banner: main card = bright electric blue; sub-cards = dark navy neumorphic
+const MAIN_CARD_BG = '#009BF2';
+const MAIN_LABEL = 'rgba(255, 255, 255, 0.85)';
+const MAIN_VALUE = '#0D162C';
+const SUB_CARD_BG = '#0D162C';
+const SUB_LABEL = 'rgba(0, 155, 242, 0.8)';
+const SUB_VALUE = '#009BF2';
 
 interface WelcomeBackCardProps {
   user: any;
@@ -65,25 +77,39 @@ export function WelcomeBackCard({
     : 'Stakeholder';
 
   const content = (
-    <div className="relative z-10 p-3 sm:p-4 lg:p-3 xl:p-4">
-      {/* Balance and actions aligned horizontally */}
-      <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-3">
-        {/* Portfolio value - Left side */}
+    <div className="relative z-10 p-5 sm:p-6">
+      {/* Top row: Total Assets + Share + Eye (neumorphic icon buttons) */}
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <p
-            className="mb-1.5 text-xs font-bold sm:mb-2 sm:text-sm lg:mb-1.5 lg:text-xs"
-            style={{ color: NEU_TEXT_MUTED }}
-          >
-            Total Portfolio Value
-          </p>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="mb-1 block cursor-help text-left text-xs font-medium sm:mb-1.5 sm:text-sm"
+                style={{ color: MAIN_LABEL }}
+                aria-label="Total Assets. Tap for details."
+              >
+                Total Assets
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="start"
+              className="max-w-[260px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+            >
+              <p className="text-xs text-white/90">
+                Combined value of your wallet balance and all staked amounts
+              </p>
+            </PopoverContent>
+          </Popover>
           {balanceVisible ? (
             <motion.div
               key="portfolio"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
-              style={{ color: NEU_TEXT, filter: 'none' }}
+              className="text-2xl leading-tight font-black sm:text-3xl md:text-4xl lg:text-2xl xl:text-3xl"
+              style={{ color: MAIN_VALUE, filter: 'none' }}
             >
               $
               {totalPortfolioValue.toLocaleString('en-US', {
@@ -97,250 +123,95 @@ export function WelcomeBackCard({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="text-2xl font-black sm:text-3xl md:text-4xl lg:text-xl xl:text-2xl"
-              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
+              className="text-2xl leading-tight font-black sm:text-3xl md:text-4xl lg:text-2xl xl:text-3xl"
+              style={{ color: MAIN_LABEL, filter: 'none' }}
             >
               ••••••••
             </motion.div>
           )}
         </div>
 
-        {/* Right side: % badge + Share + Eye */}
-        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3 lg:gap-2">
-          {/* Inset neumorphic % badge with double border */}
-          {lastWeekProfitChange !== 0 && (
-            <div
-              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 lg:px-3 lg:py-1.5"
-              style={{
-                background: NEU_SURFACE,
-                boxShadow: `
-                    inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                    inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                    inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                    inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                    0 0 0 1px rgba(255, 255, 255, 0.03)
-                  `,
-                border: 'none',
-                color: NEU_TEXT,
-                fontSize: '0.75rem',
-                fontWeight: 600,
-              }}
-            >
-              <TrendingUp
-                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3 lg:w-3 ${(lastWeekProfitChange ?? 0) < 0 ? 'rotate-180' : ''}`}
-              />
-              <span className="lg:text-xs">
-                {(lastWeekProfitChange ?? 0) >= 0 ? '+' : ''}
-                {pct4(lastWeekProfitChange ?? 0)}
-              </span>
-            </div>
-          )}
-
-          {/* Share + Eye */}
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    openShareModal('profit', {
-                      title: 'Share Your Success!',
-                      message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
-                      amount: totalEarnings,
-                    });
-                  }}
-                  className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
-                  style={{
-                    background: NEU_SURFACE,
-                    color: NEU_TEXT,
-                    boxShadow: `
-                        8px 8px 16px ${NEU_SHADOW_DARK},
-                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                        0 0 0 1px rgba(255, 255, 255, 0.05)
-                      `,
-                    border: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `
-                        10px 10px 20px ${NEU_SHADOW_DARK},
-                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                        0 0 0 1px rgba(255, 255, 255, 0.08),
-                        0 0 20px rgba(0, 155, 242, 0.2)
-                      `;
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = `
-                        8px 8px 16px ${NEU_SHADOW_DARK},
-                        -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                        0 0 0 1px rgba(255, 255, 255, 0.05)
-                      `;
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.boxShadow = `
-                        inset 4px 4px 8px ${NEU_SHADOW_DARK},
-                        inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
-                      `;
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.boxShadow = `
-                        10px 10px 20px ${NEU_SHADOW_DARK},
-                        -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                        0 0 0 1px rgba(255, 255, 255, 0.08),
-                        0 0 20px rgba(0, 155, 242, 0.2)
-                      `;
-                  }}
-                >
-                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Share your success</p>
-              </TooltipContent>
-            </Tooltip>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setBalanceVisible(!balanceVisible)}
-              className="h-9 w-9 rounded-full transition-all duration-200 sm:h-11 sm:w-11 lg:h-8 lg:w-8"
-              style={{
-                background: NEU_SURFACE,
-                color: NEU_TEXT,
-                boxShadow: `
-                    8px 8px 16px ${NEU_SHADOW_DARK},
-                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                    0 0 0 1px rgba(255, 255, 255, 0.05)
-                  `,
-                border: 'none',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `
-                    10px 10px 20px ${NEU_SHADOW_DARK},
-                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                    0 0 0 1px rgba(255, 255, 255, 0.08),
-                    0 0 20px rgba(0, 155, 242, 0.2)
-                  `;
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = `
-                    8px 8px 16px ${NEU_SHADOW_DARK},
-                    -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                    0 0 0 1px rgba(255, 255, 255, 0.05)
-                  `;
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.boxShadow = `
-                    inset 4px 4px 8px ${NEU_SHADOW_DARK},
-                    inset -4px -4px 8px ${NEU_SHADOW_LIGHT}
-                  `;
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.boxShadow = `
-                    10px 10px 20px ${NEU_SHADOW_DARK},
-                    -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                    0 0 0 1px rgba(255, 255, 255, 0.08),
-                    0 0 20px rgba(0, 155, 242, 0.2)
-                  `;
-              }}
-            >
-              {balanceVisible ? (
-                <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
-              ) : (
-                <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 lg:h-3 lg:w-3" />
-              )}
-            </Button>
-          </div>
+        {/* Share + Eye: neumorphic circular icon buttons (platform style) */}
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => {
+                  openShareModal('profit', {
+                    title: 'Share Your Success!',
+                    message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                    amount: totalEarnings,
+                  });
+                }}
+                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                aria-label="Share"
+              >
+                <Share2 className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Share your success</p>
+            </TooltipContent>
+          </Tooltip>
+          <button
+            type="button"
+            onClick={() => setBalanceVisible(!balanceVisible)}
+            className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+            style={{ color: 'var(--neu-accent)', filter: 'none' }}
+            aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
+          >
+            {balanceVisible ? (
+              <Eye className="h-5 w-5" strokeWidth={2} />
+            ) : (
+              <EyeOff className="h-5 w-5" strokeWidth={2} />
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Daily ROS and Active Stakes - Bottom section */}
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 lg:mt-3 lg:gap-4">
-        {/* Daily ROS - Clickable with double border inset */}
+      {/* Embedded sub-cards: dark navy, platform neumorphic (raised) */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
         <button
+          type="button"
           onClick={() => {
             const handleScroll = () => {
               const element = document.getElementById('daily-ros');
-              if (element) {
+              if (element)
                 element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
             };
-
-            // Check if we're already on the dashboard page
             if (window.location.pathname === '/dashboard') {
-              // Already on dashboard, just scroll
               handleScroll();
             } else {
-              // Navigate first, then scroll
               router.push('/dashboard#daily-ros');
-              // Wait for navigation to complete
               setTimeout(handleScroll, 300);
             }
           }}
-          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
+          className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
-            background: NEU_SURFACE,
-            boxShadow: `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.03)
-              `,
-            border: 'none',
+            background: SUB_CARD_BG,
+            boxShadow: NEU_RAISED_SHADOW,
+            border: NEU_BORDER,
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 10px 10px 20px ${NEU_SHADOW_DARK},
-                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
-                0 0 0 1px rgba(255, 255, 255, 0.05)
-              `;
+            e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.03)
-              `;
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 12px 12px 24px ${NEU_SHADOW_DARK},
-                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
-                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
-                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
-              `;
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 10px 10px 20px ${NEU_SHADOW_DARK},
-                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
-                0 0 0 1px rgba(255, 255, 255, 0.05)
-              `;
+            e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
           }}
         >
           <p
-            className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
-            style={{ color: NEU_TEXT_MUTED }}
+            className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
+            style={{ color: SUB_LABEL }}
           >
-            DAILY ROS
+            Today&apos;s Return on Stake
           </p>
           {balanceVisible ? (
             <p
-              className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-              style={{ color: NEU_TEXT, filter: 'none' }}
+              className="text-base font-bold sm:text-lg"
+              style={{ color: SUB_VALUE, filter: 'none' }}
             >
               $
               {dailyROS.toLocaleString('en-US', {
@@ -350,78 +221,52 @@ export function WelcomeBackCard({
             </p>
           ) : (
             <p
-              className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-              style={{ color: NEU_TEXT_MUTED, filter: 'none' }}
+              className="text-base font-bold sm:text-lg"
+              style={{ color: SUB_LABEL }}
             >
               ••••••
             </p>
           )}
         </button>
 
-        {/* Active Stakes - Clickable with double border inset */}
         <button
+          type="button"
           onClick={() => router.push('/dashboard/stakes')}
-          className="rounded-xl p-3.5 text-left transition-all duration-200 sm:p-4 lg:p-4"
+          className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
-            background: NEU_SURFACE,
-            boxShadow: `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.03)
-              `,
-            border: 'none',
+            background: SUB_CARD_BG,
+            boxShadow: NEU_RAISED_SHADOW,
+            border: NEU_BORDER,
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 10px 10px 20px ${NEU_SHADOW_DARK},
-                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
-                0 0 0 1px rgba(255, 255, 255, 0.05)
-              `;
+            e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 8px 8px 16px ${NEU_SHADOW_DARK},
-                inset -8px -8px 16px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.03)
-              `;
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 12px 12px 24px ${NEU_SHADOW_DARK},
-                inset -12px -12px 24px ${NEU_SHADOW_LIGHT},
-                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
-                inset -3px -3px 6px rgba(255, 255, 255, 0.15)
-              `;
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.boxShadow = `
-                inset 10px 10px 20px ${NEU_SHADOW_DARK},
-                inset -10px -10px 20px ${NEU_SHADOW_LIGHT},
-                inset 2px 2px 4px rgba(0, 0, 0, 0.5),
-                inset -2px -2px 4px rgba(255, 255, 255, 0.12),
-                0 0 0 1px rgba(255, 255, 255, 0.05)
-              `;
+            e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
           }}
         >
           <p
-            className="mb-1.5 text-[10px] font-medium sm:mb-2 sm:text-xs lg:mb-1.5 lg:text-[10px]"
-            style={{ color: NEU_TEXT_MUTED }}
+            className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
+            style={{ color: SUB_LABEL }}
           >
-            ACTIVE STAKES
+            Active Asset(s)
           </p>
-          <p
-            className="text-base font-bold sm:text-lg lg:text-sm xl:text-base"
-            style={{ color: NEU_TEXT, filter: 'none' }}
-          >
-            {activeStakesCount} {activeStakesCount === 1 ? 'Asset' : 'Assets'}
-          </p>
+          {balanceVisible ? (
+            <p
+              className="text-base font-bold sm:text-lg"
+              style={{ color: SUB_VALUE, filter: 'none' }}
+            >
+              {activeStakesCount} {activeStakesCount === 1 ? 'Asset' : 'Assets'}
+            </p>
+          ) : (
+            <p
+              className="text-base font-bold sm:text-lg"
+              style={{ color: SUB_LABEL }}
+            >
+              ••••••
+            </p>
+          )}
         </button>
       </div>
     </div>
@@ -433,28 +278,17 @@ export function WelcomeBackCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-3xl transition-all duration-300 lg:max-w-md lg:rounded-2xl"
+      className="group relative overflow-hidden rounded-2xl transition-all duration-300 lg:max-w-md"
       style={{
-        background: NEU_SURFACE,
-        boxShadow: `
-          12px 12px 24px ${NEU_SHADOW_DARK},
-          -12px -12px 24px ${NEU_SHADOW_LIGHT},
-          0 0 0 1px rgba(255, 255, 255, 0.05)
-        `,
+        background: MAIN_CARD_BG,
+        boxShadow: NEU_RAISED_SHADOW,
+        border: '1px solid rgba(255, 255, 255, 0.12)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `
-          14px 14px 28px ${NEU_SHADOW_DARK},
-          -14px -14px 28px ${NEU_SHADOW_LIGHT},
-          0 0 0 1px rgba(255, 255, 255, 0.08)
-        `;
+        e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = `
-          12px 12px 24px ${NEU_SHADOW_DARK},
-          -12px -12px 24px ${NEU_SHADOW_LIGHT},
-          0 0 0 1px rgba(255, 255, 255, 0.05)
-        `;
+        e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
       }}
     >
       {content}

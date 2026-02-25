@@ -31,9 +31,8 @@ export function NotificationBadge({
   return (
     <span
       className={cn(
-        'absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center',
-        'rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white',
-        'ring-background ring-2',
+        'absolute -top-0.5 right-0 flex items-center justify-center',
+        'text-xs font-semibold text-red-500',
         'animate-in zoom-in-50 duration-200',
         className
       )}

@@ -117,13 +117,22 @@ export function DailyROSPerformance() {
   // Bar chart layout: bar positions and heights (viewBox 0 0 100 CHART_HEIGHT)
   const { bars } = useMemo(() => {
     if (chartData.length === 0) {
-      return { bars: [] as { x: number; width: number; height: number; y: number; pct: number; label: string }[] };
+      return {
+        bars: [] as {
+          x: number;
+          width: number;
+          height: number;
+          y: number;
+          pct: number;
+          label: string;
+        }[],
+      };
     }
     const w = 100;
     const innerW = w - CHART_PADDING.left - CHART_PADDING.right;
     const innerH = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
     const n = chartData.length;
-    const gap = innerW / (n + 1) * BAR_GAP_RATIO;
+    const gap = (innerW / (n + 1)) * BAR_GAP_RATIO;
     const barWidth = (innerW - (n + 1) * gap) / n;
     const baseX = CHART_PADDING.left + gap;
     const baseY = CHART_HEIGHT - CHART_PADDING.bottom;
@@ -134,7 +143,10 @@ export function DailyROSPerformance() {
       const x = baseX + i * (barWidth + gap);
       const y = baseY - height;
       const date = new Date(d.date);
-      const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const label = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
       return { x, width: barWidth, height, y, pct: d.rosPercentage, label };
     });
 
@@ -156,7 +168,7 @@ export function DailyROSPerformance() {
         transition={{ delay: 0.4 }}
       >
         <div
-          className="rounded-2xl p-5 transition-all duration-300 sm:p-6 lg:p-5 xl:p-6"
+          className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
           style={CARD_STYLE}
         >
           {/* Header - match Daily ROS Payout card (icon + title + subtitle) */}
@@ -247,8 +259,16 @@ export function DailyROSPerformance() {
                     y2="0"
                     gradientUnits="objectBoundingBox"
                   >
-                    <stop offset="0%" stopColor={ACCENT_BLUE} stopOpacity="0.85" />
-                    <stop offset="100%" stopColor={ACCENT_BLUE} stopOpacity="1" />
+                    <stop
+                      offset="0%"
+                      stopColor={ACCENT_BLUE}
+                      stopOpacity="0.85"
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={ACCENT_BLUE}
+                      stopOpacity="1"
+                    />
                   </linearGradient>
                 </defs>
                 {bars.map((bar, i) => (
@@ -262,10 +282,14 @@ export function DailyROSPerformance() {
                       ry={4}
                       fill="url(#ros-bar-gradient)"
                       style={{
-                        filter: 'drop-shadow(0 2px 6px rgba(0, 155, 242, 0.35))',
+                        filter:
+                          'drop-shadow(0 2px 6px rgba(0, 155, 242, 0.35))',
                         cursor: 'pointer',
                       }}
-                      initial={{ height: 0, y: CHART_HEIGHT - CHART_PADDING.bottom }}
+                      initial={{
+                        height: 0,
+                        y: CHART_HEIGHT - CHART_PADDING.bottom,
+                      }}
                       animate={{ height: bar.height, y: bar.y }}
                       transition={{
                         duration: 0.5,
@@ -309,7 +333,10 @@ export function DailyROSPerformance() {
                 ))}
               </svg>
             ) : isLoading ? (
-              <div className="flex h-full w-full items-center justify-center" style={{ color: 'var(--app-text-muted)' }}>
+              <div
+                className="flex h-full w-full items-center justify-center"
+                style={{ color: 'var(--app-text-muted)' }}
+              >
                 <span className="text-xs font-medium">Loading…</span>
               </div>
             ) : error ? (
