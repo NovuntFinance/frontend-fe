@@ -25,18 +25,10 @@ import {
   FileText,
 } from 'lucide-react';
 import { useTransactionHistory } from '@/hooks/useWallet';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { prefersReducedMotion } from '@/lib/accessibility';
+import neuStyles from '@/styles/neumorphic.module.css';
 import {
   formatCurrency,
   formatTransactionType,
@@ -149,66 +141,54 @@ export function StakingTransactionHistory() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Staking Streak Template */}
+      {/* Header – neumorphic */}
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 20 }}
         animate={reducedMotion ? false : { opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
+        className={`rounded-[18px] p-4 sm:p-6 ${neuStyles['neu-card']}`}
       >
-        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-          {/* Animated Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent" />
-
-          {/* Animated Floating Blob */}
-          {!reducedMotion && (
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
+              style={{
+                boxShadow: 'var(--neu-shadow-inset)',
+                border: '1px solid var(--neu-border)',
+                background: 'var(--neu-bg)',
+                color: 'var(--wallet-accent)',
               }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-indigo-500/30 blur-2xl"
-            />
-          )}
-
-          <CardHeader className="relative p-4 sm:p-6">
-            <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -10 }}
-                  className="rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                >
-                  <TrendingUp className="h-5 w-5 text-indigo-500 sm:h-6 sm:w-6" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                    Staking Transaction History
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs">
-                    View all your staking activities and earnings
-                  </CardDescription>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="h-8 w-8 shrink-0 rounded-full"
-                aria-label="Refresh transactions"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${isLoading ? 'animate-spin' : ''}`}
-                />
-              </Button>
+            >
+              <TrendingUp className="h-5 w-5 sm:h-5 sm:w-5" />
             </div>
-          </CardHeader>
-        </Card>
+            <div className="min-w-0">
+              <h2
+                className="text-base font-bold sm:text-lg"
+                style={{ color: 'var(--wallet-text)' }}
+              >
+                Staking Transaction History
+              </h2>
+              <p
+                className="text-xs sm:text-sm"
+                style={{ color: 'var(--wallet-text-muted)' }}
+              >
+                View all your staking activities and earnings
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 ${neuStyles['neu-icon-button']}`}
+            style={{ color: 'var(--wallet-accent)' }}
+            aria-label="Refresh transactions"
+          >
+            <RefreshCw
+              className={`h-4 w-4 sm:h-5 sm:w-5 ${isLoading ? 'animate-spin' : ''}`}
+            />
+          </button>
+        </div>
       </motion.div>
 
       {/* Tabs */}
@@ -216,18 +196,34 @@ export function StakingTransactionHistory() {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as StakingTab)}
       >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all" className="text-xs sm:text-sm">
+        <TabsList
+          className="grid w-full grid-cols-3 gap-1 rounded-[16px] p-1"
+          style={{
+            background: 'var(--neu-bg)',
+            boxShadow: 'var(--neu-shadow-inset)',
+            border: '1px solid var(--neu-border)',
+          }}
+        >
+          <TabsTrigger
+            value="all"
+            className="rounded-[14px] border border-transparent bg-transparent text-xs text-[var(--wallet-text-muted)] transition-[box-shadow,border-color,color] duration-200 data-[state=active]:border-[var(--neu-border)] data-[state=active]:bg-[var(--neu-bg)] data-[state=active]:text-[var(--wallet-accent)] data-[state=active]:shadow-[var(--neu-shadow-inset)] sm:text-sm"
+          >
             <ArrowDownRight className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">All Staking</span>
             <span className="sm:hidden">All</span>
           </TabsTrigger>
-          <TabsTrigger value="staking" className="text-xs sm:text-sm">
+          <TabsTrigger
+            value="staking"
+            className="rounded-[14px] border border-transparent bg-transparent text-xs text-[var(--wallet-text-muted)] transition-[box-shadow,border-color,color] duration-200 data-[state=active]:border-[var(--neu-border)] data-[state=active]:bg-[var(--neu-bg)] data-[state=active]:text-[var(--wallet-accent)] data-[state=active]:shadow-[var(--neu-shadow-inset)] sm:text-sm"
+          >
             <TrendingUp className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Staking Activity</span>
             <span className="sm:hidden">Staking</span>
           </TabsTrigger>
-          <TabsTrigger value="earnings" className="text-xs sm:text-sm">
+          <TabsTrigger
+            value="earnings"
+            className="rounded-[14px] border border-transparent bg-transparent text-xs text-[var(--wallet-text-muted)] transition-[box-shadow,border-color,color] duration-200 data-[state=active]:border-[var(--neu-border)] data-[state=active]:bg-[var(--neu-bg)] data-[state=active]:text-[var(--wallet-accent)] data-[state=active]:shadow-[var(--neu-shadow-inset)] sm:text-sm"
+          >
             <DollarSign className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
             Earnings
           </TabsTrigger>
@@ -242,97 +238,97 @@ export function StakingTransactionHistory() {
               animate={reducedMotion ? false : { opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-transparent" />
-                {!reducedMotion && (
-                  <motion.div
-                    animate={{
-                      x: [0, -15, 0],
-                      y: [0, 10, 0],
-                      scale: [1, 1.15, 1],
-                    }}
-                    transition={{
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-emerald-500/30 blur-2xl"
-                  />
-                )}
-                <CardHeader className="relative p-4 sm:p-6">
-                  <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: -10 }}
-                        className="rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-                      >
-                        <FileText className="h-5 w-5 text-emerald-500 sm:h-6 sm:w-6" />
-                      </motion.div>
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                          {activeTab === 'staking' && 'Staking Activity'}
-                          {activeTab === 'earnings' && 'Earnings'}
-                          {activeTab === 'all' && 'All Staking Related'}
-                        </CardTitle>
-                        <CardDescription className="text-[10px] sm:text-xs">
-                          {transactions.length} transactions
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {transactions.length}
-                    </Badge>
+              <div
+                className={`overflow-hidden rounded-[18px] ${neuStyles['neu-card']}`}
+              >
+                <div
+                  className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4"
+                  style={{ borderBottom: '1px solid var(--wallet-border)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      style={{ color: 'var(--wallet-accent)' }}
+                    />
+                    <span
+                      className="text-sm font-semibold sm:text-base"
+                      style={{ color: 'var(--wallet-text)' }}
+                    >
+                      {activeTab === 'staking' && 'Staking Activity'}
+                      {activeTab === 'earnings' && 'Earnings'}
+                      {activeTab === 'all' && 'All Staking Related'}
+                    </span>
                   </div>
-                </CardHeader>
-                <CardContent className="relative p-0 pt-0 sm:pt-0">
-                  <div className="divide-border/50 divide-y">
-                    {transactions.map(
-                      (transaction: Transaction, index: number) => (
-                        <StakingTransactionItem
-                          key={transaction._id}
-                          transaction={transaction}
-                          index={index}
-                        />
-                      )
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  <span
+                    className={`${neuStyles['neu-badge']} text-xs`}
+                    style={{ color: 'var(--wallet-text-secondary)' }}
+                  >
+                    {transactions.length}
+                  </span>
+                </div>
+                <div
+                  className="divide-y"
+                  style={{ borderColor: 'var(--wallet-border)' }}
+                >
+                  {transactions.map(
+                    (transaction: Transaction, index: number) => (
+                      <StakingTransactionItem
+                        key={transaction._id}
+                        transaction={transaction}
+                        index={index}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="bg-card/50 mt-4 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-                  <p className="text-muted-foreground text-xs sm:text-sm">
+                <div
+                  className={`mt-4 flex flex-col gap-3 rounded-[18px] p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4 ${neuStyles['neu-card']}`}
+                >
+                  <p
+                    className="text-xs sm:text-sm"
+                    style={{ color: 'var(--wallet-text-muted)' }}
+                  >
                     Showing {startIndex + 1}-
                     {Math.min(endIndex, allTransactions.length)} of{' '}
                     {allTransactions.length} transactions
                   </p>
                   <div className="flex items-center justify-between gap-2 sm:justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
+                      type="button"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                      className={`h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm ${neuStyles['neu-button']} disabled:cursor-not-allowed disabled:opacity-50`}
+                      style={{ color: 'var(--wallet-text)' }}
                     >
-                      <ChevronLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                      <ChevronLeft className="mr-1 inline h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Previous</span>
                       <span className="sm:hidden">Prev</span>
-                    </Button>
-                    <span className="bg-muted flex items-center rounded-md px-2 text-xs sm:px-4 sm:text-sm">
+                    </button>
+                    <span
+                      className="rounded-[14px] px-2 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+                      style={{
+                        background: 'var(--neu-bg)',
+                        boxShadow: 'var(--neu-shadow-inset)',
+                        border: '1px solid var(--neu-border)',
+                        color: 'var(--wallet-text-secondary)',
+                      }}
+                    >
                       Page {currentPage} of {totalPages}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
+                      type="button"
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                      className={`h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm ${neuStyles['neu-button']} disabled:cursor-not-allowed disabled:opacity-50`}
+                      style={{ color: 'var(--wallet-text)' }}
                     >
                       <span className="hidden sm:inline">Next</span>
                       <span className="sm:hidden">Next</span>
-                      <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
+                      <ChevronRight className="ml-1 inline h-3 w-3 sm:h-4 sm:w-4" />
+                    </button>
                   </div>
                 </div>
               )}
@@ -342,39 +338,28 @@ export function StakingTransactionHistory() {
               initial={reducedMotion ? false : { opacity: 0, y: 20 }}
               animate={reducedMotion ? false : { opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className={`rounded-[18px] p-8 text-center sm:p-12 ${neuStyles['neu-card']}`}
             >
-              <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-gray-500/10 to-transparent" />
-                {!reducedMotion && (
-                  <motion.div
-                    animate={{
-                      x: [0, -15, 0],
-                      y: [0, 10, 0],
-                      scale: [1, 1.15, 1],
-                    }}
-                    transition={{
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-slate-500/30 blur-2xl"
-                  />
-                )}
-                <CardContent className="relative p-8 text-center sm:p-12">
-                  <TrendingUp className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-30 sm:h-16 sm:w-16" />
-                  <p className="text-muted-foreground mb-2 text-base font-medium sm:text-lg">
-                    No transactions found
-                  </p>
-                  <p className="text-muted-foreground text-xs sm:text-sm">
-                    {activeTab === 'staking' &&
-                      'Your staking activity will appear here'}
-                    {activeTab === 'earnings' &&
-                      'Your earnings will appear here'}
-                    {activeTab === 'all' &&
-                      'Your staking transactions will appear here'}
-                  </p>
-                </CardContent>
-              </Card>
+              <TrendingUp
+                className="mx-auto mb-4 h-12 w-12 sm:h-16 sm:w-16"
+                style={{ color: 'var(--wallet-text-muted)', opacity: 0.5 }}
+              />
+              <p
+                className="mb-2 text-base font-medium sm:text-lg"
+                style={{ color: 'var(--wallet-text)' }}
+              >
+                No transactions found
+              </p>
+              <p
+                className="text-xs sm:text-sm"
+                style={{ color: 'var(--wallet-text-muted)' }}
+              >
+                {activeTab === 'staking' &&
+                  'Your staking activity will appear here'}
+                {activeTab === 'earnings' && 'Your earnings will appear here'}
+                {activeTab === 'all' &&
+                  'Your staking transactions will appear here'}
+              </p>
             </motion.div>
           )}
         </TabsContent>
@@ -413,47 +398,57 @@ function StakingTransactionItem({
       initial={reducedMotion ? false : { opacity: 0 }}
       animate={reducedMotion ? false : { opacity: 1 }}
       transition={{ delay: index * 0.03 }}
-      className="hover:bg-muted/50 group p-3 transition-colors sm:p-4"
+      className="p-3 transition-colors hover:bg-[rgba(0,155,242,0.03)] sm:p-4"
+      style={{ borderColor: 'var(--wallet-border)' }}
     >
       <div className="flex items-start justify-between gap-2 sm:items-center sm:gap-4">
-        {/* Left: Icon & Details */}
         <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-4">
-          {/* Icon */}
           <div
-            className={`shrink-0 rounded-lg p-2 sm:rounded-xl sm:p-3 ${
-              isPositive
-                ? 'bg-emerald-500/10'
-                : isNeutral
-                  ? 'bg-muted'
-                  : 'bg-blue-500/10'
-            }`}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10"
+            style={{
+              boxShadow: 'var(--neu-shadow-inset)',
+              border: '1px solid var(--neu-border)',
+              background: 'var(--neu-bg)',
+              color: 'var(--wallet-accent)',
+            }}
           >
             <div className="h-4 w-4 sm:h-5 sm:w-5">{typeIcon}</div>
           </div>
 
-          {/* Details */}
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <p className="text-foreground text-sm font-semibold sm:text-base">
+              <p
+                className="text-sm font-semibold sm:text-base"
+                style={{ color: 'var(--wallet-text)' }}
+              >
                 {formatTransactionType(transaction.type, transaction.typeLabel)}
               </p>
-              <Badge
-                className={`${statusInfo.bgColor} ${statusInfo.color} text-[10px] sm:text-xs`}
+              <span
+                className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
+                style={{ color: 'var(--wallet-text-secondary)' }}
               >
                 {statusInfo.label}
-              </Badge>
+              </span>
               {transaction.category && (
-                <Badge variant="outline" className="text-[10px] sm:text-xs">
+                <span
+                  className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
+                  style={{ color: 'var(--wallet-text-muted)' }}
+                >
                   {transaction.category}
-                </Badge>
+                </span>
               )}
             </div>
-            <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
+            <p
+              className="mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm"
+              style={{ color: 'var(--wallet-text-muted)' }}
+            >
               {transaction.description}
             </p>
 
-            {/* Staking-specific metadata */}
-            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs">
+            <div
+              className="flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs"
+              style={{ color: 'var(--wallet-text-muted)' }}
+            >
               <span>{formatTransactionDate(transaction.timestamp)}</span>
               {weekNumber && (
                 <span className="flex items-center gap-1">
@@ -467,7 +462,6 @@ function StakingTransactionItem({
                   {rosPercentage}% ROS
                 </span>
               )}
-              {/* stakeAmount removed - sanitized by backend */}
               {stakeId && (
                 <span className="font-mono text-xs">
                   Stake ID: {stakeId.slice(0, 8)}...
@@ -477,16 +471,16 @@ function StakingTransactionItem({
           </div>
         </div>
 
-        {/* Right: Amount */}
         <div className="ml-2 shrink-0 text-right sm:ml-4">
           <p
-            className={`text-sm font-bold sm:text-lg ${
-              isPositive
-                ? 'text-emerald-500'
+            className="text-sm font-bold sm:text-lg"
+            style={{
+              color: isPositive
+                ? 'var(--wallet-accent)'
                 : isNeutral
-                  ? 'text-muted-foreground'
-                  : 'text-blue-500'
-            }`}
+                  ? 'var(--wallet-text-muted)'
+                  : 'var(--wallet-text-secondary)',
+            }}
           >
             {formatAmountWithDirection(
               transaction.amount,
@@ -494,7 +488,10 @@ function StakingTransactionItem({
             )}
           </p>
           {transaction.fee > 0 && (
-            <p className="text-muted-foreground text-[10px] sm:text-xs">
+            <p
+              className="text-[10px] sm:text-xs"
+              style={{ color: 'var(--wallet-text-muted)' }}
+            >
               Fee: {formatCurrency(transaction.fee, { showCurrency: false })}
             </p>
           )}
@@ -505,32 +502,38 @@ function StakingTransactionItem({
 }
 
 /**
- * Get staking transaction icon based on type
+ * Get staking transaction icon based on type (neumorphic: single accent color)
  */
 function getStakingTransactionIcon(
   type: string,
   direction: 'in' | 'out' | 'neutral'
 ): React.ReactNode {
   const iconClass = 'h-5 w-5';
+  const style = { color: 'var(--wallet-accent)' };
 
   switch (type) {
     case 'stake':
-      return <ArrowUpRight className={`${iconClass} text-blue-500`} />;
+      return <ArrowUpRight className={iconClass} style={style} />;
     case 'stake_completion':
-      return <Target className={`${iconClass} text-purple-500`} />;
+      return <Target className={iconClass} style={style} />;
     case 'ros_payout':
-      return <DollarSign className={`${iconClass} text-emerald-500`} />;
+      return <DollarSign className={iconClass} style={style} />;
     case 'stake_pool_payout':
     case 'performance_pool_payout':
     case 'premium_pool_payout':
-      return <Award className={`${iconClass} text-amber-500`} />;
+      return <Award className={iconClass} style={style} />;
     default:
       if (direction === 'in') {
-        return <ArrowDownRight className={`${iconClass} text-emerald-500`} />;
+        return <ArrowDownRight className={iconClass} style={style} />;
       }
       if (direction === 'out') {
-        return <ArrowUpRight className={`${iconClass} text-blue-500`} />;
+        return <ArrowUpRight className={iconClass} style={style} />;
       }
-      return <TrendingUp className={`${iconClass} text-muted-foreground`} />;
+      return (
+        <TrendingUp
+          className={iconClass}
+          style={{ color: 'var(--wallet-text-muted)' }}
+        />
+      );
   }
 }

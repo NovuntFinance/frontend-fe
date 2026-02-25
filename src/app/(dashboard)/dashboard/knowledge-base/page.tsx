@@ -13,24 +13,16 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import {
   searchArticles,
   getArticlesByCategory,
-  knowledgeBaseArticles,
 } from '@/data/knowledgeBaseArticles';
 import { ArticleCard } from '@/components/knowledge-base/ArticleCard';
 import { ArticleDetailModal } from '@/components/knowledge-base/ArticleDetailModal';
-import { Button } from '@/components/ui/button';
 import type { Article } from '@/components/knowledge-base/ArticleCard';
+import { PageContainer } from '@/components/layout/PageContainer';
+import badgeStyles from '@/styles/badge-card.module.css';
 
 /**
  * Knowledge Base Page
@@ -174,108 +166,82 @@ export default function KnowledgeBasePage() {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-        animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-          {/* Animated Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-blue-500/10 to-transparent" />
-
-          {/* Animated Floating Blob */}
-          {!reducedMotion && (
-            <motion.div
-              animate={{
-                x: [0, -15, 0],
-                y: [0, 10, 0],
-                scale: [1, 1.15, 1],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-indigo-500/30 blur-2xl"
-            />
-          )}
-
-          <CardHeader className="relative p-4 sm:p-6">
-            <div className="mb-4 flex items-center gap-2 sm:gap-3">
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: -10 }}
-                className="rounded-xl bg-gradient-to-br from-indigo-500/30 to-blue-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
-              >
-                <FileText className="h-5 w-5 text-indigo-500 sm:h-6 sm:w-6" />
-              </motion.div>
-              <div className="min-w-0 flex-1">
-                <CardTitle className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                  Knowledge Base
-                </CardTitle>
-                <CardDescription className="text-[10px] sm:text-xs">
+    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
+      <PageContainer sectionSpacing>
+        <div className={badgeStyles.kbPageRoot}>
+          {/* Page Header – neumorphic raised panel */}
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className={badgeStyles.kbHeaderPanel}
+          >
+            <div className={badgeStyles.kbHeaderTop}>
+              <div className={badgeStyles.kbHeaderIcon} aria-hidden>
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+              </div>
+              <div>
+                <h1 className={badgeStyles.kbHeaderTitle}>Knowledge Base</h1>
+                <p className={badgeStyles.kbHeaderSubtitle}>
                   Learn more about Novunt platform and how to maximize your
                   earnings
-                </CardDescription>
+                </p>
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
+            {/* Search – inset neumorphic input */}
+            <div className={badgeStyles.kbSearchWrap}>
+              <Search
+                className={badgeStyles.kbSearchIcon}
+                strokeWidth={2}
+                aria-hidden
+              />
+              <input
                 type="text"
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-background/50 h-11 w-full border-white/20 pr-10 pl-10 backdrop-blur-sm focus:border-indigo-500/50"
+                className={badgeStyles.kbSearchInput}
+                aria-label="Search articles"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={clearSearch}
-                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                  className={badgeStyles.kbSearchClear}
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
-          </CardHeader>
-        </Card>
-      </motion.div>
+          </motion.div>
 
-      {/* Category Filter Active - Show Back Button */}
-      {selectedCategory && !searchQuery.trim() && (
-        <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-            {/* Animated Gradient Background */}
-            {selectedCategoryData && (
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${selectedCategoryData.gradient}`}
-              />
-            )}
-            <CardContent className="relative p-4 sm:p-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Category Filter Active – neumorphic filter bar */}
+          {selectedCategory && !searchQuery.trim() && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className={badgeStyles.kbFilterBar}
+            >
+              <div className={badgeStyles.kbFilterBarInner}>
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   {selectedCategoryData && (
                     <>
                       <div
-                        className={`rounded-xl bg-gradient-to-br ${selectedCategoryData.gradient.replace('/20', '/30').replace('/10', '/20')} flex-shrink-0 p-2 shadow-lg backdrop-blur-sm`}
+                        className={badgeStyles.kbFilterBarIcon}
+                        style={{ color: 'var(--badge-accent)' }}
                       >
                         {React.createElement(selectedCategoryData.icon, {
-                          className: `h-5 w-5 ${selectedCategoryData.iconColor} sm:h-6 sm:w-6`,
+                          className: 'h-5 w-5 sm:h-6 sm:w-6',
                         })}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-sm font-semibold sm:text-base">
+                        <h3 className={badgeStyles.kbFilterBarTitle}>
                           {selectedCategoryData.title}
                         </h3>
-                        <p className="text-muted-foreground text-xs sm:text-sm">
+                        <p className={badgeStyles.kbFilterBarMeta}>
                           {filteredArticles.length}{' '}
                           {filteredArticles.length === 1
                             ? 'article'
@@ -285,48 +251,47 @@ export default function KnowledgeBasePage() {
                     </>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={clearCategoryFilter}
-                  className="h-9 flex-shrink-0"
+                  className={badgeStyles.kbFilterBarClearBtn}
                 >
-                  <X className="mr-2 h-4 w-4" />
+                  <X className="h-4 w-4" />
                   <span className="hidden sm:inline">Clear Filter</span>
                   <span className="sm:hidden">Clear</span>
-                </Button>
+                </button>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            </motion.div>
+          )}
 
-      {/* Search Results or Category Articles */}
-      {(searchQuery.trim() || selectedCategory) && (
-        <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="bg-card/50 border-0 shadow-lg backdrop-blur-sm">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-sm font-semibold sm:text-base">
-                {searchQuery.trim()
-                  ? 'Search Results'
-                  : selectedCategoryData
-                    ? selectedCategoryData.title
-                    : 'Articles'}
-                {filteredArticles.length > 0 && (
-                  <span className="text-muted-foreground ml-2 font-normal">
-                    ({filteredArticles.length}{' '}
-                    {filteredArticles.length === 1 ? 'article' : 'articles'})
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+          {/* Search Results or Category Articles – neumorphic panel */}
+          {(searchQuery.trim() || selectedCategory) && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className={badgeStyles.kbResultsPanel}
+            >
+              <div className={badgeStyles.kbResultsPanelHeader}>
+                <h2 className={badgeStyles.kbResultsPanelTitle}>
+                  {searchQuery.trim()
+                    ? 'Search Results'
+                    : selectedCategoryData
+                      ? selectedCategoryData.title
+                      : 'Articles'}
+                  {filteredArticles.length > 0 && (
+                    <span
+                      className={badgeStyles.kbCategoryCardMeta}
+                      style={{ marginLeft: 8, fontWeight: 400 }}
+                    >
+                      ({filteredArticles.length}{' '}
+                      {filteredArticles.length === 1 ? 'article' : 'articles'})
+                    </span>
+                  )}
+                </h2>
+              </div>
               {filteredArticles.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                <div className={badgeStyles.kbResultsPanelGrid}>
                   {filteredArticles.map((article, index) => (
                     <ArticleCard
                       key={article.id}
@@ -337,120 +302,98 @@ export default function KnowledgeBasePage() {
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center">
-                  <Search className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
-                  <p className="text-muted-foreground text-sm sm:text-base">
+                <div className={badgeStyles.kbResultsEmpty}>
+                  <Search
+                    className={badgeStyles.kbResultsEmptyIcon}
+                    size={48}
+                  />
+                  <p className={badgeStyles.kbResultsEmptyText}>
                     {searchQuery.trim()
                       ? `No articles found for "${searchQuery}"`
                       : 'No articles found in this category'}
                   </p>
-                  <p className="text-muted-foreground/60 mt-1 text-xs sm:text-sm">
+                  <p className={badgeStyles.kbResultsEmptyHint}>
                     {searchQuery.trim()
                       ? 'Try different keywords or browse categories below'
                       : 'Try selecting a different category'}
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            </motion.div>
+          )}
 
-      {/* Categories Grid - Hide when searching */}
-      {!searchQuery.trim() && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6">
-          {knowledgeCategories.map((category, index) => {
-            const IconComponent = category.icon;
-            return (
-              <motion.div
-                key={category.id}
-                initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-                animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-                whileHover={reducedMotion ? {} : { y: -4, scale: 1.01 }}
-                className="cursor-pointer"
-                onClick={() => handleCategoryClick(category.id)}
-              >
-                <Card className="bg-card/50 group relative h-full overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-                  {/* Animated Gradient Background */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${category.gradient}`}
-                  />
-
-                  {/* Animated Floating Blob */}
-                  {!reducedMotion && (
-                    <motion.div
-                      animate={{
-                        x: [0, -15, 0],
-                        y: [0, 10, 0],
-                        scale: [1, 1.15, 1],
-                      }}
-                      transition={{
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                      }}
-                      className={`absolute -bottom-8 -left-12 h-24 w-24 rounded-full bg-gradient-to-br ${category.gradient} blur-2xl`}
-                    />
-                  )}
-
-                  <CardHeader className="relative p-4 sm:p-6">
-                    <div className="mb-3 flex items-center gap-2 sm:gap-3">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: -10 }}
-                        className={`rounded-xl bg-gradient-to-br ${category.gradient.replace('/20', '/30').replace('/10', '/20')} p-2 shadow-lg backdrop-blur-sm sm:p-3`}
-                      >
-                        <IconComponent
-                          className={`h-5 w-5 ${category.iconColor} sm:h-6 sm:w-6`}
-                        />
-                      </motion.div>
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                          {category.title}
-                        </CardTitle>
-                        <CardDescription className="text-[10px] sm:text-xs">
-                          {category.articleCount} article
-                          {category.articleCount !== 1 ? 's' : ''}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground relative text-xs sm:text-sm">
-                      {category.description}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="relative p-4 pt-0 sm:p-6 sm:pt-0">
-                    <div className="space-y-1.5">
-                      {category.articles.slice(0, 3).map((article, idx) => (
+          {/* Categories Grid – neumorphic cards, hide when searching */}
+          {!searchQuery.trim() && (
+            <div className={badgeStyles.badgeSectionGrid}>
+              {knowledgeCategories.map((category, index) => {
+                const IconComponent = category.icon;
+                return (
+                  <motion.div
+                    key={category.id}
+                    initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+                    animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 + index * 0.05 }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={badgeStyles.kbCategoryCard}
+                    >
+                      <div className={badgeStyles.kbCategoryCardTop}>
                         <div
-                          key={idx}
-                          className="text-muted-foreground group-hover:text-foreground/80 flex items-center gap-2 text-xs transition-colors sm:text-sm"
+                          className={badgeStyles.kbCategoryCardIcon}
+                          style={{ color: 'var(--badge-accent)' }}
                         >
-                          <div className="h-1 w-1 flex-shrink-0 rounded-full bg-indigo-500" />
-                          <span className="line-clamp-1 truncate">
-                            {article}
+                          <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <span className={badgeStyles.kbCategoryCardTitle}>
+                            {category.title}
                           </span>
+                          <p className={badgeStyles.kbCategoryCardMeta}>
+                            {category.articleCount} article
+                            {category.articleCount !== 1 ? 's' : ''}
+                          </p>
                         </div>
-                      ))}
-                      {category.articles.length > 3 && (
-                        <div className="text-muted-foreground/60 text-xs">
-                          +{category.articles.length - 3} more
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+                      </div>
+                      <p className={badgeStyles.kbCategoryCardDesc}>
+                        {category.description}
+                      </p>
+                      <div className={badgeStyles.kbCategoryCardBullets}>
+                        {category.articles.slice(0, 3).map((article, idx) => (
+                          <span
+                            key={idx}
+                            className={badgeStyles.kbCategoryCardBullet}
+                          >
+                            <span
+                              className={badgeStyles.kbCategoryCardBulletDot}
+                            />
+                            <span className="line-clamp-1 truncate">
+                              {article}
+                            </span>
+                          </span>
+                        ))}
+                        {category.articles.length > 3 && (
+                          <span className={badgeStyles.kbCategoryCardMore}>
+                            +{category.articles.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
-      {/* Article Detail Modal */}
-      <ArticleDetailModal
-        article={selectedArticle}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
+          {/* Article Detail Modal */}
+          <ArticleDetailModal
+            article={selectedArticle}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+          />
+        </div>
+      </PageContainer>
     </div>
   );
 }
