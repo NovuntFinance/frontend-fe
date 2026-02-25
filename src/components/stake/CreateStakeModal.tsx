@@ -1,23 +1,38 @@
 'use client';
 
+/**
+ * Create Stake modal – uses shared neumorphic modal system.
+ * Same layout, flow (steps 1–3, 2FA, source), and behavior; styling from @/components/neumorphic-modal.
+ */
+
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  CheckCircle2,
-  ShieldCheck,
-  TrendingUp,
-  Loader2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { CheckCircle2, ShieldCheck, Target } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { useCreateStake } from '@/lib/mutations/stakingMutations';
 import { useWalletBalance } from '@/lib/queries';
 import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { fmt4 } from '@/utils/formatters';
+import {
+  NEU_TOKENS,
+  neuInset,
+  neuRaised,
+  neuRadius,
+} from '@/components/neumorphic-modal/tokens';
+import {
+  BaseModal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  InfoCallout,
+  PrimaryButton,
+  SecondaryButton,
+} from '@/components/neumorphic-modal';
+import { cn } from '@/lib/utils';
 
 export function CreateStakeModal() {
   const { isModalOpen, closeModal } = useUIStore();
@@ -33,15 +48,14 @@ export function CreateStakeModal() {
 
   const { data: walletBalance } = useWalletBalance();
   const createStake = useCreateStake();
-
-  // Get staking config from dynamic config system
   const stakingConfig = useStakingConfig();
+
   const amountNum = parseFloat(amount) || 0;
-  const targetReturn = amountNum * (stakingConfig.goalTargetPercentage / 100); // Dynamic target percentage
+  const targetReturn = amountNum * (stakingConfig.goalTargetPercentage / 100);
   const minStake = stakingConfig.minAmount;
+  const maxStake = stakingConfig.maxAmount;
   const requires2FA = amountNum > 100000;
 
-  // Calculate available balance based on source
   const availableBalance =
     source === 'funded'
       ? walletBalance?.funded.balance || 0
@@ -70,24 +84,20 @@ export function CreateStakeModal() {
 
   const handleSubmit = () => {
     setError(null);
-
     if (!amount) {
       setError('Please enter an amount to stake.');
       return;
     }
-
     if (amountNum < minStake) {
       setError(`Minimum stake amount is $${minStake}.`);
       return;
     }
-
     if (amountNum > availableBalance) {
       setError(
         `Insufficient balance. You have $${fmt4(availableBalance)} available.`
       );
       return;
     }
-
     if (requires2FA && !twoFactorCode) {
       toast.error('2FA Required', {
         description:
@@ -95,37 +105,19 @@ export function CreateStakeModal() {
       });
       return;
     }
-
     setStep(2);
   };
 
   const handleConfirm = async () => {
     try {
-      console.log('[CreateStakeModal] Attempting to create stake:', {
-        amount: amountNum,
-        source,
-        goal: goal || 'none',
-        has2FA: !!twoFactorCode,
-        walletBalances: {
-          funded: walletBalance?.funded.balance || 0,
-          earnings: walletBalance?.earnings.balance || 0,
-          available: availableBalance,
-        },
-      });
-
       await createStake.mutateAsync({
         amount: amountNum,
         source,
-        ...(goal && { goal }),
+        ...((goal || goalTitle) && { goal: goal || goalTitle }),
         ...(requires2FA && twoFactorCode && { twoFactorCode }),
       });
-
-      // Move to success step instead of closing
       setStep(3);
     } catch (error: unknown) {
-      console.error('[CreateStakeModal] Full error object:', error);
-
-      // Extract detailed error information
       const err = error as {
         message?: string;
         response?: {
@@ -136,10 +128,7 @@ export function CreateStakeModal() {
         };
         responseData?: string;
       };
-
       let errorMessage = 'Please try again or contact support';
-
-      // Try to extract backend error message
       if (err.response?.data?.error?.message) {
         errorMessage = err.response.data.error.message;
       } else if (err.response?.data?.message) {
@@ -147,19 +136,15 @@ export function CreateStakeModal() {
       } else if (err.responseData) {
         try {
           const parsedData = JSON.parse(err.responseData);
-          if (parsedData.error?.message) {
+          if (parsedData.error?.message)
             errorMessage = parsedData.error.message;
-          } else if (parsedData.message) {
-            errorMessage = parsedData.message;
-          }
+          else if (parsedData.message) errorMessage = parsedData.message;
         } catch {
-          // Could not parse
+          /* ignore */
         }
       } else if (err.message) {
         errorMessage = err.message;
       }
-
-      // Check for specific error scenarios
       if (
         errorMessage.includes('insufficient') ||
         errorMessage.includes('balance')
@@ -167,401 +152,393 @@ export function CreateStakeModal() {
         errorMessage = `Insufficient funds. You need $${fmt4(amountNum)} but have $${fmt4(availableBalance)} available.`;
       } else if (errorMessage.includes('Failed to create stake')) {
         errorMessage =
-          'Unable to create stake. This may be a server issue. Please check your wallet balance and try again.';
+          'Unable to create stake. Please check your wallet balance and try again.';
       }
-
-      console.error('[CreateStakeModal] User-friendly error:', errorMessage);
-
       toast.error('Failed to Create Stake', {
         description: errorMessage,
         duration: 7000,
       });
-      setStep(1); // Go back to step 1 on error
+      setStep(1);
     }
   };
 
+  const insetStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuInset,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.md,
+  };
+
+  const raisedStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuRaised,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.md,
+  };
+
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      preventClose={createStake.isPending}
+    >
+      {step === 1 && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-            onClick={handleClose}
+          <ModalHeader
+            title="Create New Stake"
+            subtitle="Secure your future by locking in high-yield returns."
+            onClose={handleClose}
+            disableClose={createStake.isPending}
           />
+          <ModalBody>
+            <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="goalTitle"
+                  className="text-sm font-medium"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  Goal Title{' '}
+                  <span className="font-normal opacity-80">(Optional)</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="goalTitle"
+                    type="text"
+                    maxLength={60}
+                    value={goalTitle}
+                    onChange={(e) => setGoalTitle(e.target.value)}
+                    placeholder="e.g. Dream Vacation"
+                    className="neu-input h-11 w-full border-0 pr-10 pl-4 text-sm focus-visible:ring-0"
+                  />
+                  <span
+                    className="absolute top-1/2 right-3 -translate-y-1/2 opacity-70"
+                    style={{ color: NEU_TOKENS.accent }}
+                  >
+                    <Target className="size-4" />
+                  </span>
+                </div>
+              </div>
 
-          {/* Modal */}
-          <div className="pointer-events-none fixed inset-0 z-[101] flex items-center justify-center overflow-y-auto p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="pointer-events-auto mx-auto my-8 w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {step === 1 && (
-                // Step 1: Enter Stake Details
-                <div className="relative overflow-hidden rounded-2xl">
-                  {/* Header - Using standard blue-600 to ensure visibility in light mode */}
-                  <div className="relative overflow-hidden rounded-t-2xl bg-blue-600 p-5 dark:bg-blue-900">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-600 opacity-100 dark:from-blue-900 dark:to-blue-800" />
-                    <div className="relative z-10 mb-1 flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-lg backdrop-blur-sm">
-                          <TrendingUp className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-bold text-white">
-                            Create New Stake
-                          </h2>
-                          <p className="mt-0.5 text-xs font-medium text-white/90">
-                            Earn weekly ROS until{' '}
-                            {stakingConfig.goalTargetPercentage}% return
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleClose}
-                        aria-label="Close modal"
-                        className="flex-shrink-0 rounded-lg p-2 text-white/90 transition-colors hover:bg-white/20 hover:text-white"
-                        disabled={createStake.isPending}
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="relative space-y-5 p-5">
-                    {/* Amount Input */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label
-                          htmlFor="amount"
-                          className="text-sm font-semibold text-gray-700 dark:text-gray-300"
-                        >
-                          Stake Amount (USDT)
-                        </Label>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Min: ${minStake}
-                        </span>
-                      </div>
-
-                      <div className="relative">
-                        <div className="absolute top-1/2 left-3 -translate-y-1/2 font-bold text-gray-500 dark:text-gray-400">
-                          $
-                        </div>
-                        <Input
-                          id="amount"
-                          type="number"
-                          min={minStake}
-                          max={availableBalance}
-                          step="0.01"
-                          value={amount}
-                          onChange={handleAmountChange}
-                          placeholder="0.00"
-                          className={`h-12 bg-white pr-16 pl-7 text-lg font-bold text-gray-900 dark:bg-gray-800 dark:text-white ${
-                            error
-                              ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
-                              : 'border-gray-300 focus:border-blue-500 dark:border-gray-700 dark:focus:border-blue-500'
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAmount(availableBalance.toString());
-                            if (error) setError(null);
-                          }}
-                          className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md bg-blue-50 px-2 py-1 text-xs font-bold text-blue-600 transition-colors hover:text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          MAX
-                        </button>
-                      </div>
-
-                      {/* Inline Error Message */}
-                      {error && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-1 text-xs font-medium text-red-500 dark:text-red-400"
-                        >
-                          {error}
-                        </motion.p>
-                      )}
-
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Available:{' '}
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            ${fmt4(availableBalance)}
-                          </span>
-                        </span>
-                        {amountNum > 0 && !error && (
-                          <span className="font-medium text-blue-600 dark:text-blue-400">
-                            Target Return: ${fmt4(targetReturn)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Goal Title (Optional) */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="goalTitle"
-                        className="text-sm font-semibold text-gray-700 dark:text-gray-300"
-                      >
-                        Goal Title{' '}
-                        <span className="text-xs font-normal text-gray-500">
-                          (Optional)
-                        </span>
-                      </Label>
-                      <Input
-                        id="goalTitle"
-                        type="text"
-                        maxLength={60}
-                        value={goalTitle}
-                        onChange={(e) => setGoalTitle(e.target.value)}
-                        placeholder="E.g. Dream Vacation"
-                        className="h-10 border-gray-300 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                      />
-                    </div>
-
-                    {/* 2FA Input - Shows when amount > $500 */}
-                    {requires2FA && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/50 dark:bg-amber-900/20">
-                          <div className="flex items-start gap-2">
-                            <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                            <div>
-                              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
-                                2FA Required
-                              </p>
-                              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400/80">
-                                High-value stakes require Two-Factor
-                                Authentication for security
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <Label
-                          htmlFor="twoFactorCode"
-                          className="text-sm font-semibold text-gray-700 dark:text-gray-300"
-                        >
-                          Authenticator Code
-                        </Label>
-                        <Input
-                          id="twoFactorCode"
-                          type="text"
-                          maxLength={6}
-                          value={twoFactorCode}
-                          onChange={(e) =>
-                            setTwoFactorCode(e.target.value.replace(/\D/g, ''))
-                          }
-                          placeholder="000000"
-                          className="h-10 border-amber-300 bg-white text-center font-mono text-lg tracking-widest text-gray-900 focus:border-amber-500 dark:border-amber-700 dark:bg-gray-800 dark:text-white dark:focus:border-amber-500"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Enter the 6-digit code from your authenticator app
-                        </p>
-                      </motion.div>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label
+                    htmlFor="amount"
+                    className="text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    Stake Amount
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAmount(availableBalance.toString());
+                      if (error) setError(null);
+                    }}
+                    className="text-xs font-semibold transition-opacity hover:opacity-90"
+                    style={{ color: NEU_TOKENS.accent }}
+                  >
+                    MAX
+                  </button>
+                </div>
+                <div
+                  className="flex items-stretch overflow-hidden"
+                  style={insetStyle}
+                >
+                  <span
+                    className="flex items-center pl-4 text-lg font-semibold"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    $
+                  </span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    min={minStake}
+                    max={availableBalance}
+                    step="0.01"
+                    value={amount}
+                    onChange={handleAmountChange}
+                    placeholder="0.00"
+                    className={cn(
+                      'neu-input neu-input-inner h-12 flex-1 border-0 bg-transparent pr-2 pl-1 text-lg font-semibold focus-visible:ring-0 focus-visible:ring-offset-0'
                     )}
-
-                    {/* Security Notice */}
-                    <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800/50 dark:bg-emerald-900/20">
-                      <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-                      <div>
-                        <h4 className="mb-1 text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                          Guaranteed Returns
-                        </h4>
-                        <p className="text-xs leading-relaxed text-emerald-700 dark:text-emerald-400/80">
-                          Your stake is locked until you receive{' '}
-                          {stakingConfig.goalTargetPercentage}% total return
-                          through weekly payouts.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex gap-3 border-t border-gray-100 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-800/50">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleClose}
-                      className="h-11 flex-1 border-gray-300 font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300"
-                      disabled={createStake.isPending}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={createStake.isPending}
-                      className="h-11 flex-1 bg-blue-600 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {createStake.isPending ? 'Processing...' : 'Create Stake'}
-                    </Button>
-                  </div>
+                  />
+                  <span
+                    className="flex items-center px-4 text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    USDT
+                  </span>
                 </div>
-              )}
-
-              {step === 2 && (
-                // Step 2: Confirmation
-                <div className="overflow-hidden rounded-2xl">
-                  {/* Header */}
-                  <div className="bg-gradient-to-br from-emerald-600 to-teal-600 p-6 text-center text-white">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                      <CheckCircle2 className="h-8 w-8 text-white" />
-                    </div>
-                    <h2 className="mb-1 text-2xl font-bold text-white">
-                      Confirm Stake
-                    </h2>
-                    <p className="text-sm text-white/90">
-                      Please review your stake details
-                    </p>
-                  </div>
-
-                  {/* Confirmation Details */}
-                  <div className="space-y-4 bg-white p-6 dark:bg-gray-900">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Amount
-                        </span>
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">
-                          ${fmt4(amountNum)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Target Return
-                        </span>
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                          ${fmt4(targetReturn)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Source
-                        </span>
-                        <span className="text-sm font-medium text-gray-900 capitalize dark:text-white">
-                          {source === 'both'
-                            ? 'Both Wallets'
-                            : `${source} Wallet`}
-                        </span>
-                      </div>
-                      {goalTitle && (
-                        <div className="flex items-center justify-between border-b border-gray-100 py-2 dark:border-gray-800">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            Goal
-                          </span>
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {goalTitle}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex gap-3 bg-white p-6 pt-0 dark:bg-gray-900">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setStep(1)}
-                      className="h-11 flex-1 border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
-                      disabled={createStake.isPending}
+                <div
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  <span>
+                    Available:{' '}
+                    <span
+                      className="font-semibold"
+                      style={{ color: NEU_TOKENS.accent }}
                     >
-                      Back
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleConfirm}
-                      disabled={createStake.isPending}
-                      className="h-11 flex-1 bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
-                    >
-                      {createStake.isPending ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Creating...
-                        </span>
-                      ) : (
-                        'Confirm & Stake'
-                      )}
-                    </Button>
-                  </div>
+                      ${fmt4(availableBalance)}
+                    </span>
+                  </span>
+                  <span>
+                    Min: ${minStake} — Max: ${maxStake}
+                  </span>
                 </div>
-              )}
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="neu-error text-xs font-medium"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+                {amountNum > 0 && !error && (
+                  <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                    Target return: ${fmt4(targetReturn)}
+                  </p>
+                )}
+              </div>
 
-              {step === 3 && (
-                // Step 3: Success
-                <div className="overflow-hidden rounded-2xl bg-white dark:bg-gray-900">
-                  <div className="p-8 text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 200,
-                        damping: 20,
-                      }}
-                      className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30"
-                    >
-                      <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
-                    </motion.div>
-
-                    <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
-                      Stake Created Successfully! 🎉
-                    </h2>
-                    <p className="mb-6 text-gray-600 dark:text-gray-400">
-                      You’ve successfully staked{' '}
-                      <span className="font-bold text-gray-900 dark:text-white">
-                        ${fmt4(amountNum)}
-                      </span>
-                      {goalTitle && (
-                        <span>
-                          {' '}
-                          for <span className="font-medium">{goalTitle}</span>
-                        </span>
-                      )}
-                      .
-                    </p>
-
-                    <div className="mb-8 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Total Target Return
-                        </span>
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                          ${fmt4(targetReturn)}
-                        </span>
-                      </div>
-                      <p className="text-left text-xs text-gray-500 dark:text-gray-500">
-                        You will receive weekly payouts to your Earning Wallet
-                        until this target is reached.
+              {requires2FA && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="space-y-2 rounded-xl p-4"
+                  style={{
+                    ...insetStyle,
+                    borderColor: 'rgba(245, 158, 11, 0.25)',
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 size-4 flex-shrink-0 text-amber-400" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-300">
+                        2FA Required
+                      </p>
+                      <p className="mt-0.5 text-xs text-amber-200/80">
+                        High-value stakes require Two-Factor Authentication.
                       </p>
                     </div>
-
-                    <Button
-                      onClick={handleClose}
-                      className="h-11 w-full bg-blue-600 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700"
-                    >
-                      Done
-                    </Button>
                   </div>
-                </div>
+                  <Label
+                    htmlFor="twoFactorCode"
+                    className="text-sm font-medium text-amber-200/90"
+                  >
+                    Authenticator Code
+                  </Label>
+                  <Input
+                    id="twoFactorCode"
+                    type="text"
+                    maxLength={6}
+                    value={twoFactorCode}
+                    onChange={(e) =>
+                      setTwoFactorCode(e.target.value.replace(/\D/g, ''))
+                    }
+                    placeholder="000000"
+                    className="neu-input h-10 border-amber-500/30 text-center font-mono text-lg tracking-widest"
+                  />
+                </motion.div>
               )}
-            </motion.div>
+
+              <InfoCallout
+                icon={
+                  <ShieldCheck
+                    className="size-4"
+                    style={{ color: NEU_TOKENS.accent }}
+                  />
+                }
+                title="Guaranteed Returns"
+                description={
+                  <>
+                    Your stake is locked until you receive{' '}
+                    {stakingConfig.goalTargetPercentage}% total return through
+                    daily payouts.
+                  </>
+                }
+                badge={{ label: 'Secure lock' }}
+              />
+
+              <ModalFooter>
+                <PrimaryButton
+                  onClick={handleSubmit}
+                  disabled={createStake.isPending}
+                  loading={createStake.isPending}
+                >
+                  {createStake.isPending ? 'Processing...' : 'Create Stake'}
+                </PrimaryButton>
+                <SecondaryButton onClick={handleClose}>
+                  Cancel and Return
+                </SecondaryButton>
+              </ModalFooter>
+            </div>
+          </ModalBody>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <div className="px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+            <div className="mb-4 flex items-center justify-center gap-2">
+              <div
+                className="flex size-12 items-center justify-center rounded-full"
+                style={raisedStyle}
+              >
+                <CheckCircle2
+                  className="size-6"
+                  style={{ color: NEU_TOKENS.accent }}
+                />
+              </div>
+            </div>
+            <h2
+              className="text-center text-lg font-bold sm:text-xl"
+              style={{ color: NEU_TOKENS.accent }}
+            >
+              Confirm Stake
+            </h2>
+            <p
+              className="mt-1 text-center text-sm"
+              style={{ color: NEU_TOKENS.white60 }}
+            >
+              Please review your stake details
+            </p>
+          </div>
+          <div
+            className="mx-4 mb-4 space-y-0 rounded-xl sm:mx-6 lg:mx-8"
+            style={insetStyle}
+          >
+            <Row label="Amount" value={`$${fmt4(amountNum)}`} />
+            <Row
+              label="Target Return"
+              value={`$${fmt4(targetReturn)}`}
+              accent
+            />
+            <Row
+              label="Source"
+              value={source === 'both' ? 'Both Wallets' : `${source} Wallet`}
+            />
+            {goalTitle && <Row label="Goal" value={goalTitle} />}
+          </div>
+          <div className="flex gap-3 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(1)}
+              disabled={createStake.isPending}
+              className="h-11 flex-1 border-0 bg-transparent font-medium text-inherit"
+              style={{ ...raisedStyle, color: NEU_TOKENS.white60 }}
+            >
+              Back
+            </Button>
+            <PrimaryButton
+              onClick={handleConfirm}
+              disabled={createStake.isPending}
+              loading={createStake.isPending}
+              className="h-11 flex-1"
+            >
+              {createStake.isPending ? 'Creating...' : 'Confirm & Stake'}
+            </PrimaryButton>
           </div>
         </>
       )}
-    </AnimatePresence>
+
+      {step === 3 && (
+        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full sm:size-20"
+            style={raisedStyle}
+          >
+            <CheckCircle2
+              className="size-8 sm:size-10"
+              style={{ color: NEU_TOKENS.accent }}
+            />
+          </motion.div>
+          <h2
+            className="text-center text-xl font-bold sm:text-2xl"
+            style={{ color: NEU_TOKENS.accent }}
+          >
+            Stake Created Successfully
+          </h2>
+          <p
+            className="mt-2 text-center text-sm"
+            style={{ color: NEU_TOKENS.white60 }}
+          >
+            You&apos;ve successfully staked{' '}
+            <span className="font-bold" style={{ color: NEU_TOKENS.white80 }}>
+              ${fmt4(amountNum)}
+            </span>
+            {goalTitle && (
+              <>
+                {' '}
+                for <span className="font-medium">{goalTitle}</span>
+              </>
+            )}
+            .
+          </p>
+          <div
+            className="mx-auto mt-6 max-w-sm rounded-xl p-4"
+            style={insetStyle}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+                Total Target Return
+              </span>
+              <span
+                className="text-lg font-bold"
+                style={{ color: NEU_TOKENS.accent }}
+              >
+                ${fmt4(targetReturn)}
+              </span>
+            </div>
+            <p
+              className="mt-2 text-left text-xs"
+              style={{ color: NEU_TOKENS.white40 }}
+            >
+              You will receive daily payouts to your Earning Wallet until this
+              target is reached.
+            </p>
+          </div>
+          <PrimaryButton onClick={handleClose} className="mt-6">
+            Done
+          </PrimaryButton>
+        </div>
+      )}
+    </BaseModal>
+  );
+}
+
+function Row({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between border-b px-4 py-3 last:border-b-0"
+      style={{ borderColor: NEU_TOKENS.border }}
+    >
+      <span className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+        {label}
+      </span>
+      <span
+        className="text-sm font-semibold"
+        style={
+          accent ? { color: NEU_TOKENS.accent } : { color: NEU_TOKENS.white80 }
+        }
+      >
+        {value}
+      </span>
+    </div>
   );
 }
