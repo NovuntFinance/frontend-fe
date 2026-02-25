@@ -1,0 +1,327 @@
+
+> novunt-frontend@0.1.0 lint C:\Users\Hp\Desktop\Novunt APP\frontend-fe
+> eslint .
+
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(auth)\reset-password\page.tsx
+  10:3  warning  'Lock' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(auth)\verify-email\page.tsx
+  8:10  warning  'Mail' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\achievements\page.tsx
+  10:28  warning  'XCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\knowledge-base\page.tsx
+  28:3  warning  'knowledgeBaseArticles' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\layout.tsx
+    5:8   warning  'Link' is defined but never used                           @typescript-eslint/no-unused-vars
+    6:8   warning  'Image' is defined but never used                          @typescript-eslint/no-unused-vars
+   11:3   warning  'Lock' is defined but never used                           @typescript-eslint/no-unused-vars
+   12:3   warning  'CheckCircle2' is defined but never used                   @typescript-eslint/no-unused-vars
+   18:3   warning  'TrendingDown' is defined but never used                   @typescript-eslint/no-unused-vars
+   19:3   warning  'Users' is defined but never used                          @typescript-eslint/no-unused-vars
+   35:3   warning  'DropdownMenuLabel' is defined but never used              @typescript-eslint/no-unused-vars
+   39:10  warning  'Badge' is defined but never used                          @typescript-eslint/no-unused-vars
+   48:10  warning  'toast' is defined but never used                          @typescript-eslint/no-unused-vars
+   56:10  warning  'FloatingAssistantButton' is defined but never used        @typescript-eslint/no-unused-vars
+  121:9   warning  'isLocked' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  128:9   warning  'lastWeekProfitChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  133:10  warning  'twoFactorEnabled' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  138:9   warning  'disable2FAMutation' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\page.tsx
+   34:10  warning  'LoadingStates' is defined but never used               @typescript-eslint/no-unused-vars
+  394:47  warning  'activityLoading' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  468:9   warning  'displayActivities' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  563:9   warning  'pendingEarnings' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  566:9   warning  'nextPayoutDate' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\trading-signals\page.tsx
+   37:29  warning  'TradingSignal' is defined but never used     @typescript-eslint/no-unused-vars
+  116:35  warning  'refetch' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\app\(dashboard)\dashboard\wallets\page.tsx
+   6:10  warning  'Button' is defined but never used               @typescript-eslint/no-unused-vars
+   9:3   warning  'CardContent' is defined but never used          @typescript-eslint/no-unused-vars
+  25:11  warning  'openModal' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  27:11  warning  'isMobile' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  27:21  warning  'breakpoint' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\SuspenseBoundaries.tsx
+  9:10  warning  'Card' is defined but never used         @typescript-eslint/no-unused-vars
+  9:16  warning  'CardContent' is defined but never used  @typescript-eslint/no-unused-vars
+  9:29  warning  'CardHeader' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\achievements\AchievementsSummaryCard.tsx
+  21:10  warning  'ShimmerCard' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\achievements\BadgeAvatarSelector.tsx
+  56:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  69:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\achievements\BadgeCard.tsx
+  10:24  warning  'Circle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\achievements\BadgeGrid.tsx
+  8:36  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\achievements\NXPLeaderboard.tsx
+  14:15  warning  'LeaderboardEntry' is defined but never used       @typescript-eslint/no-unused-vars
+  29:10  warning  'getPositionBadgeColor' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\AddAdminModal.tsx
+  138:14  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+  322:33  warning  'someSelected' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\AddUserModal.tsx
+  19:10  warning  'toast' is defined but never used  @typescript-eslint/no-unused-vars
+  58:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\AdminGuard.tsx
+  23:11  warning  'token' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\RankBadge.tsx
+  4:10  warning  'RANK_REQUIREMENTS' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\dailyProfit\BulkDeclareModal.tsx
+  73:9  warning  'rosPercentage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\dailyProfit\DailyProfitCalendar.tsx
+   25:3  warning  'formatDateShort' is defined but never used          @typescript-eslint/no-unused-vars
+   89:9  warning  'getDateColor' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  100:9  warning  'getStatusLabel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  113:9  warning  'getDateBadge' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\dailyProfit\DeclareProfitModal.tsx
+  25:3  warning  'isFutureDate' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\dailyProfit\DeclaredProfitsList.tsx
+   8:3   warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+  47:10  warning  'toast' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\admin\pool\QualifiersList.tsx
+  127:6   warning  React Hook useEffect has a missing dependency: 'fetchQualifiers'. Either include it or remove the dependency array                                                                                                                                                                       react-hooks/exhaustive-deps
+  196:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\auth\PasswordStrengthIndicator.tsx
+  5:10  warning  'Check' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\auth\TurnstileWidget.tsx
+  188:6  warning  React Hook useEffect has missing dependencies: 'theme' and 'widgetId'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\ActiveStakesCard.tsx
+  88:9  warning  The 'activeStakes' logical expression could make the dependencies of useMemo Hook (at line 116) change on every render. To fix this, wrap the initialization of 'activeStakes' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\ActivityFeed.tsx
+   61:7  warning  'getStatusIcon' is assigned a value but never used                                                                                                                                                         @typescript-eslint/no-unused-vars
+  155:9  warning  The 'safeTransactions' conditional could make the dependencies of useMemo Hook (at line 161) change on every render. To fix this, wrap the initialization of 'safeTransactions' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  169:6  warning  React Hook useEffect has a missing dependency: 'safeTransactions.length'. Either include it or remove the dependency array                                                                                 react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\DailyROSPerformance.tsx
+  106:6  warning  React Hook useMemo has an unnecessary dependency: 'selectedRange'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  142:6  warning  React Hook useMemo has an unnecessary dependency: 'selectedRange'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\LiveTradingSignals.tsx
+    7:3   warning  'TrendingDown' is defined but never used              @typescript-eslint/no-unused-vars
+  137:10  warning  'isLoadingPrices' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  138:10  warning  'lastUpdate' is assigned a value but never used       @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\PortfolioChart.tsx
+  100:9  warning  'chartHeight' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  103:9  warning  'actualBarWidth' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\QuickActions.tsx
+  30:9  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\TodayROSCard.tsx
+  114:11  warning  'profitPercentage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dashboard\WelcomeBackCard.tsx
+  45:3  warning  'refetch' is defined but never used                @typescript-eslint/no-unused-vars
+  46:3  warning  'isRefetching' is defined but never used           @typescript-eslint/no-unused-vars
+  67:9  warning  'greetingName' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\dialogs\SessionExpiredDialog.tsx
+   9:10  warning  'Button' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  47:6   warning  React Hook useEffect has a missing dependency: 'handleRedirect'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\errors\UserFriendlyError.tsx
+   8:40  warning  'ArrowLeft' is defined but never used    @typescript-eslint/no-unused-vars
+  12:3   warning  'CardContent' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\examples\ExampleWithNewPatterns.tsx
+  12:10  warning  'designTokens' is defined but never used           @typescript-eslint/no-unused-vars
+  12:24  warning  'getSpacing' is defined but never used             @typescript-eslint/no-unused-vars
+  12:36  warning  'getBorderRadius' is defined but never used        @typescript-eslint/no-unused-vars
+  22:21  warning  'setIsLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\examples\MigratedComponentExample.tsx
+  24:22  warning  'MobileOnly' is defined but never used           @typescript-eslint/no-unused-vars
+  41:11  warning  'isMobile' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  41:21  warning  'isDesktop' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  41:32  warning  'breakpoint' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  62:27  warning  'formData' is defined but never used             @typescript-eslint/no-unused-vars
+  75:14  warning  'err' is defined but never used                  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\forms\FormField.tsx
+   10:10  warning  'zodResolver' is defined but never used  @typescript-eslint/no-unused-vars
+  107:29  warning  'fieldState' is defined but never used   @typescript-eslint/no-unused-vars
+  107:41  warning  'formState' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\onboarding\OnboardingCarousel.tsx
+   5:8  warning  'Image' is defined but never used           @typescript-eslint/no-unused-vars
+   9:3  warning  'BsPeopleFill' is defined but never used    @typescript-eslint/no-unused-vars
+  10:3  warning  'BsBuildingFill' is defined but never used  @typescript-eslint/no-unused-vars
+  11:3  warning  'BsTrophyFill' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\profile\AvatarSelector.tsx
+  142:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  258:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\profile\ProfileEditModal.tsx
+    7:10  warning  'motion' is defined but never used           @typescript-eslint/no-unused-vars
+    7:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+   15:3   warning  'X' is defined but never used                @typescript-eslint/no-unused-vars
+   57:3   warning  'formatAddress' is defined but never used    @typescript-eslint/no-unused-vars
+   60:45  warning  'AlertCircle' is defined but never used      @typescript-eslint/no-unused-vars
+  207:5   warning  'watch' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\profile\SocialMediaVerification.tsx
+  5:37  warning  'Share' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\rank-progress\RankProgressCard.tsx
+  925:10  warning  'RankProgressError' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\BonusCompletedCard.tsx
+  10:29  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\BonusExpiredCard.tsx
+  21:36  warning  'bonusData' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\CountdownTimer.tsx
+  26:53  warning  'totalSeconds' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\ErrorState.tsx
+  10:10  warning  'motion' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\ProfileRequirement.tsx
+  21:3  warning  'onComplete' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\RequirementSection.tsx
+  36:3  warning  'nextStepDescription' is defined but never used  @typescript-eslint/no-unused-vars
+  39:9  warning  'router' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\StakeRequirement.tsx
+  23:3  warning  'onComplete' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\TwoFARequirement.tsx
+  17:3  warning  'onComplete' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\registration-bonus\WithdrawalAddressRequirement.tsx
+  15:10  warning  'cn' is defined but never used          @typescript-eslint/no-unused-vars
+  19:3   warning  'onComplete' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\search\CommandPalette.tsx
+   11:10  warning  'useQuery' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   20:10  warning  'Badge' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   28:3   warning  'Settings' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   31:3   warning  'FileText' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+  117:9   warning  'pathname' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  118:11  warning  'user' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+  178:6   warning  React Hook useEffect has a missing dependency: 'handleSelect'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  230:39  warning  'index' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\settings\TwoFactorModal.tsx
+    7:3   warning  'Mail' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   13:11  warning  'MessageIcon' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   32:15  warning  'Generate2FASecretResponse' is defined but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   61:10  warning  'showBackupCodes' is assigned a value but never used                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   64:9   warning  'userEmail' is assigned a value but never used                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   76:6   warning  React Hook useEffect has a missing dependency: 'qrCodeUrl'. Either include it or remove the dependency array                                                                                                                                                                             react-hooks/exhaustive-deps
+  421:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\ui\enhanced-toast.tsx
+   9:10  warning  'Button' is defined but never used  @typescript-eslint/no-unused-vars
+  10:52  warning  'X' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\wallet\MoratoriumCountdown.tsx
+  4:10  warning  'Clock' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\wallet\TransactionHistory.tsx
+   18:3  warning  'ChevronLeft' is defined but never used                         @typescript-eslint/no-unused-vars
+   19:3  warning  'ChevronRight' is defined but never used                        @typescript-eslint/no-unused-vars
+   27:3  warning  'Wallet' is defined but never used                              @typescript-eslint/no-unused-vars
+  352:9  warning  'computedCategoryBreakdown' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\wallet\WithdrawalModal.tsx
+   43:3   warning  'Select' is defined but never used                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   44:3   warning  'SelectContent' is defined but never used                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   45:3   warning  'SelectItem' is defined but never used                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   46:3   warning  'SelectTrigger' is defined but never used                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   47:3   warning  'SelectValue' is defined but never used                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   80:33  warning  'hasDefaultAddress' is defined but never used                                                                                                                                                                @typescript-eslint/no-unused-vars
+  195:9   warning  'network' is assigned a value but never used                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  245:6   warning  React Hook useEffect has missing dependencies: 'canChangeAddress', 'moratorium?.active', 'moratorium.hoursRemaining', and 'moratorium.minutesRemaining'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  320:11  warning  'finalNetwork' is assigned a value but never used                                                                                                                                                            @typescript-eslint/no-unused-vars
+  859:34  warning  'error' is defined but never used                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  992:32  warning  'error' is defined but never used                                                                                                                                                                            @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\components\wallet\modals\TransferModal.tsx
+  70:10  warning  'otpSent' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  71:10  warning  'otpExpiresIn' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\contexts\ConfigContext.tsx
+  116:6  warning  React Hook useEffect has a missing dependency: 'fetchConfigs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\design-system\animations.ts
+  114:9  warning  'config' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\hooks\__tests__\useAuth.test.ts
+  6:22  warning  'waitFor' is defined but never used              @typescript-eslint/no-unused-vars
+  7:10  warning  'renderWithProviders' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\hooks\useRegistrationBonus.ts
+  11:3  warning  'ProcessStakeRequest' is defined but never used   @typescript-eslint/no-unused-vars
+  12:3  warning  'ProcessStakeResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\hooks\useResponsive.ts
+  40:31  warning  'isDesktop' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\hooks\useShareTriggers.ts
+  60:45  warning  'totalReturn' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\hooks\useWallet.ts
+    8:26  warning  'TransactionFilters' is defined but never used  @typescript-eslint/no-unused-vars
+  137:17  warning  'response' is defined but never used            @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\accessibility.ts
+  136:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\api-utils.ts
+  85:33  warning  'key' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\backendHealthCheck.ts
+  6:10  warning  'api' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\features.tsx
+  53:19  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
+  62:19  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\queries.ts
+  2455:3  warning  'GetDeclarationByDateResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\lib\utils\wallet.ts
+  364:3   warning  'network' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  417:12  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+  429:14  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\middleware.ts
+  71:9  warning  'isAuthRoute' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Hp\Desktop\Novunt APP\frontend-fe\src\services\dailyProfitService.ts
+  2:10  warning  'adminAuthService' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 172 problems (0 errors, 172 warnings)
+
