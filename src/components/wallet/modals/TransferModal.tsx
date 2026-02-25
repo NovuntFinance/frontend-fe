@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  X,
   Send,
   Search,
   User,
@@ -16,7 +15,6 @@ import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useWalletBalance } from '@/lib/queries';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -26,6 +24,21 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queries';
 import { useTransferLimits } from '@/hooks/useTransferLimits';
 import { fmt4 } from '@/utils/formatters';
+import {
+  BaseModal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  InfoCallout,
+  PrimaryButton,
+  SecondaryButton,
+} from '@/components/neumorphic-modal';
+import {
+  NEU_TOKENS,
+  neuInset,
+  neuRaised,
+  neuRadius,
+} from '@/components/neumorphic-modal/tokens';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -219,641 +232,719 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     }
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop - Premium glassmorphism */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md backdrop-saturate-150 dark:bg-black/70"
-          />
+  const insetStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuInset,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.md,
+  };
+  const raisedStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuRaised,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.md,
+  };
 
-          {/* Modal - Mobile-first with proper height constraints */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-4">
+  return (
+    <BaseModal isOpen={isOpen} onClose={onClose}>
+      {step === 'search' && (
+        <>
+          <ModalHeader
+            title="Send USDT"
+            subtitle="Instant P2P transfer • FREE"
+            onClose={onClose}
+          />
+          <ModalBody>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative my-4 flex max-h-[calc(100vh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/30 bg-white/95 shadow-2xl shadow-black/20 backdrop-blur-2xl backdrop-saturate-200 sm:my-8 sm:max-h-[calc(100vh-2rem)] sm:rounded-3xl dark:border-white/10 dark:bg-gray-900/95 dark:shadow-black/40"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4 sm:space-y-5 lg:space-y-6"
             >
-              {/* Header - Premium gradient */}
-              <div className="from-accent via-accent to-accent/90 relative bg-gradient-to-br p-4 shadow-lg sm:p-6">
-                <div className="from-accent/20 via-accent/10 absolute inset-0 bg-gradient-to-t to-transparent" />
-                <div className="relative z-10 flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                    <div className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-sm sm:p-3 dark:bg-white/10">
-                      <Send className="h-5 w-5 text-white sm:h-6 sm:w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
-                        Send USDT
-                      </h2>
-                      <p className="truncate text-xs text-white/90 sm:text-sm">
-                        Instant P2P transfer &bull; FREE
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onClose}
-                    className="h-8 w-8 flex-shrink-0 rounded-xl text-white/90 hover:bg-white/20 hover:text-white sm:h-10 sm:w-10"
-                  >
-                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Button>
-                </div>
+              <div className="rounded-xl p-4" style={insetStyle}>
+                <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                  Available to Send
+                </p>
+                <p
+                  className="text-2xl font-bold"
+                  style={{ color: NEU_TOKENS.accent }}
+                >
+                  $
+                  {availableBalance.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: NEU_TOKENS.white40 }}
+                >
+                  From Earnings Wallet
+                </p>
               </div>
 
-              {/* Content - Scrollable with custom scrollbar */}
-              <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300/50 [&::-webkit-scrollbar-thumb]:hover:bg-gray-300/70 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700/50 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-700/70 [&::-webkit-scrollbar-track]:bg-transparent">
-                {/* Step 1: Search User */}
-                {step === 'search' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="space-y-4 sm:space-y-6"
-                  >
-                    {/* Available Balance */}
-                    <div className="from-accent/10 to-accent/5 border-accent/20 rounded-xl border bg-gradient-to-br p-4">
-                      <p className="text-muted-foreground mb-1 text-sm">
-                        Available to Send
-                      </p>
-                      <p className="text-foreground text-3xl font-bold">
-                        $
-                        {availableBalance.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        From Earnings Wallet
-                      </p>
-                    </div>
+              <InfoCallout
+                icon={
+                  <CheckCircle2
+                    className="size-4"
+                    style={{ color: NEU_TOKENS.accent }}
+                  />
+                }
+                title="Instant & FREE"
+                description="No fees, instant delivery, available 24/7"
+              />
 
-                    {/* Info Alert */}
-                    <Alert className="bg-success/10 border-success">
-                      <CheckCircle2 className="text-success h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Instant & FREE</strong> - No fees, instant
-                        delivery, available 24/7
-                      </AlertDescription>
-                    </Alert>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="search"
+                  className="text-sm font-medium"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  Find Recipient
+                </Label>
+                <div className="relative">
+                  <Search
+                    className="absolute top-1/2 left-3 size-5 -translate-y-1/2"
+                    style={{ color: NEU_TOKENS.white40 }}
+                  />
+                  <Input
+                    id="search"
+                    type={searchQuery.includes('@') ? 'email' : 'text'}
+                    placeholder="Enter email, username, or user ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="neu-input border-0 pl-10 focus-visible:ring-0"
+                  />
+                  {searchLoading && (
+                    <NovuntSpinner
+                      size="sm"
+                      className="absolute top-1/2 right-3 -translate-y-1/2"
+                    />
+                  )}
+                </div>
+                <p className="text-xs" style={{ color: NEU_TOKENS.white40 }}>
+                  You can send to a user by entering their email address,
+                  username, or user ID
+                </p>
+              </div>
 
-                    {/* Search Input */}
-                    <div className="space-y-2">
-                      <Label htmlFor="search">Find Recipient</Label>
-                      <div className="relative">
-                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-                        <Input
-                          id="search"
-                          type={searchQuery.includes('@') ? 'email' : 'text'}
-                          placeholder="Enter email, username, or user ID..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10"
+              {searchQuery.length >= 2 && (
+                <div className="space-y-2">
+                  {searchQuery.trim().length >= 3 && !searchLoading && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={() => {
+                        const trimmedQuery = searchQuery.trim();
+                        const identifier =
+                          transferApi.detectIdentifierType(trimmedQuery);
+                        const newUser: DisplayUser = {
+                          userId: identifier.recipientId || '',
+                          username:
+                            identifier.recipientUsername ||
+                            trimmedQuery.toLowerCase(),
+                          displayName:
+                            identifier.recipientEmail || trimmedQuery,
+                          email: identifier.recipientEmail,
+                        };
+                        handleSelectUser(newUser);
+                      }}
+                      className="flex w-full items-center gap-4 rounded-xl border-2 border-dashed p-4 text-left transition-colors"
+                      style={{ ...raisedStyle, borderColor: NEU_TOKENS.border }}
+                    >
+                      <div className="rounded-full p-3" style={insetStyle}>
+                        <User
+                          className="size-5"
+                          style={{ color: NEU_TOKENS.accent }}
                         />
-                        {searchLoading && (
-                          <NovuntSpinner
-                            size="sm"
-                            className="absolute top-1/2 right-3 -translate-y-1/2"
-                          />
-                        )}
                       </div>
-                      <p className="text-muted-foreground text-xs">
-                        You can send to a user by entering their email address,
-                        username, or user ID
-                      </p>
-                    </div>
-
-                    {/* Search Results */}
-                    {searchQuery.length >= 2 && (
-                      <div className="space-y-2">
-                        {/* Always show option to continue with typed username */}
-                        {searchQuery.trim().length >= 3 && !searchLoading && (
-                          <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            onClick={() => {
-                              const trimmedQuery = searchQuery.trim();
-                              // Detect identifier type (email, ID, or username)
-                              const identifier =
-                                transferApi.detectIdentifierType(trimmedQuery);
-
-                              const newUser: DisplayUser = {
-                                userId: identifier.recipientId || '',
-                                username:
-                                  identifier.recipientUsername ||
-                                  trimmedQuery.toLowerCase(),
-                                displayName:
-                                  identifier.recipientEmail || trimmedQuery,
-                                email: identifier.recipientEmail,
-                              };
-                              handleSelectUser(newUser);
-                            }}
-                            className="border-primary/30 bg-primary/5 hover:bg-primary/10 flex w-full items-center gap-4 rounded-xl border-2 border-dashed p-4 text-left transition-colors"
-                          >
-                            <div className="bg-primary/20 rounded-full p-3">
-                              <User className="text-primary h-5 w-5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate font-semibold">
-                                {searchQuery.trim().includes('@')
-                                  ? searchQuery.trim()
-                                  : `@${searchQuery.trim()}`}
-                              </p>
-                              <p className="text-muted-foreground text-sm">
-                                {searchQuery.trim().includes('@')
-                                  ? 'Send to email address'
-                                  : /^[0-9a-fA-F]{24}$/.test(searchQuery.trim())
-                                    ? 'Send to user ID'
-                                    : 'Send to new recipient'}
-                              </p>
-                            </div>
-                            <Send className="text-primary h-4 w-4" />
-                          </motion.button>
-                        )}
-
-                        {/* Show message if less than 3 characters */}
-                        {searchQuery.trim().length < 3 && !searchLoading && (
-                          <div className="text-muted-foreground bg-muted/50 rounded-xl p-6 text-center">
-                            <p className="text-sm">
-                              Type at least 3 characters, an email address, or a
-                              user ID to add a new recipient
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Past Recipients Section */}
-                        {searchResults.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-muted-foreground px-2 text-xs font-semibold tracking-wide uppercase">
-                              Past Recipients
-                            </p>
-                            {searchResults.map((user) => (
-                              <motion.button
-                                key={user.userId || user.username}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                onClick={() => handleSelectUser(user)}
-                                className="hover:bg-muted flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-colors"
-                              >
-                                <div className="bg-primary/10 rounded-full p-3">
-                                  <User className="text-primary h-5 w-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate font-semibold">
-                                    @{user.username}
-                                  </p>
-                                  <p className="text-muted-foreground truncate text-sm">
-                                    {user.displayName}
-                                  </p>
-                                </div>
-                              </motion.button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {searchQuery.length < 2 && (
-                      <div className="text-muted-foreground p-12 text-center">
-                        <Search className="mx-auto mb-4 h-12 w-12 opacity-30" />
-                        <p className="text-sm">
-                          Start typing to search for users
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="truncate font-semibold"
+                          style={{ color: NEU_TOKENS.white80 }}
+                        >
+                          {searchQuery.trim().includes('@')
+                            ? searchQuery.trim()
+                            : `@${searchQuery.trim()}`}
+                        </p>
+                        <p
+                          className="truncate text-sm"
+                          style={{ color: NEU_TOKENS.white60 }}
+                        >
+                          {searchQuery.trim().includes('@')
+                            ? 'Send to email address'
+                            : /^[0-9a-fA-F]{24}$/.test(searchQuery.trim())
+                              ? 'Send to user ID'
+                              : 'Send to new recipient'}
                         </p>
                       </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {/* Step 2: Enter Amount */}
-                {step === 'amount' && selectedUser && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="space-y-4 sm:space-y-6"
-                  >
-                    {/* Selected User */}
-                    <div className="bg-muted rounded-xl p-4">
-                      <p className="text-muted-foreground mb-2 text-xs">
-                        Sending to:
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 rounded-full p-2">
-                          <User className="text-primary h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold">
-                            {selectedUser.email &&
-                            selectedUser.email.includes('@')
-                              ? selectedUser.email
-                              : `@${selectedUser.username}`}
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            {selectedUser.email &&
-                            selectedUser.email.includes('@')
-                              ? 'Email address'
-                              : selectedUser.displayName}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={() => setStep('search')}
-                        className="mt-2 text-xs"
-                      >
-                        Change recipient
-                      </Button>
-                    </div>
-
-                    {/* Amount Input */}
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Amount (USDT)</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        min={MIN_TRANSFER}
-                        max={availableBalance}
-                        step="0.01"
-                        placeholder={`Enter amount (min ${MIN_TRANSFER} USDT)`}
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="text-lg"
-                        autoFocus
+                      <Send
+                        className="size-4"
+                        style={{ color: NEU_TOKENS.accent }}
                       />
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          Available: ${fmt4(availableBalance)}
-                        </span>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={() => setAmount(availableBalance.toString())}
-                          className="h-auto p-0 text-xs"
+                    </motion.button>
+                  )}
+                  {searchQuery.trim().length < 3 && !searchLoading && (
+                    <div
+                      className="rounded-xl p-6 text-center"
+                      style={insetStyle}
+                    >
+                      <p
+                        className="text-sm"
+                        style={{ color: NEU_TOKENS.white60 }}
+                      >
+                        Type at least 3 characters, an email address, or a user
+                        ID to add a new recipient
+                      </p>
+                    </div>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div className="space-y-2">
+                      <p
+                        className="px-2 text-xs font-semibold tracking-wide uppercase"
+                        style={{ color: NEU_TOKENS.white60 }}
+                      >
+                        Past Recipients
+                      </p>
+                      {searchResults.map((user) => (
+                        <motion.button
+                          key={user.userId || user.username}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={() => handleSelectUser(user)}
+                          className="flex w-full items-center gap-4 rounded-xl p-4 text-left transition-colors"
+                          style={raisedStyle}
                         >
-                          Send max
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Memo Input (Optional) */}
-                    <div className="space-y-2">
-                      <Label htmlFor="memo">Note (Optional)</Label>
-                      <Input
-                        id="memo"
-                        type="text"
-                        maxLength={200}
-                        placeholder="Add a note for this transfer..."
-                        value={memo}
-                        onChange={(e) => setMemo(e.target.value)}
-                      />
-                      <p className="text-muted-foreground text-xs">
-                        {memo.length}/200 characters
-                      </p>
-                    </div>
-
-                    {/* Fee Info */}
-                    {parseFloat(amount) >= MIN_TRANSFER && (
-                      <div className="bg-success/10 border-success/20 rounded-xl border p-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <CheckCircle2 className="text-success h-4 w-4" />
-                          <p className="text-success font-semibold">
-                            FREE Transfer
-                          </p>
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Amount:
-                            </span>
-                            <span className="font-semibold">
-                              ${fmt4(parseFloat(amount))}
-                            </span>
+                          <div className="rounded-full p-3" style={insetStyle}>
+                            <User
+                              className="size-5"
+                              style={{ color: NEU_TOKENS.accent }}
+                            />
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Fee:</span>
-                            <span className="text-success font-semibold">
-                              $0.00 (FREE)
-                            </span>
-                          </div>
-                          <div className="bg-border my-2 h-px" />
-                          <div className="flex justify-between">
-                            <span className="font-semibold">
-                              Recipient receives:
-                            </span>
-                            <span className="text-success text-lg font-bold">
-                              ${fmt4(parseFloat(amount))}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {error && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button
-                        onClick={() => setStep('search')}
-                        variant="outline"
-                        className="w-full flex-1 sm:w-auto"
-                        size="lg"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        onClick={handleProceedTo2FA}
-                        disabled={!amount || parseFloat(amount) < MIN_TRANSFER}
-                        className="bg-accent hover:bg-accent/90 w-full flex-1 sm:w-auto"
-                        size="lg"
-                      >
-                        Continue
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step 3: 2FA Confirmation */}
-                {step === '2fa' && selectedUser && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex h-full flex-col"
-                  >
-                    <div className="flex-1 space-y-6 overflow-y-auto pr-2">
-                      {/* Confirmation Card - Redesigned */}
-                      <div className="from-accent/5 via-accent/10 to-accent/5 border-accent/20 space-y-6 rounded-2xl border bg-gradient-to-br p-8">
-                        {/* Amount Display */}
-                        <div className="text-center">
-                          <p className="text-muted-foreground mb-3 text-sm font-medium tracking-wider uppercase">
-                            You&apos;re sending
-                          </p>
-                          <div className="flex items-baseline justify-center gap-2">
-                            <span className="text-muted-foreground text-2xl">
-                              $
-                            </span>
-                            <p className="text-foreground text-5xl font-bold">
-                              {fmt4(parseFloat(amount))}
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="truncate font-semibold"
+                              style={{ color: NEU_TOKENS.white80 }}
+                            >
+                              @{user.username}
+                            </p>
+                            <p
+                              className="truncate text-sm"
+                              style={{ color: NEU_TOKENS.white60 }}
+                            >
+                              {user.displayName}
                             </p>
                           </div>
-                          <p className="text-muted-foreground mt-2 text-lg font-medium">
-                            USDT
-                          </p>
-                        </div>
-
-                        {/* Arrow Animation */}
-                        <div className="flex items-center justify-center">
-                          <motion.div
-                            animate={{ y: [0, 8, 0] }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                            }}
-                            className="bg-accent/20 rounded-full p-4"
-                          >
-                            <Send className="text-accent h-6 w-6" />
-                          </motion.div>
-                        </div>
-
-                        {/* Recipient Display */}
-                        <div className="text-center">
-                          <p className="text-muted-foreground mb-3 text-sm font-medium">
-                            To
-                          </p>
-                          <div className="bg-background/50 hover:bg-background/70 border-border/50 inline-flex items-center gap-4 rounded-2xl border p-4 transition-colors">
-                            <div className="bg-primary/10 rounded-full p-3">
-                              <User className="text-primary h-6 w-6" />
-                            </div>
-                            <div className="text-left">
-                              <p className="text-lg font-semibold">
-                                {selectedUser.email &&
-                                selectedUser.email.includes('@')
-                                  ? selectedUser.email
-                                  : `@${selectedUser.username}`}
-                              </p>
-                              <p className="text-muted-foreground text-xs">
-                                {selectedUser.email &&
-                                selectedUser.email.includes('@')
-                                  ? 'Email address'
-                                  : selectedUser.displayName}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Transfer Details */}
-                        <div className="bg-background/30 border-border/50 space-y-3 rounded-xl border p-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground text-sm font-medium">
-                              Transfer fee
-                            </span>
-                            <span className="text-success font-bold">FREE</span>
-                          </div>
-                          <div className="bg-border h-px" />
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground text-sm font-medium">
-                              Delivery time
-                            </span>
-                            <span className="text-success font-bold">
-                              Instant
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 2FA Code Input - Redesigned */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <Shield className="text-accent h-5 w-5" />
-                          <Label
-                            htmlFor="twoFACode"
-                            className="text-base font-semibold"
-                          >
-                            Two-Factor Authentication
-                          </Label>
-                        </div>
-
-                        <div className="relative">
-                          <Input
-                            id="twoFACode"
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={6}
-                            placeholder="000000"
-                            value={twoFACode}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, '');
-                              setTwoFACode(value);
-                              setError('');
-                            }}
-                            className="bg-background/50 focus:border-accent focus:ring-accent/20 h-16 border-2 text-center font-mono text-3xl tracking-[0.5em] focus:ring-2"
-                            autoFocus
-                          />
-                          {twoFACode.length > 0 && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="absolute top-1/2 right-4 -translate-y-1/2"
-                            >
-                              <CheckCircle2 className="text-success h-5 w-5" />
-                            </motion.div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-center gap-2 text-xs">
-                          <Clock className="text-muted-foreground h-3 w-3" />
-                          <p className="text-muted-foreground text-center">
-                            Enter the 6-digit code from your authenticator app
-                          </p>
-                        </div>
-                      </div>
-
-                      {error && (
-                        <Alert
-                          variant="destructive"
-                          className="border-red-500/50"
-                        >
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription className="font-medium">
-                            {error}
-                          </AlertDescription>
-                        </Alert>
-                      )}
+                        </motion.button>
+                      ))}
                     </div>
+                  )}
+                </div>
+              )}
 
-                    {/* Sticky Footer with Buttons */}
-                    <div className="bg-card sticky bottom-0 mt-6 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:pt-6">
-                      <Button
-                        onClick={() => setStep('amount')}
-                        variant="outline"
-                        className="w-full flex-1 border-2 sm:w-auto"
-                        size="lg"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        onClick={handleSubmitTransfer}
-                        disabled={loading || twoFACode.length !== 6}
-                        className="bg-accent hover:bg-accent/90 shadow-accent/20 w-full flex-1 border-2 border-transparent shadow-lg sm:w-auto"
-                        size="lg"
-                      >
-                        {loading ? (
-                          <>
-                            <NovuntSpinner size="sm" className="mr-2" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="mr-2 h-4 w-4" />
-                            Confirm Transfer
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
+              {searchQuery.length < 2 && (
+                <div
+                  className="p-12 text-center"
+                  style={{ color: NEU_TOKENS.white40 }}
+                >
+                  <Search className="mx-auto mb-4 size-12 opacity-30" />
+                  <p className="text-sm">Start typing to search for users</p>
+                </div>
+              )}
+            </motion.div>
+          </ModalBody>
+        </>
+      )}
 
-                {/* Step 4: Success */}
-                {step === 'success' && selectedUser && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="space-y-4 py-8 text-center sm:space-y-6 sm:py-12"
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', duration: 0.5 }}
-                      className="bg-success/10 inline-flex rounded-full p-6"
+      {step === 'amount' && selectedUser && (
+        <>
+          <ModalHeader
+            title="Send USDT"
+            subtitle="Enter amount and note"
+            onClose={onClose}
+          />
+          <ModalBody>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4 sm:space-y-5 lg:space-y-6"
+            >
+              <div className="rounded-xl p-4" style={insetStyle}>
+                <p
+                  className="mb-2 text-xs"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  Sending to:
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full p-2" style={insetStyle}>
+                    <User
+                      className="size-5"
+                      style={{ color: NEU_TOKENS.accent }}
+                    />
+                  </div>
+                  <div>
+                    <p
+                      className="font-semibold"
+                      style={{ color: NEU_TOKENS.white80 }}
                     >
-                      <CheckCircle2 className="text-success h-12 w-12" />
-                    </motion.div>
+                      {selectedUser.email && selectedUser.email.includes('@')
+                        ? selectedUser.email
+                        : `@${selectedUser.username}`}
+                    </p>
+                    <p
+                      className="text-sm"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      {selectedUser.email && selectedUser.email.includes('@')
+                        ? 'Email address'
+                        : selectedUser.displayName}
+                    </p>
+                  </div>
+                </div>
+                <SecondaryButton
+                  onClick={() => setStep('search')}
+                  className="mt-2 text-xs"
+                >
+                  Change recipient
+                </SecondaryButton>
+              </div>
 
-                    <div>
-                      <h3 className="mb-2 text-2xl font-bold">
-                        Transfer Successful!
-                      </h3>
-                      <p className="text-muted-foreground text-lg">
-                        ${fmt4(parseFloat(amount))} sent to{' '}
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <Label
+                    htmlFor="amount"
+                    className="text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    Amount (USDT)
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(availableBalance.toString())}
+                    className="text-xs font-semibold"
+                    style={{ color: NEU_TOKENS.accent }}
+                  >
+                    Send max
+                  </button>
+                </div>
+                <Input
+                  id="amount"
+                  type="number"
+                  min={MIN_TRANSFER}
+                  max={availableBalance}
+                  step="0.01"
+                  placeholder={`Enter amount (min ${MIN_TRANSFER} USDT)`}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="neu-input h-12 w-full border-0 text-lg focus-visible:ring-0"
+                  autoFocus
+                />
+                <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                  Available: ${fmt4(availableBalance)}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="memo"
+                  className="text-sm font-medium"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  Note (Optional)
+                </Label>
+                <Input
+                  id="memo"
+                  type="text"
+                  maxLength={200}
+                  placeholder="Add a note for this transfer..."
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  className="neu-input w-full border-0 focus-visible:ring-0"
+                />
+                <p className="text-xs" style={{ color: NEU_TOKENS.white40 }}>
+                  {memo.length}/200 characters
+                </p>
+              </div>
+
+              {parseFloat(amount) >= MIN_TRANSFER && (
+                <div className="rounded-xl p-4" style={insetStyle}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <CheckCircle2
+                      className="size-4"
+                      style={{ color: NEU_TOKENS.accent }}
+                    />
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: NEU_TOKENS.accent }}
+                    >
+                      FREE Transfer
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span style={{ color: NEU_TOKENS.white60 }}>Amount:</span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: NEU_TOKENS.white80 }}
+                      >
+                        ${fmt4(parseFloat(amount))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: NEU_TOKENS.white60 }}>Fee:</span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: NEU_TOKENS.accent }}
+                      >
+                        $0.00 (FREE)
+                      </span>
+                    </div>
+                    <div
+                      className="my-2 h-px"
+                      style={{ background: NEU_TOKENS.border }}
+                    />
+                    <div className="flex justify-between">
+                      <span
+                        className="font-semibold"
+                        style={{ color: NEU_TOKENS.white80 }}
+                      >
+                        Recipient receives:
+                      </span>
+                      <span
+                        className="text-lg font-bold"
+                        style={{ color: NEU_TOKENS.accent }}
+                      >
+                        ${fmt4(parseFloat(amount))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <p className="neu-error text-xs font-medium">{error}</p>
+              )}
+
+              <ModalFooter className="flex flex-row gap-3 pt-2">
+                <Button
+                  onClick={() => setStep('search')}
+                  variant="outline"
+                  className="h-11 flex-1 border-0"
+                  style={raisedStyle}
+                >
+                  <span style={{ color: NEU_TOKENS.white60 }}>Back</span>
+                </Button>
+                <PrimaryButton
+                  onClick={handleProceedTo2FA}
+                  disabled={!amount || parseFloat(amount) < MIN_TRANSFER}
+                  className="h-11 flex-1"
+                >
+                  Continue
+                </PrimaryButton>
+              </ModalFooter>
+            </motion.div>
+          </ModalBody>
+        </>
+      )}
+
+      {step === '2fa' && selectedUser && (
+        <>
+          <ModalHeader
+            title="Send USDT"
+            subtitle="Confirm with 2FA"
+            onClose={onClose}
+          />
+          <ModalBody>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
+              <div className="space-y-6 rounded-2xl p-6" style={insetStyle}>
+                <div className="text-center">
+                  <p
+                    className="mb-3 text-sm font-medium tracking-wider uppercase"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    You&apos;re sending
+                  </p>
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span
+                      className="text-2xl"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      $
+                    </span>
+                    <p
+                      className="text-5xl font-bold"
+                      style={{ color: NEU_TOKENS.accent }}
+                    >
+                      {fmt4(parseFloat(amount))}
+                    </p>
+                  </div>
+                  <p
+                    className="mt-2 text-lg font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    USDT
+                  </p>
+                </div>
+                <div className="flex items-center justify-center">
+                  <motion.div
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="rounded-full p-4"
+                    style={raisedStyle}
+                  >
+                    <Send
+                      className="size-6"
+                      style={{ color: NEU_TOKENS.accent }}
+                    />
+                  </motion.div>
+                </div>
+                <div className="text-center">
+                  <p
+                    className="mb-3 text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    To
+                  </p>
+                  <div
+                    className="inline-flex items-center gap-4 rounded-2xl p-4"
+                    style={raisedStyle}
+                  >
+                    <div className="rounded-full p-3" style={insetStyle}>
+                      <User
+                        className="size-6"
+                        style={{ color: NEU_TOKENS.accent }}
+                      />
+                    </div>
+                    <div className="text-left">
+                      <p
+                        className="text-lg font-semibold"
+                        style={{ color: NEU_TOKENS.white80 }}
+                      >
                         {selectedUser.email && selectedUser.email.includes('@')
                           ? selectedUser.email
                           : `@${selectedUser.username}`}
                       </p>
-                    </div>
-
-                    <div className="bg-muted space-y-2 rounded-xl p-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">
-                          ${fmt4(parseFloat(amount))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Recipient:
-                        </span>
-                        <span className="font-semibold">
-                          {selectedUser.email &&
-                          selectedUser.email.includes('@')
-                            ? selectedUser.email
-                            : `@${selectedUser.username}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Fee:</span>
-                        <span className="text-success font-semibold">FREE</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Transaction ID:
-                        </span>
-                        <span className="font-mono text-xs">
-                          {transferResponse?.txId}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button
-                        onClick={onClose}
-                        variant="outline"
-                        className="w-full flex-1 sm:w-auto"
-                        size="lg"
+                      <p
+                        className="text-xs"
+                        style={{ color: NEU_TOKENS.white60 }}
                       >
-                        Close
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setStep('search');
-                          setSearchQuery('');
-                          setSelectedUser(null);
-                          setAmount('');
-                        }}
-                        className="bg-accent hover:bg-accent/90 w-full flex-1 sm:w-auto"
-                        size="lg"
-                      >
-                        Send Again
-                      </Button>
+                        {selectedUser.email && selectedUser.email.includes('@')
+                          ? 'Email address'
+                          : selectedUser.displayName}
+                      </p>
                     </div>
-                  </motion.div>
-                )}
+                  </div>
+                </div>
+                <div className="space-y-3 rounded-xl p-4" style={insetStyle}>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      Transfer fee
+                    </span>
+                    <span
+                      className="font-bold"
+                      style={{ color: NEU_TOKENS.accent }}
+                    >
+                      FREE
+                    </span>
+                  </div>
+                  <div
+                    className="h-px"
+                    style={{ background: NEU_TOKENS.border }}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      Delivery time
+                    </span>
+                    <span
+                      className="font-bold"
+                      style={{ color: NEU_TOKENS.accent }}
+                    >
+                      Instant
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2">
+                  <Shield
+                    className="size-5"
+                    style={{ color: NEU_TOKENS.accent }}
+                  />
+                  <Label
+                    htmlFor="twoFACode"
+                    className="text-base font-semibold"
+                    style={{ color: NEU_TOKENS.white80 }}
+                  >
+                    Two-Factor Authentication
+                  </Label>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="twoFACode"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={twoFACode}
+                    onChange={(e) => {
+                      setTwoFACode(e.target.value.replace(/\D/g, ''));
+                      setError('');
+                    }}
+                    className="neu-input h-16 border-0 text-center font-mono text-3xl tracking-[0.5em] focus-visible:ring-0"
+                    autoFocus
+                  />
+                  {twoFACode.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute top-1/2 right-4 -translate-y-1/2"
+                    >
+                      <CheckCircle2
+                        className="size-5"
+                        style={{ color: NEU_TOKENS.accent }}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+                <p
+                  className="flex items-center justify-center gap-2 text-center text-xs"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  <Clock className="size-3" /> Enter the 6-digit code from your
+                  authenticator app
+                </p>
+              </div>
+
+              {error && (
+                <p className="neu-error text-xs font-medium">{error}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  onClick={() => setStep('amount')}
+                  variant="outline"
+                  className="h-11 flex-1 border-0"
+                  style={raisedStyle}
+                >
+                  <span style={{ color: NEU_TOKENS.white60 }}>Back</span>
+                </Button>
+                <PrimaryButton
+                  onClick={handleSubmitTransfer}
+                  disabled={loading || twoFACode.length !== 6}
+                  loading={loading}
+                  className="h-11 flex-1"
+                >
+                  {loading ? 'Processing...' : 'Confirm Transfer'}
+                </PrimaryButton>
               </div>
             </motion.div>
-          </div>
+          </ModalBody>
         </>
       )}
-    </AnimatePresence>
+
+      {step === 'success' && selectedUser && (
+        <div className="px-4 py-6 text-center sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', duration: 0.5 }}
+            className="mx-auto inline-flex rounded-full p-6"
+            style={raisedStyle}
+          >
+            <CheckCircle2
+              className="size-12"
+              style={{ color: NEU_TOKENS.accent }}
+            />
+          </motion.div>
+          <h3
+            className="mb-2 text-2xl font-bold"
+            style={{ color: NEU_TOKENS.accent }}
+          >
+            Transfer Successful!
+          </h3>
+          <p className="text-lg" style={{ color: NEU_TOKENS.white60 }}>
+            ${fmt4(parseFloat(amount))} sent to{' '}
+            {selectedUser.email && selectedUser.email.includes('@')
+              ? selectedUser.email
+              : `@${selectedUser.username}`}
+          </p>
+          <div
+            className="mx-auto mt-6 max-w-sm space-y-2 rounded-xl p-4 text-left text-sm"
+            style={insetStyle}
+          >
+            <div className="flex justify-between">
+              <span style={{ color: NEU_TOKENS.white60 }}>Amount:</span>
+              <span
+                className="font-semibold"
+                style={{ color: NEU_TOKENS.white80 }}
+              >
+                ${fmt4(parseFloat(amount))}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span style={{ color: NEU_TOKENS.white60 }}>Recipient:</span>
+              <span
+                className="font-semibold"
+                style={{ color: NEU_TOKENS.white80 }}
+              >
+                {selectedUser.email && selectedUser.email.includes('@')
+                  ? selectedUser.email
+                  : `@${selectedUser.username}`}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span style={{ color: NEU_TOKENS.white60 }}>Fee:</span>
+              <span
+                className="font-semibold"
+                style={{ color: NEU_TOKENS.accent }}
+              >
+                FREE
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span style={{ color: NEU_TOKENS.white60 }}>Transaction ID:</span>
+              <span
+                className="font-mono text-xs"
+                style={{ color: NEU_TOKENS.white80 }}
+              >
+                {transferResponse?.txId}
+              </span>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <SecondaryButton onClick={onClose} className="sm:min-w-[120px]">
+              Close
+            </SecondaryButton>
+            <PrimaryButton
+              onClick={() => {
+                setStep('search');
+                setSearchQuery('');
+                setSelectedUser(null);
+                setAmount('');
+              }}
+              className="sm:min-w-[140px]"
+            >
+              Send Again
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+    </BaseModal>
   );
 }

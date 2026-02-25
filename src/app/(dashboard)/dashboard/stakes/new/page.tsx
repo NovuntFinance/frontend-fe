@@ -13,12 +13,11 @@ import { useWallet } from '@/hooks/useWallet';
 import { formatCurrency } from '@/lib/utils';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  NEU_TOKENS,
+  neuInset,
+  neuRaised,
+  neuRadius,
+} from '@/components/rank-progress/neumorphicTokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
 
 const optionalTrimmedString = (max: number, message: string) =>
   z
@@ -116,6 +116,19 @@ export default function CreateStakePage() {
     }
   });
 
+  const neuPanelStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuInset,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.lg,
+  };
+  const neuRaisedStyle: React.CSSProperties = {
+    background: NEU_TOKENS.bg,
+    boxShadow: neuRaised,
+    border: `1px solid ${NEU_TOKENS.border}`,
+    borderRadius: neuRadius.md,
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -124,50 +137,98 @@ export default function CreateStakePage() {
       className="space-y-6"
     >
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1
+          className="text-3xl font-bold tracking-tight"
+          style={{ color: NEU_TOKENS.accent }}
+        >
           Create a New Stake
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
           Choose the amount you would like to stake from your funded wallet.
           You&apos;ll earn weekly ROS credited to your earnings wallet until you
-          double your stake.
+          reach {stakingConfig.goalTargetPercentage}% return.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Stake Details</CardTitle>
-            <CardDescription>
-              Complete the form below to launch your next staking cycle.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-2xl p-6 lg:p-8" style={neuPanelStyle}>
+          <h2
+            className="text-lg font-bold"
+            style={{ color: NEU_TOKENS.white80 }}
+          >
+            Stake Details
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: NEU_TOKENS.white60 }}>
+            Complete the form below to launch your next staking cycle.
+          </p>
+          <Form {...form}>
+            <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel style={{ color: NEU_TOKENS.white60 }}>
+                      Amount to Stake (USDT)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={stakingConfig.minAmount}
+                        step={100}
+                        placeholder={`Enter amount (min $${stakingConfig.minAmount.toLocaleString()})`}
+                        disabled={isCreating}
+                        className={cn(
+                          'border-0 focus-visible:ring-2 focus-visible:ring-offset-0',
+                          'placeholder:opacity-60'
+                        )}
+                        style={{
+                          background: NEU_TOKENS.bg,
+                          boxShadow: neuInset,
+                          border: `1px solid ${NEU_TOKENS.border}`,
+                          borderRadius: neuRadius.md,
+                          color: NEU_TOKENS.white80,
+                        }}
+                        value={
+                          typeof field.value === 'number' ||
+                          typeof field.value === 'string'
+                            ? field.value
+                            : ''
+                        }
+                        onChange={(event) => field.onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="amount"
+                  name="goalTitle"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount to Stake (USDT)</FormLabel>
+                      <FormLabel style={{ color: NEU_TOKENS.white60 }}>
+                        Goal Title (optional)
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          inputMode="numeric"
-                          min={stakingConfig.minAmount}
-                          step={100}
-                          placeholder={`Enter amount in USDT (min $${stakingConfig.minAmount.toLocaleString()})`}
+                          placeholder="E.g. New Laptop Fund"
                           disabled={isCreating}
+                          className="border-0 focus-visible:ring-2 focus-visible:ring-offset-0"
+                          style={{
+                            background: NEU_TOKENS.bg,
+                            boxShadow: neuInset,
+                            border: `1px solid ${NEU_TOKENS.border}`,
+                            borderRadius: neuRadius.md,
+                            color: NEU_TOKENS.white80,
+                          }}
                           value={
-                            typeof field.value === 'number' ||
-                            typeof field.value === 'string'
-                              ? field.value
-                              : ''
+                            typeof field.value === 'string' ? field.value : ''
                           }
-                          onChange={(event) =>
-                            field.onChange(event.target.value)
-                          }
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
@@ -175,148 +236,183 @@ export default function CreateStakePage() {
                   )}
                 />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="goalTitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Goal Title (optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="E.g. New Laptop Fund"
-                            disabled={isCreating}
-                            value={
-                              typeof field.value === 'string' ? field.value : ''
-                            }
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="goalDescription"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel style={{ color: NEU_TOKENS.white60 }}>
+                        Goal Description (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          rows={4}
+                          placeholder="Describe what this stake will help you achieve"
+                          disabled={isCreating}
+                          className="resize-none border-0 focus-visible:ring-2 focus-visible:ring-offset-0"
+                          style={{
+                            background: NEU_TOKENS.bg,
+                            boxShadow: neuInset,
+                            border: `1px solid ${NEU_TOKENS.border}`,
+                            borderRadius: neuRadius.md,
+                            color: NEU_TOKENS.white80,
+                          }}
+                          value={
+                            typeof field.value === 'string' ? field.value : ''
+                          }
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="goalDescription"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Goal Description (optional)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            rows={4}
-                            placeholder="Describe what this stake will help you achieve"
-                            disabled={isCreating}
-                            value={
-                              typeof field.value === 'string' ? field.value : ''
-                            }
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+              <div
+                className="flex flex-col gap-3 rounded-xl p-4 text-sm md:flex-row md:items-center md:justify-between"
+                style={{
+                  ...neuRaisedStyle,
+                  borderColor: 'rgba(0, 155, 242, 0.2)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck
+                    className="size-8 shrink-0"
+                    style={{ color: NEU_TOKENS.accent }}
                   />
-                </div>
-
-                <div className="border-primary/40 bg-primary/5 flex flex-col gap-3 rounded-lg border border-dashed p-4 text-sm md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="text-primary h-10 w-10" />
-                    <div>
-                      <p className="font-medium">Security Notice</p>
-                      <p className="text-muted-foreground">
-                        Funds are locked for the duration of the stake. Early
-                        withdrawals may incur penalties.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <p className="text-muted-foreground">
-                      Powered by Novunt&apos;s staking engine
+                  <div>
+                    <p
+                      className="font-medium"
+                      style={{ color: NEU_TOKENS.white80 }}
+                    >
+                      Security Notice
                     </p>
-                    <p className="font-semibold">Target ROS: 100%</p>
+                    <p
+                      className="text-xs"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      Funds are locked until you reach{' '}
+                      {stakingConfig.goalTargetPercentage}% return. Early
+                      withdrawals may incur penalties.
+                    </p>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-end gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    disabled={isCreating}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isCreating || walletLoading}>
-                    {isCreating ? (
-                      <>
-                        <NovuntSpinner size="sm" className="mr-2" />
-                        Creating Stake
-                      </>
-                    ) : (
-                      'Create Stake'
-                    )}
-                  </Button>
+                <div className="text-right text-sm">
+                  <p style={{ color: NEU_TOKENS.white60 }}>
+                    Target return: {stakingConfig.goalTargetPercentage}%
+                  </p>
                 </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+              </div>
+
+              <div className="flex items-center justify-end gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  disabled={isCreating}
+                  className="border-0"
+                  style={neuRaisedStyle}
+                >
+                  <span style={{ color: NEU_TOKENS.white60 }}>Cancel</span>
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isCreating || walletLoading}
+                  className="border-0 font-bold"
+                  style={{
+                    ...neuRaisedStyle,
+                    color: NEU_TOKENS.accent,
+                  }}
+                >
+                  {isCreating ? (
+                    <>
+                      <NovuntSpinner size="sm" className="mr-2" />
+                      Creating Stake
+                    </>
+                  ) : (
+                    'Create Stake'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="text-primary h-5 w-5" />
+          <div className="rounded-2xl p-6" style={neuPanelStyle}>
+            <div className="flex items-center gap-2">
+              <Wallet className="size-5" style={{ color: NEU_TOKENS.accent }} />
+              <h3
+                className="text-base font-bold"
+                style={{ color: NEU_TOKENS.white80 }}
+              >
                 Funded Wallet
-              </CardTitle>
-              <CardDescription>
-                Available balance you can stake from.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-3xl font-bold">
-                {walletLoading ? 'Loading…' : formatCurrency(fundedBalance)}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                Ensure you have enough balance to cover the stake amount.
-              </p>
-            </CardContent>
-          </Card>
+              </h3>
+            </div>
+            <p className="mt-1 text-sm" style={{ color: NEU_TOKENS.white60 }}>
+              Available balance you can stake from.
+            </p>
+            <p
+              className="mt-4 text-2xl font-bold"
+              style={{ color: NEU_TOKENS.accent }}
+            >
+              {walletLoading ? 'Loading…' : formatCurrency(fundedBalance)}
+            </p>
+            <p className="mt-2 text-xs" style={{ color: NEU_TOKENS.white40 }}>
+              Ensure you have enough balance to cover the stake amount.
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+          <div className="rounded-2xl p-6" style={neuPanelStyle}>
+            <div className="flex items-center gap-2">
+              <TrendingUp
+                className="size-5"
+                style={{ color: NEU_TOKENS.accent }}
+              />
+              <h3
+                className="text-base font-bold"
+                style={{ color: NEU_TOKENS.white80 }}
+              >
                 Projected Returns
-              </CardTitle>
-              <CardDescription>
-                Estimated outcome based on {stakingConfig.goalTargetPercentage}%
-                ROS target.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+              </h3>
+            </div>
+            <p className="mt-1 text-sm" style={{ color: NEU_TOKENS.white60 }}>
+              Estimated outcome based on {stakingConfig.goalTargetPercentage}%
+              return target.
+            </p>
+            <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">
+                <span style={{ color: NEU_TOKENS.white60 }}>
                   Weekly ROS (approx)
                 </span>
-                <span className="font-medium text-green-600">
+                <span
+                  className="font-medium"
+                  style={{ color: NEU_TOKENS.accent }}
+                >
                   {formatCurrency(projectedDailyROS || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Completion Value</span>
-                <span className="font-semibold">
+                <span style={{ color: NEU_TOKENS.white60 }}>
+                  Completion Value
+                </span>
+                <span
+                  className="font-semibold"
+                  style={{ color: NEU_TOKENS.white80 }}
+                >
                   {formatCurrency(projectedCompletionValue || 0)}
                 </span>
               </div>
-              <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
+              <div
+                className="rounded-lg p-3 text-xs"
+                style={{ color: NEU_TOKENS.white40, ...neuRaisedStyle }}
+              >
                 Calculations assume a typical ROS schedule. Actual payout
                 frequency is confirmed in the staking agreement.
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
