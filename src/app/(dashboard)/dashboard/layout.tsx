@@ -1,7 +1,7 @@
 'use client';
 // Force Vercel rebuild - All linting errors fixed (commit cc93df0)
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowUpRight, Clock, Wallet, Bell, LogOut, User } from 'lucide-react';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
@@ -38,10 +38,6 @@ import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import { IoHeadsetOutline } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
-import { celebrateStake200AndDashboard } from '@/lib/celebrations';
-import { prefersReducedMotion } from '@/lib/accessibility';
-
-const DASHBOARD_LOGIN_CONFETTI_KEY = 'novunt_dashboard_login_confetti';
 
 /**
  * Dashboard Layout
@@ -63,18 +59,6 @@ export default function DashboardLayout({
     'all'
   );
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const dashboardConfettiFired = useRef(false);
-
-  // Confetti once per session when stakeholder lands on dashboard
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (prefersReducedMotion()) return;
-    if (dashboardConfettiFired.current) return;
-    if (sessionStorage.getItem(DASHBOARD_LOGIN_CONFETTI_KEY) === 'true') return;
-    dashboardConfettiFired.current = true;
-    sessionStorage.setItem(DASHBOARD_LOGIN_CONFETTI_KEY, 'true');
-    celebrateStake200AndDashboard();
-  }, []);
 
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {

@@ -99,7 +99,7 @@ export function StakeCard({
   const nextPayout = stake.weeklyPayouts?.find((p) => p.status === 'pending');
 
   const reducedMotion = prefersReducedMotion();
-  const cardClass = `${neuStyles['neu-card']} rounded-[18px] p-4 sm:p-6 ${isRegistrationBonus ? 'border-[1px] border-[rgba(0,155,242,0.25)]' : ''}`;
+  const cardClass = `${neuStyles['neu-card']} rounded-[18px] p-4 sm:p-6 md:p-7 ${isRegistrationBonus ? 'border-[1px] border-[rgba(0,155,242,0.25)]' : ''}`;
 
   return (
     <motion.div
