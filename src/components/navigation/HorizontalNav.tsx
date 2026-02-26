@@ -8,18 +8,18 @@ import { TrendingUp, Wallet, Users, Star } from 'lucide-react';
 
 const ACCENT = '#009BF2'; /* platform light blue */
 
-/* Bar: light blue container (full fill) */
-const BAR_GLASS_BG = 'rgba(0, 155, 242, 0.4)';
-const BAR_GLASS_BLUR = 'blur(12px)';
-const BAR_GLASS_BORDER = '2px solid rgba(0, 155, 242, 0.6)';
-const BAR_NEU_SHADOW =
-  '0 -4px 20px rgba(0, 155, 242, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+/* Bar: neumorphic raised – design system tokens (dual shadow + border) */
+const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.45)';
+const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.04)';
+const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
+const BAR_NEU_SHADOW = `0 -8px 16px ${NEU_SHADOW_DARK}, 0 8px 16px ${NEU_SHADOW_LIGHT}, inset 0 -1px 0 ${NEU_SHADOW_LIGHT}`;
+const BAR_NEU_SHADOW_HOVER = `0 -10px 20px ${NEU_SHADOW_DARK}, 0 10px 20px ${NEU_SHADOW_LIGHT}, inset 0 -1px 0 ${NEU_SHADOW_LIGHT}`;
 
-/* Icon extrude: neumorphic drop-shadows so icon looks raised */
+/* Icon: light blue on dark; neumorphic drop-shadows */
 const ICON_EXTRUDE =
-  'drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)) drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.08))';
+  'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(-2px -2px 4px rgba(255, 255, 255, 0.04))';
 const ICON_EXTRUDE_ACTIVE =
-  'drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)) drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.12)) drop-shadow(0 0 12px rgba(0, 155, 242, 0.5))';
+  'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(-2px -2px 4px rgba(255, 255, 255, 0.06)) drop-shadow(0 0 10px rgba(0, 155, 242, 0.3))';
 
 const NAV_ITEMS: {
   name: string;
@@ -33,9 +33,13 @@ const NAV_ITEMS: {
 ];
 
 const NOTCH_MASK =
-  'radial-gradient(circle at 50% 16px, transparent 42px, #000 44px)';
+  'radial-gradient(circle at 50% 16px, transparent 42px, black 44px)';
 
-export function HorizontalNav() {
+interface HorizontalNavProps {
+  barsVisible?: boolean;
+}
+
+export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -64,7 +68,7 @@ export function HorizontalNav() {
         <motion.span
           className="flex items-center justify-center transition-colors duration-200"
           style={{
-            color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.82)',
+            color: active ? ACCENT : 'rgba(0, 155, 242, 0.75)',
             filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
           }}
           whileHover={{ scale: 1.1, y: -2 }}
@@ -80,31 +84,39 @@ export function HorizontalNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed right-0 bottom-0 left-0 z-50 w-full"
+      className="fixed right-0 bottom-0 left-0 z-50 w-full transition-transform duration-150 ease-out"
+      style={{
+        transform: barsVisible ? 'translateY(0)' : 'translateY(100%)',
+      }}
     >
       <div className="relative w-full">
-        {/* Shadow wrapper — drop-shadow follows the masked notch shape */}
+        {/* Shadow wrapper — soft drop-shadow follows the masked notch */}
         <div
           style={{
-            filter:
-              'drop-shadow(0 -4px 10px rgba(0,0,0,0.4)) drop-shadow(0 0 1px rgba(255,255,255,0.05))',
+            filter: 'drop-shadow(0 -4px 12px rgba(0,0,0,0.35))',
           }}
         >
-          {/* Bar — glassy; height includes safe area, content centered vertically */}
+          {/* Bar — neumorphic raised (design system: dual shadow + subtle border) */}
           <div
+            className="transition-shadow duration-200"
             style={{
               minHeight: 'calc(66px + env(safe-area-inset-bottom, 0px))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: BAR_GLASS_BG,
-              backdropFilter: BAR_GLASS_BLUR,
-              WebkitBackdropFilter: BAR_GLASS_BLUR,
+              background: 'var(--neu-bg)',
+              border: 'none',
+              borderTop: NEU_BORDER,
               borderRadius: '20px 20px 0 0',
               WebkitMask: NOTCH_MASK,
               mask: NOTCH_MASK,
               boxShadow: BAR_NEU_SHADOW,
-              border: BAR_GLASS_BORDER,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = BAR_NEU_SHADOW_HOVER;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = BAR_NEU_SHADOW;
             }}
           >
             <div className="flex w-full items-center px-3 sm:px-4">

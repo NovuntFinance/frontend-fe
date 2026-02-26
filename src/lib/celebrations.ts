@@ -209,3 +209,64 @@ export function subtleCelebration() {
     ticks: 100,
   });
 }
+
+/** Many colors for stake 200% and dashboard login */
+const STAKE_200_AND_DASHBOARD_COLORS = [
+  '#009BF2',
+  '#00C2FF',
+  '#FFD700',
+  '#FFA500',
+  '#10B981',
+  '#22c55e',
+  '#7c3aed',
+  '#a855f7',
+  '#ec4899',
+  '#f43f5e',
+  '#ffffff',
+  '#e0e7ff',
+];
+
+/**
+ * Heavy multi-color confetti for stake reaching 200% or dashboard login.
+ * Lots of particles, multiple bursts from different origins.
+ */
+export function celebrateStake200AndDashboard() {
+  const duration = 3500;
+  const end = Date.now() + duration;
+  const defaults = {
+    startVelocity: 28,
+    spread: 360,
+    ticks: 80,
+    zIndex: 9999,
+    colors: STAKE_200_AND_DASHBOARD_COLORS,
+  };
+
+  function randomInRange(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(() => {
+    const timeLeft = end - Date.now();
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      return;
+    }
+    const particleCount = 60 * (timeLeft / duration);
+
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0, 0.2), y: randomInRange(-0.1, 0.3) },
+    });
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.8, 1), y: randomInRange(-0.1, 0.3) },
+    });
+    confetti({
+      ...defaults,
+      particleCount: Math.floor(particleCount * 0.7),
+      origin: { x: randomInRange(0.35, 0.65), y: 0.1 },
+    });
+  }, 180);
+}

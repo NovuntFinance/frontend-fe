@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
 import { Stake, hasReached200Target } from '@/lib/queries/stakingQueries';
@@ -9,7 +9,9 @@ import { useUIStore } from '@/store/uiStore';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { fmt4 } from '@/utils/formatters';
 import neuStyles from '@/styles/neumorphic.module.css';
-import walletStyles from '@/styles/wallet-page.module.css';
+import { celebrateStake200AndDashboard } from '@/lib/celebrations';
+
+const STAKES_200_CONFETTI_KEY = 'novunt_stake_200_confetti';
 
 const MASK = '••••••';
 
@@ -73,6 +75,16 @@ export function StakeCard({
     : 0;
   const isCompleted = stake.status === 'completed';
   const hasReachedTarget = hasReached200Target(stake);
+
+  // Confetti once per stake when it reaches 200% target
+  useEffect(() => {
+    if (!hasReachedTarget || typeof window === 'undefined') return;
+    if (prefersReducedMotion()) return;
+    const key = `${STAKES_200_CONFETTI_KEY}_${stake._id}`;
+    if (localStorage.getItem(key) === 'true') return;
+    localStorage.setItem(key, 'true');
+    celebrateStake200AndDashboard();
+  }, [hasReachedTarget, stake._id]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -152,7 +164,7 @@ export function StakeCard({
           </div>
         </div>
 
-        {/* Progress */}
+        {/* Progress – bar uses design tokens so it shows in any context (dashboard, stakes page, etc.) */}
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between text-xs sm:text-sm">
             <span style={{ color: primaryColor, fontWeight: 600 }}>
@@ -162,12 +174,25 @@ export function StakeCard({
                 : `${stake.progressToTarget || '0%'} of ${maxReturnCap}%`}
             </span>
           </div>
-          <div className={walletStyles.nxpProgressBarTrack}>
+          <div
+            className="overflow-hidden rounded-[16px]"
+            style={{
+              height: 10,
+              background: 'var(--neu-bg)',
+              boxShadow: 'var(--neu-shadow-inset)',
+              border: '1px solid var(--neu-border)',
+            }}
+          >
             <motion.div
               initial={reducedMotion ? false : { width: 0 }}
-              animate={reducedMotion ? false : { width: `${progress}%` }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className={walletStyles.nxpProgressBarFill}
+              animate={
+                reducedMotion ? false : { width: `${Math.min(progress, 100)}%` }
+              }
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="h-full rounded-[16px] transition-[width] duration-300"
+              style={{
+                background: 'var(--neu-accent)',
+              }}
             />
           </div>
         </div>

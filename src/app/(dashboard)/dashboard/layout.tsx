@@ -1,7 +1,7 @@
 'use client';
 // Force Vercel rebuild - All linting errors fixed (commit cc93df0)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowUpRight, Clock, Wallet, Bell, LogOut, User } from 'lucide-react';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
@@ -38,6 +38,10 @@ import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import { IoHeadsetOutline } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
+import { celebrateStake200AndDashboard } from '@/lib/celebrations';
+import { prefersReducedMotion } from '@/lib/accessibility';
+
+const DASHBOARD_LOGIN_CONFETTI_KEY = 'novunt_dashboard_login_confetti';
 
 /**
  * Dashboard Layout
@@ -59,6 +63,18 @@ export default function DashboardLayout({
     'all'
   );
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const dashboardConfettiFired = useRef(false);
+
+  // Confetti once per session when stakeholder lands on dashboard
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (prefersReducedMotion()) return;
+    if (dashboardConfettiFired.current) return;
+    if (sessionStorage.getItem(DASHBOARD_LOGIN_CONFETTI_KEY) === 'true') return;
+    dashboardConfettiFired.current = true;
+    sessionStorage.setItem(DASHBOARD_LOGIN_CONFETTI_KEY, 'true');
+    celebrateStake200AndDashboard();
+  }, []);
 
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {
@@ -135,265 +151,287 @@ export default function DashboardLayout({
           paddingRight: 'env(safe-area-inset-right, 0px)',
         }}
       >
-        {/* Header: light blue container; sticky top uses safe-area so PWA/notch doesn't clip */}
-        <header
-          className="sticky z-30 shrink-0 py-2"
+        {/* Header: fixed, always visible */}
+        <div
+          className="fixed right-0 left-0 z-30"
           style={{
             top: 'env(safe-area-inset-top, 0px)',
-            background: 'rgba(0, 155, 242, 0.4)',
-            borderTop: '2px solid rgba(0, 155, 242, 0.6)',
-            borderBottom: '2px solid rgba(0, 155, 242, 0.6)',
-            boxShadow:
-              '0 4px 20px rgba(0, 155, 242, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
           }}
         >
-          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
-            {/* Profile Section - Left side */}
-            <div className="flex shrink-0 items-center gap-3">
-              <DropdownMenu
-                open={profileDropdownOpen}
-                onOpenChange={setProfileDropdownOpen}
-              >
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
-                    <div className="relative shrink-0">
-                      <div
-                        className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
-                        style={{
-                          background: 'rgba(13, 22, 44, 0.35)',
-                          border: '1px solid rgba(13, 22, 44, 0.55)',
-                        }}
-                      >
-                        {user?.avatar && isBadgeIcon(user.avatar) ? (
-                          <BadgeAvatar
-                            badgeIcon={user.avatar}
-                            size="md"
-                            className="shrink-0"
-                          />
-                        ) : (
-                          <Avatar className="h-full w-full overflow-hidden rounded-full">
-                            <AvatarImage
-                              src={getUserAvatarUrl(user) ?? undefined}
-                              alt={`${displayName}`}
-                            />
-                            <AvatarFallback
-                              className="text-sm font-medium"
-                              style={{
-                                background: 'transparent',
-                                color: 'rgba(255, 255, 255, 0.95)',
-                              }}
-                            >
-                              {displayName[0]?.toUpperCase()}
-                              {user?.lastName?.[0] || user?.lname?.[0] || ''}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                      <NotificationBadge className="-top-0.5 right-0" />
-                    </div>
-                    <div className="flex flex-col items-start gap-0.5">
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: '#0D162C', filter: 'none' }}
-                      >
-                        Hello, {displayName}.
-                      </span>
-                      <span
-                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
-                        style={{
-                          background: '#0D162C',
-                          color: 'rgba(255, 255, 255, 0.95)',
-                          filter: 'none',
-                        }}
-                      >
-                        {user?.rank || 'Stakeholder'}
-                      </span>
-                    </div>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-56 border p-2"
-                  style={{
-                    background: '#0D162C',
-                    borderColor: 'rgba(0, 155, 242, 0.35)',
-                    boxShadow:
-                      '8px 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(0, 155, 242, 0.15)',
-                  }}
-                >
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      setProfileModalOpen(true);
-                    }}
-                    className="cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
-                    style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      filter: 'none',
-                    }}
-                  >
-                    <User
-                      className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
-                    />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      setTimeout(() => {
-                        setNotificationCenterOpen(true);
-                      }, 100);
-                    }}
-                    className="relative cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
-                    style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      filter: 'none',
-                    }}
-                  >
-                    <Bell
-                      className="mr-2 h-4 w-4"
-                      style={{ color: '#009BF2', filter: 'none' }}
-                    />
-                    <span className="flex-1">Notifications</span>
-                    <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator
-                    className="my-1"
-                    style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-                  />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer rounded-md focus:bg-red-500/15"
-                    style={{
-                      color: '#f87171',
-                    }}
-                  >
-                    <LogOut
-                      className="mr-2 h-4 w-4"
-                      style={{ color: 'inherit' }}
-                    />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Support - Right side (same look as theme controller: neumorphic + accent color) */}
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                onClick={() => setAssistantOpen(true)}
-                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                style={{ color: 'var(--neu-accent)', filter: 'none' }}
-                aria-label="Open customer support"
-              >
-                <IoHeadsetOutline className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Notification Center Dropdown - positioned at top-right, controlled via state */}
-          <DropdownMenu
-            open={notificationCenterOpen}
-            onOpenChange={setNotificationCenterOpen}
+          <header
+            className="shrink-0 py-2 transition-shadow duration-200"
+            style={{
+              background: 'var(--neu-bg)',
+              borderBottom: '1px solid var(--neu-border)',
+              boxShadow:
+                '0 8px 16px rgba(0, 0, 0, 0.45), 0 -8px 16px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+            }}
           >
-            <DropdownMenuTrigger asChild>
-              <button
-                className="pointer-events-none absolute top-1/2 right-4 h-0 w-0 -translate-y-1/2 opacity-0"
-                aria-hidden="true"
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="flex h-[calc(100vh-4rem)] w-[calc(100vw-2rem)] max-w-[420px] flex-col overflow-hidden p-0 sm:h-[600px] sm:w-[420px]"
-              sideOffset={8}
+            <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
+              {/* Profile Section - Left side */}
+              <div className="flex shrink-0 items-center gap-3">
+                <DropdownMenu
+                  open={profileDropdownOpen}
+                  onOpenChange={setProfileDropdownOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
+                      <div className="relative shrink-0">
+                        <div
+                          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
+                          style={{
+                            background: 'rgba(0, 155, 242, 0.15)',
+                            border: '1px solid rgba(0, 155, 242, 0.25)',
+                            boxShadow:
+                              'inset 2px 2px 6px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(255,255,255,0.03)',
+                          }}
+                        >
+                          {user?.avatar && isBadgeIcon(user.avatar) ? (
+                            <BadgeAvatar
+                              badgeIcon={user.avatar}
+                              size="md"
+                              className="shrink-0"
+                            />
+                          ) : (
+                            <Avatar className="h-full w-full overflow-hidden rounded-full">
+                              <AvatarImage
+                                src={getUserAvatarUrl(user) ?? undefined}
+                                alt={`${displayName}`}
+                              />
+                              <AvatarFallback
+                                className="text-sm font-medium"
+                                style={{
+                                  background: 'transparent',
+                                  color: 'rgba(255, 255, 255, 0.95)',
+                                }}
+                              >
+                                {displayName[0]?.toUpperCase()}
+                                {user?.lastName?.[0] || user?.lname?.[0] || ''}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+                        <NotificationBadge className="-top-0.5 right-0" />
+                      </div>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span
+                          className="text-sm font-medium"
+                          style={{
+                            color: 'rgba(255, 255, 255, 0.95)',
+                            filter: 'none',
+                          }}
+                        >
+                          Hello, {displayName}.
+                        </span>
+                        <span
+                          className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                          style={{
+                            background: 'rgba(0, 155, 242, 0.35)',
+                            color: '#009BF2',
+                            border: '1px solid rgba(0, 155, 242, 0.4)',
+                            filter: 'none',
+                          }}
+                        >
+                          {user?.rank || 'Stakeholder'}
+                        </span>
+                      </div>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-56 border p-2"
+                    style={{
+                      background: '#0D162C',
+                      borderColor: 'rgba(0, 155, 242, 0.35)',
+                      boxShadow:
+                        '8px 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(0, 155, 242, 0.15)',
+                    }}
+                  >
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        setProfileModalOpen(true);
+                      }}
+                      className="cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        filter: 'none',
+                      }}
+                    >
+                      <User
+                        className="mr-2 h-4 w-4"
+                        style={{ color: '#009BF2', filter: 'none' }}
+                      />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        setTimeout(() => {
+                          setNotificationCenterOpen(true);
+                        }, 100);
+                      }}
+                      className="relative cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        filter: 'none',
+                      }}
+                    >
+                      <Bell
+                        className="mr-2 h-4 w-4"
+                        style={{ color: '#009BF2', filter: 'none' }}
+                      />
+                      <span className="flex-1">Notifications</span>
+                      <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator
+                      className="my-1"
+                      style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                    />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer rounded-md focus:bg-red-500/15"
+                      style={{
+                        color: '#f87171',
+                      }}
+                    >
+                      <LogOut
+                        className="mr-2 h-4 w-4"
+                        style={{ color: 'inherit' }}
+                      />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Support - Right side (same look as theme controller: neumorphic + accent color) */}
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  onClick={() => setAssistantOpen(true)}
+                  className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                  aria-label="Open customer support"
+                >
+                  <IoHeadsetOutline className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Notification Center Dropdown - positioned at top-right, controlled via state */}
+            <DropdownMenu
+              open={notificationCenterOpen}
+              onOpenChange={setNotificationCenterOpen}
             >
-              {/* Fixed Header */}
-              <div className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-4 sm:py-3">
-                <h3 className="text-sm font-semibold sm:text-base">
-                  Notifications
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 sm:h-8 sm:w-8"
-                >
-                  <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Button>
-              </div>
-
-              {/* Scrollable Content Area */}
-              <Tabs
-                value={notificationTab}
-                onValueChange={(value) =>
-                  setNotificationTab(value as 'all' | 'system')
-                }
-                className="flex min-h-0 flex-1 flex-col"
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="pointer-events-none absolute top-1/2 right-4 h-0 w-0 -translate-y-1/2 opacity-0"
+                  aria-hidden="true"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="flex h-[calc(100vh-4rem)] w-[calc(100vw-2rem)] max-w-[420px] flex-col overflow-hidden p-0 sm:h-[600px] sm:w-[420px]"
+                sideOffset={8}
               >
-                <TabsList className="w-full shrink-0 justify-start rounded-none border-b bg-transparent p-0">
-                  <TabsTrigger
+                {/* Fixed Header */}
+                <div className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-4 sm:py-3">
+                  <h3 className="text-sm font-semibold sm:text-base">
+                    Notifications
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                  >
+                    <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
+                </div>
+
+                {/* Scrollable Content Area */}
+                <Tabs
+                  value={notificationTab}
+                  onValueChange={(value) =>
+                    setNotificationTab(value as 'all' | 'system')
+                  }
+                  className="flex min-h-0 flex-1 flex-col"
+                >
+                  <TabsList className="w-full shrink-0 justify-start rounded-none border-b bg-transparent p-0">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
+                    >
+                      <span className="whitespace-nowrap">
+                        All Notifications
+                      </span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="system"
+                      className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
+                    >
+                      <span className="whitespace-nowrap">System & Alerts</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent
                     value="all"
-                    className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
+                    className="m-0 min-h-0 flex-1 overflow-hidden"
                   >
-                    <span className="whitespace-nowrap">All Notifications</span>
-                  </TabsTrigger>
-                  <TabsTrigger
+                    <DateFilteredNotificationList
+                      dateFilter="all"
+                      maxHeight="100%"
+                      showHeader={false}
+                      className="h-full"
+                    />
+                  </TabsContent>
+
+                  <TabsContent
                     value="system"
-                    className="data-[state=active]:border-primary shrink-0 rounded-none border-b-2 border-transparent px-3 text-xs sm:px-4 sm:text-sm"
+                    className="m-0 min-h-0 flex-1 overflow-hidden"
                   >
-                    <span className="whitespace-nowrap">System & Alerts</span>
-                  </TabsTrigger>
-                </TabsList>
+                    <DateFilteredNotificationList
+                      includeTypes={[
+                        'system',
+                        'security',
+                        'alert',
+                        'bonus',
+                        'referral',
+                        'info',
+                      ]}
+                      dateFilter="all"
+                      maxHeight="100%"
+                      showHeader={false}
+                      className="h-full"
+                    />
+                  </TabsContent>
+                </Tabs>
 
-                <TabsContent
-                  value="all"
-                  className="m-0 min-h-0 flex-1 overflow-hidden"
-                >
-                  <DateFilteredNotificationList
-                    dateFilter="all"
-                    maxHeight="100%"
-                    showHeader={false}
-                    className="h-full"
-                  />
-                </TabsContent>
+                {/* Fixed Footer */}
+                <div className="bg-background shrink-0 border-t p-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-center text-sm"
+                    onClick={() => {
+                      setNotificationCenterOpen(false);
+                      router.push('/dashboard/notifications');
+                    }}
+                  >
+                    View All Notifications
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </header>
+        </div>
 
-                <TabsContent
-                  value="system"
-                  className="m-0 min-h-0 flex-1 overflow-hidden"
-                >
-                  <DateFilteredNotificationList
-                    includeTypes={[
-                      'system',
-                      'security',
-                      'alert',
-                      'bonus',
-                      'referral',
-                      'info',
-                    ]}
-                    dateFilter="all"
-                    maxHeight="100%"
-                    showHeader={false}
-                    className="h-full"
-                  />
-                </TabsContent>
-              </Tabs>
-
-              {/* Fixed Footer */}
-              <div className="bg-background shrink-0 border-t p-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-center text-sm"
-                  onClick={() => {
-                    setNotificationCenterOpen(false);
-                    router.push('/dashboard/notifications');
-                  }}
-                >
-                  View All Notifications
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
+        {/* Spacer so content starts below fixed header */}
+        <div
+          aria-hidden="true"
+          className="shrink-0"
+          style={{
+            minHeight: 'calc(4rem + env(safe-area-inset-top, 0px))',
+          }}
+        />
 
         {/* Compliance & Registration Bonus Banners - only render wrapper when at least one banner is shown */}
         {!isOnboardingPage &&
