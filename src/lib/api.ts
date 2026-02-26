@@ -211,21 +211,22 @@ apiClient.interceptors.request.use(
       try {
         (config.headers as Record<string, string>).Authorization =
           `Bearer ${token}`;
-        // Always log auth status for profile updates (critical for debugging)
-        if (config.url?.includes('/users/profile')) {
-          const header = (config.headers as Record<string, string>)
-            .Authorization;
-          console.log(
-            '[API Interceptor] ✅ Auth token attached for profile update:',
-            header?.substring(0, 30) + '...'
-          );
-        } else if (process.env.NODE_ENV === 'development') {
-          const header = (config.headers as Record<string, string>)
-            .Authorization;
-          console.log(
-            '[API Interceptor] Authorization header:',
-            header?.substring(0, 30) + '...'
-          );
+        if (process.env.NODE_ENV === 'development') {
+          if (config.url?.includes('/users/profile')) {
+            const header = (config.headers as Record<string, string>)
+              .Authorization;
+            console.log(
+              '[API Interceptor] Auth token attached for profile update:',
+              header?.substring(0, 30) + '...'
+            );
+          } else {
+            const header = (config.headers as Record<string, string>)
+              .Authorization;
+            console.log(
+              '[API Interceptor] Authorization header:',
+              header?.substring(0, 30) + '...'
+            );
+          }
         }
       } catch (attachErr) {
         console.warn('[API] Failed to attach Authorization header', attachErr);
@@ -239,9 +240,12 @@ apiClient.interceptors.request.use(
         config.url?.includes('/auth/register');
       if (isPublicEndpoint) {
         // Expected - no warning needed
-      } else if (config.url?.includes('/users/profile')) {
-        console.error(
-          '[API Interceptor] ❌ NO TOKEN FOUND for profile update! Request will fail.'
+      } else if (
+        config.url?.includes('/users/profile') &&
+        process.env.NODE_ENV === 'development'
+      ) {
+        console.warn(
+          '[API Interceptor] No token for profile update (expected if not logged in). Request may return 401.'
         );
       } else if (process.env.NODE_ENV === 'development') {
         console.warn(
