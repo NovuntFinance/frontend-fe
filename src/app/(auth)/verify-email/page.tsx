@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Mail, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { verifyEmailSchema, type VerifyEmailFormData } from '@/lib/validation';
 import {
@@ -13,7 +13,10 @@ import {
   useResendVerification,
 } from '@/lib/mutations';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
+import { REGISTRATION_CODE_EXPIRY_SECONDS } from '@/constants/emailTiming';
 import styles from '@/styles/auth.module.css';
+
+const REGISTRATION_EXPIRY_MINUTES = REGISTRATION_CODE_EXPIRY_SECONDS / 60;
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -103,7 +106,7 @@ function VerifyEmailContent() {
           'message' in error &&
           typeof (error as { message?: string }).message === 'string'
             ? (error as { message: string }).message
-            : 'Invalid verification code';
+            : 'Invalid or expired verification code. Please try again or request a new code.';
 
         // Check if email is already verified
         if (message.toLowerCase().includes('already verified')) {
@@ -113,6 +116,15 @@ function VerifyEmailContent() {
           setTimeout(() => {
             router.push('/login?verified=true&message=Email already verified');
           }, 2000);
+          return;
+        }
+
+        // Registration session expired – redirect to signup (per FRONTEND_EMAIL_TIMING_REFERENCE)
+        if (
+          message.toLowerCase().includes('registration session') &&
+          message.toLowerCase().includes('expired')
+        ) {
+          router.push('/signup?reason=session_expired');
           return;
         }
 
@@ -303,25 +315,9 @@ function VerifyEmailContent() {
             value={verificationCode}
             onChange={setVerificationCode}
             disabled={isSubmitting || completeRegistrationMutation.isPending}
+            showHelpLink={false}
           />
           <div className="mt-6 flex flex-col gap-4">
-            <button
-              type="submit"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${verificationCode.length !== 6 || isSubmitting || completeRegistrationMutation.isPending ? styles.neuBtnDisabled : ''}`}
-              disabled={
-                verificationCode.length !== 6 ||
-                isSubmitting ||
-                completeRegistrationMutation.isPending
-              }
-            >
-              {(isSubmitting || completeRegistrationMutation.isPending) && (
-                <NovuntSpinner size="sm" className="mr-2" />
-              )}
-              <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Verify Email
-              </span>
-              <ArrowRight className="h-4 w-4 text-white" />
-            </button>
             <div className="text-center text-sm">
               <span className={styles.neuTextMuted}>
                 Didn&apos;t receive the code?{' '}
@@ -332,21 +328,16 @@ function VerifyEmailContent() {
                 onClick={handleResend}
                 disabled={!canResend || resendMutation.isPending}
               >
-                {resendMutation.isPending ? (
-                  <>
-                    <NovuntSpinner size="sm" className="mr-1 inline" />
-                    Sending...
-                  </>
-                ) : canResend ? (
-                  'Resend code'
-                ) : (
-                  `Resend code (${resendTimer}s)`
-                )}
+                {resendMutation.isPending
+                  ? 'Sending...'
+                  : canResend
+                    ? 'Resend code'
+                    : `Resend code (${resendTimer}s)`}
               </button>
             </div>
             <button
               type="button"
-              className={`${styles.neuBtnBack} w-full rounded-xl py-3`}
+              className={`${styles.neuBtnBack} flex w-full items-center justify-center rounded-xl py-3`}
               onClick={() => router.push('/signup')}
             >
               Use a different email
@@ -357,8 +348,8 @@ function VerifyEmailContent() {
 
       <div className={`${styles.neuBottomLink} text-sm`}>
         <p className={styles.neuTextMuted}>
-          Check your spam folder if you don&apos;t see the email. Code expires
-          in 15 minutes.
+          Check your spam folder if you don&apos;t see the email. This code
+          expires in {REGISTRATION_EXPIRY_MINUTES} minutes.
         </p>
       </div>
     </div>

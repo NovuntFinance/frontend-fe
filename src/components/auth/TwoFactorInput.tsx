@@ -6,6 +6,15 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+/* Neumorphic style for OTP inputs (match auth platform) */
+const NEU_OTP_BASE = {
+  background: 'linear-gradient(145deg, #0c1528, #111d38)',
+  border: '1px solid rgba(0, 155, 242, 0.2)',
+  boxShadow:
+    'inset 4px 4px 10px rgba(4, 8, 18, 0.6), inset -4px -4px 10px rgba(25, 40, 72, 0.35)',
+  color: 'var(--neu-text, #e2e8f0)',
+} as const;
+
 interface TwoFactorInputProps {
   value?: string;
   onChange?: (code: string) => void;
@@ -14,6 +23,8 @@ interface TwoFactorInputProps {
   error?: string;
   length?: number;
   disabled?: boolean;
+  /** When false, hides "Can't find your code? Need help?" (e.g. on verify-email page). Default true. */
+  showHelpLink?: boolean;
 }
 
 /**
@@ -34,6 +45,7 @@ export function TwoFactorInput({
   error,
   length = 6,
   disabled = false,
+  showHelpLink = true,
 }: TwoFactorInputProps) {
   const [internalCode, setInternalCode] = useState<string[]>(() => {
     // Initialize from value prop if provided
@@ -178,11 +190,10 @@ export function TwoFactorInput({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={handlePaste}
             disabled={isLoading}
-            className={`h-14 w-12 rounded-lg border-2 text-center text-2xl font-bold transition-all duration-200 sm:h-16 sm:w-14 ${
-              digit
-                ? 'border-primary bg-primary/5'
-                : 'border-input bg-background'
-            } ${isLoading ? 'cursor-not-allowed opacity-50' : ''} focus:border-primary focus:ring-primary/20 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50`}
+            style={NEU_OTP_BASE}
+            className={`h-14 w-12 rounded-xl text-center text-2xl font-bold transition-all duration-200 outline-none focus:border-[rgba(0,155,242,0.5)] focus:ring-2 focus:ring-[rgba(0,155,242,0.2)] sm:h-16 sm:w-14 ${
+              isLoading ? 'cursor-not-allowed opacity-50' : ''
+            } disabled:cursor-not-allowed disabled:opacity-50`}
             aria-label={`Digit ${index + 1}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -223,13 +234,15 @@ export function TwoFactorInput({
         </div>
       )}
 
-      {/* Help Text */}
-      <p className="text-muted-foreground text-center text-sm">
-        Can&apos;t find your code?{' '}
-        <button className="text-primary font-medium hover:underline">
-          Need help?
-        </button>
-      </p>
+      {/* Help Text (optional, e.g. hidden on verify-email page) */}
+      {showHelpLink && (
+        <p className="text-muted-foreground text-center text-sm">
+          Can&apos;t find your code?{' '}
+          <button className="text-primary font-medium hover:underline">
+            Need help?
+          </button>
+        </p>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import { api } from '@/lib/api';
-import { formatErrorForLog } from '@/lib/error-utils';
+import { getErrorMessage, isNetworkError } from '@/lib/error-utils';
 import type {
   PlatformActivity,
   PlatformActivityResponse,
@@ -32,42 +32,17 @@ export class PlatformActivityService {
         params.append('types', types.join(','));
       }
 
-      const response = await api.get<PlatformActivityResponse>(
-        `${this.ENDPOINT}?${params.toString()}`
-      );
+      const response = await api.get<
+        PlatformActivityResponse | PlatformActivity[]
+      >(`${this.ENDPOINT}?${params.toString()}`);
 
-      console.log('[PlatformActivityService] DEBUG_V2 Raw response:', response);
-      console.log(
-        '[PlatformActivityService] DEBUG_V2 Response data type:',
-        typeof response.data
-      );
-      console.log(
-        '[PlatformActivityService] DEBUG_V2 Response keys:',
-        response.data ? Object.keys(response.data) : 'null'
-      );
-
-      // Handle both wrapped and unwrapped responses
-      let data: PlatformActivityResponse;
-
-      // Check if response data exists and has success property (standard API wrapper)
-      if (
-        response.data &&
-        typeof response.data === 'object' &&
-        'success' in response.data
-      ) {
-        data = response.data as unknown as PlatformActivityResponse;
-      } else {
-        // If response is unwrapped or doesn't match standard format, wrap it optimistically
-        data = {
-          success: true,
-          data: (Array.isArray(response.data)
-            ? response.data
-            : []) as PlatformActivity[],
-          count: Array.isArray(response.data) ? response.data.length : 0,
-        };
+      // API client may return unwrapped array or full wrapper
+      if (Array.isArray(response)) {
+        return response;
       }
 
-      // Check specifically for failure response from backend
+      // Handle wrapped response { success, data, count }
+      const data = response as PlatformActivityResponse;
       if (data.success === false) {
         const errorMsg =
           (data as any).error?.message ||
@@ -81,20 +56,18 @@ export class PlatformActivityService {
         throw new Error(errorMsg);
       }
 
-      if (data.data) {
+      if (data.data && Array.isArray(data.data)) {
         return data.data;
       }
 
-      console.error(
-        '[PlatformActivityService] DEBUG_V2 success check failed. Data:',
-        data
-      );
-      throw new Error('Invalid response format: missing data field (DEBUG_V2)');
+      return [];
     } catch (error: any) {
-      console.error(
-        '[Platform Activity] Error fetching activities:',
-        formatErrorForLog(error)
-      );
+      const msg = getErrorMessage(error, 'Request failed');
+      if (isNetworkError(error)) {
+        console.warn('[Platform Activity] Activities unavailable:', msg);
+      } else {
+        console.error('[Platform Activity] Error fetching activities:', msg);
+      }
 
       // Return empty array on error (frontend will handle fallback)
       // Don't throw - let the component handle fallback gracefully

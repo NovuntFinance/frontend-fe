@@ -253,7 +253,7 @@ function SignupPageContent() {
             <button
               type="button"
               onClick={handlePrevious}
-              className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-5`}
+              className={`${styles.neuBtnBack} flex flex-1 items-center justify-center gap-2 rounded-xl py-3`}
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm font-semibold tracking-wider uppercase">
@@ -266,7 +266,7 @@ function SignupPageContent() {
             <button
               type="button"
               onClick={handleNext}
-              className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-5`}
+              className={`${styles.neuBtnPrimary} flex flex-1 items-center justify-center gap-2 rounded-xl py-3`}
             >
               <span className="text-sm font-bold tracking-wider text-white uppercase">
                 Continue
@@ -278,9 +278,8 @@ function SignupPageContent() {
               type="submit"
               form="signup-form"
               disabled={isLoading}
-              className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-5 ${isLoading ? styles.neuBtnDisabled : ''}`}
+              className={`${styles.neuBtnSuccess} flex flex-1 items-center justify-center gap-2 rounded-xl py-3 ${isLoading ? styles.neuBtnDisabled : ''}`}
             >
-              {isLoading && <NovuntSpinner size="sm" className="mr-1" />}
               <span className="text-sm font-bold tracking-wider text-white uppercase">
                 Create Account
               </span>
@@ -308,7 +307,7 @@ function SignupPageContent() {
   }, [currentStep, isLoading, setFooterContent, handlePrevious, handleNext]);
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-3">
       {/* Title */}
       <h1
         className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
@@ -471,16 +470,16 @@ function SignupPageContent() {
                     transition={{ delay: 0.05, duration: 0.3 }}
                     className={`${styles.neuTermsSurface} space-y-4`}
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex flex-nowrap items-center gap-2">
                       <input
                         type="checkbox"
                         id="acceptedTerms"
-                        className={`${styles.neuCheckbox} mt-1`}
+                        className={`${styles.neuCheckbox} flex-shrink-0`}
                         {...register('acceptedTerms')}
                       />
                       <label
                         htmlFor="acceptedTerms"
-                        className={`cursor-pointer text-sm leading-relaxed ${styles.neuTextSecondary}`}
+                        className={`cursor-pointer text-xs leading-tight whitespace-nowrap ${styles.neuTextSecondary}`}
                       >
                         I agree to the{' '}
                         <Link href="/terms" className={styles.neuLink}>

@@ -428,8 +428,8 @@ export default function StakesPage() {
                 className="mb-6 text-sm"
                 style={{ color: 'var(--wallet-text-muted)' }}
               >
-                Start earning with Novunt&apos;s 200% ROS staking model. Create
-                your first stake and receive daily payouts!
+                Start earning with Novunt&apos;s 200% Accumulated ROS staking
+                model. Create your first stake and receive daily payouts!
               </p>
               <button
                 type="button"

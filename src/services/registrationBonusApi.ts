@@ -4,7 +4,7 @@
  */
 
 import { api } from '@/lib/api';
-import { formatErrorForLog } from '@/lib/error-utils';
+import { getErrorMessage, isNetworkError } from '@/lib/error-utils';
 import type {
   RegistrationBonusStatusResponse,
   ProcessStakeRequest,
@@ -69,13 +69,16 @@ export const registrationBonusApi = {
     } catch (error: any) {
       const status =
         error?.statusCode || error?.response?.status || error?.status;
+      const msg = getErrorMessage(error, 'Request failed');
       if (status === 404) {
         console.warn('⚠️ [registrationBonusApi] No bonus record found (404)');
-      } else {
-        console.error(
-          '❌ [registrationBonusApi] Failed to fetch status:',
-          formatErrorForLog(error)
+      } else if (isNetworkError(error)) {
+        console.warn(
+          '[registrationBonusApi] Registration bonus status unavailable:',
+          msg
         );
+      } else {
+        console.error('[registrationBonusApi] Failed to fetch status:', msg);
       }
       throw error;
     }
@@ -97,7 +100,7 @@ export const registrationBonusApi = {
     } catch (error) {
       console.error(
         '[registrationBonusApi] Failed to complete social step:',
-        formatErrorForLog(error)
+        getErrorMessage(error, 'Request failed')
       );
       throw error;
     }
@@ -132,7 +135,7 @@ export const registrationBonusApi = {
     } catch (error: any) {
       console.error(
         '[registrationBonusApi] Failed to process stake:',
-        formatErrorForLog(error)
+        getErrorMessage(error, 'Request failed')
       );
       throw error;
     }
@@ -167,7 +170,7 @@ export const registrationBonusApi = {
     } catch (error: any) {
       console.error(
         '[registrationBonusApi] Failed to fetch payout history:',
-        formatErrorForLog(error)
+        getErrorMessage(error, 'Request failed')
       );
       throw error;
     }

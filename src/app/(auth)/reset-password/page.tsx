@@ -21,7 +21,10 @@ import {
 import { useResetPassword } from '@/lib/mutations';
 import { NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
+import { PASSWORD_RESET_EXPIRY_SECONDS } from '@/constants/emailTiming';
 import styles from '@/styles/auth.module.css';
+
+const PASSWORD_RESET_EXPIRY_MINUTES = PASSWORD_RESET_EXPIRY_SECONDS / 60;
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -119,7 +122,8 @@ function ResetPasswordContent() {
             What can you do?
           </p>
           <p className={`text-sm ${styles.neuTextSecondary}`}>
-            • Password reset links expire after 1 hour
+            • Password reset links expire after {PASSWORD_RESET_EXPIRY_MINUTES}{' '}
+            minutes
           </p>
           <p className={`text-sm ${styles.neuTextSecondary}`}>
             • The link can only be used once
@@ -130,7 +134,7 @@ function ResetPasswordContent() {
           <div className="mt-6">
             <Link
               href="/forgot-password"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3.5 no-underline`}
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 no-underline`}
             >
               <span className="text-sm font-bold tracking-wider text-white uppercase">
                 Request New Reset Link
@@ -237,12 +241,9 @@ function ResetPasswordContent() {
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="submit"
-              className={`${styles.neuBtnSuccess} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || resetPasswordMutation.isPending ? styles.neuBtnDisabled : ''}`}
+              className={`${styles.neuBtnSuccess} flex w-full items-center justify-center gap-2 rounded-xl py-3 ${isSubmitting || resetPasswordMutation.isPending ? styles.neuBtnDisabled : ''}`}
               disabled={isSubmitting || resetPasswordMutation.isPending}
             >
-              {(isSubmitting || resetPasswordMutation.isPending) && (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              )}
               <span className="text-sm font-bold tracking-wider text-white uppercase">
                 Reset Password
               </span>

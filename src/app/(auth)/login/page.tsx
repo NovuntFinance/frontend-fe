@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, AlertCircle } from 'lucide-react';
-import { NovuntSpinner } from '@/components/ui/novunt-spinner';
+import { Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
 import { useLogin, useVerify2FA } from '@/lib/mutations';
 import { useAuth } from '@/hooks/useAuth';
@@ -478,12 +477,9 @@ function LoginPageContent() {
         <button
           type="submit"
           form="login-form"
-          className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-5 ${isSubmitting || loginMutation.isPending ? styles.neuBtnDisabled : ''}`}
+          className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 ${isSubmitting || loginMutation.isPending ? styles.neuBtnDisabled : ''}`}
           disabled={isSubmitting || loginMutation.isPending}
         >
-          {(isSubmitting || loginMutation.isPending) && (
-            <NovuntSpinner size="sm" className="mr-2" />
-          )}
           <span className="text-sm font-bold tracking-wider text-white uppercase">
             Log In
           </span>
@@ -549,7 +545,7 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4">
       {/* Title */}
       <h1
         className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
@@ -577,11 +573,8 @@ function LoginPageContent() {
 
       {/* Success message (if redirected from email verification) */}
       {searchParams?.get('verified') === 'true' && (
-        <div
-          className={`${styles.neuErrorAlert} border-green-500/30`}
-          style={{ color: '#86efac' }}
-        >
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        <div className={styles.neuSuccessAlert}>
+          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
           <span>Email verified successfully! You can now login.</span>
         </div>
       )}

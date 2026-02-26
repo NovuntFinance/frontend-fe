@@ -175,13 +175,13 @@ function SingleStakeCard({
         <div className="mb-4 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
             <span style={{ color: 'var(--app-text-primary)' }}>
-              Progress to {targetROSPercent}% ROS
+              Progress to {targetROSPercent}% Accumulated ROS
             </span>
             <span style={{ color: 'var(--app-text-primary)' }}>
               {typeof stake.currentROSPercent === 'number' &&
               typeof stake.targetROSPercent === 'number'
-                ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% ROS`
-                : `${stake.progressToTarget || '0%'} of ${targetROSPercent}% ROS`}
+                ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% Accumulated ROS`
+                : `${stake.progressToTarget || '0%'} of ${targetROSPercent}% Accumulated ROS`}
             </span>
           </div>
           <div
@@ -420,7 +420,7 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
                 />
               }
               title="No stakes yet"
-              description="Create a stake to start earning up to 200%."
+              description="Create a stake to start earning up to 200% Accumulated ROS."
               variant="neumorphic"
               action={{
                 label: 'Create Your First Stake',

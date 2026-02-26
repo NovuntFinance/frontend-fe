@@ -17,7 +17,10 @@ import {
 import { z } from 'zod';
 import { useRequestPasswordReset } from '@/lib/mutations';
 import { NeuField } from '@/components/auth/NeuField';
+import { PASSWORD_RESET_EXPIRY_SECONDS } from '@/constants/emailTiming';
 import styles from '@/styles/auth.module.css';
+
+const PASSWORD_RESET_EXPIRY_MINUTES = PASSWORD_RESET_EXPIRY_SECONDS / 60;
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -95,7 +98,7 @@ function ForgotPasswordContent() {
               Check your email
             </h1>
             <p className={styles.neuTextSecondary}>
-              We&apos;ve sent password reset instructions to
+              If an account exists, we&apos;ve sent a link to
               <br />
               <span
                 className="font-medium"
@@ -103,6 +106,7 @@ function ForgotPasswordContent() {
               >
                 {submittedEmail}
               </span>
+              . The link expires in {PASSWORD_RESET_EXPIRY_MINUTES} minutes.
             </p>
           </div>
         </div>
@@ -116,7 +120,8 @@ function ForgotPasswordContent() {
               1. Check your email inbox for a message from Novunt
             </p>
             <p className={`text-sm ${styles.neuTextSecondary}`}>
-              2. Click the reset link in the email (valid for 1 hour)
+              2. Click the reset link in the email (valid for{' '}
+              {PASSWORD_RESET_EXPIRY_MINUTES} minutes)
             </p>
             <p className={`text-sm ${styles.neuTextSecondary}`}>
               3. Create a new strong password for your account
@@ -125,7 +130,7 @@ function ForgotPasswordContent() {
           <div className="mt-6 flex flex-col gap-3">
             <Link
               href="/login"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3.5 no-underline`}
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 no-underline`}
             >
               <ArrowLeft className="h-4 w-4 text-white" />
               <span className="text-sm font-bold tracking-wider text-white uppercase">
@@ -145,7 +150,7 @@ function ForgotPasswordContent() {
               setSubmittedEmail('');
               forgotPasswordMutation.reset();
             }}
-            className={styles.neuBtnBack}
+            className={`${styles.neuBtnBack} flex w-full items-center justify-center rounded-xl py-3`}
           >
             Try a different email
           </button>
@@ -157,6 +162,15 @@ function ForgotPasswordContent() {
   // Form state
   return (
     <div className="space-y-5">
+      <h1
+        className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
+        style={{
+          color: 'var(--neu-text, #e2e8f0)',
+          fontSize: 'clamp(0.875rem, 2.5vw, 1.125rem)',
+        }}
+      >
+        Need a Reset? — Get Back to Your Journey
+      </h1>
       {errors.root && (
         <div className={styles.neuErrorAlert}>
           <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
@@ -181,12 +195,9 @@ function ForgotPasswordContent() {
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="submit"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 py-3.5 ${isSubmitting || forgotPasswordMutation.isPending ? styles.neuBtnDisabled : ''}`}
+              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 ${isSubmitting || forgotPasswordMutation.isPending ? styles.neuBtnDisabled : ''}`}
               disabled={isSubmitting || forgotPasswordMutation.isPending}
             >
-              {(isSubmitting || forgotPasswordMutation.isPending) && (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              )}
               <span className="text-sm font-bold tracking-wider text-white uppercase">
                 Send Reset Link
               </span>

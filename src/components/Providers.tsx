@@ -12,6 +12,7 @@ import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
 import { CommandPalette } from '@/components/search/CommandPalette';
+import { GlobalThemeButton } from '@/components/theme/GlobalThemeButton';
 import { AuthSessionHandler } from '@/components/auth/AuthSessionHandler';
 import { initializePlatformSettings } from '@/services/platformSettingsService';
 
@@ -153,6 +154,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <GlobalModalsProvider>
                 <AuthSessionHandler />
                 {children}
+                <GlobalThemeButton />
                 <Toaster position="top-right" richColors />
 
                 {/* Command Palette - Global Search (Cmd+K / Ctrl+K) */}

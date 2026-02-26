@@ -21,7 +21,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className={`${onboardingStyles.neuBase} relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden px-6 py-10`}
+      className={`${onboardingStyles.neuBase} relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden px-6 py-5 sm:py-8 md:py-10`}
     >
       {/* Subtle ambient glow */}
       <div
@@ -29,22 +29,21 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
       />
 
       {/* ── Main Content ── */}
-      <div className="z-10 flex w-full max-w-md grow flex-col items-center justify-center gap-10">
+      <div className="z-10 flex w-full max-w-md grow flex-col items-center justify-center gap-2 sm:gap-4 md:gap-6">
         {/* Logo Section */}
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-3 sm:gap-6">
           {/* Raised Icon Container */}
           <Link href="/">
             <div
-              className={`${onboardingStyles.neuCardRaised} flex h-56 w-56 items-center justify-center rounded-[2.5rem] ${onboardingStyles.neuFloat}`}
+              className={`${onboardingStyles.neuCardRaised} flex h-40 w-40 items-center justify-center rounded-[2rem] sm:h-48 sm:w-48 sm:rounded-[2.25rem] md:h-56 md:w-56 md:rounded-[2.5rem] ${onboardingStyles.neuFloat}`}
             >
               {/* Inset Icon Socket */}
               <div
-                className={`${onboardingStyles.neuSocket} flex h-36 w-36 items-center justify-center rounded-full`}
+                className={`${onboardingStyles.neuSocket} flex h-24 w-24 items-center justify-center rounded-full sm:h-28 sm:w-28 md:h-36 md:w-36`}
               >
                 <div
+                  className={`h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 ${styles.neuLogoRotate}`}
                   style={{
-                    width: '6rem',
-                    height: '6rem',
                     backgroundColor: '#009bf2',
                     maskImage: 'url(/icons/novunt_short.png)',
                     WebkitMaskImage: 'url(/icons/novunt_short.png)',
@@ -55,7 +54,6 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                     maskPosition: 'center',
                     WebkitMaskPosition: 'center',
                   }}
-                  className={styles.neuLogoRotate}
                 />
               </div>
             </div>
@@ -67,7 +65,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── Footer ── */}
-      <div className="z-20 flex w-full max-w-md flex-col gap-7">
+      <div className="z-20 flex w-full max-w-md flex-col gap-4 sm:gap-7">
         {/* Buttons and Login Link from pages */}
         {footerContent}
       </div>

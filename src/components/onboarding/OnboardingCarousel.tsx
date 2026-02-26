@@ -52,7 +52,7 @@ const slides: SlideData[] = [
   {
     id: 'return',
     icon: <MdOutlineSavings style={ICON_STYLE} />,
-    title: '200% ROS',
+    title: '200% Accumulated ROS',
     subtitle: 'Earn 200% returns on staked assets.',
   },
   {
@@ -64,8 +64,8 @@ const slides: SlideData[] = [
   {
     id: 'team',
     icon: <LiaNetworkWiredSolid style={ICON_STYLE} />,
-    title: 'Team Earnings',
-    subtitle: "Earn commissions from your team's activity.",
+    title: 'Referral Earnings',
+    subtitle: 'Earn commissions from your team.',
   },
   {
     id: 'pool',
@@ -76,8 +76,8 @@ const slides: SlideData[] = [
   {
     id: 'nxp',
     icon: <SiWegame style={ICON_STYLE} />,
-    title: 'Novunt Xperience Points',
-    subtitle: 'Track your progress and earn NLP Airdrops.',
+    title: 'NXP → NLP',
+    subtitle: 'Earn NXP, Get NLP.',
   },
 ];
 

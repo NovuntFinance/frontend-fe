@@ -708,7 +708,7 @@ export const knowledgeBaseArticles: Article[] = [
       <p>Shows the total ROS earned today across all active stakes.</p>
       
       <h4>Stake Progress</h4>
-      <p>Each stake shows its progress from 100% (initial amount) to 200% (doubled), with ROS contributing to this growth.</p>
+      <p>Each stake shows its progress from 100% (initial amount) to 200% Accumulated ROS (doubled), with ROS contributing to this growth.</p>
       
       <h3>Factors Affecting ROS</h3>
       <ul>

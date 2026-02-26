@@ -2,22 +2,8 @@
 // Force Vercel rebuild - All linting errors fixed (commit cc93df0)
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-// Framer Motion removed - no longer needed for navigation
-import {
-  ArrowUpRight,
-  Lock,
-  CheckCircle2,
-  Clock,
-  Wallet,
-  Bell,
-  LogOut,
-  User,
-  TrendingDown,
-  Users,
-} from 'lucide-react';
+import { ArrowUpRight, Clock, Wallet, Bell, LogOut, User } from 'lucide-react';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
@@ -31,11 +17,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { DashboardGuard } from '@/components/auth/DashboardGuard';
 import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
 import { NotificationsModal } from '@/components/settings/NotificationsModal';
@@ -43,9 +27,7 @@ import { NotificationBadge } from '@/components/notifications/NotificationBadge'
 import { DateFilteredNotificationList } from '@/components/notifications/DateFilteredNotificationList';
 import { TwoFactorModal } from '@/components/settings/TwoFactorModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Sun, Moon } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { toast } from '@/components/ui/enhanced-toast';
+import { Settings } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { CreateStakeModal } from '@/components/stake/CreateStakeModal';
 import { DepositModal } from '@/components/wallet/modals/DepositModal';
@@ -53,7 +35,6 @@ import { WithdrawModal } from '@/components/wallet/modals/WithdrawModal';
 import { TransferModal } from '@/components/wallet/modals/TransferModal';
 import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
-import { FloatingAssistantButton } from '@/components/assistant/FloatingAssistantButton';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import { IoHeadsetOutline } from 'react-icons/io5';
 import neuStyles from '@/styles/neumorphic.module.css';
@@ -78,9 +59,6 @@ export default function DashboardLayout({
     'all'
   );
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
-  const [themeMounted, setThemeMounted] = useState(false);
-  useEffect(() => setThemeMounted(true), []);
 
   // Listen for profile modal open event from registration bonus components
   useEffect(() => {
@@ -116,24 +94,24 @@ export default function DashboardLayout({
 
   const bonusData = bonusResponse?.data;
   const progress = bonusData?.progressPercentage || 0;
-  const isLocked = progress < 60;
+  const _isLocked = progress < 60;
   const isOnboardingPage = pathname === '/dashboard/onboarding';
 
   // Get weekly profit percentage
   const overviewData = overview as
     | { analytics?: { lastWeekProfit?: number; lastWeekProfitChange?: number } }
     | undefined;
-  const lastWeekProfitChange =
+  const _lastWeekProfitChange =
     overviewData?.analytics?.lastWeekProfitChange ?? 0;
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   // Initialize twoFactorEnabled from user's actual 2FA status
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+  const [_twoFactorEnabled, setTwoFactorEnabled] = useState(
     () => user?.twoFAEnabled || false
   );
 
   // 2FA disable mutation
-  const disable2FAMutation = useDisable2FA();
+  const _disable2FAMutation = useDisable2FA();
 
   // Sync twoFactorEnabled with user's 2FA status from backend
   useEffect(() => {
@@ -152,7 +130,7 @@ export default function DashboardLayout({
         className="flex min-h-full flex-col lg:h-full"
         style={{ background: '#0d162c' }}
       >
-        {/* Header: dark blue bar — greeting, role, theme + support icons */}
+        {/* Header: dark blue bar — greeting, role, support icons */}
         <header
           className="sticky top-0 z-30 shrink-0 py-2"
           style={{
@@ -160,7 +138,7 @@ export default function DashboardLayout({
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3">
+          <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
             {/* Profile Section - Left side */}
             <div className="flex shrink-0 items-center gap-3">
               <DropdownMenu
@@ -276,21 +254,8 @@ export default function DashboardLayout({
               </DropdownMenu>
             </div>
 
-            {/* Theme + Support - Right side (neumorphic) */}
+            {/* Support - Right side (theme is global via GlobalThemeButton) */}
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                aria-label="Toggle theme"
-                style={{ color: 'var(--neu-accent)', filter: 'none' }}
-              >
-                {themeMounted && theme === 'dark' ? (
-                  <Moon className="h-5 w-5" />
-                ) : (
-                  <Sun className="h-5 w-5" />
-                )}
-              </button>
               <button
                 onClick={() => setAssistantOpen(true)}
                 className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
