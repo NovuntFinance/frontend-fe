@@ -1,6 +1,7 @@
 /**
  * Enhanced Dark Mode Toggle
- * Provides better dark mode UX with smooth transitions
+ * Provides better dark mode UX with smooth transitions.
+ * Icon convention: Moon = dark mode (current; dark blue). Sun = light mode (planned).
  */
 
 'use client';

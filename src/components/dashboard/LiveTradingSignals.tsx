@@ -259,7 +259,7 @@ export function LiveTradingSignals() {
       style={CARD_STYLE}
     >
       <div className="p-5 sm:p-6">
-        <div className="min-h-[88px]">
+        <div className="relative min-h-[88px]">
           {trades.length === 0 && !error ? (
             <>
               <div className="mb-2">
@@ -295,14 +295,14 @@ export function LiveTradingSignals() {
               </p>
             </>
           ) : currentTrade ? (
-            <AnimatePresence mode="wait">
+            <AnimatePresence initial={false}>
               <motion.div
                 key={`${currentTrade.id}-${currentIndex}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 w-full"
               >
                 <TradeRow trade={currentTrade} />
               </motion.div>

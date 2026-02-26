@@ -7,14 +7,13 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Wallet, Users, Star } from 'lucide-react';
 
 const ACCENT = '#009BF2'; /* platform light blue */
-const DARK_NAVY = '#0D162C';
 
-/* Bar: dark blue neumorphic + glass (raised dual shadow) */
-const BAR_GLASS_BG = 'rgba(13, 22, 44, 0.88)';
-const BAR_GLASS_BLUR = 'blur(16px) saturate(150%)';
-const BAR_GLASS_BORDER = '1px solid rgba(0, 155, 242, 0.1)';
+/* Bar: light blue container (full fill) */
+const BAR_GLASS_BG = 'rgba(0, 155, 242, 0.4)';
+const BAR_GLASS_BLUR = 'blur(12px)';
+const BAR_GLASS_BORDER = '2px solid rgba(0, 155, 242, 0.6)';
 const BAR_NEU_SHADOW =
-  '8px 8px 20px rgba(4, 8, 18, 0.6), -8px -8px 20px rgba(25, 40, 72, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04)';
+  '0 -4px 20px rgba(0, 155, 242, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
 
 /* Icon extrude: neumorphic drop-shadows so icon looks raised */
 const ICON_EXTRUDE =
@@ -65,7 +64,7 @@ export function HorizontalNav() {
         <motion.span
           className="flex items-center justify-center transition-colors duration-200"
           style={{
-            color: active ? '#fff' : ACCENT,
+            color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.82)',
             filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
           }}
           whileHover={{ scale: 1.1, y: -2 }}

@@ -29,15 +29,17 @@ import {
   useActiveStakes,
   useDashboardOverview,
 } from '@/lib/queries';
+import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useTransactionHistory } from '@/hooks/useWallet';
 import { LoadingStates } from '@/components/ui/loading-states';
-import { DailyROSPerformance } from '@/components/dashboard/DailyROSPerformance';
-import { ActiveStakesCard } from '@/components/dashboard/ActiveStakesCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { StakeCard } from '@/components/stake/StakeCard';
+import walletStyles from '@/styles/wallet-page.module.css';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { AuthErrorFallback } from '@/components/dashboard/AuthErrorFallback';
 import { LiveTradingSignals } from '@/components/dashboard/LiveTradingSignals';
 import { LivePlatformActivities } from '@/components/dashboard/LivePlatformActivities';
+import { RosCalendarCard } from '@/components/dashboard/RosCalendarCard';
 import { NeumorphicCarouselDots } from '@/components/ui/neumorphic-carousel-dots';
 import { StakingStreakModal } from '@/components/dashboard/StakingStreakModal';
 import { WelcomeModal } from '@/components/auth/WelcomeModal';
@@ -69,6 +71,9 @@ export default function DashboardPage() {
   const [hoveredButtonIndex, setHoveredButtonIndex] = useState<number | null>(
     null
   );
+  const [pressedFeatureButtonIndex, setPressedFeatureButtonIndex] = useState<
+    number | null
+  >(null);
   const [newUserInfo, setNewUserInfo] = useState<{
     firstName: string;
     lastName: string;
@@ -160,6 +165,33 @@ export default function DashboardPage() {
     isLoading: stakesLoading,
     error: stakesError,
   } = useActiveStakes();
+  const { data: stakingData } = useStakeDashboard();
+  const dashboardActiveStakes = Array.isArray(stakingData?.activeStakes)
+    ? stakingData.activeStakes
+    : [];
+  const dashboardStakeHistory = Array.isArray(stakingData?.stakeHistory)
+    ? stakingData.stakeHistory
+    : [];
+
+  // One list: actives first, then completed. One card at a time, rotates every 35s.
+  const featuredStakesList = React.useMemo(
+    () => [...dashboardActiveStakes, ...dashboardStakeHistory],
+    [dashboardActiveStakes, dashboardStakeHistory]
+  );
+  const ROTATE_INTERVAL_MS = 35000;
+  const [featuredStakeIndex, setFeaturedStakeIndex] = React.useState(0);
+  React.useEffect(() => {
+    if (featuredStakesList.length <= 1) return;
+    const t = setInterval(() => {
+      setFeaturedStakeIndex((i) => (i + 1) % featuredStakesList.length);
+    }, ROTATE_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [featuredStakesList.length]);
+  const featuredStake =
+    featuredStakesList.length > 0
+      ? featuredStakesList[featuredStakeIndex % featuredStakesList.length]
+      : null;
+
   // Fetch recent transactions from transaction history API
   const {
     data: transactionHistoryData,
@@ -631,16 +663,16 @@ export default function DashboardPage() {
                     border: '1px solid var(--app-border)',
                   }}
                 >
-                  <div className="min-h-[64px]">
-                    <AnimatePresence mode="wait">
+                  <div className="relative min-h-[80px]">
+                    <AnimatePresence initial={false}>
                       {currentStat === 'earned' && (
                         <motion.div
                           key="total-earned"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.3 }}
-                          className="w-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="absolute inset-0 w-full"
                         >
                           <div className="mb-2">
                             <Popover>
@@ -701,12 +733,11 @@ export default function DashboardPage() {
                       {currentStat === 'staked' && (
                         <motion.div
                           key="total-staked"
-                          custom={currentIndex}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.4, ease: 'easeInOut' }}
-                          className="w-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="absolute inset-0 w-full"
                         >
                           <div className="mb-2">
                             <Popover>
@@ -767,12 +798,11 @@ export default function DashboardPage() {
                       {currentStat === 'deposited' && (
                         <motion.div
                           key="total-deposited"
-                          custom={currentIndex}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.4, ease: 'easeInOut' }}
-                          className="w-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="absolute inset-0 w-full"
                         >
                           <div className="mb-2">
                             <Popover>
@@ -833,12 +863,11 @@ export default function DashboardPage() {
                       {currentStat === 'withdrawn' && (
                         <motion.div
                           key="total-withdrawn"
-                          custom={currentIndex}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.4, ease: 'easeInOut' }}
-                          className="w-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="absolute inset-0 w-full"
                         >
                           <div className="mb-2">
                             <Popover>
@@ -900,15 +929,16 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              {/* Feature Buttons Grid - 8 circular buttons, neumorphic card */}
-              <div className="flex justify-center">
+
+              {/* Feature Buttons Grid - 8 circular buttons, same colors & neumorphic as Quick Actions */}
+              <div className="w-full">
                 <div
-                  className="w-full max-w-md rounded-2xl p-5 sm:p-6"
+                  className="w-full rounded-2xl p-5 sm:p-6"
                   style={{
                     background: '#0D162C',
                     boxShadow:
                       '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-                    border: '1px solid var(--app-border)',
+                    border: '1px solid rgba(0, 155, 242, 0.08)',
                   }}
                 >
                   <div className="grid grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
@@ -963,6 +993,9 @@ export default function DashboardPage() {
                       },
                     ].map((button, index) => {
                       const IconComponent = button.icon;
+                      const isHovered = hoveredButtonIndex === index;
+                      const isPressed = pressedFeatureButtonIndex === index;
+                      const isActive = isHovered || isPressed;
 
                       const isSettings = button.id === 'settings';
                       const isStreak = button.id === 'staking-streak';
@@ -970,78 +1003,57 @@ export default function DashboardPage() {
                       const isWelcomeBonus = button.id === 'welcome-bonus';
                       const buttonContent = (
                         <motion.button
+                          type="button"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.3 + index * 0.05 }}
-                          className="flex flex-col items-center gap-1.5"
+                          className="flex touch-manipulation flex-col items-center gap-1.5 sm:gap-2"
                         >
-                          {/* Circular neumorphic button */}
+                          {/* Circular neumorphic button – same as Quick Actions: convex raised, inset on press */}
                           <div
-                            className="relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 sm:h-14 sm:w-14 md:h-16 md:w-16"
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16"
                             style={{
-                              background:
-                                hoveredButtonIndex === index
-                                  ? '#009BF2'
-                                  : 'rgba(25, 40, 72, 0.6)',
-                              boxShadow:
-                                '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border)',
-                            }}
-                            onMouseEnter={(e) => {
-                              setHoveredButtonIndex(index);
-                              e.currentTarget.style.boxShadow =
-                                '8px 8px 16px rgba(4, 8, 18, 0.7), -8px -8px 16px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border), 0 0 20px rgba(0, 155, 242, 0.25)';
-                              e.currentTarget.style.transform =
-                                'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              setHoveredButtonIndex(null);
-                              e.currentTarget.style.boxShadow =
-                                '6px 6px 12px rgba(4, 8, 18, 0.7), -6px -6px 12px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border)';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseDown={(e) => {
-                              e.currentTarget.style.boxShadow =
-                                'inset 3px 3px 6px rgba(4, 8, 18, 0.7), inset -3px -3px 6px rgba(25, 40, 72, 0.5)';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                            onMouseUp={(e) => {
-                              e.currentTarget.style.boxShadow =
-                                '8px 8px 16px rgba(4, 8, 18, 0.7), -8px -8px 16px rgba(25, 40, 72, 0.5), 0 0 0 1px var(--app-border), 0 0 20px rgba(0, 155, 242, 0.25)';
+                              background: isActive ? '#009BF2' : '#0D162C',
+                              boxShadow: isPressed
+                                ? 'inset 6px 6px 12px rgba(0,0,0,0.45), inset -6px -6px 12px rgba(255,255,255,0.04)'
+                                : '8px 8px 16px rgba(0, 0, 0, 0.45), -8px -8px 16px rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(0, 155, 242, 0.08)',
+                              transform:
+                                isHovered && !isPressed
+                                  ? 'translateY(-2px)'
+                                  : 'translateY(0)',
+                              transition:
+                                'box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1), background 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                             }}
                           >
-                            <motion.div
-                              animate={{
-                                y: [0, -2, 0],
-                                scale: [1, 1.02, 1],
+                            <IconComponent
+                              className="h-5 w-5 sm:h-6 sm:w-6"
+                              style={{
+                                color: isActive ? '#0D162C' : '#009BF2',
                               }}
-                              transition={{
-                                duration: 5,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                                delay: index * 0.3,
-                              }}
-                            >
-                              <IconComponent
-                                className="h-5 w-5 transition-colors duration-200 sm:h-6 sm:w-6"
-                                style={{
-                                  color:
-                                    hoveredButtonIndex === index
-                                      ? '#0D162C'
-                                      : '#009BF2',
-                                  filter: 'none',
-                                }}
-                              />
-                            </motion.div>
+                            />
                           </div>
-                          {/* Label */}
+                          {/* Label – light blue like Quick Actions */}
                           <span
                             className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: '#009BF2', filter: 'none' }}
+                            style={{ color: '#009BF2' }}
                           >
                             {button.label}
                           </span>
                         </motion.button>
                       );
+
+                      const hoverPressProps = {
+                        onMouseEnter: () => setHoveredButtonIndex(index),
+                        onMouseLeave: () => {
+                          setHoveredButtonIndex(null);
+                          setPressedFeatureButtonIndex(null);
+                        },
+                        onMouseDown: () => setPressedFeatureButtonIndex(index),
+                        onMouseUp: () => setPressedFeatureButtonIndex(null),
+                        onTouchStart: () => setPressedFeatureButtonIndex(index),
+                        onTouchEnd: () => setPressedFeatureButtonIndex(null),
+                      };
 
                       return (
                         <React.Fragment key={button.id}>
@@ -1057,6 +1069,7 @@ export default function DashboardPage() {
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
                             >
                               {buttonContent}
                             </div>
@@ -1083,6 +1096,7 @@ export default function DashboardPage() {
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
                             >
                               {buttonContent}
                             </div>
@@ -1098,6 +1112,7 @@ export default function DashboardPage() {
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
                             >
                               {buttonContent}
                             </div>
@@ -1113,26 +1128,18 @@ export default function DashboardPage() {
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"
-                            >
-                              {buttonContent}
-                            </div>
-                          ) : isWelcomeBonus ? (
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => openModal('registration-bonus')}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  openModal('registration-bonus');
-                                }
-                              }}
-                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
                             >
                               {buttonContent}
                             </div>
                           ) : (
-                            <Link href={button.href}>{buttonContent}</Link>
+                            <Link
+                              href={button.href}
+                              className="block text-left"
+                              {...hoverPressProps}
+                            >
+                              {buttonContent}
+                            </Link>
                           )}
                         </React.Fragment>
                       );
@@ -1144,15 +1151,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Column 2 - Activity, daily ROS */}
-        <div className="flex flex-col space-y-1 sm:space-y-2 lg:min-h-0 lg:overflow-y-auto">
+        {/* Column 2 - Activity Feed, then Stake Card (uniform gap-5 with other columns) */}
+        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="flex flex-col gap-5"
           >
-            {/* Recent Activity */}
+            {/* Recent Activity (e.g. Daily ROS Payout cards) */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1163,27 +1170,54 @@ export default function DashboardPage() {
                 isLoading={transactionsLoading}
               />
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.38 }}
-              id="daily-ros"
-            >
-              <DailyROSPerformance />
-            </motion.div>
+            {/* Stake Card – full width to align with Activity Feed and other column cards */}
+            {featuredStake && (
+              <div className={`${walletStyles.nxpSectionRoot} w-full`}>
+                <div className="relative min-h-0">
+                  <AnimatePresence initial={false}>
+                    <motion.div
+                      key={featuredStake._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{
+                        opacity: 0,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                      }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <StakeCard stake={featuredStake} variant="dashboard" />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
 
-        {/* Column 3 - Live Trading Signals & Live Platform Activities */}
+        {/* Column 3 - Live Trading Signals, Live Platform Activities, ROS Calendar */}
         <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 gap-5 lg:min-h-0 lg:flex-1 lg:grid-rows-2"
           >
             <LiveTradingSignals />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+          >
+            <RosCalendarCard />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.36 }}
+          >
             <LivePlatformActivities />
           </motion.div>
         </div>

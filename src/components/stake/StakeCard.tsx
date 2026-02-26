@@ -5,18 +5,41 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
 import { Stake, hasReached200Target } from '@/lib/queries/stakingQueries';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
+import { useUIStore } from '@/store/uiStore';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { fmt4 } from '@/utils/formatters';
 import neuStyles from '@/styles/neumorphic.module.css';
 import walletStyles from '@/styles/wallet-page.module.css';
 
+const MASK = '••••••';
+
+const TEXT_WHITE = 'rgba(255, 255, 255, 0.95)';
+const TEXT_WHITE_MUTED = 'rgba(255, 255, 255, 0.7)';
+
 interface StakeCardProps {
   stake: Stake;
   onClick?: () => void;
+  /** Use white primary text (dashboard style); default is wallet blue theme */
+  variant?: 'default' | 'dashboard';
 }
 
-export function StakeCard({ stake, onClick }: StakeCardProps) {
+export function StakeCard({
+  stake,
+  onClick,
+  variant = 'default',
+}: StakeCardProps) {
   const stakingConfig = useStakingConfig();
+  const balanceVisible = useUIStore((s) => s.balanceVisible);
+  const isDashboard = variant === 'dashboard';
+  const maskAmounts = isDashboard && !balanceVisible;
+  const primaryColor = isDashboard ? TEXT_WHITE : 'var(--wallet-accent)';
+  const textColor = isDashboard ? TEXT_WHITE : 'var(--wallet-text)';
+  const mutedColor = isDashboard
+    ? TEXT_WHITE_MUTED
+    : 'var(--wallet-text-muted)';
+  const secondaryColor = isDashboard
+    ? TEXT_WHITE_MUTED
+    : 'var(--wallet-text-secondary)';
 
   // ✅ BACKEND CONFIRMED (Jan 15, 2026): Bonus stakes have these identifiers
   const isRegistrationBonus =
@@ -78,28 +101,28 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
-              style={{
-                boxShadow: 'var(--neu-shadow-inset)',
-                border: '1px solid var(--neu-border)',
-                background: 'var(--neu-bg)',
-                color: 'var(--wallet-accent)',
-              }}
-            >
-              <TrendingUp className="h-5 w-5 sm:h-5 sm:w-5" />
-            </div>
+            {!isDashboard && (
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
+                style={{
+                  boxShadow: 'var(--neu-shadow-inset)',
+                  border: '1px solid var(--neu-border)',
+                  background: 'var(--neu-bg)',
+                  color: 'var(--wallet-accent)',
+                }}
+              >
+                <TrendingUp className="h-5 w-5 sm:h-5 sm:w-5" />
+              </div>
+            )}
             <div className="min-w-0">
               <p
                 className="text-sm font-bold sm:text-base"
-                style={{ color: 'var(--wallet-text)' }}
+                style={{ color: textColor }}
               >
-                {isRegistrationBonus && '🎁 '}${fmt4(stake.amount)} USDT
+                {isRegistrationBonus && '🎁 '}$
+                {maskAmounts ? MASK : fmt4(stake.amount)} USDT
               </p>
-              <p
-                className="text-xs"
-                style={{ color: 'var(--wallet-text-muted)' }}
-              >
+              <p className="text-xs" style={{ color: mutedColor }}>
                 {isRegistrationBonus
                   ? 'Registration Bonus'
                   : formatDate(stake.createdAt)}
@@ -109,7 +132,11 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
           <div className="flex shrink-0 flex-col gap-1.5">
             <span
               className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
-              style={{ color: 'var(--neu-text-secondary)' }}
+              style={{
+                color: isDashboard
+                  ? TEXT_WHITE_MUTED
+                  : 'var(--neu-text-secondary)',
+              }}
             >
               {stake.status
                 ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
@@ -127,15 +154,12 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
 
         {/* Progress */}
         <div className="mb-4 space-y-2">
-          <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
-            <span style={{ color: 'var(--wallet-label)' }}>
-              Progress to {maxReturnCap}% ROS
-            </span>
-            <span style={{ color: 'var(--wallet-accent)', fontWeight: 600 }}>
+          <div className="flex items-center justify-between text-xs sm:text-sm">
+            <span style={{ color: primaryColor, fontWeight: 600 }}>
               {typeof stake.currentROSPercent === 'number' &&
               typeof stake.targetROSPercent === 'number'
-                ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}% ROS`
-                : `${stake.progressToTarget || '0%'} of the way to ${maxReturnCap}% ROS`}
+                ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}%`
+                : `${stake.progressToTarget || '0%'} of ${maxReturnCap}%`}
             </span>
           </div>
           <div className={walletStyles.nxpProgressBarTrack}>
@@ -151,57 +175,45 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         {/* Stats Grid */}
         <div className="mb-4 grid grid-cols-2 gap-2 sm:gap-3">
           <div
-            className="rounded-[16px] p-2 sm:p-3"
+            className="flex items-center gap-2 rounded-[16px] p-2 sm:gap-3 sm:p-3"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
               border: '1px solid var(--neu-border)',
               background: 'var(--neu-bg)',
             }}
           >
-            <div className="mb-1 flex items-center gap-1.5">
-              <DollarSign
-                className="h-3 w-3 sm:h-4 sm:w-4"
-                style={{ color: 'var(--wallet-accent)' }}
-              />
-              <span
-                className="text-[10px] font-medium sm:text-xs"
-                style={{ color: 'var(--wallet-text-muted)' }}
-              >
-                {isRegistrationBonus ? 'Bonus Paid' : 'Total Earned'}
-              </span>
-            </div>
+            <DollarSign
+              className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
+              style={{
+                color: isDashboard ? TEXT_WHITE : 'var(--wallet-accent)',
+              }}
+            />
             <p
-              className="text-sm font-bold sm:text-base"
-              style={{ color: 'var(--wallet-accent)' }}
+              className="min-w-0 truncate text-sm font-bold sm:text-base"
+              style={{ color: primaryColor }}
             >
-              ${fmt4(stake.totalEarned)}
+              ${maskAmounts ? MASK : fmt4(stake.totalEarned)}
             </p>
           </div>
           <div
-            className="rounded-[16px] p-2 sm:p-3"
+            className="flex items-center gap-2 rounded-[16px] p-2 sm:gap-3 sm:p-3"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
               border: '1px solid var(--neu-border)',
               background: 'var(--neu-bg)',
             }}
           >
-            <div className="mb-1 flex items-center gap-1.5">
-              <Target
-                className="h-3 w-3 sm:h-4 sm:w-4"
-                style={{ color: 'var(--wallet-accent)' }}
-              />
-              <span
-                className="text-[10px] font-medium sm:text-xs"
-                style={{ color: 'var(--wallet-text-muted)' }}
-              >
-                {isRegistrationBonus ? `Target (${maxReturnCap}%)` : 'Target'}
-              </span>
-            </div>
+            <Target
+              className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
+              style={{
+                color: isDashboard ? TEXT_WHITE : 'var(--wallet-accent)',
+              }}
+            />
             <p
-              className="text-sm font-bold sm:text-base"
-              style={{ color: 'var(--wallet-accent)' }}
+              className="min-w-0 truncate text-sm font-bold sm:text-base"
+              style={{ color: primaryColor }}
             >
-              ${fmt4(stake.targetReturn)}
+              ${maskAmounts ? MASK : fmt4(stake.targetReturn)}
             </p>
           </div>
         </div>
@@ -220,18 +232,12 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
               <div className="flex items-center gap-1.5">
                 <Calendar
                   className="h-3 w-3 sm:h-4 sm:w-4"
-                  style={{ color: 'var(--wallet-text-muted)' }}
+                  style={{ color: mutedColor }}
                 />
-                <span
-                  className="text-xs sm:text-sm"
-                  style={{ color: 'var(--wallet-text-muted)' }}
-                >
-                  Next Payout
-                </span>
               </div>
               <span
                 className="text-xs font-medium sm:text-sm"
-                style={{ color: 'var(--wallet-accent)' }}
+                style={{ color: primaryColor }}
               >
                 Week {nextPayout.week}
               </span>
@@ -242,18 +248,12 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
         {/* Remaining to Target */}
         {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
           <div className="mb-3 flex items-center justify-between text-xs sm:text-sm">
-            <span
-              className="flex items-center gap-1.5"
-              style={{ color: 'var(--wallet-text-muted)' }}
-            >
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              Remaining
-            </span>
-            <span
-              className="font-semibold"
-              style={{ color: 'var(--wallet-accent)' }}
-            >
-              ${fmt4(stake.remainingToTarget)}
+            <Clock
+              className="h-3 w-3 sm:h-4 sm:w-4"
+              style={{ color: mutedColor }}
+            />
+            <span className="font-semibold" style={{ color: primaryColor }}>
+              ${maskAmounts ? MASK : fmt4(stake.remainingToTarget)}
             </span>
           </div>
         )}
@@ -270,9 +270,9 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
           >
             <p
               className="text-[10px] font-medium sm:text-xs"
-              style={{ color: 'var(--wallet-text-secondary)' }}
+              style={{ color: secondaryColor }}
             >
-              🎯 Goal: {stake.goal}
+              🎯 {stake.goal}
             </p>
           </div>
         )}
@@ -289,9 +289,9 @@ export function StakeCard({ stake, onClick }: StakeCardProps) {
           >
             <p
               className="text-xs font-medium sm:text-sm"
-              style={{ color: 'var(--wallet-accent)' }}
+              style={{ color: primaryColor }}
             >
-              🎉 {maxReturnCap}% ROS Target Achieved!
+              🎉 {maxReturnCap}% achieved
             </p>
           </div>
         )}

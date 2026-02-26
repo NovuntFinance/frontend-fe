@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
   DollarSign,
@@ -120,6 +120,26 @@ export default function StakesPage() {
     return () => clearTimeout(timer);
   }, [refetch]);
 
+  // Rotating featured stake: one active + one completed, cycle every 35s (hooks must be before any return)
+  const ROTATE_INTERVAL_MS = 35000;
+  const [activeRotateIndex, setActiveRotateIndex] = React.useState(0);
+  const [completedRotateIndex, setCompletedRotateIndex] = React.useState(0);
+  const activeStakesForRotate = stakingData?.activeStakes ?? [];
+  const stakeHistoryForRotate = stakingData?.stakeHistory ?? [];
+  React.useEffect(() => {
+    if (activeStakesForRotate.length <= 1 && stakeHistoryForRotate.length <= 1)
+      return;
+    const t = setInterval(() => {
+      if (activeStakesForRotate.length > 1) {
+        setActiveRotateIndex((i) => (i + 1) % activeStakesForRotate.length);
+      }
+      if (stakeHistoryForRotate.length > 1) {
+        setCompletedRotateIndex((i) => (i + 1) % stakeHistoryForRotate.length);
+      }
+    }, ROTATE_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [activeStakesForRotate.length, stakeHistoryForRotate.length]);
+
   if (isLoading) {
     return (
       <div className={walletStyles.walletPage}>
@@ -188,6 +208,15 @@ export default function StakesPage() {
   });
 
   const reducedMotion = prefersReducedMotion();
+
+  const featuredActiveStake =
+    activeStakes.length > 0
+      ? activeStakes[activeRotateIndex % activeStakes.length]
+      : null;
+  const featuredCompletedStake =
+    stakeHistory.length > 0
+      ? stakeHistory[completedRotateIndex % stakeHistory.length]
+      : null;
 
   return (
     <div className={walletStyles.walletPage}>
@@ -286,6 +315,66 @@ export default function StakesPage() {
               }
             />
           </div>
+
+          {/* Active Stake – single rotating card */}
+          {featuredActiveStake && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h2
+                className="mb-3 text-base font-bold sm:text-lg"
+                style={{ color: 'var(--wallet-text)' }}
+              >
+                Active Stake
+              </h2>
+              <div className="relative min-h-[300px] w-full max-w-md">
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={featuredActiveStake._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute inset-0"
+                  >
+                    <StakeCard stake={featuredActiveStake} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Completed Stakes – single rotating card */}
+          {featuredCompletedStake && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <h2
+                className="mb-3 text-base font-bold sm:text-lg"
+                style={{ color: 'var(--wallet-text)' }}
+              >
+                Completed Stakes
+              </h2>
+              <div className="relative min-h-[300px] w-full max-w-md">
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={featuredCompletedStake._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute inset-0"
+                  >
+                    <StakeCard stake={featuredCompletedStake} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
 
           {/* Available to Stake – neumorphic card */}
           {wallets && (

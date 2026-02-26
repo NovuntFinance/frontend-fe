@@ -219,6 +219,15 @@
   }
 }
 
+/* PWA / standalone: ensure viewport height and safe area so content isn't clipped (e.g. when opened from home screen). */
+@media (display-mode: standalone) {
+  html,
+  body {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+}
+
 /* Dashboard: viewport cap on large screens so only main scrolls. Use dvh for consistent height across browsers/production. */
 @media (min-width: 1024px) {
   .dashboard-viewport-cap {

@@ -7,7 +7,7 @@ import neuStyles from '@/styles/neumorphic.module.css';
 
 /**
  * Global theme toggle — fixed position, neumorphic design, visible on every page.
- * Same visual as the previous dashboard theme button (neu-icon-button).
+ * Icon convention: Moon = dark mode (current; dark blue background). Sun = light mode (planned).
  */
 export function GlobalThemeButton() {
   const { theme, setTheme } = useTheme();
@@ -18,7 +18,8 @@ export function GlobalThemeButton() {
   if (!mounted) {
     return (
       <div
-        className={`fixed top-4 right-4 z-[100] ${neuStyles['neu-icon-button']}`}
+        className={`fixed right-4 z-[100] ${neuStyles['neu-icon-button']}`}
+        style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
         aria-hidden
       />
     );
@@ -28,8 +29,12 @@ export function GlobalThemeButton() {
     <button
       type="button"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className={`fixed top-4 right-4 z-[100] flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-      style={{ color: 'var(--neu-accent)', filter: 'none' }}
+      className={`fixed right-4 z-[100] flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+      style={{
+        color: 'var(--neu-accent)',
+        filter: 'none',
+        top: 'calc(1rem + env(safe-area-inset-top, 0px))',
+      }}
       aria-label="Toggle theme"
     >
       {theme === 'dark' ? (

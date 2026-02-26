@@ -78,7 +78,7 @@ export const registrationBonusApi = {
           msg
         );
       } else {
-        console.error('[registrationBonusApi] Failed to fetch status:', msg);
+        console.warn('[registrationBonusApi] Failed to fetch status:', msg);
       }
       throw error;
     }

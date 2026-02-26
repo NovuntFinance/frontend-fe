@@ -128,14 +128,23 @@ export default function DashboardLayout({
     <DashboardGuard>
       <div
         className="flex min-h-full flex-col lg:h-full"
-        style={{ background: '#0d162c' }}
+        style={{
+          background: '#0d162c',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        }}
       >
-        {/* Header: dark blue bar — greeting, role, support icons */}
+        {/* Header: light blue container; sticky top uses safe-area so PWA/notch doesn't clip */}
         <header
-          className="sticky top-0 z-30 shrink-0 py-2"
+          className="sticky z-30 shrink-0 py-2"
           style={{
-            background: '#0d162c',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            top: 'env(safe-area-inset-top, 0px)',
+            background: 'rgba(0, 155, 242, 0.4)',
+            borderTop: '2px solid rgba(0, 155, 242, 0.6)',
+            borderBottom: '2px solid rgba(0, 155, 242, 0.6)',
+            boxShadow:
+              '0 4px 20px rgba(0, 155, 242, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
           }}
         >
           <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
@@ -151,8 +160,8 @@ export default function DashboardLayout({
                       <div
                         className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
                         style={{
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          background: 'rgba(13, 22, 44, 0.35)',
+                          border: '1px solid rgba(13, 22, 44, 0.55)',
                         }}
                       >
                         {user?.avatar && isBadgeIcon(user.avatar) ? (
@@ -168,10 +177,10 @@ export default function DashboardLayout({
                               alt={`${displayName}`}
                             />
                             <AvatarFallback
-                              className="text-sm font-medium text-white"
+                              className="text-sm font-medium"
                               style={{
                                 background: 'transparent',
-                                color: 'rgba(255, 255, 255, 0.9)',
+                                color: 'rgba(255, 255, 255, 0.95)',
                               }}
                             >
                               {displayName[0]?.toUpperCase()}
@@ -184,15 +193,16 @@ export default function DashboardLayout({
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
                       <span
-                        className="text-sm font-medium text-white"
-                        style={{ filter: 'none' }}
+                        className="text-sm font-medium"
+                        style={{ color: '#0D162C', filter: 'none' }}
                       >
                         Hello, {displayName}.
                       </span>
                       <span
-                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase"
+                        className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
                         style={{
-                          background: '#009bf2',
+                          background: '#0D162C',
+                          color: 'rgba(255, 255, 255, 0.95)',
                           filter: 'none',
                         }}
                       >
@@ -203,12 +213,12 @@ export default function DashboardLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-56 border p-2 dark:border-white/10"
+                  className="w-56 border p-2"
                   style={{
-                    background: 'var(--app-surface)',
-                    borderColor: 'var(--app-border)',
+                    background: '#0D162C',
+                    borderColor: 'rgba(0, 155, 242, 0.35)',
                     boxShadow:
-                      '8px 8px 16px var(--app-shadow-dark), -8px -8px 16px var(--app-shadow-light)',
+                      '8px 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(0, 155, 242, 0.15)',
                   }}
                 >
                   <DropdownMenuItem
@@ -216,12 +226,15 @@ export default function DashboardLayout({
                       setProfileDropdownOpen(false);
                       setProfileModalOpen(true);
                     }}
-                    className="cursor-pointer rounded-md focus:bg-black/5 dark:focus:bg-white/10"
-                    style={{ color: 'var(--app-accent)', filter: 'none' }}
+                    className="cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.95)',
+                      filter: 'none',
+                    }}
                   >
                     <User
                       className="mr-2 h-4 w-4"
-                      style={{ color: 'var(--app-accent)', filter: 'none' }}
+                      style={{ color: '#009BF2', filter: 'none' }}
                     />
                     Profile
                   </DropdownMenuItem>
@@ -232,29 +245,41 @@ export default function DashboardLayout({
                         setNotificationCenterOpen(true);
                       }, 100);
                     }}
-                    className="relative cursor-pointer rounded-md focus:bg-white/10 dark:focus:bg-white/10"
-                    style={{ color: 'var(--app-accent)', filter: 'none' }}
+                    className="relative cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.95)',
+                      filter: 'none',
+                    }}
                   >
                     <Bell
                       className="mr-2 h-4 w-4"
-                      style={{ color: 'var(--app-accent)', filter: 'none' }}
+                      style={{ color: '#009BF2', filter: 'none' }}
                     />
                     <span className="flex-1">Notifications</span>
                     <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-1 bg-black/5 dark:bg-white/10" />
+                  <DropdownMenuSeparator
+                    className="my-1"
+                    style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                  />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="cursor-pointer rounded-md text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                    className="cursor-pointer rounded-md focus:bg-red-500/15"
+                    style={{
+                      color: '#f87171',
+                    }}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut
+                      className="mr-2 h-4 w-4"
+                      style={{ color: 'inherit' }}
+                    />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
 
-            {/* Support - Right side (theme is global via GlobalThemeButton) */}
+            {/* Support - Right side (same look as theme controller: neumorphic + accent color) */}
             <div className="flex shrink-0 items-center gap-2">
               <button
                 onClick={() => setAssistantOpen(true)}

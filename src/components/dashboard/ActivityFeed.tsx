@@ -200,8 +200,8 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
             border: '1px solid var(--app-border)',
           }}
         >
-          {/* Content Section - Minimal like Stats card: label + value only */}
-          <div className="min-h-[64px]">
+          {/* Content Section - Minimal like Stats card: label + value only (crossfade, no empty gap) */}
+          <div className="relative min-h-[88px]">
             {isLoading || safeTransactions.length === 0 ? (
               <div
                 className="w-full cursor-pointer"
@@ -238,14 +238,14 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                 </p>
               </div>
             ) : currentTransaction ? (
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false}>
                 <motion.div
                   key={`${getTransactionId(currentTransaction)}-${currentIndex}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute inset-0 w-full"
                 >
                   <div className="mb-2">
                     <p

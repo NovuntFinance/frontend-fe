@@ -66,7 +66,7 @@ export class PlatformActivityService {
       if (isNetworkError(error)) {
         console.warn('[Platform Activity] Activities unavailable:', msg);
       } else {
-        console.error('[Platform Activity] Error fetching activities:', msg);
+        console.warn('[Platform Activity] Error fetching activities:', msg);
       }
 
       // Return empty array on error (frontend will handle fallback)

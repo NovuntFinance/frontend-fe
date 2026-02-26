@@ -4,7 +4,7 @@
  */
 
 import apiClient from '@/lib/api';
-import { formatErrorForLog } from '@/lib/error-utils';
+import { getErrorMessage, isNetworkError } from '@/lib/error-utils';
 import type {
   Notification,
   NotificationFilters,
@@ -118,36 +118,20 @@ export async function getUnreadCount(): Promise<number> {
 
     return 0;
   } catch (error: any) {
-    // Silently handle network errors (CORS, backend down, etc.)
-    // Only log in development mode to avoid console spam
+    // Silently handle network/timeout errors - avoid console.error spam
     if (process.env.NODE_ENV === 'development') {
-      // Check if it's a network error (not a 4xx/5xx response)
-      const isNetworkError =
-        error?.code === 'ERR_NETWORK' ||
-        error?.message?.toLowerCase().includes('network error') ||
-        !error?.response; // No response means network error
-
-      if (isNetworkError) {
-        // Log once per session, not repeatedly
+      if (isNetworkError(error)) {
         const logKey = 'notification_api_network_error_logged';
         if (typeof window !== 'undefined' && !sessionStorage.getItem(logKey)) {
-          console.debug(
-            '[notificationApi.getUnreadCount] Network error (backend may be unavailable)'
+          console.warn(
+            '[notificationApi.getUnreadCount]',
+            getErrorMessage(error, 'Backend may be unavailable')
           );
           sessionStorage.setItem(logKey, 'true');
         }
       } else {
-        // Log actual API errors (4xx, 5xx) only if they have meaningful content
-        if (error && (error as any).response) {
-          console.error(
-            '[notificationApi.getUnreadCount] API error:',
-            formatErrorForLog(error)
-          );
-        } else if (process.env.NODE_ENV === 'development') {
-          console.debug(
-            '[notificationApi.getUnreadCount] Network error (suppressed)'
-          );
-        }
+        const msg = getErrorMessage(error, 'Request failed');
+        console.warn('[notificationApi.getUnreadCount]', msg);
       }
     }
 

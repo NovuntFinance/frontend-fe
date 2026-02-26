@@ -26,13 +26,14 @@ const NEU_RAISED_HOVER =
   '10px 10px 24px rgba(4, 8, 18, 0.75), -10px -10px 24px rgba(25, 40, 72, 0.55)';
 const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
 
-// Welcome banner: main card = bright electric blue; sub-cards = dark navy neumorphic
-const MAIN_CARD_BG = '#009BF2';
-const MAIN_LABEL = 'rgba(255, 255, 255, 0.85)';
-const MAIN_VALUE = '#0D162C';
-const SUB_CARD_BG = '#0D162C';
-const SUB_LABEL = 'rgba(0, 155, 242, 0.8)';
-const SUB_VALUE = '#009BF2';
+// Welcome banner (inverted): main card = dark blue; sub-cards = light blue with dark text
+const MAIN_CARD_BG = '#0D162C';
+const MAIN_LABEL = 'rgba(255, 255, 255, 0.9)';
+const MAIN_VALUE = '#009BF2';
+const SUB_CARD_BG = '#009BF2';
+const SUB_LABEL = 'rgba(13, 22, 44, 0.85)';
+const SUB_VALUE = '#0D162C';
+const SUB_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
 
 interface WelcomeBackCardProps {
   user: any;
@@ -131,7 +132,7 @@ export function WelcomeBackCard({
           )}
         </div>
 
-        {/* Share + Eye: neumorphic circular icon buttons (platform style) */}
+        {/* Share + Eye: inverted (light blue circle, dark icon) to match card */}
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -144,8 +145,14 @@ export function WelcomeBackCard({
                     amount: totalEarnings,
                   });
                 }}
-                className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
+                style={{
+                  background: '#009BF2',
+                  color: '#0D162C',
+                  border: '1px solid rgba(13, 22, 44, 0.2)',
+                  boxShadow:
+                    '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                }}
                 aria-label="Share"
               >
                 <Share2 className="h-5 w-5" strokeWidth={2} />
@@ -158,8 +165,14 @@ export function WelcomeBackCard({
           <button
             type="button"
             onClick={() => setBalanceVisible(!balanceVisible)}
-            className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-            style={{ color: 'var(--neu-accent)', filter: 'none' }}
+            className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
+            style={{
+              background: '#009BF2',
+              color: '#0D162C',
+              border: '1px solid rgba(13, 22, 44, 0.2)',
+              boxShadow:
+                '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+            }}
             aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
           >
             {balanceVisible ? (
@@ -171,7 +184,7 @@ export function WelcomeBackCard({
         </div>
       </div>
 
-      {/* Embedded sub-cards: dark navy, platform neumorphic (raised) */}
+      {/* Embedded sub-cards: light blue with dark text (inverted) */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
         <button
           type="button"
@@ -192,7 +205,7 @@ export function WelcomeBackCard({
           style={{
             background: SUB_CARD_BG,
             boxShadow: NEU_RAISED_SHADOW,
-            border: NEU_BORDER,
+            border: SUB_BORDER,
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
@@ -236,7 +249,7 @@ export function WelcomeBackCard({
           style={{
             background: SUB_CARD_BG,
             boxShadow: NEU_RAISED_SHADOW,
-            border: NEU_BORDER,
+            border: SUB_BORDER,
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
@@ -282,7 +295,7 @@ export function WelcomeBackCard({
       style={{
         background: MAIN_CARD_BG,
         boxShadow: NEU_RAISED_SHADOW,
-        border: '1px solid rgba(255, 255, 255, 0.12)',
+        border: NEU_BORDER,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;

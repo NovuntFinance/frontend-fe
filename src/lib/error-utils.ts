@@ -153,9 +153,23 @@ export function getStatusMessage(statusCode: number): string {
 }
 
 /**
- * Check if error is a network error
+ * Check if error is a request timeout (e.g. axios timeout)
+ */
+export function isTimeoutError(error: unknown): boolean {
+  if (typeof error === 'object' && error !== null) {
+    const err = error as Record<string, unknown>;
+    if (err.code === 'ECONNABORTED') return true;
+    const msg = typeof err.message === 'string' ? err.message : '';
+    if (msg.toLowerCase().includes('timeout')) return true;
+  }
+  return false;
+}
+
+/**
+ * Check if error is a network error (including timeout)
  */
 export function isNetworkError(error: unknown): boolean {
+  if (isTimeoutError(error)) return true;
   if (typeof error === 'object' && error !== null) {
     const err = error as Record<string, unknown>;
     return (

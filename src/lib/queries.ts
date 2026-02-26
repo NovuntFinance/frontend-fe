@@ -47,7 +47,7 @@ import type {
 } from '@/types/adminAnalytics';
 import type { RankAnalyticsResponse } from '@/types/rankAnalytics';
 import { useAuthStore } from '@/store/authStore';
-import { formatErrorForLog } from '@/lib/error-utils';
+import { formatErrorForLog, getErrorMessage } from '@/lib/error-utils';
 import { getStakingStreak } from '@/services/stakingStreakApi';
 import { rosApi, type WeeklySummaryData } from '@/services/rosApi';
 import { announcementsApi } from '@/services/announcementsApi';
@@ -434,16 +434,20 @@ export function useWalletBalance() {
           } satisfies WalletBalance;
         }
 
-        // Handle network errors gracefully - return empty wallet instead of throwing
-        const isNetworkError =
+        // Handle network/timeout errors gracefully - return empty wallet instead of throwing
+        const isNetworkOrTimeout =
           err?.code === 'ERR_NETWORK' ||
+          err?.code === 'ECONNABORTED' ||
           err?.message?.includes('Network Error') ||
           err?.message?.includes('Failed to fetch') ||
+          (typeof err?.message === 'string' &&
+            err.message.toLowerCase().includes('timeout')) ||
           (!err?.response && !err?.statusCode);
 
-        if (isNetworkError) {
+        if (isNetworkOrTimeout) {
           console.warn(
-            '[useWalletBalance] ⚠️ Network error - returning empty wallet (backend might be unavailable)'
+            '[useWalletBalance] ⚠️',
+            getErrorMessage(err, 'Backend unavailable - returning empty wallet')
           );
           return {
             funded: { balance: 0, availableBalance: 0, lockedBalance: 0 },
@@ -455,8 +459,11 @@ export function useWalletBalance() {
           } satisfies WalletBalance;
         }
 
-        // Only log and throw for other errors
-        console.error('[useWalletBalance] ❌ Unexpected error:', error);
+        // Only log and throw for other errors (log message string to avoid "{}" in console)
+        console.warn(
+          '[useWalletBalance] ❌',
+          getErrorMessage(error, 'Unexpected error')
+        );
         throw error;
       }
     },

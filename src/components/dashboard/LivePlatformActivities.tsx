@@ -152,8 +152,8 @@ export function LivePlatformActivities() {
       className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
       style={CARD_STYLE}
     >
-      {/* Minimal: label + value only (match Stats, Recent Activity, Live Trading Signals) */}
-      <div className="min-h-[64px]">
+      {/* Minimal: label + value only (match Stats, Recent Activity, Live Trading Signals); crossfade, no empty gap */}
+      <div className="relative min-h-[88px]">
         {loading ? (
           <div className="w-full">
             <div className="mb-2">
@@ -181,14 +181,14 @@ export function LivePlatformActivities() {
             <p>No activities found</p>
           </div>
         ) : currentActivity ? (
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             <motion.div
               key={`${currentActivity.id}-${currentIndex}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="w-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="absolute inset-0 w-full"
             >
               {/* Label line (match Recent Activity card) */}
               <div className="mb-2">
