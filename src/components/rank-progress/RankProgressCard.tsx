@@ -45,7 +45,7 @@ import {
   useRankProgressLightweight,
   useRankProgressDetailed,
 } from '@/lib/queries/rankProgressQueries';
-import { cn } from '@/lib/utils';
+import { cn, stripEmojis } from '@/lib/utils';
 import type { Requirement } from '@/types/rankProgress';
 import {
   getPremiumPoolDownlineRequirement,
@@ -277,16 +277,16 @@ export function RankProgressCard() {
           <div className="min-w-0 flex-1">
             <CardTitle className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
               {isMaxRank
-                ? `${current_rank} Progress`
+                ? `${stripEmojis(current_rank)} Progress`
                 : next_rank
-                  ? `${next_rank} Progress`
+                  ? `${stripEmojis(next_rank)} Progress`
                   : 'Rank Progress'}
             </CardTitle>
             <CardDescription className="text-[10px] sm:text-xs">
               {isMaxRank
                 ? 'Highest rank achieved!'
                 : next_rank
-                  ? `Progressing to ${next_rank}`
+                  ? `Progressing to ${stripEmojis(next_rank)}`
                   : 'Your journey to the next level'}
             </CardDescription>
           </div>
@@ -330,7 +330,7 @@ export function RankProgressCard() {
               </div>
               <div>
                 <p className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-xl font-bold text-transparent">
-                  {current_rank}
+                  {stripEmojis(current_rank)}
                 </p>
               </div>
             </div>
@@ -373,7 +373,7 @@ export function RankProgressCard() {
                   </div>
                   <div>
                     <p className="text-muted-foreground text-lg font-bold">
-                      {next_rank}
+                      {stripEmojis(next_rank)}
                     </p>
                   </div>
                 </div>
@@ -393,9 +393,9 @@ export function RankProgressCard() {
                     </div>
                     <span className="text-foreground font-medium">
                       {isMaxRank
-                        ? `${current_rank} Progress`
+                        ? `${stripEmojis(current_rank)} Progress`
                         : next_rank
-                          ? `${next_rank} Progress`
+                          ? `${stripEmojis(next_rank)} Progress`
                           : 'Performance Progress'}
                     </span>
                     <TooltipProvider>
@@ -613,7 +613,8 @@ export function RankProgressCard() {
               </div>
               <h3 className="mb-1 text-lg font-bold">Congratulations!</h3>
               <p className="text-muted-foreground text-sm">
-                You’ve reached the highest rank: <strong>{current_rank}</strong>
+                You’ve reached the highest rank:{' '}
+                <strong>{stripEmojis(current_rank)}</strong>
               </p>
             </motion.div>
           )}

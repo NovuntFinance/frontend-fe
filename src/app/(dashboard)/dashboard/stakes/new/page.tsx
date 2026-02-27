@@ -144,8 +144,8 @@ export default function CreateStakePage() {
           Create a New Stake
         </h1>
         <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
-          Choose the amount you would like to stake from your funded wallet.
-          You&apos;ll earn weekly ROS credited to your earnings wallet until you
+          Choose the amount you would like to stake from your deposit wallet.
+          You&apos;ll earn weekly ROS credited to your Earnings Wallet until you
           reach {stakingConfig.goalTargetPercentage}% return.
         </p>
       </div>
@@ -347,7 +347,7 @@ export default function CreateStakePage() {
                 className="text-base font-bold"
                 style={{ color: NEU_TOKENS.white80 }}
               >
-                Funded Wallet
+                Deposit Wallet
               </h3>
             </div>
             <p className="mt-1 text-sm" style={{ color: NEU_TOKENS.white60 }}>

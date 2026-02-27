@@ -27,7 +27,7 @@ import {
 } from '@/lib/queries/achievementQueries';
 import { useUpdateProfilePicture } from '@/lib/mutations/profileMutations';
 import { useUser } from '@/hooks/useUser';
-import { cn } from '@/lib/utils';
+import { cn, stripEmojis } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 
 export function AchievementsSummaryCard() {
@@ -227,7 +227,9 @@ export function AchievementsSummaryCard() {
                       await updateAvatarMutation.mutateAsync({
                         profilePicture: badge.icon,
                       });
-                      toast.success(`Profile picture set to ${badge.title}!`);
+                      toast.success(
+                        `Profile picture set to ${stripEmojis(badge.title)}!`
+                      );
                     } catch {
                       toast.error('Failed to update profile picture');
                     }
@@ -246,7 +248,7 @@ export function AchievementsSummaryCard() {
                         'border-white/20 shadow-lg',
                         'group cursor-pointer'
                       )}
-                      title={`${badge.title} - Click to set as profile picture`}
+                      title={`${stripEmojis(badge.title)} - Click to set as profile picture`}
                       onClick={handleSetAsProfile}
                     >
                       {/* Badge Icon as Background */}
@@ -267,7 +269,7 @@ export function AchievementsSummaryCard() {
                         {badge.icon}
                       </div>
                       <div className="relative z-10 line-clamp-1 text-center text-xs font-semibold text-white drop-shadow-sm">
-                        {badge.title}
+                        {stripEmojis(badge.title)}
                       </div>
 
                       {/* Set as Profile Hint */}

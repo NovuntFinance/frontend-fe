@@ -7,7 +7,7 @@ import type { Stake, StakingDashboard } from '@/lib/queries/stakingQueries';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
-import { StakingTransactionHistory } from '@/components/stake/StakingTransactionHistory';
+import { TransactionHistory } from '@/components/wallet';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { prefersReducedMotion } from '@/lib/accessibility';
@@ -289,13 +289,13 @@ export default function StakesPage() {
           </div>
         )}
 
-        {/* Staking Transaction History */}
+        {/* Transaction History – full platform history with search and filters */}
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
           animate={reducedMotion ? false : { opacity: 1, y: 0 }}
           transition={{ delay: 0.85 }}
         >
-          <StakingTransactionHistory />
+          <TransactionHistory variant="compact" />
         </motion.div>
       </div>
     </div>

@@ -277,7 +277,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
           setStep('success');
           toast.success('Deposit confirmed!', {
-            description: `${finalStatus.amount ?? depositData?.amount ?? 0} USDT credited to your Funded Wallet`,
+            description: `${finalStatus.amount ?? depositData?.amount ?? 0} USDT credited to your Deposit Wallet`,
           });
         } else if (FAILURE_STATUSES.has(finalNormalized)) {
           setError(`Deposit ${finalNormalized}. Please try again.`);
@@ -1046,7 +1046,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
             Deposit Confirmed!
           </h3>
           <p className="text-lg" style={{ color: NEU_TOKENS.white60 }}>
-            {successAmount} USDT has been credited to your Funded Wallet
+            {successAmount} USDT has been credited to your Deposit Wallet
           </p>
           <p className="mt-2 text-sm" style={{ color: NEU_TOKENS.white40 }}>
             Your balance has been updated

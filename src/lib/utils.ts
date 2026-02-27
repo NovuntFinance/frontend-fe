@@ -1,14 +1,17 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
  * Format currency with symbol
  */
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
+export function formatCurrency(
+  amount: number,
+  currency: string = 'USD'
+): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency === 'USDT' ? 'USD' : currency,
@@ -37,13 +40,16 @@ export function formatPercentage(value: number, decimals: number = 2): string {
 /**
  * Format date
  */
-export function formatDate(date: string | Date, format: 'short' | 'long' | 'relative' = 'short'): string {
+export function formatDate(
+  date: string | Date,
+  format: 'short' | 'long' | 'relative' = 'short'
+): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (format === 'relative') {
     return formatRelativeTime(d);
   }
-  
+
   if (format === 'long') {
     return d.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -53,7 +59,7 @@ export function formatDate(date: string | Date, format: 'short' | 'long' | 'rela
       minute: '2-digit',
     });
   }
-  
+
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -67,21 +73,45 @@ export function formatDate(date: string | Date, format: 'short' | 'long' | 'rela
 export function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
-  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
-  
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  if (diffInSeconds < 31536000)
+    return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+
   return `${Math.floor(diffInSeconds / 31536000)} years ago`;
+}
+
+/**
+ * Remove emoji characters from a string (e.g. "👑 Finance Titan" → "Finance Titan")
+ */
+export function stripEmojis(str: string): string {
+  if (!str || typeof str !== 'string') return str;
+  try {
+    return str
+      .replace(/\p{Extended_Pictographic}/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  } catch {
+    return str;
+  }
 }
 
 /**
  * Truncate address for display
  */
-export function truncateAddress(address: string, startLength: number = 6, endLength: number = 4): string {
+export function truncateAddress(
+  address: string,
+  startLength: number = 6,
+  endLength: number = 4
+): string {
   if (address.length <= startLength + endLength) return address;
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 }
@@ -123,13 +153,13 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
-  
+
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
     };
-    
+
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
@@ -143,7 +173,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
-  
+
   return function executedFunction(...args: Parameters<T>) {
     if (!inThrottle) {
       func(...args);

@@ -14,6 +14,7 @@ import { useEarnedBadges } from '@/lib/queries/achievementQueries';
 import { useUpdateProfilePicture } from '@/lib/mutations/profileMutations';
 import { toast } from '@/lib/toast';
 import { isBadgeIcon, getBadgeIcon } from '@/lib/avatar-utils';
+import { stripEmojis } from '@/lib/utils';
 import type { User } from '@/types/user';
 
 interface BadgeAvatarSelectorProps {
@@ -111,8 +112,10 @@ export function BadgeAvatarSelector({
             <BadgeAvatar badgeIcon={selectedBadge} size="lg" />
             <div>
               <p className="text-sm font-medium">
-                {earnedBadges.find((b) => b.icon === selectedBadge)?.title ||
-                  'Badge'}
+                {stripEmojis(
+                  earnedBadges.find((b) => b.icon === selectedBadge)?.title ||
+                    'Badge'
+                )}
               </p>
               <p className="text-muted-foreground text-xs">
                 This will be your new profile picture
@@ -159,7 +162,7 @@ export function BadgeAvatarSelector({
               )}
 
               <p className="mt-2 line-clamp-1 text-center text-xs">
-                {badge.title}
+                {stripEmojis(badge.title)}
               </p>
             </motion.button>
           );

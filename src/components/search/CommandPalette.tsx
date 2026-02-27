@@ -32,6 +32,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
+import { useUIStore } from '@/store/uiStore';
 
 interface CommandItem {
   id: string;
@@ -41,6 +42,8 @@ interface CommandItem {
   href: string;
   category: 'navigation' | 'actions' | 'recent';
   keywords?: string[];
+  /** If set, opens this modal instead of navigating to href */
+  modalId?: string;
 }
 
 const defaultCommands: CommandItem[] = [
@@ -55,12 +58,20 @@ const defaultCommands: CommandItem[] = [
   },
   {
     id: 'wallets',
-    label: 'Wallets',
-    description: 'View and manage wallets',
+    label: 'Wallet',
+    description: 'Withdrawal whitelist and address',
     icon: Wallet,
-    href: '/dashboard/wallets',
+    href: '/dashboard',
     category: 'navigation',
-    keywords: ['wallet', 'balance', 'funds', 'deposit', 'withdraw'],
+    keywords: [
+      'wallet',
+      'balance',
+      'funds',
+      'deposit',
+      'withdraw',
+      'whitelist',
+    ],
+    modalId: 'wallet',
   },
   {
     id: 'stakes',
@@ -115,6 +126,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
+  const openModal = useUIStore((s) => s.openModal);
   const { user } = useUser();
 
   // Filter commands based on search query
@@ -160,7 +172,9 @@ export function CommandPalette() {
       if (open) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          setSelectedIndex((prev) => Math.min(prev + 1, filteredCommands.length - 1));
+          setSelectedIndex((prev) =>
+            Math.min(prev + 1, filteredCommands.length - 1)
+          );
         }
         if (e.key === 'ArrowUp') {
           e.preventDefault();
@@ -179,12 +193,16 @@ export function CommandPalette() {
 
   const handleSelect = useCallback(
     (command: CommandItem) => {
-      router.push(command.href);
+      if (command.modalId) {
+        openModal(command.modalId);
+      } else {
+        router.push(command.href);
+      }
       setOpen(false);
       setSearchQuery('');
       setSelectedIndex(0);
     },
-    [router]
+    [router, openModal]
   );
 
   // Reset selected index when search changes
@@ -199,7 +217,7 @@ export function CommandPalette() {
           <DialogTitle>Quick Navigation</DialogTitle>
           <DialogDescription>
             Search and navigate quickly. Press{' '}
-            <kbd className="rounded border bg-muted px-2 py-1 text-xs font-mono">
+            <kbd className="bg-muted rounded border px-2 py-1 font-mono text-xs">
               {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}K
             </kbd>{' '}
             to open anytime.
@@ -209,7 +227,7 @@ export function CommandPalette() {
         <div className="px-6 pb-6">
           {/* Search Input */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -223,7 +241,7 @@ export function CommandPalette() {
           <div className="max-h-[400px] overflow-y-auto">
             {Object.entries(groupedCommands).map(([category, commands]) => (
               <div key={category} className="mb-4">
-                <div className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground">
+                <div className="text-muted-foreground mb-2 px-2 text-xs font-semibold uppercase">
                   {category}
                 </div>
                 <div className="space-y-1">
@@ -250,7 +268,9 @@ export function CommandPalette() {
                             <div
                               className={cn(
                                 'text-sm',
-                                isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                                isSelected
+                                  ? 'text-primary-foreground/80'
+                                  : 'text-muted-foreground'
                               )}
                             >
                               {cmd.description}
@@ -260,7 +280,9 @@ export function CommandPalette() {
                         <ArrowRight
                           className={cn(
                             'h-4 w-4 shrink-0',
-                            isSelected ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                            isSelected
+                              ? 'text-primary-foreground/60'
+                              : 'text-muted-foreground'
                           )}
                         />
                       </button>
@@ -271,7 +293,7 @@ export function CommandPalette() {
             ))}
 
             {filteredCommands.length === 0 && (
-              <div className="py-8 text-center text-muted-foreground">
+              <div className="text-muted-foreground py-8 text-center">
                 <Search className="mx-auto mb-2 h-8 w-8 opacity-50" />
                 <p>No results found</p>
                 <p className="mt-1 text-sm">Try a different search term</p>
@@ -280,19 +302,25 @@ export function CommandPalette() {
           </div>
 
           {/* Footer */}
-          <div className="mt-4 flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-4 flex items-center justify-between border-t pt-4 text-xs">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <kbd className="rounded border bg-muted px-2 py-1 font-mono">↑↓</kbd>
+                <kbd className="bg-muted rounded border px-2 py-1 font-mono">
+                  ↑↓
+                </kbd>
                 <span>Navigate</span>
               </div>
               <div className="flex items-center gap-1">
-                <kbd className="rounded border bg-muted px-2 py-1 font-mono">↵</kbd>
+                <kbd className="bg-muted rounded border px-2 py-1 font-mono">
+                  ↵
+                </kbd>
                 <span>Select</span>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="rounded border bg-muted px-2 py-1 font-mono">Esc</kbd>
+              <kbd className="bg-muted rounded border px-2 py-1 font-mono">
+                Esc
+              </kbd>
               <span>Close</span>
             </div>
           </div>
@@ -301,4 +329,3 @@ export function CommandPalette() {
     </Dialog>
   );
 }
-

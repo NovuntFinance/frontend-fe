@@ -472,7 +472,7 @@ export function useCreateWithdrawal() {
       if (code === 'INSUFFICIENT_FUNDS') {
         const availableBalance = errorData?.availableBalance || 0;
         toast.error('Insufficient balance', {
-          description: `Available: ${formatCurrency(availableBalance)}. Withdrawals can only be made from earnings wallet.`,
+          description: `Available: ${formatCurrency(availableBalance)}. Withdrawals can only be made from Earnings Wallet.`,
         });
       } else if (code === 'WITHDRAWAL_AMOUNT_TOO_LOW') {
         toast.error('Amount too low', {

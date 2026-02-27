@@ -309,7 +309,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     // Check if amount exceeds available balance
     if (limits && data.amount > limits.availableBalance) {
       toast.error('Insufficient balance', {
-        description: `Available: ${formatCurrency(limits.availableBalance)}. Withdrawals can only be made from earnings wallet.`,
+        description: `Available: ${formatCurrency(limits.availableBalance)}. Withdrawals can only be made from Earnings Wallet.`,
       });
       return;
     }
@@ -475,7 +475,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
               Withdraw USDT
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Withdraw funds from your earnings wallet. Enter the amount, wallet
+              Withdraw funds from your Earnings Wallet. Enter the amount, wallet
               address, and 2FA code to complete the withdrawal.
             </DialogDescription>
           </DialogHeader>

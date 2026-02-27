@@ -1,5 +1,6 @@
 'use client';
 
+import { stripEmojis } from '@/lib/utils';
 import { AdminUser } from '@/types/admin';
 import { RANK_REQUIREMENTS } from '@/types/teamRank';
 
@@ -53,7 +54,7 @@ export function RankBadge({ user }: RankBadgeProps) {
       <span
         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${rankColor}`}
       >
-        {rankName}
+        {stripEmojis(rankName)}
       </span>
       {rankInfo && (
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">

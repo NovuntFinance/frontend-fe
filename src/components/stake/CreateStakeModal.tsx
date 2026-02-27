@@ -501,7 +501,7 @@ export function CreateStakeModal() {
               className="mt-2 text-left text-xs"
               style={{ color: NEU_TOKENS.white40 }}
             >
-              You will receive daily payouts to your Earning Wallet until this
+              You will receive daily payouts to your Earnings Wallet until this
               target is reached.
             </p>
           </div>

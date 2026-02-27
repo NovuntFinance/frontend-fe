@@ -981,7 +981,7 @@ export default function DashboardPage() {
                       },
                       {
                         id: 'knowledge-base',
-                        label: 'Help',
+                        label: 'Knowledge base',
                         icon: BookOpen,
                         href: '/dashboard/knowledge-base',
                       },
@@ -1001,6 +1001,7 @@ export default function DashboardPage() {
                       const isStreak = button.id === 'staking-streak';
                       const isRank = button.id === 'rank';
                       const isWelcomeBonus = button.id === 'welcome-bonus';
+                      const isWallet = button.id === 'wallet-address';
                       const buttonContent = (
                         <motion.button
                           type="button"
@@ -1125,6 +1126,22 @@ export default function DashboardPage() {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
                                   setRankModalOpen(true);
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isWallet ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openModal('wallet')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openModal('wallet');
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"

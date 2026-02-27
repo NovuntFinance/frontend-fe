@@ -1,5 +1,5 @@
 /**
- * Wallet Breakdown – Compact FUNDED WALLET / EARNING WALLET cards
+ * Wallet Breakdown – Compact DEPOSIT WALLET / EARNINGS WALLET cards
  * Neumorphic style to match wallet page reference
  */
 
@@ -28,7 +28,7 @@ export function WalletBreakdown({
           className="mb-1 text-[10px] font-semibold tracking-wider uppercase sm:text-xs"
           style={{ color: 'rgba(0,155,242,0.55)' }}
         >
-          Funded Wallet
+          Deposit Wallet
         </p>
         <p
           className="text-lg font-bold sm:text-xl"
@@ -45,7 +45,7 @@ export function WalletBreakdown({
           className="mb-1 text-[10px] font-semibold tracking-wider uppercase sm:text-xs"
           style={{ color: 'rgba(0,155,242,0.55)' }}
         >
-          Earning Wallet
+          Earnings Wallet
         </p>
         <p
           className="text-lg font-bold sm:text-xl"

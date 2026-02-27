@@ -79,7 +79,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     useState<TransferResponse | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
-  // Transfers should only use Earning Wallet, not total balance
+  // Transfers should only use Earnings Wallet, not total balance
   // Use earnings.availableBalance (or earnings.balance) for transfers
   const availableBalance =
     wallet?.earnings?.availableBalance || wallet?.earnings?.balance || 0;

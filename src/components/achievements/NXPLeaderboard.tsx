@@ -10,6 +10,7 @@ import { Award } from 'lucide-react';
 import { NovuntPremiumCard } from '@/components/ui/NovuntPremiumCard';
 import { Badge } from '@/components/ui/badge';
 import { useNXPLeaderboard } from '@/lib/queries/achievementQueries';
+import { stripEmojis } from '@/lib/utils';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import type { LeaderboardEntry } from '@/types/achievements';
 
@@ -130,7 +131,7 @@ export function NXPLeaderboard() {
                             : entry.username}
                         </span>
                         <Badge variant="outline" className="text-xs">
-                          {entry.rank}
+                          {stripEmojis(entry.rank)}
                         </Badge>
                       </div>
                       <div className="text-muted-foreground text-xs">

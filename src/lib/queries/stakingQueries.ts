@@ -249,7 +249,7 @@ export function useStakeDashboard() {
               progressToTarget: '0.00%',
               stakingModel:
                 'Daily ROS based on Novunt trading performance until 200% returns',
-              note: 'Stakes are permanent commitments. You benefit through daily ROS payouts to your Earning Wallet until 200% maturity.',
+              note: 'Stakes are permanent commitments. You benefit through daily ROS payouts to your Earnings Wallet until 200% maturity.',
             },
           };
         }

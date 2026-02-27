@@ -7,8 +7,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Lock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, stripEmojis } from '@/lib/utils';
 import badgeStyles from '@/styles/badge-card.module.css';
 import type {
   Badge as BadgeType,
@@ -20,7 +19,6 @@ interface BadgeCardProps {
   badge: BadgeType | BadgeDefinition;
   earned?: boolean;
   progress?: number;
-  onToggleDisplay?: (badgeId: string) => void;
 }
 
 function getNXPForRarity(rarity: BadgeRarity): number {
@@ -40,26 +38,43 @@ const RARITY_PILL_CLASS: Record<BadgeRarity, string> = {
   common: badgeStyles.badgeRarityPill_common,
 };
 
-export function BadgeCard({
-  badge,
-  earned = false,
-  progress,
-  onToggleDisplay,
-}: BadgeCardProps) {
+export function BadgeCard({ badge, earned = false, progress }: BadgeCardProps) {
   const nxpAmount = getNXPForRarity(badge.rarity);
-  const earnedBadge = earned && 'awardedAt' in badge ? badge : null;
   const rarityLabel =
     badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1);
+  const levelNum =
+    badge.rarity === 'legendary'
+      ? 4
+      : badge.rarity === 'epic'
+        ? 3
+        : badge.rarity === 'rare'
+          ? 2
+          : 1;
+
+  const isOngoing = !earned && progress !== undefined && progress > 0;
+  const statusDot = earned ? '🟢' : isOngoing ? '🟠' : '🔴';
+  const statusClass = earned
+    ? badgeStyles.badgeCardRoot_earned
+    : isOngoing
+      ? badgeStyles.badgeCardRoot_ongoing
+      : badgeStyles.badgeCardRoot_unearned;
 
   return (
-    <article
-      className={cn(
-        badgeStyles.badgeCardRoot,
-        !earned && badgeStyles.badgeCardRoot_unearned
-      )}
-    >
-      {/* Top row: rarity pill (left) + earned status or lock (right) */}
+    <article className={cn(badgeStyles.badgeCardRoot, statusClass)}>
+      {/* Faint enlarged emoji as background – does not overpower neumorphic design */}
+      <div className={badgeStyles.badgeCardEmojiBg} aria-hidden>
+        {badge.icon}
+      </div>
+      {/* Top row: status dot, rarity, level */}
       <div className={badgeStyles.badgeTopRow}>
+        <span
+          className={badgeStyles.badgeStatusDot}
+          aria-label={
+            earned ? 'Earned' : isOngoing ? 'In progress' : 'Not earned'
+          }
+        >
+          {statusDot}
+        </span>
         <span
           className={cn(
             badgeStyles.badgeRarityPill,
@@ -68,40 +83,22 @@ export function BadgeCard({
         >
           {rarityLabel}
         </span>
-        {earned ? (
-          <span className={badgeStyles.badgeEarnedChip}>
-            <CheckCircle2
-              className={badgeStyles.badgeEarnedChipIcon}
-              strokeWidth={2.5}
-              aria-hidden
-            />
-            Earned
-          </span>
-        ) : (
-          <span className={badgeStyles.badgeLockWrap} aria-hidden>
-            <Lock className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} />
-          </span>
-        )}
+        <span className={badgeStyles.badgeLevelPill}>Level {levelNum}</span>
       </div>
 
       {/* Icon – inset circle (central) */}
       <div className={badgeStyles.badgeIconWrap}>{badge.icon}</div>
 
       {/* Title */}
-      <h3 className={badgeStyles.badgeTitle}>{badge.title}</h3>
+      <h3 className={badgeStyles.badgeTitle}>{stripEmojis(badge.title)}</h3>
 
-      {/* Description */}
-      <p className={badgeStyles.badgeDescription}>{badge.description}</p>
-
-      {/* NXP panel – inset */}
+      {/* NXP panel */}
       {earned ? (
         <div className={badgeStyles.badgeNxpPanel}>
-          <div className={badgeStyles.badgeNxpLabel}>NXP Earned</div>
           <div className={badgeStyles.badgeNxpValue}>+{nxpAmount} NXP</div>
         </div>
       ) : (
         <div className={badgeStyles.badgeNxpPanel}>
-          <div className={badgeStyles.badgeNxpLabel}>Will Earn</div>
           <div
             className={cn(
               badgeStyles.badgeNxpValue,
@@ -127,24 +124,6 @@ export function BadgeCard({
             />
           </div>
         </div>
-      )}
-
-      {/* Date earned */}
-      {earnedBadge?.awardedAt && (
-        <div className={badgeStyles.badgeDate}>
-          Earned: {new Date(earnedBadge.awardedAt).toLocaleDateString()}
-        </div>
-      )}
-
-      {/* Display toggle */}
-      {earned && 'isDisplayed' in badge && onToggleDisplay && (
-        <button
-          type="button"
-          onClick={() => onToggleDisplay(badge.badgeType)}
-          className={badgeStyles.badgeAction}
-        >
-          {badge.isDisplayed ? 'Hide from profile' : 'Show on profile'}
-        </button>
       )}
     </article>
   );

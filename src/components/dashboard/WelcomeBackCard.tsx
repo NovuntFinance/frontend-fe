@@ -13,11 +13,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
+import { useUIStore } from '@/store/uiStore';
 import { motion } from 'framer-motion';
 import { openShareModal } from '@/store/shareModalStore';
-import { useActiveStakes } from '@/lib/queries';
-import { useStakeDashboard } from '@/lib/queries/stakingQueries';
-import neuStyles from '@/styles/neumorphic.module.css';
+import { useWalletBalance } from '@/lib/queries';
+import { formatCurrency } from '@/lib/utils/wallet';
 
 // Platform neumorphic tokens (match Quick Actions, Stats, etc.)
 const NEU_RAISED_SHADOW =
@@ -59,19 +59,11 @@ export function WelcomeBackCard({
   noCard = false,
 }: WelcomeBackCardProps) {
   const router = useRouter();
-  const { data: stakingDashboard } = useStakeDashboard();
-  const { data: activeStakes } = useActiveStakes();
+  const openModal = useUIStore((s) => s.openModal);
+  const { data: walletBalance } = useWalletBalance();
 
-  // Get accurate active stakes count
-  const activeStakesArray = Array.isArray(activeStakes)
-    ? activeStakes
-    : (activeStakes as any)?.data?.activeStakes ||
-      (activeStakes as any)?.activeStakes ||
-      [];
-  const activeStakesCount = activeStakesArray.length;
-
-  // Get daily ROS (today's profit amount) from staking dashboard summary
-  const dailyROS = Number(stakingDashboard?.summary?.todaysProfit || 0);
+  const depositBalance = walletBalance?.funded?.availableBalance ?? 0;
+  const earningsBalance = walletBalance?.earnings?.availableBalance ?? 0;
 
   const greetingName = user?.firstName
     ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
@@ -184,23 +176,11 @@ export function WelcomeBackCard({
         </div>
       </div>
 
-      {/* Embedded sub-cards: light blue with dark text (inverted) */}
+      {/* Embedded sub-cards: Deposit Wallet + Earnings Wallet (light blue, dark text) */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
         <button
           type="button"
-          onClick={() => {
-            const handleScroll = () => {
-              const element = document.getElementById('daily-ros');
-              if (element)
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            };
-            if (window.location.pathname === '/dashboard') {
-              handleScroll();
-            } else {
-              router.push('/dashboard#daily-ros');
-              setTimeout(handleScroll, 300);
-            }
-          }}
+          onClick={() => openModal('wallet')}
           className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
             background: SUB_CARD_BG,
@@ -219,18 +199,14 @@ export function WelcomeBackCard({
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
             style={{ color: SUB_LABEL }}
           >
-            Today&apos;s Return on Stake
+            Deposit Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
               style={{ color: SUB_VALUE, filter: 'none' }}
             >
-              $
-              {dailyROS.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              ${formatCurrency(depositBalance, { showCurrency: false })}
             </p>
           ) : (
             <p
@@ -244,7 +220,7 @@ export function WelcomeBackCard({
 
         <button
           type="button"
-          onClick={() => router.push('/dashboard/stakes')}
+          onClick={() => openModal('wallet')}
           className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
             background: SUB_CARD_BG,
@@ -263,14 +239,14 @@ export function WelcomeBackCard({
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
             style={{ color: SUB_LABEL }}
           >
-            Active Asset(s)
+            Earnings Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
               style={{ color: SUB_VALUE, filter: 'none' }}
             >
-              {activeStakesCount} {activeStakesCount === 1 ? 'Asset' : 'Assets'}
+              ${formatCurrency(earningsBalance, { showCurrency: false })}
             </p>
           ) : (
             <p

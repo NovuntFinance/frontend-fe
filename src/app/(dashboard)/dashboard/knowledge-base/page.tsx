@@ -21,22 +21,28 @@ import {
 import { ArticleCard } from '@/components/knowledge-base/ArticleCard';
 import { ArticleDetailModal } from '@/components/knowledge-base/ArticleDetailModal';
 import type { Article } from '@/components/knowledge-base/ArticleCard';
-import { PageContainer } from '@/components/layout/PageContainer';
 import badgeStyles from '@/styles/badge-card.module.css';
 
-/**
- * Knowledge Base Page
- * Provides articles and documentation about Novunt platform
- */
+const MAIN_BG = '#0D162C';
+const CARD_STYLE = {
+  background: MAIN_BG,
+  boxShadow:
+    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+  border: '1px solid rgba(0, 155, 242, 0.08)',
+} as const;
+const ACCENT = '#009BF2';
+const LABEL = 'rgba(255, 255, 255, 0.9)';
+const SUBTITLE = 'rgba(255, 255, 255, 0.55)';
+const ICON_BG = ACCENT;
+const ICON_TEXT = MAIN_BG;
+const ICON_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
+const ICON_SHADOW = 'inset 0 1px 0 rgba(255,255,255,0.2)';
 
-// Knowledge Base Categories
 interface KnowledgeCategory {
   id: string;
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  iconColor: string;
-  gradient: string;
   articleCount: number;
   articles: string[];
 }
@@ -47,8 +53,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Getting Started',
     description: 'New to Novunt? Start here to learn the basics',
     icon: Star,
-    iconColor: 'text-blue-500',
-    gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
     articleCount: 1,
     articles: ['Platform Overview', 'Getting Started Guide'],
   },
@@ -57,8 +61,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Wallets & Finance',
     description: 'Understanding wallets, deposits, and withdrawals',
     icon: Wallet,
-    iconColor: 'text-emerald-500',
-    gradient: 'from-emerald-500/20 via-teal-500/10 to-transparent',
     articleCount: 4,
     articles: [
       'Two-Wallet System',
@@ -72,8 +74,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Staking & Goals',
     description: 'Learn how to create goals and stake effectively',
     icon: TrendingUp,
-    iconColor: 'text-purple-500',
-    gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
     articleCount: 2,
     articles: ['Goal-Based Staking System', 'Daily Profit Distribution (ROS)'],
   },
@@ -82,8 +82,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Earning Systems',
     description: 'Pools, referrals, bonuses, and how to maximize earnings',
     icon: Award,
-    iconColor: 'text-amber-500',
-    gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
     articleCount: 4,
     articles: [
       'Three-Tier Pool System',
@@ -97,8 +95,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Ranks & Teams',
     description: 'Rank progression, team building, and leadership',
     icon: Users,
-    iconColor: 'text-pink-500',
-    gradient: 'from-pink-500/20 via-rose-500/10 to-transparent',
     articleCount: 2,
     articles: [
       'Rank System & Progression',
@@ -110,8 +106,6 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Security & Account',
     description: 'Account security, authentication, and best practices',
     icon: Shield,
-    iconColor: 'text-indigo-500',
-    gradient: 'from-indigo-500/20 via-blue-500/10 to-transparent',
     articleCount: 2,
     articles: [
       'Security & Authentication',
@@ -127,14 +121,9 @@ export default function KnowledgeBasePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Filter articles based on search query or category
   const filteredArticles = useMemo(() => {
-    if (searchQuery.trim()) {
-      return searchArticles(searchQuery);
-    }
-    if (selectedCategory) {
-      return getArticlesByCategory(selectedCategory);
-    }
+    if (searchQuery.trim()) return searchArticles(searchQuery);
+    if (selectedCategory) return getArticlesByCategory(selectedCategory);
     return [];
   }, [searchQuery, selectedCategory]);
 
@@ -142,189 +131,303 @@ export default function KnowledgeBasePage() {
     setSelectedArticle(article);
     setIsModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedArticle(null);
   };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-  };
-
+  const clearSearch = () => setSearchQuery('');
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setSearchQuery(''); // Clear search when selecting category
+    setSearchQuery('');
   };
-
-  const clearCategoryFilter = () => {
-    setSelectedCategory(null);
-  };
+  const clearCategoryFilter = () => setSelectedCategory(null);
 
   const selectedCategoryData = knowledgeCategories.find(
     (cat) => cat.id === selectedCategory
   );
 
   return (
-    <div className="from-background via-background to-primary/5 min-h-screen bg-gradient-to-br">
-      <PageContainer sectionSpacing>
-        <div className={badgeStyles.kbPageRoot}>
-          {/* Page Header – neumorphic raised panel */}
-          <motion.div
-            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className={badgeStyles.kbHeaderPanel}
+    <div
+      className="min-h-screen lg:h-full lg:min-h-0"
+      style={{ background: MAIN_BG }}
+    >
+      <div
+        className={badgeStyles.kbPageRoot}
+        style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+      >
+        {/* Hero card */}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl p-4 sm:p-6"
+          style={CARD_STYLE}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '14px',
+            }}
           >
-            <div className={badgeStyles.kbHeaderTop}>
-              <div className={badgeStyles.kbHeaderIcon} aria-hidden>
-                <FileText className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
-              </div>
-              <div>
-                <h1 className={badgeStyles.kbHeaderTitle}>Knowledge Base</h1>
-                <p className={badgeStyles.kbHeaderSubtitle}>
-                  Learn more about Novunt platform and how to maximize your
-                  earnings
-                </p>
-              </div>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 14,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: ICON_BG,
+                border: ICON_BORDER,
+                color: ICON_TEXT,
+                boxShadow: ICON_SHADOW,
+              }}
+            >
+              <FileText size={24} strokeWidth={2} />
             </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h1
+                style={{
+                  color: LABEL,
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  margin: 0,
+                  lineHeight: 1.3,
+                }}
+              >
+                Knowledge Base
+              </h1>
+              <p
+                style={{
+                  color: SUBTITLE,
+                  fontSize: '0.75rem',
+                  margin: '2px 0 0',
+                  lineHeight: 1.4,
+                }}
+              >
+                Learn more about the Novunt platform
+              </p>
+            </div>
+          </div>
 
-            {/* Search – inset neumorphic input */}
-            <div className={badgeStyles.kbSearchWrap}>
-              <Search
-                className={badgeStyles.kbSearchIcon}
-                strokeWidth={2}
-                aria-hidden
-              />
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={badgeStyles.kbSearchInput}
-                aria-label="Search articles"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className={badgeStyles.kbSearchClear}
-                  aria-label="Clear search"
+          {/* Search */}
+          <div className={badgeStyles.kbSearchWrap}>
+            <Search
+              className={badgeStyles.kbSearchIcon}
+              strokeWidth={2}
+              aria-hidden
+            />
+            <input
+              type="text"
+              placeholder="Search articles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={badgeStyles.kbSearchInput}
+              aria-label="Search articles"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className={badgeStyles.kbSearchClear}
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Active category filter bar */}
+        {selectedCategory && !searchQuery.trim() && selectedCategoryData && (
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            className="rounded-2xl p-3 sm:p-4"
+            style={CARD_STYLE}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: ICON_BG,
+                    border: ICON_BORDER,
+                    color: ICON_TEXT,
+                    boxShadow: ICON_SHADOW,
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+                  {React.createElement(selectedCategoryData.icon, {
+                    className: 'h-4 w-4',
+                  })}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      color: LABEL,
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      margin: 0,
+                    }}
+                  >
+                    {selectedCategoryData.title}
+                  </p>
+                  <p
+                    style={{
+                      color: SUBTITLE,
+                      fontSize: '0.6875rem',
+                      margin: 0,
+                    }}
+                  >
+                    {filteredArticles.length}{' '}
+                    {filteredArticles.length === 1 ? 'article' : 'articles'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearCategoryFilter}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: 10,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  background: 'rgba(0, 155, 242, 0.15)',
+                  color: ACCENT,
+                  border: '1px solid rgba(0, 155, 242, 0.25)',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={14} />
+                Clear
+              </button>
             </div>
           </motion.div>
+        )}
 
-          {/* Category Filter Active – neumorphic filter bar */}
-          {selectedCategory && !searchQuery.trim() && (
-            <motion.div
-              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className={badgeStyles.kbFilterBar}
+        {/* Search results / category articles */}
+        {(searchQuery.trim() || selectedCategory) && (
+          <motion.section
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+          >
+            <p
+              style={{
+                color: LABEL,
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                margin: 0,
+                paddingLeft: 2,
+              }}
             >
-              <div className={badgeStyles.kbFilterBarInner}>
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {selectedCategoryData && (
-                    <>
-                      <div
-                        className={badgeStyles.kbFilterBarIcon}
-                        style={{ color: 'var(--badge-accent)' }}
-                      >
-                        {React.createElement(selectedCategoryData.icon, {
-                          className: 'h-5 w-5 sm:h-6 sm:w-6',
-                        })}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className={badgeStyles.kbFilterBarTitle}>
-                          {selectedCategoryData.title}
-                        </h3>
-                        <p className={badgeStyles.kbFilterBarMeta}>
-                          {filteredArticles.length}{' '}
-                          {filteredArticles.length === 1
-                            ? 'article'
-                            : 'articles'}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={clearCategoryFilter}
-                  className={badgeStyles.kbFilterBarClearBtn}
-                >
-                  <X className="h-4 w-4" />
-                  <span className="hidden sm:inline">Clear Filter</span>
-                  <span className="sm:hidden">Clear</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Search Results or Category Articles – neumorphic panel */}
-          {(searchQuery.trim() || selectedCategory) && (
-            <motion.div
-              initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className={badgeStyles.kbResultsPanel}
-            >
-              <div className={badgeStyles.kbResultsPanelHeader}>
-                <h2 className={badgeStyles.kbResultsPanelTitle}>
-                  {searchQuery.trim()
-                    ? 'Search Results'
-                    : selectedCategoryData
-                      ? selectedCategoryData.title
-                      : 'Articles'}
-                  {filteredArticles.length > 0 && (
-                    <span
-                      className={badgeStyles.kbCategoryCardMeta}
-                      style={{ marginLeft: 8, fontWeight: 400 }}
-                    >
-                      ({filteredArticles.length}{' '}
-                      {filteredArticles.length === 1 ? 'article' : 'articles'})
-                    </span>
-                  )}
-                </h2>
-              </div>
-              {filteredArticles.length > 0 ? (
-                <div className={badgeStyles.kbResultsPanelGrid}>
-                  {filteredArticles.map((article, index) => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      onClick={() => handleArticleClick(article)}
-                      index={index}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={badgeStyles.kbResultsEmpty}>
-                  <Search
-                    className={badgeStyles.kbResultsEmptyIcon}
-                    size={48}
-                  />
-                  <p className={badgeStyles.kbResultsEmptyText}>
-                    {searchQuery.trim()
-                      ? `No articles found for "${searchQuery}"`
-                      : 'No articles found in this category'}
-                  </p>
-                  <p className={badgeStyles.kbResultsEmptyHint}>
-                    {searchQuery.trim()
-                      ? 'Try different keywords or browse categories below'
-                      : 'Try selecting a different category'}
-                  </p>
-                </div>
+              {searchQuery.trim()
+                ? `Results for "${searchQuery}"`
+                : (selectedCategoryData?.title ?? 'Articles')}
+              {filteredArticles.length > 0 && (
+                <span style={{ color: SUBTITLE, fontWeight: 400 }}>
+                  {' '}
+                  ({filteredArticles.length})
+                </span>
               )}
-            </motion.div>
-          )}
+            </p>
 
-          {/* Categories Grid – neumorphic cards, hide when searching */}
-          {!searchQuery.trim() && (
-            <div className={badgeStyles.badgeSectionGrid}>
+            {filteredArticles.length > 0 ? (
+              <div className={badgeStyles.kbCategoryGrid}>
+                {filteredArticles.map((article, index) => (
+                  <ArticleCard
+                    key={article.id}
+                    article={article}
+                    onClick={() => handleArticleClick(article)}
+                    index={index}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl"
+                style={{
+                  ...CARD_STYLE,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                }}
+              >
+                <Search
+                  size={40}
+                  strokeWidth={1.5}
+                  style={{ color: ACCENT, opacity: 0.4 }}
+                />
+                <p
+                  style={{
+                    color: LABEL,
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    margin: 0,
+                  }}
+                >
+                  {searchQuery.trim()
+                    ? `No articles found for "${searchQuery}"`
+                    : 'No articles in this category'}
+                </p>
+                <p style={{ color: SUBTITLE, fontSize: '0.75rem', margin: 0 }}>
+                  Try different keywords or browse categories
+                </p>
+              </div>
+            )}
+          </motion.section>
+        )}
+
+        {/* Categories */}
+        {!searchQuery.trim() && (
+          <section
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+          >
+            <p
+              style={{
+                color: LABEL,
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                margin: 0,
+                paddingLeft: 2,
+              }}
+            >
+              Browse by Category
+            </p>
+            <div className={badgeStyles.kbCategoryGrid}>
               {knowledgeCategories.map((category, index) => {
                 const IconComponent = category.icon;
                 return (
@@ -332,21 +435,28 @@ export default function KnowledgeBasePage() {
                     key={category.id}
                     initial={reducedMotion ? false : { opacity: 0, y: 20 }}
                     animate={reducedMotion ? false : { opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + index * 0.05 }}
+                    transition={{ delay: 0.12 + index * 0.04 }}
                   >
                     <button
                       type="button"
                       onClick={() => handleCategoryClick(category.id)}
                       className={badgeStyles.kbCategoryCard}
+                      style={
+                        selectedCategory === category.id
+                          ? { borderColor: 'rgba(0, 155, 242, 0.4)' }
+                          : undefined
+                      }
                     >
                       <div className={badgeStyles.kbCategoryCardTop}>
                         <div
                           className={badgeStyles.kbCategoryCardIcon}
-                          style={{ color: 'var(--badge-accent)' }}
+                          style={{ color: ACCENT }}
                         >
-                          <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                          <IconComponent className="h-5 w-5" />
                         </div>
-                        <div className="min-w-0 flex-1 text-left">
+                        <div
+                          style={{ minWidth: 0, flex: 1, textAlign: 'left' }}
+                        >
                           <span className={badgeStyles.kbCategoryCardTitle}>
                             {category.title}
                           </span>
@@ -368,7 +478,13 @@ export default function KnowledgeBasePage() {
                             <span
                               className={badgeStyles.kbCategoryCardBulletDot}
                             />
-                            <span className="line-clamp-1 truncate">
+                            <span
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
                               {article}
                             </span>
                           </span>
@@ -384,16 +500,15 @@ export default function KnowledgeBasePage() {
                 );
               })}
             </div>
-          )}
+          </section>
+        )}
+      </div>
 
-          {/* Article Detail Modal */}
-          <ArticleDetailModal
-            article={selectedArticle}
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-          />
-        </div>
-      </PageContainer>
+      <ArticleDetailModal
+        article={selectedArticle}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

@@ -40,20 +40,59 @@ function getSourceIcon(source: NXPSource) {
   }
 }
 
-export function NXPHistory() {
+const DASHBOARD_ICON_STYLE = {
+  background: '#009BF2',
+  border: '1px solid rgba(13, 22, 44, 0.2)',
+  color: '#0D162C',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+} as const;
+
+interface NXPHistoryProps {
+  /** Use dashboard-style header (filled accent icon). Default false. */
+  variant?: 'default' | 'dashboard';
+}
+
+export function NXPHistory({ variant = 'default' }: NXPHistoryProps) {
   const [page, setPage] = useState(1);
   const [showAll, setShowAll] = useState(false);
   const limit = 20;
   const INITIAL_DISPLAY_LIMIT = 5;
   const { data, isLoading, error } = useNXPHistory(page, limit);
 
-  if (isLoading) {
-    return (
-      <section
-        className={badgeStyles.badgeSectionRoot}
-        aria-label="NXP History"
-      >
-        <header className={badgeStyles.badgeSectionHeader}>
+  const headerContent = (
+    <header
+      className={
+        variant === 'dashboard'
+          ? 'mb-4 flex items-center gap-3 sm:mb-5'
+          : badgeStyles.badgeSectionHeader
+      }
+    >
+      {variant === 'dashboard' ? (
+        <>
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11"
+            style={DASHBOARD_ICON_STYLE}
+            aria-hidden
+          >
+            <Gift className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={2} />
+          </div>
+          <div>
+            <h2
+              className="text-sm font-bold sm:text-base"
+              style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+            >
+              NXP History
+            </h2>
+            <p
+              className="text-xs"
+              style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+            >
+              Your NXP transaction history
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
           <div className={badgeStyles.badgeSectionIcon} aria-hidden>
             <Gift className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
           </div>
@@ -63,7 +102,18 @@ export function NXPHistory() {
               Your NXP transaction history
             </p>
           </div>
-        </header>
+        </>
+      )}
+    </header>
+  );
+
+  if (isLoading) {
+    return (
+      <section
+        className={badgeStyles.badgeSectionRoot}
+        aria-label="NXP History"
+      >
+        {headerContent}
         <div className={badgeStyles.nxpHistoryList}>
           {[...Array(3)].map((_, i) => (
             <ShimmerCard key={i} className="h-20 rounded-[16px]" />
@@ -84,17 +134,7 @@ export function NXPHistory() {
         className={badgeStyles.badgeSectionRoot}
         aria-label="NXP History"
       >
-        <header className={badgeStyles.badgeSectionHeader}>
-          <div className={badgeStyles.badgeSectionIcon} aria-hidden>
-            <Gift className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className={badgeStyles.badgeSectionTitle}>NXP History</h2>
-            <p className={badgeStyles.badgeSectionSubtitle}>
-              Your NXP transaction history
-            </p>
-          </div>
-        </header>
+        {headerContent}
         <div className={badgeStyles.nxpHistoryEmpty}>
           <Gift className={cn(badgeStyles.nxpHistoryEmptyIcon, 'h-12 w-12')} />
           {isUnderDevelopment ? (
@@ -135,17 +175,7 @@ export function NXPHistory() {
 
   return (
     <section className={badgeStyles.badgeSectionRoot} aria-label="NXP History">
-      <header className={badgeStyles.badgeSectionHeader}>
-        <div className={badgeStyles.badgeSectionIcon} aria-hidden>
-          <Gift className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
-        </div>
-        <div>
-          <h2 className={badgeStyles.badgeSectionTitle}>NXP History</h2>
-          <p className={badgeStyles.badgeSectionSubtitle}>
-            Your NXP transaction history
-          </p>
-        </div>
-      </header>
+      {headerContent}
 
       {transactions.length > 0 ? (
         <>

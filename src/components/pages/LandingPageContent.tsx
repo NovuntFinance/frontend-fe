@@ -477,7 +477,7 @@ export default function LandingPageContent() {
                     Set clear financial goals with progress tracking toward{' '}
                     {stakingConfig.goalTargetPercentage}% returns. Stake
                     multiple times and collect weekly ROS directly to your
-                    Earning Wallet.
+                    Earnings Wallet.
                   </p>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import { prefersReducedMotion } from '@/lib/accessibility';
 import { fmt4 } from '@/utils/formatters';
 import neuStyles from '@/styles/neumorphic.module.css';
 import { celebrateStake200AndDashboard } from '@/lib/celebrations';
+import { getFoodForThoughtForProgress } from '@/data/stakeFoodForThought';
 
 const STAKES_200_CONFETTI_KEY = 'novunt_stake_200_confetti';
 
@@ -73,6 +74,11 @@ export function StakeCard({
   const progress = stake.progressToTarget
     ? parseFloat(stake.progressToTarget.replace('%', ''))
     : 0;
+  // Food-for-thought must match the visible "X% of 200%" (current ROS 0–200). Use currentROSPercent when present; else convert completion (0–100) to ROS.
+  const progressForQuote =
+    typeof stake.currentROSPercent === 'number'
+      ? Math.min(200, stake.currentROSPercent)
+      : Math.min(200, progress * 2);
   const isCompleted = stake.status === 'completed';
   const hasReachedTarget = hasReached200Target(stake);
 
@@ -195,6 +201,13 @@ export function StakeCard({
               }}
             />
           </div>
+          {/* Food for thought – one statement per 5% progression (0–200%) */}
+          <p
+            className="mt-2 text-[11px] leading-snug sm:text-xs"
+            style={{ color: mutedColor, fontStyle: 'italic' }}
+          >
+            {getFoodForThoughtForProgress(progressForQuote)}
+          </p>
         </div>
 
         {/* Stats Grid */}

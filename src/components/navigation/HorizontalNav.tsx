@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { TrendingUp, Wallet, Users, Star } from 'lucide-react';
+import { TrendingUp, Users, Star, HelpCircle } from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
 
 const ACCENT = '#009BF2'; /* platform light blue */
 
@@ -25,11 +26,17 @@ const NAV_ITEMS: {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
+  /** If set, opens this modal instead of navigating to href */
+  modalId?: string;
 }[] = [
   { name: 'Stake', href: '/dashboard/stakes', icon: TrendingUp },
-  { name: 'Wallet', href: '/dashboard/wallets', icon: Wallet },
   { name: 'Team', href: '/dashboard/team', icon: Users },
   { name: 'NXP', href: '/dashboard/achievements', icon: Star },
+  {
+    name: 'Knowledge base',
+    href: '/dashboard/knowledge-base',
+    icon: HelpCircle,
+  },
 ];
 
 const NOTCH_MASK =
@@ -41,8 +48,11 @@ interface HorizontalNavProps {
 
 export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
   const pathname = usePathname();
+  const openModal = useUIStore((s) => s.openModal);
+  const isModalOpen = useUIStore((s) => s.isModalOpen);
 
-  const isActive = (href: string) => {
+  const isActive = (href: string, item: (typeof NAV_ITEMS)[0]) => {
+    if (item.modalId) return isModalOpen(item.modalId);
     if (href === '/dashboard') return pathname === '/dashboard';
     return pathname.startsWith(href);
   };
@@ -55,8 +65,31 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
   };
 
   const renderNavItem = (item: (typeof NAV_ITEMS)[0]) => {
-    const active = isActive(item.href);
+    const active = isActive(item.href, item);
     const Icon = item.icon;
+    if (item.modalId) {
+      return (
+        <button
+          key={item.name}
+          type="button"
+          onClick={() => openModal(item.modalId!)}
+          className="group relative flex items-center justify-center p-1"
+          aria-label={`Open ${item.name}`}
+        >
+          <motion.span
+            className="flex items-center justify-center transition-colors duration-200"
+            style={{
+              color: active ? ACCENT : 'rgba(0, 155, 242, 0.75)',
+              filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
+            }}
+            whileHover={{ scale: 1.1, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
+          </motion.span>
+        </button>
+      );
+    }
     return (
       <Link
         key={item.name}

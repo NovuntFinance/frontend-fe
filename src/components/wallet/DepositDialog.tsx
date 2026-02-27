@@ -102,7 +102,7 @@ export function DepositDialog({ trigger, className }: DepositDialogProps) {
         <DialogHeader>
           <DialogTitle>Deposit USDT</DialogTitle>
           <DialogDescription>
-            Generate a unique deposit address to top up your funded wallet.
+            Generate a unique deposit address to top up your deposit wallet.
           </DialogDescription>
         </DialogHeader>
 

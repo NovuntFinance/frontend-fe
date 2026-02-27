@@ -50,6 +50,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   formatCurrency,
   formatTransactionType,
   formatTransactionStatus,
@@ -67,10 +74,17 @@ import type {
 } from '@/types/enhanced-transaction';
 import neuStyles from '@/styles/neumorphic.module.css';
 
+export type TransactionHistoryVariant = 'default' | 'compact';
+
 /**
  * Transaction History Component
+ * @param variant - 'default' = full wallet layout; 'compact' = stake-page style (simple card, search/filter, minimal rows)
  */
-export function TransactionHistory() {
+export function TransactionHistory({
+  variant = 'default',
+}: {
+  variant?: TransactionHistoryVariant;
+}) {
   const { user } = useUser();
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<TransactionHistoryParams>({
@@ -81,23 +95,27 @@ export function TransactionHistory() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [compactPage, setCompactPage] = useState(1);
 
   // Separate filters: backend filters (search, date) vs client-side filters (category)
   // We don't send category to backend because backend uses stored category which might be wrong
   // When filtering by category, we fetch more transactions to ensure we get all matches
   const backendFilters = useMemo(() => {
     const { category, ...rest } = filters;
+    // Compact variant: always fetch up to 1000 and paginate client-side for simple UI
+    if (variant === 'compact') {
+      return { ...rest, limit: 1000, page: 1 };
+    }
     // If filtering by category, increase limit to get all transactions for client-side filtering
-    // Otherwise use normal pagination
     if (category) {
       return {
         ...rest,
-        limit: 1000, // Fetch a large number to get all transactions
-        page: 1, // Always start from page 1 when category filtering
+        limit: 1000,
+        page: 1,
       };
     }
     return rest;
-  }, [filters]);
+  }, [filters, variant]);
 
   const { data, isLoading, error, refetch } =
     useTransactionHistory(backendFilters);
@@ -117,10 +135,11 @@ export function TransactionHistory() {
       return {
         ...prev,
         search: debouncedSearch || undefined,
-        page: 1, // Reset to first page when search changes
+        page: 1,
       };
     });
-  }, [debouncedSearch]);
+    if (variant === 'compact') setCompactPage(1);
+  }, [debouncedSearch, variant]);
 
   // Debug logging
   useEffect(() => {
@@ -561,8 +580,9 @@ export function TransactionHistory() {
     setFilters((prev) => ({
       ...prev,
       [key]: value === 'all' || value === '' ? undefined : value,
-      page: 1, // Reset to first page when filters change
+      page: 1,
     }));
+    if (variant === 'compact') setCompactPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -592,6 +612,7 @@ export function TransactionHistory() {
     });
     setSearchQuery('');
     setDebouncedSearch('');
+    if (variant === 'compact') setCompactPage(1);
   };
 
   const handleRefresh = () => {
@@ -1001,6 +1022,305 @@ export function TransactionHistory() {
 
   const reducedMotion = prefersReducedMotion();
 
+  // Compact variant: client-side pagination (10 per page), stake-style UI
+  const COMPACT_ITEMS_PER_PAGE = 10;
+  const totalPagesCompact =
+    variant === 'compact'
+      ? Math.max(
+          1,
+          Math.ceil(filteredTransactions.length / COMPACT_ITEMS_PER_PAGE)
+        )
+      : 0;
+  const displayedCompact =
+    variant === 'compact'
+      ? filteredTransactions.slice(
+          (compactPage - 1) * COMPACT_ITEMS_PER_PAGE,
+          compactPage * COMPACT_ITEMS_PER_PAGE
+        )
+      : [];
+
+  const handleCompactPageChange = (newPage: number) => {
+    setCompactPage(newPage);
+  };
+
+  if (variant === 'compact') {
+    const compactCardStyle = {
+      background: '#0D162C',
+      boxShadow:
+        '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+      border: '1px solid rgba(0, 155, 242, 0.08)',
+    } as const;
+    const compactInputStyle = {
+      background: 'rgba(255, 255, 255, 0.06)',
+      border: '1px solid rgba(0, 155, 242, 0.2)',
+      color: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 14,
+    };
+    return (
+      <div ref={sectionRef} className="space-y-5">
+        {/* Transaction History card – matches My Stakes / stake page design */}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+          animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl p-5 sm:p-6"
+          style={compactCardStyle}
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
+              style={{
+                background: '#009BF2',
+                border: '1px solid rgba(13, 22, 44, 0.2)',
+                color: '#0D162C',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+              }}
+            >
+              <FileText className="h-6 w-6 sm:h-7 sm:w-7" />
+            </div>
+            <div className="min-w-0">
+              <h2
+                className="text-base font-bold sm:text-lg"
+                style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+              >
+                Transaction History
+              </h2>
+              <p
+                className="text-xs sm:text-sm"
+                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+              >
+                Search and filter your transactions
+              </p>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              <div className="relative sm:col-span-1">
+                <Search
+                  className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                />
+                <Input
+                  placeholder="Search by amount, ref, description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-10 w-full border py-2 pr-9 pl-9 text-sm placeholder:opacity-60 sm:h-11"
+                  style={{
+                    ...compactInputStyle,
+                    paddingLeft: '2.25rem',
+                    paddingRight: searchQuery ? '2.25rem' : '0.75rem',
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setDebouncedSearch('');
+                    }}
+                    className="absolute top-1/2 right-3 h-6 w-6 -translate-y-1/2 rounded opacity-70 hover:opacity-100"
+                    style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                    title="Clear search"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <Select
+                value={filters.category || 'all'}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    'category',
+                    value === 'all' ? undefined : value
+                  )
+                }
+              >
+                <SelectTrigger
+                  className="h-10 w-full rounded-[14px] border px-3 pr-9 text-sm sm:h-11"
+                  style={{
+                    ...compactInputStyle,
+                  }}
+                  aria-label="Filter by category"
+                >
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent
+                  className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+                  position="popper"
+                  sideOffset={4}
+                >
+                  <SelectItem value="all">All categories</SelectItem>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                  <SelectItem value="staking">Staking</SelectItem>
+                  <SelectItem value="earnings">Earnings</SelectItem>
+                  <SelectItem value="transfer">Transfer</SelectItem>
+                  <SelectItem value="bonus">Bonus</SelectItem>
+                  <SelectItem value="fee">Fee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="relative min-w-[120px] flex-1 sm:min-w-[140px]">
+                <Calendar
+                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                />
+                <Input
+                  type="date"
+                  placeholder="From"
+                  value={filters.dateFrom || ''}
+                  onChange={(e) =>
+                    handleFilterChange('dateFrom', e.target.value || undefined)
+                  }
+                  className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
+                  style={compactInputStyle}
+                />
+              </div>
+              <div className="relative min-w-[120px] flex-1 sm:min-w-[140px]">
+                <Calendar
+                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                />
+                <Input
+                  type="date"
+                  value={filters.dateTo || ''}
+                  onChange={(e) =>
+                    handleFilterChange('dateTo', e.target.value || undefined)
+                  }
+                  min={filters.dateFrom || undefined}
+                  className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
+                  style={compactInputStyle}
+                />
+              </div>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="h-10 shrink-0 rounded-[14px] px-4 text-sm font-medium transition-opacity hover:opacity-90 sm:h-11"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid rgba(0, 155, 242, 0.3)',
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {isLoading ? (
+          <LoadingStates.List lines={5} />
+        ) : displayedCompact.length > 0 ? (
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="space-y-2 sm:space-y-2.5"
+          >
+            {displayedCompact.map((transaction, index) => (
+              <div
+                key={transaction._id}
+                className={`rounded-[14px] ${neuStyles['neu-card']}`}
+                style={{
+                  boxShadow:
+                    '4px 4px 10px var(--neu-shadow-dark), -4px -4px 10px var(--neu-shadow-light)',
+                }}
+              >
+                <CompactTransactionItem
+                  transaction={transaction}
+                  index={index}
+                />
+              </div>
+            ))}
+
+            {totalPagesCompact > 1 && (
+              <div className="flex flex-col gap-3 border-t border-[var(--neu-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p
+                  className="text-xs sm:text-sm"
+                  style={{ color: 'var(--wallet-text-muted)' }}
+                >
+                  Showing {(compactPage - 1) * COMPACT_ITEMS_PER_PAGE + 1}-
+                  {Math.min(
+                    compactPage * COMPACT_ITEMS_PER_PAGE,
+                    filteredTransactions.length
+                  )}{' '}
+                  of {filteredTransactions.length} transactions
+                </p>
+                <div className="flex items-center justify-between gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleCompactPageChange(compactPage - 1)}
+                    disabled={compactPage === 1}
+                    className={`h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm ${neuStyles['neu-button']} disabled:cursor-not-allowed disabled:opacity-50`}
+                    style={{ color: 'var(--wallet-text)' }}
+                  >
+                    <ChevronLeft className="mr-1 inline h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
+                  </button>
+                  <span
+                    className="rounded-[14px] px-2 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+                    style={{
+                      background: 'var(--neu-bg)',
+                      boxShadow: 'var(--neu-shadow-inset)',
+                      border: '1px solid var(--neu-border)',
+                      color: 'var(--wallet-text-secondary)',
+                    }}
+                  >
+                    Page {compactPage} of {totalPagesCompact}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCompactPageChange(compactPage + 1)}
+                    disabled={compactPage === totalPagesCompact}
+                    className={`h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm ${neuStyles['neu-button']} disabled:cursor-not-allowed disabled:opacity-50`}
+                    style={{ color: 'var(--wallet-text)' }}
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
+                    <ChevronRight className="ml-1 inline h-3 w-3 sm:h-4 sm:w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className={`rounded-[18px] p-6 text-center sm:p-8 ${neuStyles['neu-card']}`}
+          >
+            <p
+              className="text-sm sm:text-base"
+              style={{ color: 'var(--wallet-text-muted)' }}
+            >
+              {hasActiveFilters
+                ? 'No transactions match your filters'
+                : 'No transactions found'}
+            </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className={`${neuStyles['neu-button']} mt-3 h-9 px-3 text-sm`}
+                style={{ color: 'var(--wallet-text)' }}
+              >
+                Clear filters
+              </button>
+            )}
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div ref={sectionRef} className="space-y-4 sm:space-y-6">
       {/* Header – Neumorphic panel (#0D162C + #009BF2) */}
@@ -1064,6 +1384,8 @@ export function TransactionHistory() {
                       }}
                       className="absolute top-1/2 right-2 h-7 w-7 -translate-y-1/2 rounded-md transition-opacity hover:opacity-80"
                       style={{ color: 'var(--neu-text-muted)' }}
+                      title="Clear search"
+                      aria-label="Clear search"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -1263,6 +1585,64 @@ export function TransactionHistory() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+/**
+ * Compact Transaction Item – stake-style: type, amount, date (minimal row, no icons).
+ */
+function CompactTransactionItem({
+  transaction,
+  index,
+}: {
+  transaction: Transaction;
+  index: number;
+}) {
+  const reducedMotion = prefersReducedMotion();
+  const isPositive = transaction.direction === 'in';
+  const isNeutral = transaction.direction === 'neutral';
+  const typeLabel = formatTransactionType(
+    transaction.type,
+    transaction.typeLabel
+  );
+  const amountStr = formatAmountWithDirection(
+    transaction.amount,
+    transaction.direction
+  );
+  const dateStr = formatTransactionDate(transaction.timestamp);
+
+  return (
+    <motion.div
+      initial={reducedMotion ? false : { opacity: 0 }}
+      animate={reducedMotion ? false : { opacity: 1 }}
+      transition={{ delay: index * 0.02 }}
+      className="px-3 py-2.5 transition-colors hover:bg-[rgba(0,155,242,0.03)] sm:px-4 sm:py-3"
+      style={{ borderColor: 'var(--wallet-border)' }}
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <p
+          className="min-w-0 truncate text-sm font-medium sm:text-base"
+          style={{ color: 'var(--wallet-text)' }}
+        >
+          {typeLabel}
+        </p>
+        <p
+          className="shrink-0 text-sm font-medium sm:text-base"
+          style={{
+            color: isPositive
+              ? 'var(--wallet-accent)'
+              : isNeutral
+                ? 'var(--wallet-text-muted)'
+                : 'var(--wallet-text)',
+          }}
+        >
+          {amountStr}
+        </p>
+      </div>
+      <p className="text-xs" style={{ color: 'var(--wallet-text-muted)' }}>
+        {dateStr}
+      </p>
+    </motion.div>
   );
 }
 

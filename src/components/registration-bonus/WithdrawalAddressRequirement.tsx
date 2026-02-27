@@ -7,8 +7,8 @@
 
 import React from 'react';
 import { Wallet, CheckCircle2, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useUIStore } from '@/store/uiStore';
 import type { WithdrawalAddressRequirementProps } from '@/types/registrationBonus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,11 @@ export function WithdrawalAddressRequirement({
   addressData,
   onComplete,
 }: WithdrawalAddressRequirementProps) {
-  const router = useRouter();
+  const openModal = useUIStore((s) => s.openModal);
   const isComplete = addressData.isCompleted;
 
   const handleAddAddress = () => {
-    router.push('/dashboard/wallets');
+    openModal('wallet');
   };
 
   const truncateAddress = (addr: string) => {

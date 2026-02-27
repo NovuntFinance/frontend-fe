@@ -31,7 +31,7 @@ import {
 } from '@/lib/queries/rankProgressQueries';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
-import { cn } from '@/lib/utils';
+import { cn, stripEmojis } from '@/lib/utils';
 import type { Requirement } from '@/types/rankProgress';
 import {
   getPremiumPoolDownlineRequirement,
@@ -135,7 +135,7 @@ export function QualificationRequirementsContent() {
   const next_rank_icon = data.next_rank_icon;
 
   const title = isMaxRank
-    ? `${currentRank} Progress`
+    ? `${stripEmojis(currentRank)} Progress`
     : nextRank
       ? `${nextRank} Progress`
       : 'Rank Progress';
@@ -263,7 +263,7 @@ export function QualificationRequirementsContent() {
           </div>
         </div>
         <p className="text-xl font-bold" style={{ color: NEU_TOKENS.accent }}>
-          {currentRank}
+          {stripEmojis(currentRank)}
         </p>
       </div>
       {!isMaxRank && (
@@ -324,7 +324,7 @@ export function QualificationRequirementsContent() {
               className="text-lg font-bold"
               style={{ color: NEU_TOKENS.white80 }}
             >
-              {nextRank}
+              {nextRank ? stripEmojis(nextRank) : ''}
             </p>
           </div>
         </>
@@ -582,7 +582,9 @@ export function QualificationRequirementsContent() {
       </h3>
       <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
         You&apos;ve reached the highest rank:{' '}
-        <strong style={{ color: NEU_TOKENS.white80 }}>{currentRank}</strong>
+        <strong style={{ color: NEU_TOKENS.white80 }}>
+          {stripEmojis(currentRank)}
+        </strong>
       </p>
     </div>
   );

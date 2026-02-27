@@ -47,7 +47,7 @@ export interface Goal {
 
 export interface CreateStakePayload {
   amount: number;
-  walletType: 'funded'; // Only funded wallet can be used
+  walletType: 'funded'; // Only deposit wallet can be used for staking (API still uses 'funded')
   goalTitle?: string;
   goalDescription?: string;
 }
