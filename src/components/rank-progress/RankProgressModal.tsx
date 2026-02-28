@@ -3,13 +3,7 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QualificationRequirementsContent } from './QualificationRequirementsContent';
-import {
-  NEU_TOKENS,
-  neuModalRaised,
-  neuRadius,
-  neuInset,
-  neuRaised,
-} from './neumorphicTokens';
+import { neuRadius } from './neumorphicTokens';
 import { cn } from '@/lib/utils';
 
 interface RankProgressModalProps {
@@ -46,29 +40,29 @@ export function RankProgressModal({
           '[&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-white/20'
         )}
         style={{
-          background: `linear-gradient(165deg, #0f1930 0%, ${NEU_TOKENS.bg} 45%, #0b1222 100%)`,
-          boxShadow: neuModalRaised,
-          border: `1px solid ${NEU_TOKENS.border}`,
+          background: 'var(--neu-modal-bg)',
+          boxShadow: 'var(--neu-shadow-raised)',
+          border: '1px solid var(--neu-border)',
         }}
       >
         {/* Inner padding: mobile 16px, tablet 24px, desktop 32px */}
         <div className="relative p-4 sm:p-6 lg:p-8">
           <style>{`
             .rank-progress-neu-modal [data-slot="dialog-close"] {
-              background: ${NEU_TOKENS.bg};
-              box-shadow: ${neuRaised};
-              border: 1px solid ${NEU_TOKENS.border};
-              color: ${NEU_TOKENS.accent};
+              background: var(--neu-bg);
+              box-shadow: var(--neu-shadow-raised);
+              border: 1px solid var(--neu-border);
+              color: var(--neu-accent);
               border-radius: ${neuRadius.md};
             }
             .rank-progress-neu-modal [data-slot="dialog-close"]:hover {
-              box-shadow: 8px 8px 16px rgba(0,0,0,0.4), -4px -4px 12px rgba(255,255,255,0.05);
+              box-shadow: var(--neu-shadow-raised-hover);
             }
             .rank-progress-neu-modal [data-slot="dialog-close"]:active {
-              box-shadow: ${neuInset};
+              box-shadow: var(--neu-shadow-inset-press);
             }
             .rank-progress-neu-modal [data-slot="dialog-close"]:focus-visible {
-              outline: 2px solid ${NEU_TOKENS.focusRing};
+              outline: 2px solid var(--neu-focus-ring);
               outline-offset: 2px;
             }
           `}</style>

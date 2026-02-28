@@ -195,10 +195,9 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         <div
           className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
           style={{
-            background: '#0D162C',
-            boxShadow:
-              '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-            border: '1px solid var(--app-border)',
+            background: 'var(--neu-bg)',
+            boxShadow: 'var(--neu-shadow-raised)',
+            border: '1px solid var(--neu-border)',
           }}
         >
           {/* Content Section - Minimal like Stats card: label + value only (crossfade, no empty gap) */}
@@ -220,20 +219,20 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                 <div className="mb-2">
                   <p
                     className="text-left text-xs font-semibold sm:text-sm"
-                    style={{ color: '#009BF2', filter: 'none' }}
+                    style={{ color: 'var(--neu-accent)', filter: 'none' }}
                   >
                     Recent Activity
                   </p>
                 </div>
                 <p
                   className="text-left text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                  style={{ color: 'rgba(255, 255, 255, 0.95)', filter: 'none' }}
+                  style={{ color: 'var(--neu-text-primary)', filter: 'none' }}
                 >
                   +$0.00
                 </p>
                 <p
                   className="mt-1 text-left text-[10px] sm:text-xs"
-                  style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
+                  style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
                 >
                   Deposit or stake to see activity
                 </p>
@@ -251,12 +250,12 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   <div className="mb-2">
                     <p
                       className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
-                      style={{ color: '#009BF2', filter: 'none' }}
+                      style={{ color: 'var(--neu-accent)', filter: 'none' }}
                     >
                       {getTransactionTypeLabel(currentTransaction)}
                       <span
                         className="ml-1.5 font-normal"
-                        style={{ color: 'rgba(0, 155, 242, 0.75)' }}
+                        style={{ color: 'var(--neu-text-secondary)' }}
                       >
                         ·{' '}
                         {formatRelativeTime(
@@ -280,11 +279,9 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                           key={currentTransaction.amount}
                           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                           style={{
-                            color: isStake
-                              ? 'rgba(255, 255, 255, 0.95)'
-                              : isOutgoing
-                                ? '#ef4444'
-                                : 'rgba(255, 255, 255, 0.95)',
+                            color: isOutgoing
+                              ? '#ef4444'
+                              : 'var(--neu-text-primary)',
                             filter: 'none',
                           }}
                         >
@@ -305,7 +302,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                     <span
                       className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
                       style={{
-                        color: 'rgba(0, 155, 242, 0.7)',
+                        color: 'var(--neu-text-secondary)',
                         filter: 'none',
                       }}
                     >

@@ -41,9 +41,9 @@ function getSourceIcon(source: NXPSource) {
 }
 
 const DASHBOARD_ICON_STYLE = {
-  background: '#009BF2',
-  border: '1px solid rgba(13, 22, 44, 0.2)',
-  color: '#0D162C',
+  background: 'var(--neu-accent)',
+  border: '1px solid var(--neu-border)',
+  color: 'var(--neu-accent-foreground)',
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
 } as const;
 

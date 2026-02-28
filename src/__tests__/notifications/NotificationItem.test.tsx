@@ -20,12 +20,14 @@ const mockNotification: Notification = {
 };
 
 describe('NotificationItem', () => {
-  const mockOnMarkAsRead = jest.fn();
-  const mockOnDelete = jest.fn();
+  const mockOnMarkAsRead = jest.fn().mockResolvedValue(undefined);
+  const mockOnDelete = jest.fn().mockResolvedValue(undefined);
   const mockOnClick = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOnMarkAsRead.mockResolvedValue(undefined);
+    mockOnDelete.mockResolvedValue(undefined);
   });
 
   it('renders notification correctly', () => {
@@ -79,7 +81,9 @@ describe('NotificationItem', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Notification: Test Notification' })
+    );
 
     expect(mockOnMarkAsRead).toHaveBeenCalledWith('123');
   });
@@ -94,7 +98,9 @@ describe('NotificationItem', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Notification: Test Notification' })
+    );
 
     expect(mockOnClick).toHaveBeenCalledWith(mockNotification);
   });
@@ -159,7 +165,9 @@ describe('NotificationItem', () => {
       />
     );
 
-    const notificationElement = screen.getByRole('button');
+    const notificationElement = screen.getByRole('button', {
+      name: 'Notification: Test Notification',
+    });
 
     fireEvent.keyDown(notificationElement, { key: 'Enter' });
     expect(mockOnClick).toHaveBeenCalledTimes(1);

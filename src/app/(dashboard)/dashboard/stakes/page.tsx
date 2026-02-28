@@ -13,21 +13,12 @@ import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import neuStyles from '@/styles/neumorphic.module.css';
 
-/* Dashboard design system: card surface */
+/* Dashboard design system: theme tokens (--neu-*) for light/dark */
 const CARD_STYLE = {
-  background: '#0D162C',
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
   border: '1px solid var(--neu-border)',
 } as const;
-
-/* Welcome-card style: same palette as WelcomeBackCard (dark blue + light blue + white) */
-const WELCOME_MAIN_BG = '#0D162C';
-const WELCOME_LABEL = 'rgba(255, 255, 255, 0.9)';
-const WELCOME_SUBTITLE = 'rgba(255, 255, 255, 0.8)';
-const WELCOME_SUB_BG = '#009BF2';
-const WELCOME_SUB_TEXT = '#0D162C';
-const WELCOME_SUB_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
 
 const INITIAL_STAKE_DISPLAY = 5;
 
@@ -117,10 +108,9 @@ export default function StakesPage() {
           transition={{ delay: 0.1 }}
           className="rounded-2xl p-5 sm:p-6"
           style={{
-            background: WELCOME_MAIN_BG,
-            boxShadow:
-              '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-            border: '1px solid rgba(0, 155, 242, 0.08)',
+            background: 'var(--neu-bg)',
+            boxShadow: 'var(--neu-shadow-raised)',
+            border: '1px solid var(--neu-border)',
           }}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -128,9 +118,9 @@ export default function StakesPage() {
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
                 style={{
-                  background: WELCOME_SUB_BG,
-                  border: WELCOME_SUB_BORDER,
-                  color: WELCOME_SUB_TEXT,
+                  background: 'var(--neu-accent)',
+                  border: '1px solid var(--neu-border)',
+                  color: 'var(--neu-accent-foreground)',
                   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
                 }}
               >
@@ -139,13 +129,13 @@ export default function StakesPage() {
               <div className="min-w-0">
                 <h1
                   className="text-base font-bold sm:text-lg"
-                  style={{ color: WELCOME_LABEL }}
+                  style={{ color: 'var(--neu-text-primary)' }}
                 >
                   My Stakes
                 </h1>
                 <p
                   className="text-xs sm:text-sm"
-                  style={{ color: WELCOME_SUBTITLE }}
+                  style={{ color: 'var(--neu-text-secondary)' }}
                 >
                   Track your stakes and ROS progress
                 </p>
@@ -156,9 +146,9 @@ export default function StakesPage() {
               onClick={() => openModal('create-stake')}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--neu-focus-ring)] focus-visible:outline-none sm:px-5 sm:py-3 sm:text-base"
               style={{
-                background: WELCOME_SUB_BG,
-                color: WELCOME_SUB_TEXT,
-                border: WELCOME_SUB_BORDER,
+                background: 'var(--neu-accent)',
+                color: 'var(--neu-accent-foreground)',
+                border: '1px solid var(--neu-border)',
               }}
             >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />

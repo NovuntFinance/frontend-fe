@@ -4,21 +4,11 @@ import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRosCalendarData } from '@/lib/queries';
 
-/* Platform colors (match Daily ROS, Live Trading Signals, neumorphic) */
-const BG = '#0D162C';
-const ACCENT = '#009BF2';
-const TEXT_PRIMARY = 'rgba(0, 155, 242, 0.95)';
-const TEXT_MUTED = 'rgba(0, 155, 242, 0.6)';
-const TEXT_WHITE = 'rgba(255, 255, 255, 0.95)';
-const BORDER = 'rgba(0, 155, 242, 0.12)';
-const TODAY_BG = 'rgba(0, 155, 242, 0.4)'; /* light blue for present day */
-const DARK_NAVY = '#0D162C'; /* text on today */
-const SHADOW_RAISED =
-  '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)';
-const SHADOW_INSET =
-  'inset 5px 5px 10px rgba(0, 0, 0, 0.45), inset -5px -5px 10px rgba(255, 255, 255, 0.04)';
+/* Platform colors – theme tokens (--neu-*) for dashboard light/dark */
+const SHADOW_RAISED = 'var(--neu-shadow-raised)';
+const SHADOW_INSET = 'var(--neu-shadow-inset)';
 const SHADOW_BUTTON =
-  '4px 4px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.04)';
+  '4px 4px 8px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light)';
 const MIN_ROS = 0.1;
 const MAX_ROS = 2.2;
 
@@ -77,9 +67,9 @@ function getMonthData(
 }
 
 const CARD_STYLE = {
-  background: BG,
+  background: 'var(--neu-bg)',
   boxShadow: SHADOW_RAISED,
-  border: `1px solid ${BORDER}`,
+  border: '1px solid var(--neu-border)',
 } as const;
 
 export function RosCalendarCard() {
@@ -161,7 +151,7 @@ export function RosCalendarCard() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h3
           className="text-sm font-semibold sm:text-base"
-          style={{ color: TEXT_WHITE }}
+          style={{ color: 'var(--neu-text-primary)' }}
         >
           ROS Calendar
           {isLoading && (
@@ -179,10 +169,10 @@ export function RosCalendarCard() {
             disabled={!canGoPrev}
             className="flex h-8 w-8 items-center justify-center rounded-xl transition-all disabled:opacity-40"
             style={{
-              background: BG,
+              background: 'var(--neu-bg)',
               boxShadow: SHADOW_BUTTON,
-              border: `1px solid ${BORDER}`,
-              color: ACCENT,
+              border: '1px solid var(--neu-border)',
+              color: 'var(--neu-accent)',
             }}
             aria-label="Previous month"
           >
@@ -190,7 +180,7 @@ export function RosCalendarCard() {
           </button>
           <span
             className="min-w-[120px] px-2 text-center text-sm font-medium"
-            style={{ color: TEXT_WHITE }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {monthLabel}
           </span>
@@ -200,10 +190,10 @@ export function RosCalendarCard() {
             disabled={!canGoNext}
             className="flex h-8 w-8 items-center justify-center rounded-xl transition-all disabled:opacity-40"
             style={{
-              background: BG,
+              background: 'var(--neu-bg)',
               boxShadow: SHADOW_BUTTON,
-              border: `1px solid ${BORDER}`,
-              color: ACCENT,
+              border: '1px solid var(--neu-border)',
+              color: 'var(--neu-accent)',
             }}
             aria-label="Next month"
           >
@@ -218,7 +208,7 @@ export function RosCalendarCard() {
           <div
             key={day}
             className="text-center text-[10px] font-medium sm:text-xs"
-            style={{ color: TEXT_MUTED }}
+            style={{ color: 'var(--neu-text-muted)' }}
           >
             {day}
           </div>
@@ -250,15 +240,15 @@ export function RosCalendarCard() {
               key={`${year}-${month}-${dayNum}`}
               className="flex aspect-square flex-col items-center justify-center rounded-[12px] p-0.5 transition-all"
               style={{
-                background: isToday ? TODAY_BG : BG,
+                background: isToday ? 'rgba(var(--neu-accent-rgb), 0.4)' : 'var(--neu-bg)',
                 boxShadow: isToday ? 'none' : SHADOW_BUTTON,
-                border: `1px solid ${isToday ? 'rgba(0, 155, 242, 0.5)' : BORDER}`,
+                border: '1px solid var(--neu-border)',
               }}
             >
               <span
                 className="text-[10px] font-semibold sm:text-xs"
                 style={{
-                  color: isToday ? DARK_NAVY : TEXT_PRIMARY,
+                  color: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-text-primary)',
                 }}
               >
                 {dayNum}
@@ -267,7 +257,7 @@ export function RosCalendarCard() {
                 <>
                   <span
                     className="text-[9px] font-medium sm:text-[10px]"
-                    style={{ color: isToday ? DARK_NAVY : TEXT_MUTED }}
+                    style={{ color: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-text-muted)' }}
                   >
                     {ros}%
                   </span>
@@ -283,7 +273,7 @@ export function RosCalendarCard() {
                       className="h-full rounded-full"
                       style={{
                         width: `${Math.max(8, barHeight * 100)}%`,
-                        background: isToday ? DARK_NAVY : ACCENT,
+                        background: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
                       }}
                     />
                   </div>
@@ -298,15 +288,15 @@ export function RosCalendarCard() {
       <div
         className="mt-4 flex items-center justify-between rounded-[16px] px-4 py-3"
         style={{
-          background: BG,
+          background: 'var(--neu-bg)',
           boxShadow: SHADOW_INSET,
-          border: `1px solid ${BORDER}`,
+          border: '1px solid var(--neu-border)',
         }}
       >
-        <span className="text-sm font-medium" style={{ color: TEXT_WHITE }}>
+        <span className="text-sm font-medium" style={{ color: 'var(--neu-text-primary)' }}>
           Monthly Average
         </span>
-        <span className="text-lg font-bold" style={{ color: TEXT_WHITE }}>
+        <span className="text-lg font-bold" style={{ color: 'var(--neu-text-primary)' }}>
           {monthlyAvg.toFixed(1)}%
         </span>
       </div>

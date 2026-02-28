@@ -86,7 +86,7 @@ export function NeumorphicModalStyles() {
       }
       .neu-modal::-webkit-scrollbar { width: 6px; }
       .neu-modal::-webkit-scrollbar-track { background: transparent; }
-      .neu-modal::-webkit-scrollbar-thumb { border-radius: 9999px; background: rgba(255,255,255,0.1); }
+      .neu-modal::-webkit-scrollbar-thumb { border-radius: 9999px; background: var(--neu-text-muted); }
     `}</style>
   );
 }

@@ -1,24 +1,17 @@
-/* Badge Card – strict neumorphic: #0D162C + #009BF2 + #FFFFFF (opacity only).
-   Mobile-first. Single reusable component styling. */
+/* Badge Card – theme-aware: uses --neu-* from globals (light/dark). */
 
-/* Section wrapper (e.g. "Your Badges") – same tokens, background for grid */
+/* Section wrapper (e.g. "Your Badges") */
 .badgeSectionRoot {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    8px 8px 16px var(--badge-shadow-dark),
-    -8px -8px 16px var(--badge-shadow-light);
-  --badge-shadow-raised-hover:
-    10px 10px 20px var(--badge-shadow-dark),
-    -10px -10px 20px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-border: var(--neu-border);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-raised-hover: var(--neu-shadow-raised-hover);
+  --badge-shadow-inset: var(--neu-shadow-inset);
   --badge-radius-sm: 16px;
   --badge-radius-md: 18px;
   --badge-radius-lg: 24px;
@@ -87,21 +80,17 @@
   line-height: 1.3;
 }
 
-/* ========== Overview stats – neumorphic (same tokens as badge sections) ========== */
+/* ========== Overview stats – theme-aware ========== */
 .overviewRoot {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    8px 8px 16px var(--badge-shadow-dark),
-    -8px -8px 16px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-border: var(--neu-border);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-inset: var(--neu-shadow-inset);
   --badge-radius-sm: 16px;
   --badge-radius-md: 18px;
   background: var(--badge-bg);
@@ -171,7 +160,7 @@
 .overviewStatValue {
   font-size: 1.25rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--neu-text-primary);
   margin: 0;
   line-height: 1.2;
   letter-spacing: -0.02em;
@@ -562,27 +551,19 @@
 }
 
 .badgeCardRoot {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-label-strong: rgba(255, 255, 255, 0.75);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-focus-ring: rgba(var(--badge-accent-rgb), 0.2);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    8px 8px 16px var(--badge-shadow-dark),
-    -8px -8px 16px var(--badge-shadow-light);
-  --badge-shadow-raised-hover:
-    10px 10px 20px var(--badge-shadow-dark),
-    -10px -10px 20px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
-  --badge-shadow-inset-press:
-    inset 6px 6px 12px var(--badge-shadow-dark),
-    inset -6px -6px 12px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-label-strong: var(--neu-text-primary);
+  --badge-border: var(--neu-border);
+  --badge-focus-ring: var(--neu-focus-ring);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-raised-hover: var(--neu-shadow-raised-hover);
+  --badge-shadow-inset: var(--neu-shadow-inset);
+  --badge-shadow-inset-press: var(--neu-shadow-inset-press);
   --badge-radius-sm: 16px;
   --badge-radius-md: 18px;
   --badge-radius-lg: 24px;
@@ -717,9 +698,9 @@
   border-radius: var(--badge-radius-sm);
   font-size: 0.7rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(0, 155, 242, 0.25);
-  border: 1px solid rgba(0, 155, 242, 0.35);
+  color: var(--neu-text-primary);
+  background: rgba(var(--neu-accent-rgb), 0.25);
+  border: 1px solid rgba(var(--neu-accent-rgb), 0.35);
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -1138,29 +1119,21 @@
   box-shadow: var(--badge-shadow-raised);
 }
 
-/* ========== Knowledge Base – same neumorphic system as Achievements ========== */
+/* ========== Knowledge Base – theme-aware ========== */
 .kbPageRoot {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-label-strong: rgba(255, 255, 255, 0.75);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-focus-ring: rgba(var(--badge-accent-rgb), 0.2);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    8px 8px 16px var(--badge-shadow-dark),
-    -8px -8px 16px var(--badge-shadow-light);
-  --badge-shadow-raised-hover:
-    10px 10px 20px var(--badge-shadow-dark),
-    -10px -10px 20px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
-  --badge-shadow-inset-press:
-    inset 6px 6px 12px var(--badge-shadow-dark),
-    inset -6px -6px 12px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-label-strong: var(--neu-text-primary);
+  --badge-border: var(--neu-border);
+  --badge-focus-ring: var(--neu-focus-ring);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-raised-hover: var(--neu-shadow-raised-hover);
+  --badge-shadow-inset: var(--neu-shadow-inset);
+  --badge-shadow-inset-press: var(--neu-shadow-inset-press);
   --badge-radius-sm: 16px;
   --badge-radius-md: 18px;
   --badge-radius-lg: 24px;
@@ -1592,25 +1565,19 @@
 
 /* KB article card (in results grid) – same as badge card raised/inset */
 .kbArticleCard {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    6px 6px 12px var(--badge-shadow-dark),
-    -6px -6px 12px var(--badge-shadow-light);
-  --badge-shadow-raised-hover:
-    10px 10px 20px var(--badge-shadow-dark),
-    -10px -10px 20px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-border: var(--neu-border);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-raised-hover: var(--neu-shadow-raised-hover);
+  --badge-shadow-inset: var(--neu-shadow-inset);
   --badge-radius-sm: 16px;
   --badge-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --badge-focus-ring: rgba(var(--badge-accent-rgb), 0.2);
+  --badge-focus-ring: var(--neu-focus-ring);
 
   background: var(--badge-bg);
   border-radius: var(--badge-radius-md);
@@ -1703,27 +1670,21 @@
   backdrop-filter: blur(8px);
 }
 .kbModalContent {
-  --badge-bg: #0d162c;
-  --badge-accent: #009bf2;
-  --badge-accent-rgb: 0, 155, 242;
-  --badge-label: rgba(255, 255, 255, 0.55);
-  --badge-label-strong: rgba(255, 255, 255, 0.75);
-  --badge-border: rgba(var(--badge-accent-rgb), 0.08);
-  --badge-shadow-dark: rgba(0, 0, 0, 0.45);
-  --badge-shadow-light: rgba(255, 255, 255, 0.04);
-  --badge-shadow-raised:
-    8px 8px 16px var(--badge-shadow-dark),
-    -8px -8px 16px var(--badge-shadow-light);
-  --badge-shadow-raised-hover:
-    10px 10px 20px var(--badge-shadow-dark),
-    -10px -10px 20px var(--badge-shadow-light);
-  --badge-shadow-inset:
-    inset 5px 5px 10px var(--badge-shadow-dark),
-    inset -5px -5px 10px var(--badge-shadow-light);
+  --badge-bg: var(--neu-bg);
+  --badge-accent: var(--neu-accent);
+  --badge-accent-rgb: var(--neu-accent-rgb);
+  --badge-label: var(--neu-text-secondary);
+  --badge-label-strong: var(--neu-text-primary);
+  --badge-border: var(--neu-border);
+  --badge-shadow-dark: var(--neu-shadow-dark);
+  --badge-shadow-light: var(--neu-shadow-light);
+  --badge-shadow-raised: var(--neu-shadow-raised);
+  --badge-shadow-raised-hover: var(--neu-shadow-raised-hover);
+  --badge-shadow-inset: var(--neu-shadow-inset);
   --badge-radius-sm: 16px;
   --badge-radius-lg: 24px;
   --badge-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --badge-focus-ring: rgba(var(--badge-accent-rgb), 0.2);
+  --badge-focus-ring: var(--neu-focus-ring);
 
   background: var(--badge-bg);
   border-radius: var(--badge-radius-lg);

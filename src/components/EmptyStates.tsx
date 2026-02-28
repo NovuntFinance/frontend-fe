@@ -82,7 +82,7 @@ export function EmptyState({
             <span
               style={
                 isPlatformStyle
-                  ? { color: '#009BF2', filter: 'none' }
+                  ? { color: 'var(--neu-accent)', filter: 'none' }
                   : undefined
               }
             >
@@ -107,7 +107,7 @@ export function EmptyState({
         }
         style={
           isPlatformStyle
-            ? { color: '#009BF2', filter: 'none' }
+            ? { color: 'var(--neu-accent)', filter: 'none' }
             : undefined
         }
       >
@@ -146,10 +146,10 @@ export function EmptyState({
             <button
               type="button"
               onClick={action.onClick}
-              className="inline-flex cursor-pointer items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[#009BF2]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D162C] active:scale-[0.98]"
+              className="inline-flex cursor-pointer items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)] focus-visible:ring-opacity-50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--neu-bg)] active:scale-[0.98]"
               style={{
-                background: '#009BF2',
-                color: '#fff',
+                background: 'var(--neu-accent)',
+                color: 'var(--neu-accent-foreground)',
                 boxShadow:
                   '0 4px 14px rgba(0, 155, 242, 0.35), 0 0 0 1px rgba(0, 155, 242, 0.2)',
               }}

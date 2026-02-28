@@ -6,13 +6,12 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-/* Neumorphic style for OTP inputs (match auth platform) */
+/* Neumorphic style for OTP inputs – theme-aware (dashboard light/dark) */
 const NEU_OTP_BASE = {
-  background: 'linear-gradient(145deg, #0c1528, #111d38)',
-  border: '1px solid rgba(0, 155, 242, 0.2)',
-  boxShadow:
-    'inset 4px 4px 10px rgba(4, 8, 18, 0.6), inset -4px -4px 10px rgba(25, 40, 72, 0.35)',
-  color: 'var(--neu-text, #e2e8f0)',
+  background: 'var(--neu-bg)',
+  border: '1px solid var(--neu-border)',
+  boxShadow: 'var(--neu-shadow-inset)',
+  color: 'var(--neu-text-primary)',
 } as const;
 
 interface TwoFactorInputProps {

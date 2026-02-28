@@ -19,21 +19,7 @@ import { openShareModal } from '@/store/shareModalStore';
 import { useWalletBalance } from '@/lib/queries';
 import { formatCurrency } from '@/lib/utils/wallet';
 
-// Platform neumorphic tokens (match Quick Actions, Stats, etc.)
-const NEU_RAISED_SHADOW =
-  '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)';
-const NEU_RAISED_HOVER =
-  '10px 10px 24px rgba(4, 8, 18, 0.75), -10px -10px 24px rgba(25, 40, 72, 0.55)';
-const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
-
-// Welcome banner (inverted): main card = dark blue; sub-cards = light blue with dark text
-const MAIN_CARD_BG = '#0D162C';
-const MAIN_LABEL = 'rgba(255, 255, 255, 0.9)';
-const MAIN_VALUE = '#009BF2';
-const SUB_CARD_BG = '#009BF2';
-const SUB_LABEL = 'rgba(13, 22, 44, 0.85)';
-const SUB_VALUE = '#0D162C';
-const SUB_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
+/* Welcome banner uses theme tokens (--neu-*) so it respects light/dark dashboard theme */
 
 interface WelcomeBackCardProps {
   user: any;
@@ -79,7 +65,7 @@ export function WelcomeBackCard({
               <button
                 type="button"
                 className="mb-1 block cursor-help text-left text-xs font-medium sm:mb-1.5 sm:text-sm"
-                style={{ color: MAIN_LABEL }}
+                style={{ color: 'var(--neu-text-primary)' }}
                 aria-label="Total Assets. Tap for details."
               >
                 Total Assets
@@ -88,9 +74,14 @@ export function WelcomeBackCard({
             <PopoverContent
               side="top"
               align="start"
-              className="max-w-[260px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+              className="max-w-[260px] shadow-lg"
+              style={{
+                borderColor: 'var(--neu-border)',
+                background: 'var(--neu-bg)',
+                color: 'var(--neu-text-primary)',
+              }}
             >
-              <p className="text-xs text-white/90">
+              <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
                 Combined value of your wallet balance and all staked amounts
               </p>
             </PopoverContent>
@@ -102,7 +93,7 @@ export function WelcomeBackCard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
               className="text-2xl leading-tight font-black sm:text-3xl md:text-4xl lg:text-2xl xl:text-3xl"
-              style={{ color: MAIN_VALUE, filter: 'none' }}
+              style={{ color: 'var(--neu-accent)', filter: 'none' }}
             >
               $
               {totalPortfolioValue.toLocaleString('en-US', {
@@ -117,7 +108,7 @@ export function WelcomeBackCard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
               className="text-2xl leading-tight font-black sm:text-3xl md:text-4xl lg:text-2xl xl:text-3xl"
-              style={{ color: MAIN_LABEL, filter: 'none' }}
+              style={{ color: 'var(--neu-text-primary)', filter: 'none' }}
             >
               ••••••••
             </motion.div>
@@ -139,11 +130,11 @@ export function WelcomeBackCard({
                 }}
                 className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
                 style={{
-                  background: '#009BF2',
-                  color: '#0D162C',
-                  border: '1px solid rgba(13, 22, 44, 0.2)',
+                  background: 'var(--neu-accent)',
+                  color: 'var(--neu-accent-foreground)',
+                  border: '1px solid var(--neu-border)',
                   boxShadow:
-                    '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
                 }}
                 aria-label="Share"
               >
@@ -159,11 +150,11 @@ export function WelcomeBackCard({
             onClick={() => setBalanceVisible(!balanceVisible)}
             className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
             style={{
-              background: '#009BF2',
-              color: '#0D162C',
-              border: '1px solid rgba(13, 22, 44, 0.2)',
+              background: 'var(--neu-accent)',
+              color: 'var(--neu-accent-foreground)',
+              border: '1px solid var(--neu-border)',
               boxShadow:
-                '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
             }}
             aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
           >
@@ -183,35 +174,35 @@ export function WelcomeBackCard({
           onClick={() => openModal('wallet')}
           className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
-            background: SUB_CARD_BG,
-            boxShadow: NEU_RAISED_SHADOW,
-            border: SUB_BORDER,
+            background: 'var(--neu-accent)',
+            boxShadow: 'var(--neu-shadow-raised)',
+            border: '1px solid var(--neu-border)',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
+            e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
+            e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised)';
           }}
         >
           <p
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
-            style={{ color: SUB_LABEL }}
+            style={{ color: 'var(--neu-text-secondary)' }}
           >
             Deposit Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: SUB_VALUE, filter: 'none' }}
+              style={{ color: 'var(--neu-accent-foreground)', filter: 'none' }}
             >
               ${formatCurrency(depositBalance, { showCurrency: false })}
             </p>
           ) : (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: SUB_LABEL }}
+              style={{ color: 'var(--neu-text-secondary)' }}
             >
               ••••••
             </p>
@@ -223,35 +214,35 @@ export function WelcomeBackCard({
           onClick={() => openModal('wallet')}
           className="rounded-xl p-5 text-left transition-all duration-200 sm:p-6"
           style={{
-            background: SUB_CARD_BG,
-            boxShadow: NEU_RAISED_SHADOW,
-            border: SUB_BORDER,
+            background: 'var(--neu-accent)',
+            boxShadow: 'var(--neu-shadow-raised)',
+            border: '1px solid var(--neu-border)',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
+            e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
+            e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised)';
           }}
         >
           <p
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
-            style={{ color: SUB_LABEL }}
+            style={{ color: 'var(--neu-text-secondary)' }}
           >
             Earnings Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: SUB_VALUE, filter: 'none' }}
+              style={{ color: 'var(--neu-accent-foreground)', filter: 'none' }}
             >
               ${formatCurrency(earningsBalance, { showCurrency: false })}
             </p>
           ) : (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: SUB_LABEL }}
+              style={{ color: 'var(--neu-text-secondary)' }}
             >
               ••••••
             </p>
@@ -267,17 +258,17 @@ export function WelcomeBackCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl transition-all duration-300 lg:max-w-md"
+      className="group relative w-full overflow-hidden rounded-2xl transition-all duration-300"
       style={{
-        background: MAIN_CARD_BG,
-        boxShadow: NEU_RAISED_SHADOW,
-        border: NEU_BORDER,
+        background: 'var(--neu-bg)',
+        boxShadow: 'var(--neu-shadow-raised)',
+        border: '1px solid var(--neu-border)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
+        e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised-hover)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = NEU_RAISED_SHADOW;
+        e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised)';
       }}
     >
       {content}

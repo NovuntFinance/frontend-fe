@@ -607,7 +607,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen lg:h-full lg:min-h-0">
-      <div className="space-y-5 lg:grid lg:h-full lg:grid-cols-3 lg:gap-5 lg:space-y-0">
+      <div className="space-y-5 lg:grid lg:h-full lg:grid-cols-2 lg:gap-5 lg:space-y-0">
         {/* Column 1 - Balance, quick actions, stats carousel (Registration Bonus is in modal via 10% Bonus button) */}
         <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <div className="lg:max-w-md lg:max-w-none">
@@ -642,10 +642,9 @@ export default function DashboardPage() {
                 <div
                   className="rounded-2xl p-5 sm:p-6"
                   style={{
-                    background: '#0D162C',
-                    boxShadow:
-                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-                    border: '1px solid var(--app-border)',
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-raised)',
+                    border: '1px solid var(--neu-border)',
                   }}
                 >
                   <QuickActions />
@@ -657,10 +656,9 @@ export default function DashboardPage() {
                 <div
                   className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
                   style={{
-                    background: '#0D162C',
-                    boxShadow:
-                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-                    border: '1px solid var(--app-border)',
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-raised)',
+                    border: '1px solid var(--neu-border)',
                   }}
                 >
                   <div className="relative min-h-[80px]">
@@ -680,8 +678,8 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: '#009BF2', filter: 'none' }}
-                                  aria-label="Total Earned. Tap for details."
+                                style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                                aria-label="Total Earned. Tap for details."
                                 >
                                   Total Earned
                                 </button>
@@ -689,9 +687,14 @@ export default function DashboardPage() {
                               <PopoverContent
                                 side="top"
                                 align="start"
-                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+                                className="max-w-[240px] shadow-lg"
+                                style={{
+                                  borderColor: 'var(--neu-border)',
+                                  background: 'var(--neu-bg)',
+                                  color: 'var(--neu-text-primary)',
+                                }}
                               >
-                                <p className="text-xs text-white/90">
+                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
                                   Total earnings from all sources
                                 </p>
                               </PopoverContent>
@@ -701,7 +704,7 @@ export default function DashboardPage() {
                             <div
                               className="h-8 w-28 animate-pulse rounded sm:h-9"
                               style={{
-                                background: 'rgba(0, 155, 242, 0.25)',
+                                background: 'rgba(var(--neu-accent-rgb), 0.25)',
                               }}
                               aria-hidden
                             />
@@ -713,7 +716,7 @@ export default function DashboardPage() {
                               key={totalEarned ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--neu-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -745,7 +748,7 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                                   aria-label="Total Staked. Tap for details."
                                 >
                                   Total Staked
@@ -754,9 +757,14 @@ export default function DashboardPage() {
                               <PopoverContent
                                 side="top"
                                 align="start"
-                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+                                className="max-w-[240px] shadow-lg"
+                                style={{
+                                  borderColor: 'var(--neu-border)',
+                                  background: 'var(--neu-bg)',
+                                  color: 'var(--neu-text-primary)',
+                                }}
                               >
-                                <p className="text-xs text-white/90">
+                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
                                   Total amount staked across all stakes
                                 </p>
                               </PopoverContent>
@@ -766,7 +774,7 @@ export default function DashboardPage() {
                             <div
                               className="h-8 w-28 animate-pulse rounded sm:h-9"
                               style={{
-                                background: 'rgba(0, 155, 242, 0.25)',
+                                background: 'rgba(var(--neu-accent-rgb), 0.25)',
                               }}
                               aria-hidden
                             />
@@ -778,7 +786,7 @@ export default function DashboardPage() {
                               key={totalStaked ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--neu-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -810,7 +818,7 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                                   aria-label="Total Deposited. Tap for details."
                                 >
                                   Total Deposited
@@ -819,9 +827,14 @@ export default function DashboardPage() {
                               <PopoverContent
                                 side="top"
                                 align="start"
-                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+                                className="max-w-[240px] shadow-lg"
+                                style={{
+                                  borderColor: 'var(--neu-border)',
+                                  background: 'var(--neu-bg)',
+                                  color: 'var(--neu-text-primary)',
+                                }}
                               >
-                                <p className="text-xs text-white/90">
+                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
                                   Total amount deposited to your wallet
                                 </p>
                               </PopoverContent>
@@ -831,7 +844,7 @@ export default function DashboardPage() {
                             <div
                               className="h-8 w-28 animate-pulse rounded sm:h-9"
                               style={{
-                                background: 'rgba(0, 155, 242, 0.25)',
+                                background: 'rgba(var(--neu-accent-rgb), 0.25)',
                               }}
                               aria-hidden
                             />
@@ -843,7 +856,7 @@ export default function DashboardPage() {
                               key={totalDeposited ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--neu-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -875,7 +888,7 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: '#009BF2', filter: 'none' }}
+                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                                   aria-label="Total Withdrawn. Tap for details."
                                 >
                                   Total Withdrawn
@@ -884,9 +897,14 @@ export default function DashboardPage() {
                               <PopoverContent
                                 side="top"
                                 align="start"
-                                className="max-w-[240px] border-[#0D162C] bg-[#0D162C] text-white shadow-lg"
+                                className="max-w-[240px] shadow-lg"
+                                style={{
+                                  borderColor: 'var(--neu-border)',
+                                  background: 'var(--neu-bg)',
+                                  color: 'var(--neu-text-primary)',
+                                }}
                               >
-                                <p className="text-xs text-white/90">
+                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
                                   Total amount withdrawn from your wallet
                                 </p>
                               </PopoverContent>
@@ -896,7 +914,7 @@ export default function DashboardPage() {
                             <div
                               className="h-8 w-28 animate-pulse rounded sm:h-9"
                               style={{
-                                background: 'rgba(0, 155, 242, 0.25)',
+                                background: 'rgba(var(--neu-accent-rgb), 0.25)',
                               }}
                               aria-hidden
                             />
@@ -908,7 +926,7 @@ export default function DashboardPage() {
                               key={totalWithdrawn ?? 0}
                               className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                               style={{
-                                color: 'rgba(255, 255, 255, 0.95)',
+                                color: 'var(--neu-text-primary)',
                                 filter: 'none',
                               }}
                             >
@@ -935,10 +953,9 @@ export default function DashboardPage() {
                 <div
                   className="w-full rounded-2xl p-5 sm:p-6"
                   style={{
-                    background: '#0D162C',
-                    boxShadow:
-                      '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-                    border: '1px solid rgba(0, 155, 242, 0.08)',
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-raised)',
+                    border: '1px solid var(--neu-border)',
                   }}
                 >
                   <div className="grid grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
@@ -1014,11 +1031,11 @@ export default function DashboardPage() {
                           <div
                             className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16"
                             style={{
-                              background: isActive ? '#009BF2' : '#0D162C',
+                              background: isActive ? 'var(--neu-accent)' : 'var(--neu-bg)',
                               boxShadow: isPressed
-                                ? 'inset 6px 6px 12px rgba(0,0,0,0.45), inset -6px -6px 12px rgba(255,255,255,0.04)'
-                                : '8px 8px 16px rgba(0, 0, 0, 0.45), -8px -8px 16px rgba(255, 255, 255, 0.04)',
-                              border: '1px solid rgba(0, 155, 242, 0.08)',
+                                ? 'var(--neu-shadow-inset-press)'
+                                : 'var(--neu-shadow-raised)',
+                              border: '1px solid var(--neu-border)',
                               transform:
                                 isHovered && !isPressed
                                   ? 'translateY(-2px)'
@@ -1030,14 +1047,14 @@ export default function DashboardPage() {
                             <IconComponent
                               className="h-5 w-5 sm:h-6 sm:w-6"
                               style={{
-                                color: isActive ? '#0D162C' : '#009BF2',
+                                color: isActive ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
                               }}
                             />
                           </div>
-                          {/* Label – light blue like Quick Actions */}
+                          {/* Label – theme accent */}
                           <span
                             className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: '#009BF2' }}
+                            style={{ color: 'var(--neu-accent)' }}
                           >
                             {button.label}
                           </span>
@@ -1165,10 +1182,20 @@ export default function DashboardPage() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Live Platform Activities - desktop only: under the 8 action buttons for better grid balance */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.36 }}
+              className="hidden lg:block lg:pt-5"
+            >
+              <LivePlatformActivities />
+            </motion.div>
           </div>
         </div>
 
-        {/* Column 2 - Activity Feed, then Stake Card (uniform gap-5 with other columns) */}
+        {/* Column 2 - Activity Feed, Stake Card, Live Trading, ROS Calendar, Platform Activities (2-col desktop) */}
         <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1211,31 +1238,30 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-          </motion.div>
-        </div>
-
-        {/* Column 3 - Live Trading Signals, Live Platform Activities, ROS Calendar */}
-        <div className="flex flex-col gap-5 lg:min-h-0 lg:overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <LiveTradingSignals />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28 }}
-          >
-            <RosCalendarCard />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.36 }}
-          >
-            <LivePlatformActivities />
+            {/* Live Trading Signals, ROS Calendar, Live Platform Activities (merged into column 2 on desktop) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <LiveTradingSignals />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.28 }}
+            >
+              <RosCalendarCard />
+            </motion.div>
+            {/* Live Platform Activities - mobile/tablet only; on desktop it appears under 8 action buttons in column 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.36 }}
+              className="lg:hidden"
+            >
+              <LivePlatformActivities />
+            </motion.div>
           </motion.div>
         </div>
       </div>

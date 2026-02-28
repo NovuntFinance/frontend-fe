@@ -2,8 +2,7 @@
 
 /**
  * Staking Streak modal – mobile-first neumorphic redesign.
- * Strict palette: #0D162C (all surfaces), #009BF2 (accent only), #FFFFFF (low opacity only).
- * Hierarchy via opacity, spacing, and neumorphic depth. All content, data, and interactions unchanged.
+ * Theme-aware: uses --neu-modal-bg, --neu-bg, --neu-accent, --neu-border, etc. (light/dark from globals).
  */
 
 import React from 'react';
@@ -13,12 +12,7 @@ import { LoadingStates } from '@/components/ui/loading-states';
 import { useStakingStreak } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import {
-  NEU_TOKENS,
-  neuModalRaised,
-  neuInset,
   neuSpacing,
-  neuRaised,
-  neuPressed,
   neuRadius,
   neuProgressFillHighlight,
 } from '@/components/rank-progress/neumorphicTokens';
@@ -39,21 +33,21 @@ export function StakingStreakModal({
   const { data: streakData, isLoading: streakLoading } = useStakingStreak();
 
   const trackInsetStyle: React.CSSProperties = {
-    background: NEU_TOKENS.bg,
-    boxShadow: neuInset,
-    border: `1px solid ${NEU_TOKENS.border}`,
+    background: 'var(--neu-bg)',
+    boxShadow: 'var(--neu-shadow-inset)',
+    border: '1px solid var(--neu-border)',
     borderRadius: neuRadius.lg,
     padding: 6,
   };
-  const todayChipGlow = `0 0 0 2px ${NEU_TOKENS.accent}, 0 0 14px rgba(0, 155, 242, 0.4)`;
+  const todayChipGlow = '0 0 0 2px var(--neu-accent), 0 0 14px rgba(var(--neu-accent-rgb), 0.4)';
   const textGlow =
-    '0 0 12px rgba(0, 155, 242, 0.9), 0 0 24px rgba(0, 155, 242, 0.5)';
+    '0 0 12px rgba(var(--neu-accent-rgb), 0.9), 0 0 24px rgba(var(--neu-accent-rgb), 0.5)';
   const textGlowStrong =
-    '0 0 16px rgba(0, 155, 242, 0.95), 0 0 32px rgba(0, 155, 242, 0.5)';
+    '0 0 16px rgba(var(--neu-accent-rgb), 0.95), 0 0 32px rgba(var(--neu-accent-rgb), 0.5)';
   const circleInsetStyle: React.CSSProperties = {
-    background: 'rgba(16, 21, 47, 0.98)',
-    boxShadow: neuInset,
-    border: `1px solid ${NEU_TOKENS.border}`,
+    background: 'var(--neu-bg)',
+    boxShadow: 'var(--neu-shadow-inset)',
+    border: '1px solid var(--neu-border)',
     borderRadius: '50%',
   };
 
@@ -80,9 +74,9 @@ export function StakingStreakModal({
           '[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10'
         )}
         style={{
-          background: `linear-gradient(165deg, #0f1930 0%, ${NEU_TOKENS.bg} 45%, #0b1222 100%)`,
-          boxShadow: neuModalRaised,
-          border: `1px solid ${NEU_TOKENS.border}`,
+          background: 'var(--neu-modal-bg)',
+          boxShadow: 'var(--neu-shadow-raised)',
+          border: '1px solid var(--neu-border)',
           borderRadius: neuRadius.lg,
         }}
       >
@@ -92,31 +86,31 @@ export function StakingStreakModal({
               padding: clamp(16px, 4vw, 24px) clamp(18px, 4.5vw, 28px);
             }
             .staking-streak-neu-modal [data-slot="dialog-close"] {
-              background: ${NEU_TOKENS.bg};
-              box-shadow: ${neuRaised};
-              border: 1px solid ${NEU_TOKENS.border};
-              color: ${NEU_TOKENS.accent};
+              background: var(--neu-bg);
+              box-shadow: var(--neu-shadow-raised);
+              border: 1px solid var(--neu-border);
+              color: var(--neu-accent);
               border-radius: ${neuRadius.md};
               transition: box-shadow 0.2s ease;
             }
             .staking-streak-neu-modal [data-slot="dialog-close"]:hover {
-              box-shadow: 8px 8px 16px rgba(0,0,0,0.4), -4px -4px 12px rgba(255,255,255,0.05);
+              box-shadow: var(--neu-shadow-raised-hover);
             }
             .staking-streak-neu-modal [data-slot="dialog-close"]:active {
-              box-shadow: ${neuPressed};
+              box-shadow: var(--neu-shadow-inset-press);
             }
             .staking-streak-neu-modal [data-slot="dialog-close"]:focus-visible {
-              outline: 2px solid ${NEU_TOKENS.focusRing};
+              outline: 2px solid var(--neu-focus-ring);
               outline-offset: 2px;
             }
             .cta-streak:hover {
-              box-shadow: 8px 8px 18px rgba(0,0,0,0.45), -5px -5px 14px rgba(255,255,255,0.05);
+              box-shadow: var(--neu-shadow-raised-hover);
             }
             .cta-streak:active {
-              box-shadow: ${neuPressed};
+              box-shadow: var(--neu-shadow-inset-press);
             }
             .cta-streak:focus-visible {
-              outline: 2px solid ${NEU_TOKENS.focusRing};
+              outline: 2px solid var(--neu-focus-ring);
               outline-offset: 2px;
             }
           `}</style>
@@ -131,13 +125,13 @@ export function StakingStreakModal({
                 <header>
                   <p
                     className="text-xs font-semibold tracking-wider uppercase sm:text-[13px]"
-                    style={{ color: NEU_TOKENS.white60 }}
+                    style={{ color: 'var(--neu-text-secondary)' }}
                   >
                     Current Activity
                   </p>
                   <h2
                     className="mt-1 text-lg font-bold sm:text-xl"
-                    style={{ color: NEU_TOKENS.white80 }}
+                    style={{ color: 'var(--neu-text-primary)' }}
                   >
                     Staking Streak
                   </h2>
@@ -154,7 +148,7 @@ export function StakingStreakModal({
                     <span
                       className="leading-none font-black"
                       style={{
-                        color: NEU_TOKENS.accent,
+                        color: 'var(--neu-accent)',
                         textShadow: textGlowStrong,
                         fontSize: 'clamp(2rem, 7vmin, 2.75rem)',
                       }}
@@ -164,7 +158,7 @@ export function StakingStreakModal({
                     <span
                       className="mt-1.5 font-semibold tracking-wide uppercase"
                       style={{
-                        color: NEU_TOKENS.accent,
+                        color: 'var(--neu-accent)',
                         textShadow: textGlow,
                         fontSize: 'clamp(0.75rem, 2.5vmin, 0.875rem)',
                       }}
@@ -221,8 +215,8 @@ export function StakingStreakModal({
                               className="text-[10px] font-medium"
                               style={{
                                 color: isToday
-                                  ? NEU_TOKENS.accent
-                                  : NEU_TOKENS.white60,
+                                  ? 'var(--neu-accent)'
+                                  : 'var(--neu-text-secondary)',
                                 ...(i === 0 || isToday || i === 6
                                   ? { textShadow: textGlow }
                                   : {}),
@@ -245,20 +239,20 @@ export function StakingStreakModal({
                   <div
                     className="min-w-0 space-y-2.5 p-3 sm:p-4"
                     style={{
-                      background: NEU_TOKENS.bg,
-                      boxShadow: neuInset,
-                      border: `1px solid ${NEU_TOKENS.border}`,
+                      background: 'var(--neu-bg)',
+                      boxShadow: 'var(--neu-shadow-inset)',
+                      border: '1px solid var(--neu-border)',
                       borderRadius: neuRadius.lg,
                     }}
                   >
                     <div className="flex items-center gap-2">
                       <Shield
                         className="h-4 w-4 shrink-0"
-                        style={{ color: NEU_TOKENS.accent }}
+                        style={{ color: 'var(--neu-accent)' }}
                       />
                       <span
                         className="text-sm font-semibold"
-                        style={{ color: NEU_TOKENS.accent }}
+                        style={{ color: 'var(--neu-accent)' }}
                       >
                         Milestone Progress
                       </span>
@@ -266,9 +260,9 @@ export function StakingStreakModal({
                     <div
                       className="h-2 w-full overflow-hidden rounded-full"
                       style={{
-                        background: NEU_TOKENS.bg,
-                        boxShadow: neuInset,
-                        border: `1px solid ${NEU_TOKENS.border}`,
+                        background: 'var(--neu-bg)',
+                        boxShadow: 'var(--neu-shadow-inset)',
+                        border: '1px solid var(--neu-border)',
                         height: 8,
                       }}
                     >
@@ -276,27 +270,27 @@ export function StakingStreakModal({
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${milestonePercent(streakData)}%`,
-                          background: NEU_TOKENS.accent,
+                          background: 'var(--neu-accent)',
                           boxShadow: neuProgressFillHighlight,
                         }}
                       />
                     </div>
                     <p
                       className="text-right text-xs break-words"
-                      style={{ color: NEU_TOKENS.white60 }}
+                      style={{ color: 'var(--neu-text-secondary)' }}
                     >
                       {streakData.daysUntilNextMilestone} days remaining
                     </p>
                     <p
                       className="min-w-0 text-xs leading-snug break-words"
-                      style={{ color: NEU_TOKENS.white60 }}
+                      style={{ color: 'var(--neu-text-secondary)' }}
                     >
                       Stake for{' '}
-                      <strong style={{ color: NEU_TOKENS.white80 }}>
+                      <strong style={{ color: 'var(--neu-text-primary)' }}>
                         {streakData.daysUntilNextMilestone} more days
                       </strong>{' '}
                       to unlock the{' '}
-                      <span style={{ color: NEU_TOKENS.accent }}>
+                      <span style={{ color: 'var(--neu-accent)' }}>
                         {streakData.nextMilestone} Day Milestone Reward Pool.
                       </span>
                     </p>
@@ -306,10 +300,10 @@ export function StakingStreakModal({
                   href="/dashboard/stakes/new"
                   className="cta-streak flex w-full touch-manipulation items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold uppercase transition-all focus:outline-none sm:py-3.5 sm:text-[15px]"
                   style={{
-                    background: NEU_TOKENS.bg,
-                    boxShadow: neuRaised,
-                    border: `1px solid ${NEU_TOKENS.border}`,
-                    color: NEU_TOKENS.accent,
+                    background: 'var(--neu-bg)',
+                    boxShadow: 'var(--neu-shadow-raised)',
+                    border: '1px solid var(--neu-border)',
+                    color: 'var(--neu-accent)',
                     borderRadius: neuRadius.lg,
                   }}
                 >
@@ -346,19 +340,19 @@ function DayChip({
 
   const baseStyle: React.CSSProperties = isFuture
     ? {
-        background: NEU_TOKENS.bg,
-        boxShadow: neuInset,
-        border: `1px solid ${NEU_TOKENS.border}`,
+        background: 'var(--neu-bg)',
+        boxShadow: 'var(--neu-shadow-inset)',
+        border: '1px solid var(--neu-border)',
         borderRadius: neuRadius.md,
       }
     : {
-        background: NEU_TOKENS.bg,
-        boxShadow: neuRaised,
+        background: 'var(--neu-bg)',
+        boxShadow: 'var(--neu-shadow-raised)',
         border:
-          isToday && todayGlow ? undefined : `1px solid ${NEU_TOKENS.border}`,
+          isToday && todayGlow ? undefined : '1px solid var(--neu-border)',
         borderRadius: neuRadius.md,
         ...(isToday && todayGlow
-          ? { boxShadow: `${neuRaised}, ${todayGlow}` }
+          ? { boxShadow: `var(--neu-shadow-raised), ${todayGlow}` }
           : {}),
       };
 
@@ -375,7 +369,7 @@ function DayChip({
         <span style={{ filter: 'drop-shadow(0 0 6px rgba(0,155,242,0.7))' }}>
           <Check
             className="h-4 w-4"
-            style={{ color: NEU_TOKENS.accent }}
+            style={{ color: 'var(--neu-accent)' }}
             strokeWidth={2.5}
           />
         </span>
@@ -384,7 +378,7 @@ function DayChip({
         <span style={{ filter: 'drop-shadow(0 0 6px rgba(0,155,242,0.7))' }}>
           <TrendingUp
             className="h-4 w-4"
-            style={{ color: NEU_TOKENS.accent }}
+            style={{ color: 'var(--neu-accent)' }}
           />
         </span>
       )}
@@ -392,7 +386,7 @@ function DayChip({
         <span
           className="text-xs font-bold"
           style={{
-            color: NEU_TOKENS.accent,
+            color: 'var(--neu-accent)',
             textShadow:
               '0 0 10px rgba(0,155,242,0.8), 0 0 20px rgba(0,155,242,0.4)',
           }}
@@ -401,7 +395,7 @@ function DayChip({
         </span>
       )}
       {state === 'empty' && futureLabel != null && (
-        <span className="text-[10px]" style={{ color: NEU_TOKENS.white40 }}>
+        <span className="text-[10px]" style={{ color: 'var(--neu-text-muted)' }}>
           {futureLabel}
         </span>
       )}

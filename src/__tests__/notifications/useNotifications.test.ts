@@ -5,12 +5,64 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useNotifications, useUnreadCount } from '@/hooks/useNotifications';
 import { useNotificationStore } from '@/store/notificationStore';
+import type { Notification, NotificationFilters, PaginationInfo } from '@/types/notification';
 
 // Mock the notification store
 jest.mock('@/store/notificationStore');
 const mockUseNotificationStore = useNotificationStore as jest.MockedFunction<
   typeof useNotificationStore
 >;
+
+/** Store shape used by useNotifications / useUnreadCount (matches notificationStore) */
+type MockNotificationStoreState = {
+  notifications: Notification[];
+  unreadCount: number;
+  pagination: PaginationInfo | null;
+  loading: boolean;
+  error: string | null;
+  pushEnabled: boolean;
+  fetchNotifications: (filters?: NotificationFilters) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  loadMore: () => Promise<void>;
+  addNotification: (n: Notification) => void;
+  clearError: () => void;
+  setLoading: (v: boolean) => void;
+  setError: (v: string | null) => void;
+  setPushEnabled: (v: boolean) => void;
+  requestPushPermission: () => Promise<boolean>;
+};
+
+/** Build a full store value with defaults for testing */
+function buildStoreValue(
+  overrides: Partial<MockNotificationStoreState> = {}
+): MockNotificationStoreState {
+  const noop = jest.fn();
+  const asyncNoop = jest.fn().mockResolvedValue(undefined);
+  return {
+    notifications: [],
+    unreadCount: 0,
+    pagination: null,
+    loading: false,
+    error: null,
+    pushEnabled: false,
+    fetchNotifications: asyncNoop,
+    fetchUnreadCount: asyncNoop,
+    markAsRead: asyncNoop,
+    markAllAsRead: asyncNoop,
+    deleteNotification: asyncNoop,
+    loadMore: asyncNoop,
+    addNotification: noop,
+    clearError: noop,
+    setLoading: noop,
+    setError: noop,
+    setPushEnabled: noop,
+    requestPushPermission: asyncNoop,
+    ...overrides,
+  };
+}
 
 describe('useNotifications', () => {
   const mockFetchNotifications = jest.fn();
@@ -162,7 +214,11 @@ describe('useNotifications', () => {
 
     rerender();
 
-    expect(mockOnNewNotification).toHaveBeenCalledWith(updatedNotifications[0]);
+    // forEach passes (item, index, array) to the callback
+    expect(mockOnNewNotification).toHaveBeenCalled();
+    expect(mockOnNewNotification.mock.calls[0][0]).toEqual(
+      updatedNotifications[0]
+    );
   });
 });
 

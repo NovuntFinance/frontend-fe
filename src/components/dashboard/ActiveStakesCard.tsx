@@ -327,10 +327,9 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
   // Single card style: match Activity Feed / cards above (one border, no double)
   const cardWrapperStyle = embedded
     ? {
-        background: '#0D162C',
-        boxShadow:
-          '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-        border: '1px solid var(--app-border)',
+        background: 'var(--neu-bg)',
+        boxShadow: 'var(--neu-shadow-raised)',
+        border: '1px solid var(--neu-border)',
       }
     : {
         background: 'var(--app-surface)',
@@ -340,8 +339,7 @@ export function ActiveStakesCard({ embedded = false }: ActiveStakesCardProps) {
           0 0 0 1px var(--app-border)
         `,
       };
-  const raisedShadow =
-    '6px 6px 12px var(--app-shadow-dark), -6px -6px 12px var(--app-shadow-light)';
+  const raisedShadow = 'var(--neu-shadow-raised)';
   const insetShadow =
     'inset 4px 4px 10px var(--app-shadow-dark), inset -4px -4px 10px var(--app-shadow-light)';
 
