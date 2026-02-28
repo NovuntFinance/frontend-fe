@@ -137,6 +137,8 @@ export const queryKeys = {
 
   // Analytics
   weeklyROSSummary: ['analytics', 'weekly-ros-summary'] as const,
+  rosCalendar: (year: number, month: number) =>
+    ['ros', 'calendar', year, month] as const,
 
   // Daily Profit (Admin)
   declaredDailyProfits: (filters?: any) =>
@@ -761,6 +763,32 @@ export function useWeeklyROSSummary() {
       ) {
         return false;
       }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * useRosCalendarData - Get daily ROS for a calendar month (backend multi-slot API)
+ * Uses GET /api/v1/daily-profit/calendar.
+ * - Today: sums all completed slot declarations (multi-slot)
+ * - Past days: distributed profit
+ * - Polls every 60s so when admin declares daily profits, they appear.
+ *
+ * @param year - Full year (e.g. 2026)
+ * @param month - Month 0-11 (0 = January)
+ * @returns { calendar: Record<date, ros>, today?: string } e.g. { calendar: { "2026-02-28": 1.2 }, today: "2026-02-28" }
+ */
+export function useRosCalendarData(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.rosCalendar(year, month),
+    queryFn: () => rosApi.getDailyRosForMonth(year, month),
+    refetchInterval: 60 * 1000, // Poll every 60s for fresh declared profits
+    staleTime: 30 * 1000, // Consider stale after 30s
+    gcTime: 5 * 60 * 1000,
+    retry: (failureCount, error: unknown) => {
+      const err = error as { statusCode?: number; response?: { status?: number } };
+      if (err?.statusCode === 404 || err?.response?.status === 404) return false;
       return failureCount < 2;
     },
   });
@@ -2442,7 +2470,6 @@ export function useActiveAnnouncements() {
 import type {
   GetDeclaredReturnsFilters,
   GetDeclaredReturnsResponse,
-  GetDeclarationByDateResponse,
 } from '@/types/dailyDeclarationReturns';
 
 /**

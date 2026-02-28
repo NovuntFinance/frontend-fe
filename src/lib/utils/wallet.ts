@@ -262,17 +262,34 @@ export function formatTransactionStatus(status: string): {
 }
 
 /**
- * Format amount with direction sign
+ * Format amount with direction sign.
+ * Use noSign: true for stake/investment so amount is shown neutral (no minus/plus, not red).
  * @param amount - Transaction amount
  * @param direction - Transaction direction ('in', 'out', 'neutral')
- * @returns Formatted amount string with sign
+ * @param options - noSign: true to show amount only (e.g. for staking)
+ * @returns Formatted amount string
  */
 export function formatAmountWithDirection(
   amount: number,
-  direction: 'in' | 'out' | 'neutral'
+  direction: 'in' | 'out' | 'neutral',
+  options?: { noSign?: boolean }
 ): string {
+  if (options?.noSign) {
+    return formatCurrency(Math.abs(amount), { showCurrency: false });
+  }
   const sign = direction === 'out' ? '-' : direction === 'in' ? '+' : '';
   return `${sign}${formatCurrency(Math.abs(amount), { showCurrency: false })}`;
+}
+
+/** True when transaction type is staking (investing) – show amount neutral, not negative/red. */
+export function isStakeTransactionType(type: string): boolean {
+  const t = type?.toLowerCase() ?? '';
+  return (
+    t === 'stake' ||
+    t === 'stake_created' ||
+    t === 'staked' ||
+    t === 'unstake'
+  );
 }
 
 /**

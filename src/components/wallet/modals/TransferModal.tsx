@@ -9,7 +9,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Shield,
-  Clock,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
@@ -654,180 +653,68 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
             subtitle="Confirm with 2FA"
             onClose={onClose}
           />
-          <ModalBody>
+          <ModalBody className="!max-h-none !overflow-visible">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="space-y-6"
+              className="space-y-3"
             >
-              <div className="space-y-6 rounded-2xl p-6" style={insetStyle}>
-                <div className="text-center">
-                  <p
-                    className="mb-3 text-sm font-medium tracking-wider uppercase"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    You&apos;re sending
-                  </p>
-                  <div className="flex items-baseline justify-center gap-2">
-                    <span
-                      className="text-2xl"
-                      style={{ color: NEU_TOKENS.white60 }}
-                    >
-                      $
-                    </span>
-                    <p
-                      className="text-5xl font-bold"
-                      style={{ color: NEU_TOKENS.accent }}
-                    >
-                      {fmt4(parseFloat(amount))}
+              <div className="space-y-2 rounded-xl p-4" style={insetStyle}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="rounded-full p-2 shrink-0" style={raisedStyle}>
+                      <Send className="size-4" style={{ color: NEU_TOKENS.accent }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                        Sending
+                      </p>
+                      <p className="text-xl font-bold truncate" style={{ color: NEU_TOKENS.accent }}>
+                        ${fmt4(parseFloat(amount))} USDT
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>To</p>
+                    <p className="text-sm font-medium truncate max-w-[140px]" style={{ color: NEU_TOKENS.white80 }}>
+                      {selectedUser.email && selectedUser.email.includes('@')
+                        ? selectedUser.email
+                        : `@${selectedUser.username}`}
                     </p>
                   </div>
-                  <p
-                    className="mt-2 text-lg font-medium"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    USDT
-                  </p>
                 </div>
-                <div className="flex items-center justify-center">
-                  <motion.div
-                    animate={{ y: [0, 8, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    className="rounded-full p-4"
-                    style={raisedStyle}
-                  >
-                    <Send
-                      className="size-6"
-                      style={{ color: NEU_TOKENS.accent }}
-                    />
-                  </motion.div>
-                </div>
-                <div className="text-center">
-                  <p
-                    className="mb-3 text-sm font-medium"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    To
-                  </p>
-                  <div
-                    className="inline-flex items-center gap-4 rounded-2xl p-4"
-                    style={raisedStyle}
-                  >
-                    <div className="rounded-full p-3" style={insetStyle}>
-                      <User
-                        className="size-6"
-                        style={{ color: NEU_TOKENS.accent }}
-                      />
-                    </div>
-                    <div className="text-left">
-                      <p
-                        className="text-lg font-semibold"
-                        style={{ color: NEU_TOKENS.white80 }}
-                      >
-                        {selectedUser.email && selectedUser.email.includes('@')
-                          ? selectedUser.email
-                          : `@${selectedUser.username}`}
-                      </p>
-                      <p
-                        className="text-xs"
-                        style={{ color: NEU_TOKENS.white60 }}
-                      >
-                        {selectedUser.email && selectedUser.email.includes('@')
-                          ? 'Email address'
-                          : selectedUser.displayName}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3 rounded-xl p-4" style={insetStyle}>
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: NEU_TOKENS.white60 }}
-                    >
-                      Transfer fee
-                    </span>
-                    <span
-                      className="font-bold"
-                      style={{ color: NEU_TOKENS.accent }}
-                    >
-                      FREE
-                    </span>
-                  </div>
-                  <div
-                    className="h-px"
-                    style={{ background: NEU_TOKENS.border }}
-                  />
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: NEU_TOKENS.white60 }}
-                    >
-                      Delivery time
-                    </span>
-                    <span
-                      className="font-bold"
-                      style={{ color: NEU_TOKENS.accent }}
-                    >
-                      Instant
-                    </span>
-                  </div>
+                <div className="flex justify-between text-xs pt-1" style={{ color: NEU_TOKENS.white60 }}>
+                  <span>Fee: FREE</span>
+                  <span>Delivery: Instant</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2">
-                  <Shield
-                    className="size-5"
-                    style={{ color: NEU_TOKENS.accent }}
-                  />
-                  <Label
-                    htmlFor="twoFACode"
-                    className="text-base font-semibold"
-                    style={{ color: NEU_TOKENS.white80 }}
-                  >
-                    Two-Factor Authentication
-                  </Label>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="twoFACode"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    placeholder="000000"
-                    value={twoFACode}
-                    onChange={(e) => {
-                      setTwoFACode(e.target.value.replace(/\D/g, ''));
-                      setError('');
-                    }}
-                    className="neu-input h-16 border-0 text-center font-mono text-3xl tracking-[0.5em] focus-visible:ring-0"
-                    autoFocus
-                  />
-                  {twoFACode.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute top-1/2 right-4 -translate-y-1/2"
-                    >
-                      <CheckCircle2
-                        className="size-5"
-                        style={{ color: NEU_TOKENS.accent }}
-                      />
-                    </motion.div>
-                  )}
-                </div>
-                <p
-                  className="flex items-center justify-center gap-2 text-center text-xs"
-                  style={{ color: NEU_TOKENS.white60 }}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="twoFACode"
+                  className="text-sm font-medium flex items-center gap-1.5"
+                  style={{ color: NEU_TOKENS.white80 }}
                 >
-                  <Clock className="size-3" /> Enter the 6-digit code from your
-                  authenticator app
+                  <Shield className="size-4" style={{ color: NEU_TOKENS.accent }} />
+                  Two-Factor Authentication
+                </Label>
+                <Input
+                  id="twoFACode"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={twoFACode}
+                  onChange={(e) => {
+                    setTwoFACode(e.target.value.replace(/\D/g, ''));
+                    setError('');
+                  }}
+                  className="neu-input h-12 border-0 text-center font-mono text-2xl tracking-[0.4em] focus-visible:ring-0"
+                  autoFocus
+                />
+                <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                  Enter the 6-digit code from your authenticator app
                 </p>
               </div>
 
@@ -835,11 +722,11 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 <p className="neu-error text-xs font-medium">{error}</p>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-1">
                 <Button
                   onClick={() => setStep('amount')}
                   variant="outline"
-                  className="h-11 flex-1 border-0"
+                  className="h-10 flex-1 border-0"
                   style={raisedStyle}
                 >
                   <span style={{ color: NEU_TOKENS.white60 }}>Back</span>
@@ -848,7 +735,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   onClick={handleSubmitTransfer}
                   disabled={loading || twoFACode.length !== 6}
                   loading={loading}
-                  className="h-11 flex-1"
+                  className="h-10 flex-1"
                 >
                   {loading ? 'Processing...' : 'Confirm Transfer'}
                 </PrimaryButton>

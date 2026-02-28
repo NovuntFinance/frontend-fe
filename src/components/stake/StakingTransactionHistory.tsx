@@ -20,6 +20,7 @@ import {
   formatTransactionType,
   formatAmountWithDirection,
   formatTransactionDate,
+  isStakeTransactionType,
 } from '@/lib/utils/wallet';
 import type { Transaction } from '@/types/enhanced-transaction';
 
@@ -186,6 +187,7 @@ function StakingTransactionItem({
   index: number;
 }) {
   const reducedMotion = prefersReducedMotion();
+  const isStake = isStakeTransactionType(transaction.type);
   const isPositive = transaction.direction === 'in';
   const isNeutral = transaction.direction === 'neutral';
   const typeLabel = formatTransactionType(
@@ -194,9 +196,17 @@ function StakingTransactionItem({
   );
   const amountStr = formatAmountWithDirection(
     transaction.amount,
-    transaction.direction
+    transaction.direction,
+    isStake ? { noSign: true } : undefined
   );
   const dateStr = formatTransactionDate(transaction.timestamp);
+  const amountColor = isStake
+    ? 'var(--wallet-text)'
+    : isPositive
+      ? 'var(--wallet-accent)'
+      : isNeutral
+        ? 'var(--wallet-text-muted)'
+        : 'var(--wallet-text)';
 
   return (
     <motion.div
@@ -216,11 +226,7 @@ function StakingTransactionItem({
         <p
           className="shrink-0 text-sm font-medium sm:text-base"
           style={{
-            color: isPositive
-              ? 'var(--wallet-accent)'
-              : isNeutral
-                ? 'var(--wallet-text-muted)'
-                : 'var(--wallet-text)',
+            color: amountColor,
           }}
         >
           {amountStr}

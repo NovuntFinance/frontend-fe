@@ -17,6 +17,7 @@ import {
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
+import { isStakeTransactionType } from '@/lib/utils/wallet';
 import { useUIStore } from '@/store/uiStore';
 
 // Support both enhanced and legacy transaction types
@@ -266,8 +267,11 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   </div>
                   <div className="flex items-baseline justify-between gap-2">
                     {(() => {
+                      const isStake = isStakeTransactionType(
+                        currentTransaction.type
+                      );
                       const isOutgoing =
-                        isOutgoingTransaction(currentTransaction);
+                        !isStake && isOutgoingTransaction(currentTransaction);
                       return (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.98 }}
@@ -276,15 +280,24 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                           key={currentTransaction.amount}
                           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                           style={{
-                            color: isOutgoing
-                              ? '#ef4444'
-                              : 'rgba(255, 255, 255, 0.95)',
+                            color: isStake
+                              ? 'rgba(255, 255, 255, 0.95)'
+                              : isOutgoing
+                                ? '#ef4444'
+                                : 'rgba(255, 255, 255, 0.95)',
                             filter: 'none',
                           }}
                         >
-                          {isOutgoing ? '-' : '+'}
+                          {isStake ? '' : isOutgoing ? '-' : '+'}
                           {balanceVisible
-                            ? formatCurrency(currentTransaction.amount)
+                            ? formatCurrency(
+                                Math.abs(
+                                  Number(
+                                    (currentTransaction as { amount?: number })
+                                      .amount ?? 0
+                                  )
+                                )
+                              )
                             : '••••••'}
                         </motion.div>
                       );

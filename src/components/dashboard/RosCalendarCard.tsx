@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRosCalendarData } from '@/lib/queries';
 
 /* Platform colors (match Daily ROS, Live Trading Signals, neumorphic) */
 const BG = '#0D162C';
@@ -83,6 +84,14 @@ export function RosCalendarCard() {
   const dataEnd = useMemo(() => new Date(), []);
   const [viewDate, setViewDate] = useState(() => new Date());
 
+  const { year, month } = useMemo(() => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    return { year: y, month: m };
+  }, [viewDate]);
+
+  const { data: backendData, isLoading } = useRosCalendarData(year, month);
+  const backendToday = backendData?.today; // YYYY-MM-DD from backend (platform day)
   const mockRos = useMemo(
     () => generateMockRosByDate(DATA_START, dataEnd),
     [dataEnd]
@@ -91,16 +100,14 @@ export function RosCalendarCard() {
   const getRosForDate = useMemo(
     () => (date: Date) => {
       const key = date.toISOString().slice(0, 10);
+      const calendar = backendData?.calendar;
+      if (calendar && typeof calendar[key] === 'number') {
+        return calendar[key];
+      }
       return mockRos[key] ?? null;
     },
-    [mockRos]
+    [backendData?.calendar, mockRos]
   );
-
-  const { year, month } = useMemo(() => {
-    const y = viewDate.getFullYear();
-    const m = viewDate.getMonth();
-    return { year: y, month: m };
-  }, [viewDate]);
 
   const monthLabel = useMemo(
     () =>
@@ -150,6 +157,13 @@ export function RosCalendarCard() {
           style={{ color: TEXT_WHITE }}
         >
           ROS Calendar
+          {isLoading && (
+            <span
+              className="ml-2 inline-block h-1.5 w-1.5 animate-pulse rounded-full"
+              style={{ background: ACCENT }}
+              aria-hidden
+            />
+          )}
         </h3>
         <div className="flex items-center gap-1">
           <button
@@ -212,12 +226,17 @@ export function RosCalendarCard() {
           }
           const date = new Date(year, month, dayNum);
           const ros = getRosForDate(date);
+          const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
           const isToday =
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
+            backendToday === dateKey ||
+            (date.getDate() === today.getDate() &&
+              date.getMonth() === today.getMonth() &&
+              date.getFullYear() === today.getFullYear());
+          // Multi-slot sums can exceed 2.2%; cap bar at 100%
           const barHeight =
-            ros != null ? (ros - MIN_ROS) / (MAX_ROS - MIN_ROS) : 0;
+            ros != null && ros >= 0
+              ? Math.min(1, Math.max(0, (ros - MIN_ROS) / (MAX_ROS - MIN_ROS)))
+              : 0;
 
           return (
             <div

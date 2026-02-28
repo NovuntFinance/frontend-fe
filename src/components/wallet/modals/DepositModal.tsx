@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Download,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-  Clock,
-} from 'lucide-react';
+import { Copy, CheckCircle2 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,7 +107,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
-  const MIN_DEPOSIT = 1; // Production mode: Real crypto testing with small amounts
+  const MIN_DEPOSIT = 10;
 
   // Mutation hooks and query client for refreshing wallet balance
   const queryClient = useQueryClient();
@@ -529,11 +522,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      preventClose={step === 'confirming'}
-    >
+    <BaseModal isOpen={isOpen} onClose={handleClose}>
       {step === 'amount' && (
         <>
           <ModalHeader
@@ -547,31 +536,6 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-4 sm:space-y-5 lg:space-y-6"
             >
-              <InfoCallout
-                icon={
-                  <AlertCircle
-                    className="size-4"
-                    style={{ color: NEU_TOKENS.accent }}
-                  />
-                }
-                title="Deposit details"
-                description={
-                  <>
-                    Minimum deposit: <strong>{MIN_DEPOSIT} USDT</strong>
-                    <br />
-                    Supported network:{' '}
-                    <strong>BEP20 (Binance Smart Chain) only</strong>
-                    <br />
-                    Confirmation time: <strong>5-15 minutes</strong>
-                    <br />
-                    <span style={{ color: NEU_TOKENS.white80 }}>
-                      ⚠️ Real cryptocurrency — verify address before sending.
-                    </span>
-                  </>
-                }
-                borderColor="rgba(245, 158, 11, 0.25)"
-              />
-
               <div className="space-y-1.5">
                 <Label
                   htmlFor="amount"
@@ -650,154 +614,41 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         <>
           <ModalHeader
             title="Deposit USDT"
-            subtitle="Send USDT to the address below"
+            subtitle={`${depositData.amount} USDT · BEP20`}
             onClose={handleClose}
           />
           <ModalBody>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="space-y-4 sm:space-y-5 lg:space-y-6"
+              className="space-y-4"
             >
-              <InfoCallout
-                icon={
-                  <AlertCircle
-                    className="size-4"
-                    style={{ color: NEU_TOKENS.accent }}
-                  />
-                }
-                title="Send payment"
-                description={
-                  <>
-                    Send <strong>{depositData.amount} USDT</strong> to the
-                    address below using{' '}
-                    <strong>BEP20 (Binance Smart Chain)</strong> network.
-                  </>
-                }
-              />
-
-              {(showSandboxBanner ||
-                (showMockBanner && !showSandboxBanner)) && (
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    ...insetStyle,
-                    borderColor: 'rgba(245, 158, 11, 0.3)',
-                  }}
-                >
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: NEU_TOKENS.white80 }}
-                  >
-                    Sandbox Mode
-                  </p>
-                  <p
-                    className="mt-1 text-xs"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    {showSandboxBanner
-                      ? 'You are testing with sandbox. No real funds will be transferred. Pending deposits may auto-confirm after about 30 seconds—keep this window open.'
-                      : 'Payment auto-confirmed in mock mode. Funds are credited instantly for testing only.'}
-                  </p>
-                </div>
-              )}
-
-              <div className="rounded-xl p-4" style={insetStyle}>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p
-                      className="text-xs"
-                      style={{ color: NEU_TOKENS.white60 }}
-                    >
-                      Current status
-                    </p>
-                    <p
-                      className="text-lg font-semibold"
-                      style={{ color: NEU_TOKENS.white80 }}
-                    >
-                      {statusDisplayLabel}
-                    </p>
-                  </div>
-                  <span
-                    className="rounded-full px-3 py-1 text-xs font-semibold"
-                    style={{ color: NEU_TOKENS.accent }}
-                  >
-                    {statusDisplayLabel}
-                  </span>
-                </div>
-                {isPendingStatus && (
-                  <p
-                    className="mt-2 flex items-center gap-2 text-xs"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    <Clock className="size-3.5" />
-                    Monitoring confirmations automatically. You can keep this
-                    tab open or return later.
-                  </p>
-                )}
-                <div
-                  className="mt-3 grid gap-2 text-xs sm:grid-cols-2"
-                  style={{ color: NEU_TOKENS.white60 }}
-                >
-                  <span>
-                    Invoice ID:{' '}
-                    <strong
-                      style={{ color: NEU_TOKENS.white80 }}
-                      className="break-all"
-                    >
-                      {depositData.invoiceId}
-                    </strong>
-                  </span>
-                  <span>
-                    Transaction ID:{' '}
-                    <strong
-                      style={{ color: NEU_TOKENS.white80 }}
-                      className="break-all"
-                    >
-                      {depositData.transactionId || 'Pending'}
-                    </strong>
-                  </span>
-                  <span>
-                    Expires:{' '}
-                    <strong style={{ color: NEU_TOKENS.white80 }}>
-                      {formattedExpiry || 'Not provided'}
-                    </strong>
-                  </span>
-                  <span>
-                    Network:{' '}
-                    <strong style={{ color: NEU_TOKENS.white80 }}>
-                      BEP20 (Binance Smart Chain)
-                    </strong>
-                  </span>
-                </div>
-              </div>
-
               {qrCodeUrl && (
                 <div
-                  className="flex justify-center rounded-2xl p-6"
+                  className="flex justify-center rounded-xl p-4"
                   style={insetStyle}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrCodeUrl}
-                    alt="Deposit Address QR Code"
-                    className="h-64 w-64 rounded-xl"
+                    alt="Deposit address QR"
+                    className="h-40 w-40 rounded-lg sm:h-48 sm:w-48"
                   />
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label
-                  className="text-sm font-medium"
+                  className="text-xs font-medium"
                   style={{ color: NEU_TOKENS.white60 }}
                 >
-                  Deposit Address
+                  Address
                 </Label>
                 <div className="flex items-center gap-2">
                   <Input
                     value={depositData.depositAddress}
                     readOnly
-                    className="neu-input border-0 font-mono text-sm focus-visible:ring-0"
+                    className="neu-input border-0 font-mono text-xs focus-visible:ring-0"
                   />
                   <Button
                     variant="outline"
@@ -821,86 +672,10 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </div>
               </div>
 
-              {paymentPortalUrl && (
-                <div className="space-y-1.5">
-                  <Label
-                    className="text-sm font-medium"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    Payment Portal
-                  </Label>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between border-0"
-                    style={raisedStyle}
-                    onClick={openPaymentPortal}
-                  >
-                    <span style={{ color: NEU_TOKENS.white80 }}>
-                      Open payment instructions
-                    </span>
-                    <ExternalLink
-                      className="size-4"
-                      style={{ color: NEU_TOKENS.accent }}
-                    />
-                  </Button>
-                  <p
-                    className="text-xs break-all"
-                    style={{ color: NEU_TOKENS.white40 }}
-                  >
-                    {paymentPortalUrl}
-                  </p>
-                </div>
-              )}
-
-              {instructionList.length > 0 && (
-                <div className="rounded-xl p-4" style={insetStyle}>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: NEU_TOKENS.white80 }}
-                  >
-                    Instructions
-                  </p>
-                  <ol
-                    className="mt-2 list-inside list-decimal space-y-1 text-xs"
-                    style={{ color: NEU_TOKENS.white60 }}
-                  >
-                    {instructionList.map((instruction, index) => (
-                      <li key={index}>{instruction}</li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              <InfoCallout
-                icon={
-                  <AlertCircle
-                    className="size-4"
-                    style={{ color: NEU_TOKENS.accent }}
-                  />
-                }
-                title="Warning"
-                description={
-                  <>
-                    Only send USDT via{' '}
-                    <strong>BEP20 (Binance Smart Chain)</strong> network.
-                    Sending other tokens or using wrong network will result in
-                    loss of funds.
-                  </>
-                }
-                borderColor="rgba(248, 113, 113, 0.3)"
-              />
-
               <ModalFooter className="pt-2">
                 <PrimaryButton onClick={() => setStep('confirming')}>
                   I&apos;ve Sent the Payment
                 </PrimaryButton>
-                <p
-                  className="text-center text-xs"
-                  style={{ color: NEU_TOKENS.white40 }}
-                >
-                  ⏱️ Confirmation typically takes 5-15 minutes. We&apos;re
-                  monitoring the blockchain automatically.
-                </p>
               </ModalFooter>
             </motion.div>
           </ModalBody>
@@ -913,113 +688,23 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
             title="Deposit USDT"
             subtitle="Waiting for confirmation"
             onClose={handleClose}
-            disableClose
           />
           <ModalBody>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-6 py-6"
+              className="flex flex-col items-center gap-4 py-8"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="mx-auto inline-flex rounded-full p-6"
-                style={raisedStyle}
-              >
+              <div className="inline-flex" style={raisedStyle}>
                 <NovuntSpinner size="lg" />
-              </motion.div>
-              <div className="space-y-2 text-center">
-                <h3
-                  className="text-xl font-semibold"
-                  style={{ color: NEU_TOKENS.accent }}
-                >
-                  Waiting for Confirmation
-                </h3>
-                <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
-                  This usually takes 5-15 minutes
-                </p>
-                <p
-                  className="mt-2 text-sm"
-                  style={{ color: NEU_TOKENS.white40 }}
-                >
-                  Don&apos;t close this window. We&apos;ll notify you when
-                  confirmed.
-                </p>
               </div>
-              <div className="rounded-2xl p-4 text-sm" style={insetStyle}>
-                <p style={{ color: NEU_TOKENS.white80 }}>
-                  ✓ Transaction broadcasted to blockchain
-                </p>
-                <p style={{ color: NEU_TOKENS.white60 }}>
-                  ⏳ Waiting for network confirmations...
-                </p>
-                <p
-                  className="text-xs break-all"
-                  style={{ color: NEU_TOKENS.white40 }}
-                >
-                  Invoice ID: {depositData?.invoiceId}
-                </p>
-                <p
-                  className="text-xs break-all"
-                  style={{ color: NEU_TOKENS.white40 }}
-                >
-                  Transaction ID: {depositData?.transactionId || 'Pending'}
-                </p>
-              </div>
-              {depositData && (
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label
-                      className="text-sm font-medium"
-                      style={{ color: NEU_TOKENS.white60 }}
-                    >
-                      Deposit Address
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={depositData.depositAddress}
-                        readOnly
-                        className="neu-input border-0 font-mono text-sm focus-visible:ring-0"
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                          copyToClipboard(depositData.depositAddress)
-                        }
-                        className="shrink-0 border-0"
-                        style={raisedStyle}
-                      >
-                        {copied ? (
-                          <CheckCircle2
-                            className="size-4"
-                            style={{ color: NEU_TOKENS.accent }}
-                          />
-                        ) : (
-                          <Copy
-                            className="size-4"
-                            style={{ color: NEU_TOKENS.accent }}
-                          />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  {qrCodeUrl && (
-                    <div
-                      className="flex justify-center rounded-2xl p-4"
-                      style={insetStyle}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={qrCodeUrl}
-                        alt="Deposit Address QR Code"
-                        className="h-48 w-48 rounded-lg"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+              <p
+                className="text-center text-sm"
+                style={{ color: NEU_TOKENS.white60 }}
+              >
+                Confirming… This screen will switch to &quot;Deposit Confirmed!&quot; when
+                the payment is received. You can also close and we&apos;ll notify you.
+              </p>
             </motion.div>
           </ModalBody>
         </>

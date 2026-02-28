@@ -17,6 +17,7 @@ import {
   formatTransactionStatus,
   formatAmountWithDirection,
   formatTransactionDate,
+  isStakeTransactionType,
 } from '@/lib/utils/wallet';
 import type { Transaction } from '@/types/enhanced-transaction';
 import neuStyles from '@/styles/neumorphic.module.css';
@@ -71,8 +72,14 @@ const BADGE_TEXT = 'rgba(0,155,242,0.9)';
 
 function RecentTransactionItem({ transaction }: { transaction: Transaction }) {
   const statusInfo = formatTransactionStatus(transaction.status);
+  const isStake = isStakeTransactionType(transaction.type);
   const isPositive = transaction.direction === 'in';
   const typeIcon = getTransactionIcon(transaction.type, transaction.direction);
+  const amountColor = isStake
+    ? TEXT_PRIMARY
+    : isPositive
+      ? TEXT_PRIMARY
+      : AMOUNT_OUT;
 
   return (
     <div
@@ -103,10 +110,14 @@ function RecentTransactionItem({ transaction }: { transaction: Transaction }) {
         <p
           className="text-sm font-bold"
           style={{
-            color: isPositive ? TEXT_PRIMARY : AMOUNT_OUT,
+            color: amountColor,
           }}
         >
-          {formatAmountWithDirection(transaction.amount, transaction.direction)}
+          {formatAmountWithDirection(
+            transaction.amount,
+            transaction.direction,
+            isStake ? { noSign: true } : undefined
+          )}
         </p>
         <span
           className="mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"

@@ -354,6 +354,109 @@ export const rosApi = {
     return null;
   },
 
+  /**
+   * Get daily ROS for a calendar month (user-facing).
+   * Uses backend multi-slot Daily Declaration Returns:
+   * - Today: sums all completed slot declarations (e.g. 0% + 0.3% + 0.4% + 0.5% = 1.2%)
+   * - Past days: distributed profit (single or summed multi-slot)
+   * - Future / no declaration: 0
+   *
+   * Endpoint: GET /api/v1/daily-profit/calendar (per backend FRONTEND_ROS_CALENDAR_API.md)
+   *
+   * @returns { calendar: Record<date, ros>, today?: string } e.g. { calendar: { "2026-02-28": 1.2 }, today: "2026-02-28" }
+   */
+  getDailyRosForMonth: async (
+    year: number,
+    month: number
+  ): Promise<{ calendar: Record<string, number>; today?: string }> => {
+    const monthStr = String(month + 1).padStart(2, '0');
+
+    // 1. Primary: GET /api/v1/daily-profit/calendar (backend multi-slot API)
+    try {
+      const response = await axios.get(
+        `${ROS_BASE_URL}/api/v1/daily-profit/calendar`,
+        {
+          params: { year, month: month + 1 },
+          headers: getUserAuthHeader(),
+          withCredentials: true,
+        }
+      );
+      const data = response.data?.data ?? response.data;
+      if (data && typeof data === 'object' && data.calendar) {
+        const calendar = data.calendar as Record<string, number>;
+        const out: Record<string, number> = {};
+        for (const [k, v] of Object.entries(calendar)) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number') {
+            out[k] = v;
+          }
+        }
+        return {
+          calendar: out,
+          today: typeof data.today === 'string' ? data.today.slice(0, 10) : undefined,
+        };
+      }
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response?.status === 404) {
+        // Fall through to fallbacks
+      } else if (axios.isAxiosError(e)) {
+        throw e;
+      }
+    }
+
+    // 2. Fallback: legacy /api/ros/calendar or /api/v1/ros/calendar
+    const legacyEndpoints = [
+      `${ROS_BASE_URL}/api/v1/ros/calendar`,
+      `${ROS_BASE_URL}/api/ros/calendar`,
+    ];
+    for (const endpoint of legacyEndpoints) {
+      try {
+        const response = await axios.get(endpoint, {
+          params: { year, month: month + 1 },
+          headers: getUserAuthHeader(),
+          withCredentials: true,
+        });
+        const data = response.data?.data ?? response.data;
+        if (data && typeof data === 'object') {
+          const out: Record<string, number> = {};
+          if (Array.isArray(data.dailyRos)) {
+            for (const item of data.dailyRos) {
+              const d = item.date?.slice?.(0, 10) ?? item.date;
+              const p = item.percentage ?? item.ros ?? 0;
+              if (d) out[d] = Number(p);
+            }
+          } else {
+            for (const [k, v] of Object.entries(data)) {
+              if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number') out[k] = v;
+            }
+          }
+          if (Object.keys(out).length > 0) {
+            return { calendar: out };
+          }
+        }
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 404) continue;
+        if (axios.isAxiosError(err)) throw err;
+      }
+    }
+
+    // 3. Fallback: getDailyEarnings('ALL') filtered by month
+    try {
+      const data = await rosApi.getDailyEarnings('ALL');
+      const dailyData = data?.dailyData ?? [];
+      const prefix = `${year}-${monthStr}-`;
+      const out: Record<string, number> = {};
+      for (const item of dailyData) {
+        const d = item.date?.slice?.(0, 10) ?? item.date;
+        if (d?.startsWith(prefix) && typeof item.ros === 'number') {
+          out[d] = item.ros;
+        }
+      }
+      return { calendar: out };
+    } catch {
+      return { calendar: {} };
+    }
+  },
+
   // Admin Endpoints - Try both /api/v1 and /api paths
   getAllCalendars: async (twoFACode?: string): Promise<CalendarEntry[]> => {
     const endpoints = [

@@ -49,7 +49,9 @@ export function LargeWithdrawalDialog({
     },
     {
       label: 'Destination',
-      value: `${walletAddress.slice(0, 10)}...${walletAddress.slice(-8)}`,
+      value: walletAddress
+        ? `${walletAddress.slice(0, 10)}...${walletAddress.slice(-8)}`
+        : '—',
     },
   ];
 

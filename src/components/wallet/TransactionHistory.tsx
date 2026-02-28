@@ -63,6 +63,7 @@ import {
   maskWalletAddress,
   formatAmountWithDirection,
   formatTransactionDate,
+  isStakeTransactionType,
 } from '@/lib/utils/wallet';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import { listItemAnimation } from '@/design-system/animations';
@@ -1599,6 +1600,7 @@ function CompactTransactionItem({
   index: number;
 }) {
   const reducedMotion = prefersReducedMotion();
+  const isStake = isStakeTransactionType(transaction.type);
   const isPositive = transaction.direction === 'in';
   const isNeutral = transaction.direction === 'neutral';
   const typeLabel = formatTransactionType(
@@ -1607,9 +1609,17 @@ function CompactTransactionItem({
   );
   const amountStr = formatAmountWithDirection(
     transaction.amount,
-    transaction.direction
+    transaction.direction,
+    isStake ? { noSign: true } : undefined
   );
   const dateStr = formatTransactionDate(transaction.timestamp);
+  const amountColor = isStake
+    ? 'var(--wallet-text)'
+    : isPositive
+      ? 'var(--wallet-accent)'
+      : isNeutral
+        ? 'var(--wallet-text-muted)'
+        : 'var(--wallet-text)';
 
   return (
     <motion.div
@@ -1629,11 +1639,7 @@ function CompactTransactionItem({
         <p
           className="shrink-0 text-sm font-medium sm:text-base"
           style={{
-            color: isPositive
-              ? 'var(--wallet-accent)'
-              : isNeutral
-                ? 'var(--wallet-text-muted)'
-                : 'var(--wallet-text)',
+            color: amountColor,
           }}
         >
           {amountStr}
@@ -1658,6 +1664,7 @@ function TransactionItem({
 }) {
   const statusInfo = formatTransactionStatus(transaction.status);
   const typeIcon = getTransactionIcon(transaction.type, transaction.direction);
+  const isStake = isStakeTransactionType(transaction.type);
   const isPositive = transaction.direction === 'in';
   const isNeutral = transaction.direction === 'neutral';
   const [showReceipt, setShowReceipt] = useState(false);
@@ -1850,16 +1857,19 @@ function TransactionItem({
             <p
               className="text-sm font-bold sm:text-lg"
               style={{
-                color: isPositive
-                  ? 'var(--neu-accent)'
-                  : isNeutral
-                    ? 'var(--neu-text-muted)'
-                    : 'var(--neu-text-secondary)',
+                color: isStake
+                  ? 'var(--neu-text)'
+                  : isPositive
+                    ? 'var(--neu-accent)'
+                    : isNeutral
+                      ? 'var(--neu-text-muted)'
+                      : 'var(--neu-text-secondary)',
               }}
             >
               {formatAmountWithDirection(
                 transaction.amount,
-                transaction.direction
+                transaction.direction,
+                isStake ? { noSign: true } : undefined
               )}
             </p>
             {/* Show fee and net amount for withdrawals */}
@@ -1996,6 +2006,7 @@ function receiptDescriptionWithoutPoolAmount(
 function TransactionReceipt({ transaction }: { transaction: Transaction }) {
   const { user } = useUser();
   const statusInfo = formatTransactionStatus(transaction.status);
+  const isStake = isStakeTransactionType(transaction.type);
   const isPositive = transaction.direction === 'in';
 
   const handlePrint = () => {
@@ -2128,19 +2139,20 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
 
       {/* Transaction Details */}
       <div className="space-y-6">
-        {/* Amount Section */}
+        {/* Amount Section - stake: neutral (no red/green); in: green; out: red */}
         <div
-          className={`rounded-lg p-6 ${isPositive ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+          className={`rounded-lg p-6 ${isStake ? 'bg-muted/50' : isPositive ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
         >
           <div className="text-muted-foreground mb-2 text-sm">
             Transaction Amount
           </div>
           <div
-            className={`text-4xl font-bold ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}
+            className={`text-4xl font-bold ${isStake ? 'text-foreground' : isPositive ? 'text-emerald-500' : 'text-red-500'}`}
           >
             {formatAmountWithDirection(
               transaction.amount,
-              transaction.direction
+              transaction.direction,
+              isStake ? { noSign: true } : undefined
             )}
           </div>
           {transaction.fee > 0 && (
