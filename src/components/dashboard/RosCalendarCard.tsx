@@ -12,6 +12,7 @@ const SHADOW_BUTTON =
   '4px 4px 8px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light)';
 const MIN_ROS = 0.1;
 const MAX_ROS = 2.2;
+const DAYS_LOOKBACK = 190;
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

@@ -678,8 +678,11 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                style={{ color: 'var(--neu-accent)', filter: 'none' }}
-                                aria-label="Total Earned. Tap for details."
+                                  style={{
+                                    color: 'var(--neu-accent)',
+                                    filter: 'none',
+                                  }}
+                                  aria-label="Total Earned. Tap for details."
                                 >
                                   Total Earned
                                 </button>
@@ -694,7 +697,10 @@ export default function DashboardPage() {
                                   color: 'var(--neu-text-primary)',
                                 }}
                               >
-                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
+                                <p
+                                  className="text-xs opacity-90"
+                                  style={{ color: 'var(--neu-text-primary)' }}
+                                >
                                   Total earnings from all sources
                                 </p>
                               </PopoverContent>
@@ -748,7 +754,10 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                                  style={{
+                                    color: 'var(--neu-accent)',
+                                    filter: 'none',
+                                  }}
                                   aria-label="Total Staked. Tap for details."
                                 >
                                   Total Staked
@@ -764,7 +773,10 @@ export default function DashboardPage() {
                                   color: 'var(--neu-text-primary)',
                                 }}
                               >
-                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
+                                <p
+                                  className="text-xs opacity-90"
+                                  style={{ color: 'var(--neu-text-primary)' }}
+                                >
                                   Total amount staked across all stakes
                                 </p>
                               </PopoverContent>
@@ -818,7 +830,10 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                                  style={{
+                                    color: 'var(--neu-accent)',
+                                    filter: 'none',
+                                  }}
                                   aria-label="Total Deposited. Tap for details."
                                 >
                                   Total Deposited
@@ -834,7 +849,10 @@ export default function DashboardPage() {
                                   color: 'var(--neu-text-primary)',
                                 }}
                               >
-                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
+                                <p
+                                  className="text-xs opacity-90"
+                                  style={{ color: 'var(--neu-text-primary)' }}
+                                >
                                   Total amount deposited to your wallet
                                 </p>
                               </PopoverContent>
@@ -888,7 +906,10 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   className="inline-block cursor-help text-left text-xs font-semibold sm:text-sm"
-                                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                                  style={{
+                                    color: 'var(--neu-accent)',
+                                    filter: 'none',
+                                  }}
                                   aria-label="Total Withdrawn. Tap for details."
                                 >
                                   Total Withdrawn
@@ -904,7 +925,10 @@ export default function DashboardPage() {
                                   color: 'var(--neu-text-primary)',
                                 }}
                               >
-                                <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
+                                <p
+                                  className="text-xs opacity-90"
+                                  style={{ color: 'var(--neu-text-primary)' }}
+                                >
                                   Total amount withdrawn from your wallet
                                 </p>
                               </PopoverContent>
@@ -1027,11 +1051,11 @@ export default function DashboardPage() {
                           transition={{ delay: 0.3 + index * 0.05 }}
                           className="flex touch-manipulation flex-col items-center gap-1.5 sm:gap-2"
                         >
-                          {/* Circular neumorphic button – same as Quick Actions: convex raised, inset on press */}
+                          {/* Circular neumorphic button – same as Quick Actions: default light blue + dark icon, hover dark + light blue; label white */}
                           <div
                             className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16"
                             style={{
-                              background: isActive ? 'var(--neu-accent)' : 'var(--neu-bg)',
+                              background: isActive ? '#0D162C' : '#009BF2',
                               boxShadow: isPressed
                                 ? 'var(--neu-shadow-inset-press)'
                                 : 'var(--neu-shadow-raised)',
@@ -1047,14 +1071,14 @@ export default function DashboardPage() {
                             <IconComponent
                               className="h-5 w-5 sm:h-6 sm:w-6"
                               style={{
-                                color: isActive ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
+                                color: isActive ? '#009BF2' : '#0D162C',
                               }}
                             />
                           </div>
-                          {/* Label – theme accent */}
+                          {/* Label – white */}
                           <span
                             className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: 'var(--neu-accent)' }}
+                            style={{ color: 'rgba(255, 255, 255, 0.95)' }}
                           >
                             {button.label}
                           </span>

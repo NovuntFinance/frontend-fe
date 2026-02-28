@@ -28,7 +28,13 @@ const PRIMARY = '#009BF2';
  * Latest Novunt loader: concentric blue arcs (incomplete circles) with center dot.
  * Single element spins 360° continuously.
  */
-function NovuntLoaderSvg({ size, filterId }: { size: keyof typeof pixelSize; filterId: string }) {
+function NovuntLoaderSvg({
+  size,
+  filterId,
+}: {
+  size: keyof typeof pixelSize;
+  filterId: string;
+}) {
   const px = pixelSize[size];
   const r = px / 2;
   const stroke = Math.max(2, px / 20);
@@ -86,13 +92,23 @@ function NovuntLoaderSvg({ size, filterId }: { size: keyof typeof pixelSize; fil
         filter={`url(#${filterId})`}
       />
       {/* Center dot */}
-      <circle cx={r} cy={r} r={stroke} fill={PRIMARY} filter={`url(#${filterId})`} />
+      <circle
+        cx={r}
+        cy={r}
+        r={stroke}
+        fill={PRIMARY}
+        filter={`url(#${filterId})`}
+      />
     </svg>
   );
 }
 
-export function NovuntSpinner({ size = 'md', className = '' }: NovuntSpinnerProps) {
-  const filterId = React.useId().replace(/:/g, '');
+const LOADER_FILTER_ID = 'novunt-loader-filter';
+
+export function NovuntSpinner({
+  size = 'md',
+  className = '',
+}: NovuntSpinnerProps) {
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <motion.div
@@ -104,20 +120,24 @@ export function NovuntSpinner({ size = 'md', className = '' }: NovuntSpinnerProp
           ease: 'linear',
         }}
       >
-        <NovuntLoaderSvg size={size} filterId={filterId} />
+        <NovuntLoaderSvg size={size} filterId={LOADER_FILTER_ID} />
       </motion.div>
     </div>
   );
 }
 
 // Full page loading component
-export function NovuntPageLoader({ message = 'Loading...' }: { message?: string }) {
+export function NovuntPageLoader({
+  message = 'Loading...',
+}: {
+  message?: string;
+}) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="bg-background/80 fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-sm">
       <NovuntSpinner size="xl" />
       {message && (
         <motion.p
-          className="mt-8 text-lg font-medium text-foreground"
+          className="text-foreground mt-8 text-lg font-medium"
           animate={{
             opacity: [0.5, 1, 0.5],
           }}

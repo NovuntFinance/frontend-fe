@@ -25,9 +25,14 @@ interface QuickActionsProps {
   gridOnDesktop?: boolean;
 }
 
+/* Featured/Quick Action button colors: default = light blue bg + dark icon; hover = dark bg + light blue icon; labels white */
+const ACCENT_BLUE = '#009BF2';
+const DARK_NAVY = '#0D162C';
+const LABEL_WHITE = 'rgba(255, 255, 255, 0.95)';
+
 /**
  * QuickActions – Neumorphic only: raised by default, inset on press.
- * No glow; dual shadows only. #0D162C surface, #009BF2 accent.
+ * Default = light blue circle + dark icon; hover = dark circle + light blue icon; labels white.
  */
 export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
   const { openModal } = useUIStore();
@@ -80,7 +85,7 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
             <div
               className="flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16"
               style={{
-                background: isActive ? 'var(--neu-accent)' : 'var(--neu-bg)',
+                background: isActive ? DARK_NAVY : ACCENT_BLUE,
                 boxShadow: isPressed
                   ? 'var(--neu-shadow-inset-press)'
                   : 'var(--neu-shadow-raised)',
@@ -95,13 +100,13 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
               <action.icon
                 className="h-6 w-6 sm:h-7 sm:w-7"
                 style={{
-                  color: isActive ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
+                  color: isActive ? ACCENT_BLUE : DARK_NAVY,
                 }}
               />
             </div>
             <span
               className="text-center text-xs font-medium sm:text-sm"
-              style={{ color: 'var(--neu-accent)' }}
+              style={{ color: LABEL_WHITE }}
             >
               {action.label}
             </span>
