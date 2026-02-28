@@ -1,7 +1,7 @@
 /* Neumorphic Design System – Dashboard theme-aware.
    Tokens (--neu-*) are defined in globals.css: light in :root, dark in .dark. */
 
-  /* Design tokens: 16–24px radius, 200–300ms transitions (theme-invariant) */
+/* Design tokens: 16–24px radius, 200–300ms transitions (theme-invariant) */
 :root {
   --neu-radius-sm: 16px;
   --neu-radius-md: 18px;
@@ -139,6 +139,22 @@
 .neu-icon-button:active {
   box-shadow: var(--neu-shadow-inset-press);
   transform: scale(0.98);
+}
+
+/* Icon button – accent default (light blue bg, dark icon); hover = dark bg, light blue icon */
+.neu-icon-button-accent-default {
+  background: var(--neu-accent);
+  color: var(--neu-bg);
+}
+
+.neu-icon-button-accent-default:hover {
+  background: var(--neu-bg);
+  color: var(--neu-accent);
+}
+
+.neu-icon-button-accent-default:active {
+  background: var(--neu-bg);
+  color: var(--neu-accent);
 }
 
 /* Input – inset */

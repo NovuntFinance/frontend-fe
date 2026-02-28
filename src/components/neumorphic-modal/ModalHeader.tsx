@@ -30,7 +30,7 @@ export function ModalHeader({
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8',
+        'flex shrink-0 items-start justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8',
         className
       )}
       style={{ paddingBottom: neuSpacing.mobile }}

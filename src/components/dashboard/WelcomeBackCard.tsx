@@ -50,6 +50,7 @@ export function WelcomeBackCard({
 
   const depositBalance = walletBalance?.funded?.availableBalance ?? 0;
   const earningsBalance = walletBalance?.earnings?.availableBalance ?? 0;
+  const totalAssets = depositBalance + earningsBalance;
 
   const greetingName = user?.firstName
     ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
@@ -81,8 +82,11 @@ export function WelcomeBackCard({
                 color: 'var(--neu-text-primary)',
               }}
             >
-              <p className="text-xs opacity-90" style={{ color: 'var(--neu-text-primary)' }}>
-                Combined value of your wallet balance and all staked amounts
+              <p
+                className="text-xs opacity-90"
+                style={{ color: 'var(--neu-text-primary)' }}
+              >
+                Combined Value of your Deposit Asset and Earnings Asset
               </p>
             </PopoverContent>
           </Popover>
@@ -96,7 +100,7 @@ export function WelcomeBackCard({
               style={{ color: 'var(--neu-accent)', filter: 'none' }}
             >
               $
-              {totalPortfolioValue.toLocaleString('en-US', {
+              {totalAssets.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

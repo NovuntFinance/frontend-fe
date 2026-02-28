@@ -62,8 +62,8 @@ export function BaseModal({
                 exit={{ opacity: 0, scale: 0.96, y: 12 }}
                 transition={{ duration: 0.25 }}
                 className={cn(
-                  'neu-modal pointer-events-auto w-full max-w-lg overflow-hidden lg:max-w-xl',
-                  'max-h-[calc(100vh-2rem)] lg:max-h-none',
+                  'neu-modal pointer-events-auto flex w-full max-w-lg flex-col overflow-hidden lg:max-w-xl',
+                  'max-h-[calc(100dvh-2rem)] lg:max-h-none',
                   className
                 )}
                 style={{

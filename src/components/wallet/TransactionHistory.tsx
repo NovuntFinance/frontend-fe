@@ -1163,44 +1163,49 @@ export function TransactionHistory({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="relative min-w-[120px] flex-1 sm:min-w-[140px]">
-                <Calendar
-                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
-                />
-                <Input
-                  type="date"
-                  placeholder="From"
-                  value={filters.dateFrom || ''}
-                  onChange={(e) =>
-                    handleFilterChange('dateFrom', e.target.value || undefined)
-                  }
-                  className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
-                  style={compactInputStyle}
-                />
-              </div>
-              <div className="relative min-w-[120px] flex-1 sm:min-w-[140px]">
-                <Calendar
-                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
-                />
-                <Input
-                  type="date"
-                  value={filters.dateTo || ''}
-                  onChange={(e) =>
-                    handleFilterChange('dateTo', e.target.value || undefined)
-                  }
-                  min={filters.dateFrom || undefined}
-                  className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
-                  style={compactInputStyle}
-                />
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <div className="flex min-w-0 gap-2 sm:flex-1 sm:gap-3">
+                <div className="relative min-w-0 flex-1 sm:min-w-[140px]">
+                  <Calendar
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                    style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                  />
+                  <Input
+                    type="date"
+                    placeholder="From"
+                    value={filters.dateFrom || ''}
+                    onChange={(e) =>
+                      handleFilterChange(
+                        'dateFrom',
+                        e.target.value || undefined
+                      )
+                    }
+                    className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
+                    style={compactInputStyle}
+                  />
+                </div>
+                <div className="relative min-w-0 flex-1 sm:min-w-[140px]">
+                  <Calendar
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                    style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                  />
+                  <Input
+                    type="date"
+                    value={filters.dateTo || ''}
+                    onChange={(e) =>
+                      handleFilterChange('dateTo', e.target.value || undefined)
+                    }
+                    min={filters.dateFrom || undefined}
+                    className="h-10 w-full border py-2 pr-2 pl-9 text-sm sm:h-11 sm:min-w-[140px]"
+                    style={compactInputStyle}
+                  />
+                </div>
               </div>
               {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="h-10 shrink-0 rounded-[14px] px-4 text-sm font-medium transition-opacity hover:opacity-90 sm:h-11"
+                  className="h-10 w-full shrink-0 rounded-[14px] px-4 text-sm font-medium transition-opacity hover:opacity-90 sm:h-11 sm:w-auto"
                   style={{
                     background: 'rgba(var(--neu-accent-rgb), 0.12)',
                     color: 'var(--neu-text-primary)',

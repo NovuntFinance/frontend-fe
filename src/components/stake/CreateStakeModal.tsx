@@ -82,6 +82,16 @@ export function CreateStakeModal() {
     if (error) setError(null);
   };
 
+  // Scroll focused input into view when keyboard opens (mobile)
+  const scrollFocusedIntoView = (e: React.FocusEvent<HTMLInputElement>) => {
+    const el = e.target;
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 300);
+    });
+  };
+
   const handleSubmit = () => {
     setError(null);
     if (!amount) {
@@ -208,6 +218,7 @@ export function CreateStakeModal() {
                     maxLength={60}
                     value={goalTitle}
                     onChange={(e) => setGoalTitle(e.target.value)}
+                    onFocus={scrollFocusedIntoView}
                     placeholder="e.g. Dream Vacation"
                     className="neu-input h-11 w-full border-0 pr-10 pl-4 text-sm focus-visible:ring-0"
                   />
@@ -259,6 +270,7 @@ export function CreateStakeModal() {
                     step="0.01"
                     value={amount}
                     onChange={handleAmountChange}
+                    onFocus={scrollFocusedIntoView}
                     placeholder="0.00"
                     className={cn(
                       'neu-input neu-input-inner h-12 flex-1 border-0 bg-transparent pr-2 pl-1 text-lg font-semibold focus-visible:ring-0 focus-visible:ring-offset-0'

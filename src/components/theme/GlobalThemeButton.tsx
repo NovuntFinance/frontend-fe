@@ -29,9 +29,8 @@ export function GlobalThemeButton() {
     <button
       type="button"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className={`fixed right-4 z-[100] flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
+      className={`fixed right-4 z-[100] flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']} ${neuStyles['neu-icon-button-accent-default']}`}
       style={{
-        color: 'var(--neu-accent)',
         filter: 'none',
         top: 'calc(1rem + env(safe-area-inset-top, 0px))',
       }}

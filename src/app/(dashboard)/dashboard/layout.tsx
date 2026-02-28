@@ -128,7 +128,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="flex min-h-screen h-[100dvh] max-h-[100dvh] flex-col"
+        className="flex h-[100dvh] max-h-[100dvh] min-h-screen flex-col"
         style={{
           background: 'var(--neu-bg)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -292,8 +292,8 @@ export default function DashboardLayout({
               <div className="flex shrink-0 items-center gap-2">
                 <button
                   onClick={() => setAssistantOpen(true)}
-                  className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']}`}
-                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                  className={`flex items-center justify-center rounded-full ${neuStyles['neu-icon-button']} ${neuStyles['neu-icon-button-accent-default']}`}
+                  style={{ filter: 'none' }}
                   aria-label="Open customer support"
                 >
                   <IoHeadsetOutline className="h-5 w-5" />

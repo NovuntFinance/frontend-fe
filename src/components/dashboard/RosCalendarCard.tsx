@@ -39,9 +39,6 @@ function generateMockRosByDate(start: Date, end: Date): Record<string, number> {
   return out;
 }
 
-/** Start from Aug 25, 2023; end = today */
-const DATA_START = new Date(2023, 7, 25);
-
 function getMonthData(
   year: number,
   month: number,
@@ -73,9 +70,28 @@ const CARD_STYLE = {
   border: '1px solid var(--neu-border)',
 } as const;
 
+/** Format date as YYYY-MM-DD (calendar date, no UTC shift) */
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const d = date.getDate();
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 export function RosCalendarCard() {
   const today = useMemo(() => new Date(), []);
+  const todayKey = useMemo(() => toDateKey(today), [today]);
   const dataEnd = useMemo(() => new Date(), []);
+  const dataStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - DAYS_LOOKBACK);
+    return d;
+  }, []);
+  const yesterdayEnd = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d;
+  }, []);
   const [viewDate, setViewDate] = useState(() => new Date());
 
   const { year, month } = useMemo(() => {
@@ -87,24 +103,24 @@ export function RosCalendarCard() {
   const { data: backendData, isLoading } = useRosCalendarData(year, month);
   const backendToday = backendData?.today; // YYYY-MM-DD from backend (platform day)
   const mockRos = useMemo(
-    () => generateMockRosByDate(DATA_START, dataEnd),
-    [dataEnd]
+    () => generateMockRosByDate(dataStart, yesterdayEnd),
+    [dataStart, yesterdayEnd]
   );
 
-  /** Build YYYY-MM-DD from calendar date so it matches backend keys (platform UTC dates). Avoid toISOString() which would shift the key in timezones ahead of UTC. */
+  /** Today and future: backend only. Past (yesterday back 190 days): backend if > 0, else mock 0.1–2.2%. */
   const getRosForDate = useMemo(
     () => (date: Date) => {
-      const y = date.getFullYear();
-      const m = date.getMonth();
-      const d = date.getDate();
-      const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const key = toDateKey(date);
       const calendar = backendData?.calendar;
-      if (calendar && typeof calendar[key] === 'number') {
-        return calendar[key];
+      const backendVal =
+        calendar && typeof calendar[key] === 'number' ? calendar[key] : null;
+      if (key >= todayKey) {
+        return backendVal !== null ? backendVal : null;
       }
+      if (backendVal != null && backendVal > 0) return backendVal;
       return mockRos[key] ?? null;
     },
-    [backendData?.calendar, mockRos]
+    [backendData?.calendar, mockRos, todayKey]
   );
 
   const monthLabel = useMemo(
@@ -119,10 +135,10 @@ export function RosCalendarCard() {
   );
 
   const canGoPrev = useMemo(() => {
-    const min = new Date(DATA_START.getFullYear(), DATA_START.getMonth(), 1);
+    const min = new Date(dataStart.getFullYear(), dataStart.getMonth(), 1);
     const viewFirst = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
     return viewFirst.getTime() > min.getTime();
-  }, [viewDate]);
+  }, [viewDate, dataStart]);
 
   const canGoNext = useMemo(() => {
     const max = new Date(dataEnd.getFullYear(), dataEnd.getMonth(), 1);
