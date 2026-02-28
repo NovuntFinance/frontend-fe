@@ -23,7 +23,7 @@ interface SlideData {
   subtitle: string;
 }
 
-const ICON_STYLE = { color: '#009BF2', fontSize: '5rem' };
+const ICON_STYLE = { color: 'var(--neu-accent)', fontSize: '5rem' };
 
 const slides: SlideData[] = [
   {
@@ -34,7 +34,7 @@ const slides: SlideData[] = [
         style={{
           width: '6rem',
           height: '6rem',
-          backgroundColor: '#009bf2',
+          backgroundColor: 'var(--neu-accent)',
           maskImage: 'url(/icons/novunt_short.png)',
           WebkitMaskImage: 'url(/icons/novunt_short.png)',
           maskSize: 'contain',
@@ -223,7 +223,7 @@ export default function OnboardingCarousel({
         >
           <h1
             className="text-3xl font-semibold tracking-tight"
-            style={{ color: 'var(--neu-text)' }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {activeSlide.title}
           </h1>
@@ -252,11 +252,6 @@ export default function OnboardingCarousel({
                     ? `h-2.5 w-8 ${styles.neuDotActive}`
                     : `h-2.5 w-2.5 ${styles.neuDot} hover:scale-110`
                 } `}
-                style={
-                  currentSlide === idx
-                    ? { backgroundColor: '#009BF2' }
-                    : undefined
-                }
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

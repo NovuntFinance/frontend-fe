@@ -18,7 +18,7 @@ import {
 import { useEffect, useState } from 'react';
 
 export function DarkModeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -33,6 +33,8 @@ export function DarkModeToggle() {
     );
   }
 
+  const isDark = (resolvedTheme ?? theme) === 'dark';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,12 +44,10 @@ export function DarkModeToggle() {
           className="h-10 w-10"
           aria-label="Toggle theme"
         >
-          {theme === 'dark' ? (
+          {isDark ? (
             <Moon className="h-5 w-5" />
-          ) : theme === 'light' ? (
-            <Sun className="h-5 w-5" />
           ) : (
-            <Sun className="h-5 w-5 opacity-50" />
+            <Sun className={`h-5 w-5 ${theme === 'system' ? 'opacity-70' : ''}`} />
           )}
         </Button>
       </DropdownMenuTrigger>

@@ -1,132 +1,100 @@
 /* ═══════════════════════════════════════════════════════════
-   Neumorphic Onboarding — Dark Theme
-   Background: #0D162C  ·  Text: white / shades of white
+   Neumorphic Onboarding — Theme-aware (light/dark via globals.css)
+   Uses: --neu-auth-base, --neu-bg, --neu-accent, --neu-text-primary, etc.
    ═══════════════════════════════════════════════════════════ */
-
-/* ── Neumorphic Variables (dark mode) ─────────────────────── */
-:root {
-  --neu-bg: #0d162c;
-  --neu-bg-lighter: #132040;
-  --neu-bg-darker: #080f1e;
-  --neu-shadow-dark: rgba(4, 8, 18, 0.7);
-  --neu-shadow-light: rgba(25, 40, 72, 0.5);
-  --neu-text: #e2e8f0;
-  --neu-text-secondary: rgba(226, 232, 240, 0.75);
-  --neu-text-muted: rgba(226, 232, 240, 0.55);
-  --neu-accent: #009bf2;
-  --neu-accent-light: #d8effd;
-  --neu-accent-dark: #0078c1;
-}
 
 /* ── Screen base ──────────────────────────────────────────── */
 .neuBase {
-  background: radial-gradient(
-    ellipse at 50% 30%,
-    #152244 0%,
-    #0d162c 50%,
-    #0a1122 100%
-  );
+  background: var(--neu-auth-base);
+  color: var(--neu-text-primary);
   font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
 }
 
 /* ── Ambient glow ─────────────────────────────────────────── */
 .ambientGlow {
-  background-color: #009bf2;
+  background-color: var(--neu-accent);
 }
 
-/* ── Raised icon card (dark neumorphic) ───────────────────── */
+/* ── Raised icon card (theme-aware neumorphic) ─────────────── */
 .neuCardRaised {
-  background: linear-gradient(145deg, #152244, #0f1a34);
+  background: var(--neu-bg);
   box-shadow:
     8px 8px 20px var(--neu-shadow-dark),
     -8px -8px 20px var(--neu-shadow-light);
 }
 
-/* ── Inset icon socket (dark) ─────────────────────────────── */
+/* ── Inset icon socket (theme-aware) ───────────────────────── */
 .neuSocket {
-  background: linear-gradient(145deg, #0f1a34, #152244);
-  box-shadow:
-    inset 6px 6px 14px var(--neu-shadow-dark),
-    inset -6px -6px 14px var(--neu-shadow-light);
+  background: var(--neu-bg);
+  box-shadow: var(--neu-shadow-inset);
 }
 
-/* ── Dot track (dark) ─────────────────────────────────────── */
+/* ── Dot track (theme-aware) ───────────────────────────────── */
 .neuTrack {
-  background: linear-gradient(145deg, #0f1a34, #152244);
-  box-shadow:
-    inset 2px 2px 5px rgba(4, 8, 18, 0.5),
-    inset -2px -2px 5px rgba(25, 40, 72, 0.3),
-    1px 1px 3px rgba(4, 8, 18, 0.2),
-    -1px -1px 3px rgba(25, 40, 72, 0.15);
+  background: var(--neu-bg);
+  box-shadow: var(--neu-shadow-inset);
 }
 
 .neuDot {
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow:
-    inset 1px 1px 2px rgba(4, 8, 18, 0.4),
-    inset -1px -1px 2px rgba(25, 40, 72, 0.2);
+  background: var(--neu-shadow-light);
+  box-shadow: var(--neu-shadow-inset);
 }
 
 .neuDot:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--neu-shadow-light);
   box-shadow:
-    inset 1px 1px 2px rgba(4, 8, 18, 0.3),
-    inset -1px -1px 2px rgba(25, 40, 72, 0.15),
-    0 0 6px rgba(0, 155, 242, 0.2);
+    var(--neu-shadow-inset),
+    0 0 6px rgba(var(--neu-accent-rgb, 0, 155, 242), 0.2);
 }
 
 .neuDotActive {
   background: var(--neu-accent);
   box-shadow:
-    0 2px 10px rgba(0, 155, 242, 0.4),
+    0 2px 10px rgba(var(--neu-accent-rgb, 0, 155, 242), 0.4),
     inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
 
-/* ── CTA Button — raised (dark) ──────────────────────────── */
+/* ── CTA Button — raised (theme-aware) ────────────────────── */
 .neuBtn {
-  background: #0d162c;
-  border: 1px solid #009bf2;
+  background: var(--neu-bg);
+  border: 1px solid var(--neu-accent);
   border-radius: 1rem;
   box-shadow:
-    8px 8px 24px rgba(4, 8, 18, 0.7),
-    -8px -8px 24px rgba(25, 40, 72, 0.5),
-    0 0 18px rgba(0, 155, 242, 0.35),
+    8px 8px 24px var(--neu-shadow-dark),
+    -8px -8px 24px var(--neu-shadow-light),
+    0 0 18px rgba(var(--neu-accent-rgb, 0, 155, 242), 0.35),
     inset 1px 1px 0 rgba(255, 255, 255, 0.08);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .neuBtn span {
-  color: #009bf2 !important;
+  color: var(--neu-accent) !important;
 }
 
 .neuBtn:hover {
-  background: #009bf2;
-  border-color: #0d162c;
+  background: var(--neu-accent);
+  border-color: var(--neu-bg);
   transform: translateY(-1px);
   box-shadow:
-    8px 8px 24px rgba(4, 8, 18, 0.7),
-    -8px -8px 24px rgba(25, 40, 72, 0.5),
-    0 0 14px rgba(0, 155, 242, 0.25),
+    8px 8px 24px var(--neu-shadow-dark),
+    -8px -8px 24px var(--neu-shadow-light),
+    0 0 14px rgba(var(--neu-accent-rgb, 0, 155, 242), 0.25),
     inset 1px 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .neuBtn:hover span {
-  color: #0d162c !important;
+  color: var(--neu-accent-foreground) !important;
 }
 
-/* ── CTA Button — pressed (dark) ─────────────────────────── */
+/* ── CTA Button — pressed (theme-aware) ───────────────────── */
 .neuBtnActive {
-  background: #009bf2;
-  border-color: #0d162c;
-  box-shadow:
-    inset 6px 6px 16px rgba(4, 8, 18, 0.7),
-    inset -6px -6px 16px rgba(25, 40, 72, 0.5),
-    inset 2px 2px 6px rgba(4, 8, 18, 0.3),
-    inset -2px -2px 6px rgba(25, 40, 72, 0.2);
+  background: var(--neu-accent);
+  border-color: var(--neu-bg);
+  box-shadow: var(--neu-shadow-inset-press);
 }
 
 .neuBtnActive span {
-  color: #0d162c !important;
+  color: var(--neu-accent-foreground) !important;
 }
 
 /* ── Login link ───────────────────────────────────────────── */
@@ -139,7 +107,8 @@
 }
 
 .loginLink:hover {
-  color: var(--neu-accent-light);
+  color: var(--neu-accent);
+  opacity: 0.9;
   text-decoration: underline;
 }
 

@@ -132,6 +132,8 @@
     0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
   /* Modals – solid background in light */
   --neu-modal-bg: #ffffff;
+  /* Auth / Onboarding page background (light) */
+  --neu-auth-base: #FFFFFF;
   /* Inset shadows – form fields, pressed state (used by modals) */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -222,6 +224,8 @@
     #0d162c 45%,
     #0b1222 100%
   );
+  /* Auth / Onboarding page background (dark) */
+  --neu-auth-base: radial-gradient(ellipse at 50% 30%, #152244 0%, #0d162c 50%, #0a1122 100%);
   /* Inset shadows – same formula, use .dark --neu-shadow-dark/light */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -502,5 +506,12 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Dashboard main scroll: iOS momentum + prevent scroll chaining on mobile */
+  .dashboard-main-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
 }
