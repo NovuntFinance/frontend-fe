@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRosCalendarData } from '@/lib/queries';
 
 /* Platform colors – theme tokens (--neu-*) for dashboard light/dark */
+const ACCENT = 'var(--neu-accent)';
 const SHADOW_RAISED = 'var(--neu-shadow-raised)';
 const SHADOW_INSET = 'var(--neu-shadow-inset)';
 const SHADOW_BUTTON =
@@ -240,7 +241,9 @@ export function RosCalendarCard() {
               key={`${year}-${month}-${dayNum}`}
               className="flex aspect-square flex-col items-center justify-center rounded-[12px] p-0.5 transition-all"
               style={{
-                background: isToday ? 'rgba(var(--neu-accent-rgb), 0.4)' : 'var(--neu-bg)',
+                background: isToday
+                  ? 'rgba(var(--neu-accent-rgb), 0.4)'
+                  : 'var(--neu-bg)',
                 boxShadow: isToday ? 'none' : SHADOW_BUTTON,
                 border: '1px solid var(--neu-border)',
               }}
@@ -248,7 +251,9 @@ export function RosCalendarCard() {
               <span
                 className="text-[10px] font-semibold sm:text-xs"
                 style={{
-                  color: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-text-primary)',
+                  color: isToday
+                    ? 'var(--neu-accent-foreground)'
+                    : 'var(--neu-text-primary)',
                 }}
               >
                 {dayNum}
@@ -257,7 +262,11 @@ export function RosCalendarCard() {
                 <>
                   <span
                     className="text-[9px] font-medium sm:text-[10px]"
-                    style={{ color: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-text-muted)' }}
+                    style={{
+                      color: isToday
+                        ? 'var(--neu-accent-foreground)'
+                        : 'var(--neu-text-muted)',
+                    }}
                   >
                     {ros}%
                   </span>
@@ -273,7 +282,9 @@ export function RosCalendarCard() {
                       className="h-full rounded-full"
                       style={{
                         width: `${Math.max(8, barHeight * 100)}%`,
-                        background: isToday ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
+                        background: isToday
+                          ? 'var(--neu-accent-foreground)'
+                          : 'var(--neu-accent)',
                       }}
                     />
                   </div>
@@ -293,10 +304,16 @@ export function RosCalendarCard() {
           border: '1px solid var(--neu-border)',
         }}
       >
-        <span className="text-sm font-medium" style={{ color: 'var(--neu-text-primary)' }}>
+        <span
+          className="text-sm font-medium"
+          style={{ color: 'var(--neu-text-primary)' }}
+        >
           Monthly Average
         </span>
-        <span className="text-lg font-bold" style={{ color: 'var(--neu-text-primary)' }}>
+        <span
+          className="text-lg font-bold"
+          style={{ color: 'var(--neu-text-primary)' }}
+        >
           {monthlyAvg.toFixed(1)}%
         </span>
       </div>
