@@ -25,14 +25,13 @@ interface QuickActionsProps {
   gridOnDesktop?: boolean;
 }
 
-/* Featured/Quick Action button colors: default = light blue bg + dark icon; hover = dark bg + light blue icon; labels white */
+/* Featured/Quick Action button colors: default = light blue bg + dark icon; hover = dark bg + light blue icon; labels invert with theme (dark in light, white in dark) */
 const ACCENT_BLUE = '#009BF2';
 const DARK_NAVY = '#0D162C';
-const LABEL_WHITE = 'rgba(255, 255, 255, 0.95)';
 
 /**
  * QuickActions – Neumorphic only: raised by default, inset on press.
- * Default = light blue circle + dark icon; hover = dark circle + light blue icon; labels white.
+ * Labels use --neu-text-primary (dark in light mode, white in dark mode).
  */
 export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
   const { openModal } = useUIStore();
@@ -99,14 +98,12 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
             >
               <action.icon
                 className="h-6 w-6 sm:h-7 sm:w-7"
-                style={{
-                  color: isActive ? ACCENT_BLUE : DARK_NAVY,
-                }}
+                style={{ color: '#ffffff' }}
               />
             </div>
             <span
               className="text-center text-xs font-medium sm:text-sm"
-              style={{ color: LABEL_WHITE }}
+              style={{ color: 'var(--neu-text-primary)' }}
             >
               {action.label}
             </span>

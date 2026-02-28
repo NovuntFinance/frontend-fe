@@ -1070,15 +1070,13 @@ export default function DashboardPage() {
                           >
                             <IconComponent
                               className="h-5 w-5 sm:h-6 sm:w-6"
-                              style={{
-                                color: isActive ? '#009BF2' : '#0D162C',
-                              }}
+                              style={{ color: '#ffffff' }}
                             />
                           </div>
-                          {/* Label – white */}
+                          {/* Label – inverts with theme: dark in light mode, white in dark mode */}
                           <span
                             className="text-center text-[10px] font-medium sm:text-xs"
-                            style={{ color: 'rgba(255, 255, 255, 0.95)' }}
+                            style={{ color: 'var(--neu-text-primary)' }}
                           >
                             {button.label}
                           </span>

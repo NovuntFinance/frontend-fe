@@ -180,7 +180,7 @@ export function RosCalendarCard() {
             />
           )}
         </h3>
-        <div className="flex items-center gap-1">
+        <div className="ros-calendar-month-nav flex items-center gap-1">
           <button
             type="button"
             onClick={goPrev}

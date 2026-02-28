@@ -74,7 +74,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
           <motion.span
             className="flex items-center justify-center transition-colors duration-200"
             style={{
-              color: active ? 'var(--neu-accent)' : 'var(--neu-text-secondary)',
+              color: active ? 'var(--neu-accent)' : 'var(--nav-inactive-icon)',
               filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
             }}
             whileHover={{ scale: 1.1, y: -2 }}
@@ -96,7 +96,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
         <motion.span
           className="flex items-center justify-center transition-colors duration-200"
           style={{
-            color: active ? 'var(--neu-accent)' : 'var(--neu-text-secondary)',
+            color: active ? 'var(--neu-accent)' : 'var(--nav-inactive-icon)',
             filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
           }}
           whileHover={{ scale: 1.1, y: -2 }}
@@ -112,7 +112,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed right-0 bottom-0 left-0 z-50 w-full transition-transform duration-150 ease-out"
+      className="horizontal-nav fixed right-0 bottom-0 left-0 z-50 w-full transition-transform duration-150 ease-out"
       style={{
         transform: barsVisible ? 'translateY(0)' : 'translateY(100%)',
       }}
@@ -172,7 +172,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
-            className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)] focus-visible:ring-opacity-50"
+            className="focus-visible:ring-opacity-50 relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)]"
             aria-label="Go to dashboard"
           >
             <motion.div

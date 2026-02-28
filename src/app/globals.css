@@ -110,24 +110,28 @@
   --app-overlay: rgba(0, 0, 0, 0.05);
 
   /* Dashboard light theme – base #FFFFFF, shadow #E0E5EC; card text #0D162C for readability, accent #009BF2 */
-  --neu-bg: #FFFFFF;
-  --neu-bg-primary: #FFFFFF;
-  --neu-bg-secondary: #FFFFFF;
-  --neu-accent: #009BF2;
+  --dashboard-icon: #ffffff;
+  --nav-inactive-icon: var(--neu-accent);
+  --neu-bg: #ffffff;
+  --neu-bg-primary: #ffffff;
+  --neu-bg-secondary: #ffffff;
+  --neu-accent: #009bf2;
   --neu-accent-rgb: 0, 155, 242;
-  --neu-text-primary: #0D162C;
+  --neu-text-primary: #0d162c;
   --neu-text-secondary: #434445;
   --neu-text-muted: #434445;
   --neu-border: rgba(163, 177, 198, 0.35);
-  --neu-shadow-dark: #E0E5EC;
-  --neu-shadow-light: #E0E5EC;
+  --neu-shadow-dark: #e0e5ec;
+  --neu-shadow-light: #e0e5ec;
   --neu-focus-ring: rgba(13, 22, 44, 0.12);
-  --neu-accent-foreground: #0D162C;
+  --neu-accent-foreground: #0d162c;
   /* Single soft card shadow – same for all dashboard containers */
-  --neu-shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --neu-shadow-raised-hover: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
+  --neu-shadow-raised:
+    0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --neu-shadow-raised-hover:
+    0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
   /* Modals – solid background in light */
-  --neu-modal-bg: #FFFFFF;
+  --neu-modal-bg: #ffffff;
   /* Inset shadows – form fields, pressed state (used by modals) */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -191,6 +195,8 @@
   --app-overlay-hover: rgba(0, 0, 0, 0.08);
 
   /* Dashboard dark theme – #0D162C bg, #009BF2 accent, white text (unchanged) */
+  --dashboard-icon: #ffffff;
+  --nav-inactive-icon: #ffffff;
   --neu-bg: #0d162c;
   --neu-bg-primary: #0d162c;
   --neu-bg-secondary: #0d162c;
@@ -203,12 +209,19 @@
   --neu-shadow-dark: rgba(0, 0, 0, 0.45);
   --neu-shadow-light: rgba(255, 255, 255, 0.04);
   --neu-focus-ring: rgba(0, 155, 242, 0.2);
-  --neu-accent-foreground: #0D162C;
+  --neu-accent-foreground: #0d162c;
   /* Same soft card shadow – consistent with light mode style */
-  --neu-shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.12);
-  --neu-shadow-raised-hover: 0 6px 16px rgba(0, 0, 0, 0.25), 0 3px 8px rgba(0, 0, 0, 0.15);
+  --neu-shadow-raised:
+    0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.12);
+  --neu-shadow-raised-hover:
+    0 6px 16px rgba(0, 0, 0, 0.25), 0 3px 8px rgba(0, 0, 0, 0.15);
   /* Modals – gradient in dark */
-  --neu-modal-bg: linear-gradient(165deg, #0f1930 0%, #0d162c 45%, #0b1222 100%);
+  --neu-modal-bg: linear-gradient(
+    165deg,
+    #0f1930 0%,
+    #0d162c 45%,
+    #0b1222 100%
+  );
   /* Inset shadows – same formula, use .dark --neu-shadow-dark/light */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -271,6 +284,21 @@
     max-width: 100%;
     height: auto;
   }
+}
+
+/* Dashboard: all icons (SVG) white in light and dark theme */
+.dashboard-layout svg {
+  color: var(--dashboard-icon, #ffffff);
+}
+
+/* Bottom nav: menu item icons use --nav-inactive-icon (light blue in light, white in dark) */
+.dashboard-layout .horizontal-nav svg {
+  color: inherit;
+}
+
+/* ROS Calendar: month prev/next arrows use light blue (inherit from button) in both themes */
+.dashboard-layout .ros-calendar-month-nav svg {
+  color: inherit;
 }
 
 /* PWA / standalone: ensure viewport height and safe area so content isn't clipped (e.g. when opened from home screen). */

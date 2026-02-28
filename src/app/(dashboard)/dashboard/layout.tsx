@@ -128,7 +128,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="flex h-[100dvh] max-h-[100dvh] min-h-screen flex-col"
+        className="dashboard-layout flex h-[100dvh] max-h-[100dvh] min-h-screen flex-col"
         style={{
           background: 'var(--neu-bg)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -243,7 +243,10 @@ export default function DashboardLayout({
                     >
                       <User
                         className="mr-2 h-4 w-4"
-                        style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                        style={{
+                          color: 'var(--dashboard-icon, #ffffff)',
+                          filter: 'none',
+                        }}
                       />
                       Profile
                     </DropdownMenuItem>
@@ -262,7 +265,10 @@ export default function DashboardLayout({
                     >
                       <Bell
                         className="mr-2 h-4 w-4"
-                        style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                        style={{
+                          color: 'var(--dashboard-icon, #ffffff)',
+                          filter: 'none',
+                        }}
                       />
                       <span className="flex-1">Notifications</span>
                       <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />

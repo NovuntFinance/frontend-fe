@@ -141,20 +141,20 @@
   transform: scale(0.98);
 }
 
-/* Icon button – accent default (light blue bg, dark icon); hover = dark bg, light blue icon */
+/* Icon button – accent default (light blue bg); icon always white */
 .neu-icon-button-accent-default {
   background: var(--neu-accent);
-  color: var(--neu-bg);
+  color: var(--dashboard-icon, #ffffff);
 }
 
 .neu-icon-button-accent-default:hover {
   background: var(--neu-bg);
-  color: var(--neu-accent);
+  color: var(--dashboard-icon, #ffffff);
 }
 
 .neu-icon-button-accent-default:active {
   background: var(--neu-bg);
-  color: var(--neu-accent);
+  color: var(--dashboard-icon, #ffffff);
 }
 
 /* Input – inset */

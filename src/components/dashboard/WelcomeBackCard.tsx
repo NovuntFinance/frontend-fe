@@ -19,7 +19,8 @@ import { openShareModal } from '@/store/shareModalStore';
 import { useWalletBalance } from '@/lib/queries';
 import { formatCurrency } from '@/lib/utils/wallet';
 
-/* Welcome banner uses theme tokens (--neu-*) so it respects light/dark dashboard theme */
+/* Welcome card: all text white in both light and dark mode for consistency on dark/blue surfaces */
+const WELCOME_TEXT_WHITE = '#ffffff';
 
 interface WelcomeBackCardProps {
   user: any;
@@ -66,7 +67,7 @@ export function WelcomeBackCard({
               <button
                 type="button"
                 className="mb-1 block cursor-help text-left text-xs font-medium sm:mb-1.5 sm:text-sm"
-                style={{ color: 'var(--neu-text-primary)' }}
+                style={{ color: 'var(--neu-accent)' }}
                 aria-label="Total Assets. Tap for details."
               >
                 Total Assets
@@ -79,12 +80,12 @@ export function WelcomeBackCard({
               style={{
                 borderColor: 'var(--neu-border)',
                 background: 'var(--neu-bg)',
-                color: 'var(--neu-text-primary)',
+                color: WELCOME_TEXT_WHITE,
               }}
             >
               <p
                 className="text-xs opacity-90"
-                style={{ color: 'var(--neu-text-primary)' }}
+                style={{ color: WELCOME_TEXT_WHITE }}
               >
                 Combined Value of your Deposit Asset and Earnings Asset
               </p>
@@ -97,7 +98,7 @@ export function WelcomeBackCard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
               className="text-2xl leading-tight font-black sm:text-3xl md:text-4xl lg:text-2xl xl:text-3xl"
-              style={{ color: 'var(--neu-accent)', filter: 'none' }}
+              style={{ color: 'var(--neu-text-primary)', filter: 'none' }}
             >
               $
               {totalAssets.toLocaleString('en-US', {
@@ -135,7 +136,7 @@ export function WelcomeBackCard({
                 className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
                 style={{
                   background: 'var(--neu-accent)',
-                  color: 'var(--neu-accent-foreground)',
+                  color: WELCOME_TEXT_WHITE,
                   border: '1px solid var(--neu-border)',
                   boxShadow:
                     '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
@@ -155,7 +156,7 @@ export function WelcomeBackCard({
             className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
             style={{
               background: 'var(--neu-accent)',
-              color: 'var(--neu-accent-foreground)',
+              color: WELCOME_TEXT_WHITE,
               border: '1px solid var(--neu-border)',
               boxShadow:
                 '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
@@ -171,7 +172,7 @@ export function WelcomeBackCard({
         </div>
       </div>
 
-      {/* Embedded sub-cards: Deposit Wallet + Earnings Wallet (light blue, dark text) */}
+      {/* Embedded sub-cards: Deposit Wallet + Earnings Wallet (light blue, white text) */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
         <button
           type="button"
@@ -192,21 +193,21 @@ export function WelcomeBackCard({
         >
           <p
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
-            style={{ color: 'var(--neu-text-secondary)' }}
+            style={{ color: WELCOME_TEXT_WHITE }}
           >
             Deposit Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: 'var(--neu-accent-foreground)', filter: 'none' }}
+              style={{ color: WELCOME_TEXT_WHITE, filter: 'none' }}
             >
               ${formatCurrency(depositBalance, { showCurrency: false })}
             </p>
           ) : (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: 'var(--neu-text-secondary)' }}
+              style={{ color: WELCOME_TEXT_WHITE }}
             >
               ••••••
             </p>
@@ -232,21 +233,21 @@ export function WelcomeBackCard({
         >
           <p
             className="mb-1 text-[10px] font-medium tracking-wide sm:text-xs"
-            style={{ color: 'var(--neu-text-secondary)' }}
+            style={{ color: WELCOME_TEXT_WHITE }}
           >
             Earnings Wallet
           </p>
           {balanceVisible ? (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: 'var(--neu-accent-foreground)', filter: 'none' }}
+              style={{ color: WELCOME_TEXT_WHITE, filter: 'none' }}
             >
               ${formatCurrency(earningsBalance, { showCurrency: false })}
             </p>
           ) : (
             <p
               className="text-base font-bold sm:text-lg"
-              style={{ color: 'var(--neu-text-secondary)' }}
+              style={{ color: WELCOME_TEXT_WHITE }}
             >
               ••••••
             </p>
