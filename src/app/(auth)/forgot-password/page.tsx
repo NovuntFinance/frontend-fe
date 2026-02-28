@@ -165,7 +165,7 @@ function ForgotPasswordContent() {
       <h1
         className="w-full text-center font-semibold tracking-tight whitespace-nowrap"
         style={{
-          color: 'var(--neu-text, #e2e8f0)',
+          color: 'var(--neu-text-primary)',
           fontSize: 'clamp(0.875rem, 2.5vw, 1.125rem)',
         }}
       >

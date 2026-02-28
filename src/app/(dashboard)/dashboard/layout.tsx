@@ -128,7 +128,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="dashboard-layout flex h-[100dvh] max-h-[100dvh] min-h-screen flex-col"
+        className="dashboard-layout flex min-h-screen h-[100dvh] max-h-[100dvh] flex-col overflow-hidden"
         style={{
           background: 'var(--neu-bg)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -136,11 +136,13 @@ export default function DashboardLayout({
           paddingRight: 'env(safe-area-inset-right, 0px)',
         }}
       >
-        {/* Header: fixed, always visible */}
+        {/* Header: fixed, always visible; insets so it doesn't sit under notch */}
         <div
-          className="fixed right-0 left-0 z-30"
+          className="fixed left-0 right-0 z-30"
           style={{
             top: 'env(safe-area-inset-top, 0px)',
+            paddingLeft: 'env(safe-area-inset-left, 0px)',
+            paddingRight: 'env(safe-area-inset-right, 0px)',
           }}
         >
           <header
@@ -504,10 +506,13 @@ export default function DashboardLayout({
             </div>
           )}
 
-        {/* Page content - scrolls here so bottom nav does not block; gutters from dashboard-page-container */}
+        {/* Page content - scrolls here so bottom nav does not block; bottom padding clears fixed nav + safe area */}
         <main
           id="main-content"
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 pb-24 sm:pt-6 sm:pb-24 md:pt-8 md:pb-24 lg:pt-8 lg:pb-24"
+          className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:pt-8"
+          style={{
+            paddingBottom: 'max(6rem, calc(5.5rem + env(safe-area-inset-bottom, 0px)))',
+          }}
         >
           <div className="dashboard-page-container">{children}</div>
         </main>
