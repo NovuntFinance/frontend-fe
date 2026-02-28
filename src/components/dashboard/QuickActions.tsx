@@ -9,10 +9,6 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
-const NEU_BG = '#0D162C';
-const NEU_ACCENT = '#009BF2';
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.45)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.04)';
 const NEU_TRANSITION = '250ms cubic-bezier(0.4, 0, 0.2, 1)';
 
 interface QuickAction {
@@ -84,14 +80,11 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
             <div
               className="flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16"
               style={{
-                background: isActive ? NEU_ACCENT : NEU_BG,
+                background: isActive ? 'var(--neu-accent)' : 'var(--neu-bg)',
                 boxShadow: isPressed
-                  ? 'inset 6px 6px 12px rgba(0,0,0,0.45), inset -6px -6px 12px rgba(255,255,255,0.04)'
-                  : '8px 8px 16px ' +
-                    NEU_SHADOW_DARK +
-                    ', -8px -8px 16px ' +
-                    NEU_SHADOW_LIGHT,
-                border: '1px solid rgba(0,155,242,0.08)',
+                  ? 'var(--neu-shadow-inset-press)'
+                  : 'var(--neu-shadow-raised)',
+                border: '1px solid var(--neu-border)',
                 transform:
                   isHovered && !isPressed
                     ? 'translateY(-2px)'
@@ -102,13 +95,13 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
               <action.icon
                 className="h-6 w-6 sm:h-7 sm:w-7"
                 style={{
-                  color: isActive ? NEU_BG : NEU_ACCENT,
+                  color: isActive ? 'var(--neu-accent-foreground)' : 'var(--neu-accent)',
                 }}
               />
             </div>
             <span
               className="text-center text-xs font-medium sm:text-sm"
-              style={{ color: NEU_ACCENT }}
+              style={{ color: 'var(--neu-accent)' }}
             >
               {action.label}
             </span>

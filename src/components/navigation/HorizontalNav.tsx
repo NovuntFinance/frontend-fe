@@ -7,20 +7,15 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Users, Star, HelpCircle } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
-const ACCENT = '#009BF2'; /* platform light blue */
-
-/* Bar: neumorphic raised – design system tokens (dual shadow + border) */
-const NEU_SHADOW_DARK = 'rgba(0, 0, 0, 0.45)';
-const NEU_SHADOW_LIGHT = 'rgba(255, 255, 255, 0.04)';
-const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
-const BAR_NEU_SHADOW = `0 -8px 16px ${NEU_SHADOW_DARK}, 0 8px 16px ${NEU_SHADOW_LIGHT}, inset 0 -1px 0 ${NEU_SHADOW_LIGHT}`;
-const BAR_NEU_SHADOW_HOVER = `0 -10px 20px ${NEU_SHADOW_DARK}, 0 10px 20px ${NEU_SHADOW_LIGHT}, inset 0 -1px 0 ${NEU_SHADOW_LIGHT}`;
-
-/* Icon: light blue on dark; neumorphic drop-shadows */
+/* Bar and icon use theme tokens from globals.css (--neu-*) */
+const BAR_NEU_SHADOW =
+  '0 -8px 16px var(--neu-shadow-dark), 0 8px 16px var(--neu-shadow-light), inset 0 -1px 0 var(--neu-shadow-light)';
+const BAR_NEU_SHADOW_HOVER =
+  '0 -10px 20px var(--neu-shadow-dark), 0 10px 20px var(--neu-shadow-light), inset 0 -1px 0 var(--neu-shadow-light)';
 const ICON_EXTRUDE =
-  'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(-2px -2px 4px rgba(255, 255, 255, 0.04))';
+  'drop-shadow(2px 2px 4px var(--neu-shadow-dark)) drop-shadow(-2px -2px 4px var(--neu-shadow-light))';
 const ICON_EXTRUDE_ACTIVE =
-  'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(-2px -2px 4px rgba(255, 255, 255, 0.06)) drop-shadow(0 0 10px rgba(0, 155, 242, 0.3))';
+  'drop-shadow(2px 2px 4px var(--neu-shadow-dark)) drop-shadow(-2px -2px 4px var(--neu-shadow-light)) drop-shadow(0 0 10px rgba(var(--neu-accent-rgb), 0.3))';
 
 const NAV_ITEMS: {
   name: string;
@@ -79,7 +74,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
           <motion.span
             className="flex items-center justify-center transition-colors duration-200"
             style={{
-              color: active ? ACCENT : 'rgba(0, 155, 242, 0.75)',
+              color: active ? 'var(--neu-accent)' : 'var(--neu-text-secondary)',
               filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
             }}
             whileHover={{ scale: 1.1, y: -2 }}
@@ -101,7 +96,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
         <motion.span
           className="flex items-center justify-center transition-colors duration-200"
           style={{
-            color: active ? ACCENT : 'rgba(0, 155, 242, 0.75)',
+            color: active ? 'var(--neu-accent)' : 'var(--neu-text-secondary)',
             filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
           }}
           whileHover={{ scale: 1.1, y: -2 }}
@@ -139,7 +134,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
               justifyContent: 'center',
               background: 'var(--neu-bg)',
               border: 'none',
-              borderTop: NEU_BORDER,
+              borderTop: '1px solid var(--neu-border)',
               borderRadius: '20px 20px 0 0',
               WebkitMask: NOTCH_MASK,
               mask: NOTCH_MASK,
@@ -177,7 +172,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
-            className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009BF2]/50"
+            className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)] focus-visible:ring-opacity-50"
             aria-label="Go to dashboard"
           >
             <motion.div
@@ -188,7 +183,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
               <div
                 className="absolute inset-[-8px]"
                 style={{
-                  backgroundColor: ACCENT,
+                  backgroundColor: 'var(--neu-accent)',
                   maskImage: 'url(/icons/novunt_short.png)',
                   WebkitMaskImage: 'url(/icons/novunt_short.png)',
                   maskSize: 'contain',

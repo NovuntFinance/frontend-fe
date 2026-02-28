@@ -40,16 +40,16 @@ function useMockProfitHistory(): { date: string; rosPercentage: number }[] {
 
 // Bar chart dimensions
 const CHART_HEIGHT = 140;
+const ACCENT_BLUE = '#009BF2';
 const CHART_PADDING = { top: 8, right: 8, bottom: 28, left: 8 };
 const BAR_GAP_RATIO = 0.35; // gap between bars as fraction of bar width
-const ACCENT_BLUE = '#009BF2';
+/* Uses theme tokens (--neu-*) for dashboard light/dark */
 
 // Dashboard card style (match Activity Feed / stake card)
 const CARD_STYLE = {
-  background: '#0D162C',
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-  border: '1px solid var(--app-border)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
+  border: '1px solid var(--neu-border)',
 } as const;
 
 /**
@@ -179,13 +179,13 @@ export function DailyROSPerformance() {
             >
               <TrendingUp
                 className="h-4 w-4 sm:h-5 sm:w-5"
-                style={{ color: '#009BF2', filter: 'none' }}
+                style={{ color: 'var(--neu-accent)', filter: 'none' }}
               />
             </div>
             <div className="min-w-0 flex-1">
               <p
                 className="text-xs font-semibold sm:text-sm"
-                style={{ color: '#009BF2', filter: 'none' }}
+                style={{ color: 'var(--neu-accent)', filter: 'none' }}
               >
                 Daily ROS Performance
               </p>

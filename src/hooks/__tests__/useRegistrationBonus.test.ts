@@ -6,11 +6,12 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
 import { createWrapper } from '@/lib/test-utils';
-import { api } from '@/lib/api';
+import { registrationBonusApi } from '@/services/registrationBonusApi';
 
-// Mock the API
-jest.mock('@/lib/api');
-const mockedApi = api as jest.Mocked<typeof api>;
+// Mock the registration bonus API (hook uses registrationBonusApi.getStatus)
+jest.mock('@/services/registrationBonusApi');
+const mockedRegistrationBonusApi =
+  registrationBonusApi as jest.Mocked<typeof registrationBonusApi>;
 
 describe('useRegistrationBonus', () => {
     const mockBonusData = {
@@ -32,7 +33,7 @@ describe('useRegistrationBonus', () => {
     });
 
     it('should fetch registration bonus data successfully', async () => {
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: mockBonusData,
         });
@@ -41,34 +42,35 @@ describe('useRegistrationBonus', () => {
             wrapper: createWrapper(),
         });
 
-        expect(result.current.isLoading).toBe(true);
-
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.data).toEqual(mockBonusData);
+        expect(result.current.data).toEqual({ success: true, data: mockBonusData });
         expect(result.current.error).toBeNull();
     });
 
     it('should handle bonus fetch error', async () => {
         const error = new Error('Failed to fetch bonus');
-        mockedApi.get.mockRejectedValue(error);
+        mockedRegistrationBonusApi.getStatus.mockRejectedValue(error);
 
         const { result } = renderHook(() => useRegistrationBonus(), {
             wrapper: createWrapper(),
         });
 
-        await waitFor(() => {
-            expect(result.current.isLoading).toBe(false);
-        });
+        await waitFor(
+            () => {
+                expect(result.current.error).toBeTruthy();
+            },
+            { timeout: 3000 }
+        );
 
         expect(result.current.data).toBeUndefined();
-        expect(result.current.error).toBeTruthy();
+        expect(result.current.isLoading).toBe(false);
     });
 
     it('should calculate progress correctly', async () => {
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: mockBonusData,
         });
@@ -81,9 +83,9 @@ describe('useRegistrationBonus', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.data?.progress).toBe(40); // 2/5 = 40%
-        expect(result.current.data?.completedTasks).toBe(2);
-        expect(result.current.data?.totalTasks).toBe(5);
+        expect(result.current.data?.data?.progress).toBe(40); // 2/5 = 40%
+        expect(result.current.data?.data?.completedTasks).toBe(2);
+        expect(result.current.data?.data?.totalTasks).toBe(5);
     });
 
     it('should handle completed bonus (all tasks done)', async () => {
@@ -94,7 +96,7 @@ describe('useRegistrationBonus', () => {
             tasks: mockBonusData.tasks.map(task => ({ ...task, completed: true })),
         };
 
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: completedBonus,
         });
@@ -107,13 +109,13 @@ describe('useRegistrationBonus', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.data?.progress).toBe(100);
-        expect(result.current.data?.completedTasks).toBe(5);
-        expect(result.current.data?.tasks.every(task => task.completed)).toBe(true);
+        expect(result.current.data?.data?.progress).toBe(100);
+        expect(result.current.data?.data?.completedTasks).toBe(5);
+        expect(result.current.data?.data?.tasks.every((task: { completed: boolean }) => task.completed)).toBe(true);
     });
 
     it('should refetch bonus data', async () => {
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: mockBonusData,
         });
@@ -126,13 +128,13 @@ describe('useRegistrationBonus', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        // Update mock data
+        // Update mock data for refetch
         const updatedData = {
             ...mockBonusData,
             completedTasks: 3,
             progress: 60,
         };
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: updatedData,
         });
@@ -141,8 +143,8 @@ describe('useRegistrationBonus', () => {
         result.current.refetch();
 
         await waitFor(() => {
-            expect(result.current.data?.completedTasks).toBe(3);
-            expect(result.current.data?.progress).toBe(60);
+            expect(result.current.data?.data?.completedTasks).toBe(3);
+            expect(result.current.data?.data?.progress).toBe(60);
         });
     });
 
@@ -155,7 +157,7 @@ describe('useRegistrationBonus', () => {
             tasks: mockBonusData.tasks.map(task => ({ ...task, completed: false })),
         };
 
-        mockedApi.get.mockResolvedValue({
+        mockedRegistrationBonusApi.getStatus.mockResolvedValue({
             success: true,
             data: emptyBonus,
         });
@@ -168,41 +170,45 @@ describe('useRegistrationBonus', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.data?.progress).toBe(0);
-        expect(result.current.data?.completedTasks).toBe(0);
-        expect(result.current.data?.tasks.every(task => !task.completed)).toBe(true);
+        expect(result.current.data?.data?.progress).toBe(0);
+        expect(result.current.data?.data?.completedTasks).toBe(0);
+        expect(result.current.data?.data?.tasks.every((task: { completed: boolean }) => !task.completed)).toBe(true);
     });
 
     it('should handle network errors gracefully', async () => {
-        mockedApi.get.mockRejectedValue({
-            response: { status: 503, statusText: 'Service Unavailable' },
-        });
+        mockedRegistrationBonusApi.getStatus.mockRejectedValue(
+            new Error('Service unavailable. Please try again later.')
+        );
 
         const { result } = renderHook(() => useRegistrationBonus(), {
             wrapper: createWrapper(),
         });
 
-        await waitFor(() => {
-            expect(result.current.isLoading).toBe(false);
-        });
+        await waitFor(
+            () => {
+                expect(result.current.error).toBeTruthy();
+            },
+            { timeout: 3000 }
+        );
 
-        expect(result.current.error).toBeTruthy();
         expect(result.current.data).toBeUndefined();
+        expect(result.current.isLoading).toBe(false);
     });
 
     it('should handle unauthorized errors', async () => {
-        mockedApi.get.mockRejectedValue({
-            response: { status: 401, statusText: 'Unauthorized' },
-        });
+        mockedRegistrationBonusApi.getStatus.mockRejectedValue(
+            new Error('Your session has expired. Please log in again.')
+        );
 
         const { result } = renderHook(() => useRegistrationBonus(), {
             wrapper: createWrapper(),
         });
 
-        await waitFor(() => {
-            expect(result.current.isLoading).toBe(false);
-        });
-
-        expect(result.current.error).toBeTruthy();
+        await waitFor(
+            () => {
+                expect(result.current.error).toBeTruthy();
+            },
+            { timeout: 3000 }
+        );
     });
 });

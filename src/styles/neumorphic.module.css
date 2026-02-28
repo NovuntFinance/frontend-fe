@@ -1,40 +1,15 @@
-/* Neumorphic Design System - Strict two-color: #0D162C + #009BF2
-   Mobile-first. Hierarchy via opacity, depth via dual shadows only. */
+/* Neumorphic Design System – Dashboard theme-aware.
+   Tokens (--neu-*) are defined in globals.css: light in :root, dark in .dark. */
 
+  /* Design tokens: 16–24px radius, 200–300ms transitions (theme-invariant) */
 :root {
-  /* Primary background – page and all structural surfaces */
-  --neu-bg: #0d162c;
-  --neu-bg-primary: #0d162c;
-  --neu-bg-secondary: #0d162c;
-
-  /* Only secondary color – text, icons, active states, subtle borders */
-  --neu-accent: #009bf2;
-  --neu-accent-rgb: 0, 155, 242;
-  /* Typography hierarchy: use rgba(var(--neu-accent-rgb), opacity) */
-  --neu-text-primary: rgba(var(--neu-accent-rgb), 0.95);
-  --neu-text-secondary: rgba(var(--neu-accent-rgb), 0.75);
-  --neu-text-muted: rgba(var(--neu-accent-rgb), 0.5);
-  --neu-border: rgba(var(--neu-accent-rgb), 0.08);
-
-  /* Depth – dark neumorphism (no colored glow) */
-  --neu-shadow-dark: rgba(0, 0, 0, 0.45);
-  --neu-shadow-light: rgba(255, 255, 255, 0.04);
-  /* Soft focus only – very subtle */
-  --neu-focus-ring: rgba(var(--neu-accent-rgb), 0.2);
-
-  /* Design tokens: 16–24px radius, 200–300ms transitions */
   --neu-radius-sm: 16px;
   --neu-radius-md: 18px;
   --neu-radius-lg: 24px;
   --neu-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --neu-transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Raised surface – soft outer dual shadow */
-  --neu-shadow-raised:
-    8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
-  --neu-shadow-raised-hover:
-    10px 10px 20px var(--neu-shadow-dark),
-    -10px -10px 20px var(--neu-shadow-light);
+  /* Raised shadow: defined in globals.css (--neu-shadow-raised, --neu-shadow-raised-hover) for consistent card shadow. */
   /* Inset – pressed / form fields */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -113,7 +88,7 @@
   background: var(--neu-bg);
   border-radius: var(--neu-radius-sm);
   box-shadow: var(--neu-shadow-raised);
-  border: 1px solid var(--neu-accent);
+  border: 1px solid var(--neu-border);
   color: var(--neu-accent);
   transition:
     box-shadow var(--neu-transition),
@@ -184,7 +159,7 @@
   box-shadow:
     var(--neu-shadow-inset),
     0 0 0 2px var(--neu-focus-ring);
-  border-color: var(--neu-accent);
+  border-color: var(--neu-border);
 }
 
 .neu-input::placeholder,
@@ -205,7 +180,7 @@
 }
 
 .neu-badge-accent {
-  border-color: var(--neu-accent);
+  border-color: var(--neu-border);
   color: var(--neu-accent);
 }
 

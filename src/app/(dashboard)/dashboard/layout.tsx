@@ -128,9 +128,9 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="flex min-h-full flex-col lg:h-full"
+        className="flex min-h-screen h-[100dvh] max-h-[100dvh] flex-col"
         style={{
-          background: '#0d162c',
+          background: 'var(--neu-bg)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
@@ -148,8 +148,7 @@ export default function DashboardLayout({
             style={{
               background: 'var(--neu-bg)',
               borderBottom: '1px solid var(--neu-border)',
-              boxShadow:
-                '0 8px 16px rgba(0, 0, 0, 0.45), 0 -8px 16px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+              boxShadow: 'var(--neu-shadow-raised)',
             }}
           >
             <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
@@ -165,10 +164,10 @@ export default function DashboardLayout({
                         <div
                           className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
                           style={{
-                            background: 'rgba(0, 155, 242, 0.15)',
-                            border: '1px solid rgba(0, 155, 242, 0.25)',
+                            background: 'rgba(var(--neu-accent-rgb), 0.15)',
+                            border: '1px solid var(--neu-border)',
                             boxShadow:
-                              'inset 2px 2px 6px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(255,255,255,0.03)',
+                              'inset 2px 2px 6px var(--neu-shadow-dark), inset -2px -2px 6px var(--neu-shadow-light)',
                           }}
                         >
                           {user?.avatar && isBadgeIcon(user.avatar) ? (
@@ -187,7 +186,7 @@ export default function DashboardLayout({
                                 className="text-sm font-medium"
                                 style={{
                                   background: 'transparent',
-                                  color: 'rgba(255, 255, 255, 0.95)',
+                                  color: 'var(--neu-text-primary)',
                                 }}
                               >
                                 {displayName[0]?.toUpperCase()}
@@ -202,7 +201,7 @@ export default function DashboardLayout({
                         <span
                           className="text-sm font-medium"
                           style={{
-                            color: 'rgba(255, 255, 255, 0.95)',
+                            color: 'var(--neu-text-primary)',
                             filter: 'none',
                           }}
                         >
@@ -211,9 +210,9 @@ export default function DashboardLayout({
                         <span
                           className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
                           style={{
-                            background: 'rgba(0, 155, 242, 0.35)',
-                            color: '#009BF2',
-                            border: '1px solid rgba(0, 155, 242, 0.4)',
+                            background: 'rgba(var(--neu-accent-rgb), 0.35)',
+                            color: 'var(--neu-accent)',
+                            border: '1px solid var(--neu-border)',
                             filter: 'none',
                           }}
                         >
@@ -226,10 +225,9 @@ export default function DashboardLayout({
                     align="start"
                     className="w-56 border p-2"
                     style={{
-                      background: '#0D162C',
-                      borderColor: 'rgba(0, 155, 242, 0.35)',
-                      boxShadow:
-                        '8px 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(0, 155, 242, 0.15)',
+                      background: 'var(--neu-bg)',
+                      borderColor: 'var(--neu-border)',
+                      boxShadow: 'var(--neu-shadow-raised)',
                     }}
                   >
                     <DropdownMenuItem
@@ -237,15 +235,15 @@ export default function DashboardLayout({
                         setProfileDropdownOpen(false);
                         setProfileModalOpen(true);
                       }}
-                      className="cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                      className="cursor-pointer rounded-md focus:bg-[rgba(var(--neu-accent-rgb),0.15)]"
                       style={{
-                        color: 'rgba(255, 255, 255, 0.95)',
+                        color: 'var(--neu-text-primary)',
                         filter: 'none',
                       }}
                     >
                       <User
                         className="mr-2 h-4 w-4"
-                        style={{ color: '#009BF2', filter: 'none' }}
+                        style={{ color: 'var(--neu-accent)', filter: 'none' }}
                       />
                       Profile
                     </DropdownMenuItem>
@@ -256,22 +254,22 @@ export default function DashboardLayout({
                           setNotificationCenterOpen(true);
                         }, 100);
                       }}
-                      className="relative cursor-pointer rounded-md focus:bg-[rgba(0,155,242,0.15)]"
+                      className="relative cursor-pointer rounded-md focus:bg-[rgba(var(--neu-accent-rgb),0.15)]"
                       style={{
-                        color: 'rgba(255, 255, 255, 0.95)',
+                        color: 'var(--neu-text-primary)',
                         filter: 'none',
                       }}
                     >
                       <Bell
                         className="mr-2 h-4 w-4"
-                        style={{ color: '#009BF2', filter: 'none' }}
+                        style={{ color: 'var(--neu-accent)', filter: 'none' }}
                       />
                       <span className="flex-1">Notifications</span>
                       <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
                     </DropdownMenuItem>
                     <DropdownMenuSeparator
                       className="my-1"
-                      style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                      style={{ background: 'var(--neu-border)' }}
                     />
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -422,7 +420,7 @@ export default function DashboardLayout({
         {!isOnboardingPage &&
           ((progress >= 40 && progress < 60) ||
             (progress >= 60 && progress < 100 && !!bonusData)) && (
-            <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
+            <div className="dashboard-page-container space-y-4 py-4">
               {/* Wallet Setup Banner (40% <= Progress < 60%) */}
               {progress >= 40 && progress < 60 && (
                 <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
@@ -500,12 +498,12 @@ export default function DashboardLayout({
             </div>
           )}
 
-        {/* Page content - standard app spacing; on lg fill remaining height, no scroll */}
+        {/* Page content - scrolls here so bottom nav does not block; gutters from dashboard-page-container */}
         <main
           id="main-content"
-          className="px-3 pt-6 pb-24 sm:px-4 sm:pt-6 sm:pb-24 md:px-5 md:pt-8 md:pb-24 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6 lg:pt-8 lg:pb-0"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 pb-24 sm:pt-6 sm:pb-24 md:pt-8 md:pb-24 lg:pt-8 lg:pb-24"
         >
-          {children}
+          <div className="dashboard-page-container">{children}</div>
         </main>
 
         {/* Modals */}

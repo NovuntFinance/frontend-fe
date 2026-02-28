@@ -21,8 +21,9 @@ interface ActivityCardProps {
   variant?: 'default' | 'neumorphic' | 'neumorphicDark';
 }
 
-const NEU_TEXT = '#009BF2';
-const NEU_TEXT_MUTED = 'rgba(0, 155, 242, 0.7)';
+/* Theme tokens for dashboard light/dark */
+const NEU_TEXT = 'var(--neu-accent)';
+const NEU_TEXT_MUTED = 'var(--neu-text-secondary)';
 
 export function ActivityCard({ activity, variant = 'default' }: ActivityCardProps) {
   const getActivityIcon = (type: PlatformActivity['type']) => {

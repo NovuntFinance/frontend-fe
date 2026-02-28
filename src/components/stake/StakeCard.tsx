@@ -21,8 +21,7 @@ const STAKES_200_CONFETTI_KEY = 'novunt_stake_200_confetti';
 
 const MASK = '••••••';
 
-const TEXT_WHITE = 'rgba(255, 255, 255, 0.95)';
-const TEXT_WHITE_MUTED = 'rgba(255, 255, 255, 0.7)';
+/* Theme-aware: white in dark mode, #0D162C in light (via --neu-text-*) */
 
 interface StakeCardProps {
   stake: Stake;
@@ -40,13 +39,13 @@ export function StakeCard({
   const balanceVisible = useUIStore((s) => s.balanceVisible);
   const isDashboard = variant === 'dashboard';
   const maskAmounts = isDashboard && !balanceVisible;
-  const primaryColor = isDashboard ? TEXT_WHITE : 'var(--wallet-accent)';
-  const textColor = isDashboard ? TEXT_WHITE : 'var(--wallet-text)';
+  const primaryColor = isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)';
+  const textColor = isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-text)';
   const mutedColor = isDashboard
-    ? TEXT_WHITE_MUTED
+    ? 'var(--neu-text-muted)'
     : 'var(--wallet-text-muted)';
   const secondaryColor = isDashboard
-    ? TEXT_WHITE_MUTED
+    ? 'var(--neu-text-secondary)'
     : 'var(--wallet-text-secondary)';
 
   // ✅ BACKEND CONFIRMED (Jan 15, 2026): Bonus stakes have these identifiers
@@ -157,7 +156,7 @@ export function StakeCard({
               className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
               style={{
                 color: isDashboard
-                  ? TEXT_WHITE_MUTED
+                  ? 'var(--neu-text-muted)'
                   : 'var(--neu-text-secondary)',
               }}
             >
@@ -228,7 +227,7 @@ export function StakeCard({
             <DollarSign
               className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
               style={{
-                color: isDashboard ? TEXT_WHITE : 'var(--wallet-accent)',
+                color: isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)',
               }}
             />
             <p
@@ -249,7 +248,7 @@ export function StakeCard({
             <Target
               className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
               style={{
-                color: isDashboard ? TEXT_WHITE : 'var(--wallet-accent)',
+                color: isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)',
               }}
             />
             <p

@@ -23,20 +23,12 @@ import { ArticleDetailModal } from '@/components/knowledge-base/ArticleDetailMod
 import type { Article } from '@/components/knowledge-base/ArticleCard';
 import badgeStyles from '@/styles/badge-card.module.css';
 
-const MAIN_BG = '#0D162C';
+/* Dashboard theme tokens (--neu-*) for light/dark */
 const CARD_STYLE = {
-  background: MAIN_BG,
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-  border: '1px solid rgba(0, 155, 242, 0.08)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
+  border: '1px solid var(--neu-border)',
 } as const;
-const ACCENT = '#009BF2';
-const LABEL = 'rgba(255, 255, 255, 0.9)';
-const SUBTITLE = 'rgba(255, 255, 255, 0.55)';
-const ICON_BG = ACCENT;
-const ICON_TEXT = MAIN_BG;
-const ICON_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
-const ICON_SHADOW = 'inset 0 1px 0 rgba(255,255,255,0.2)';
 
 interface KnowledgeCategory {
   id: string;
@@ -149,7 +141,7 @@ export default function KnowledgeBasePage() {
   return (
     <div
       className="min-h-screen lg:h-full lg:min-h-0"
-      style={{ background: MAIN_BG }}
+      style={{ background: 'var(--neu-bg)' }}
     >
       <div
         className={badgeStyles.kbPageRoot}
@@ -180,10 +172,10 @@ export default function KnowledgeBasePage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: ICON_BG,
-                border: ICON_BORDER,
-                color: ICON_TEXT,
-                boxShadow: ICON_SHADOW,
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
+                boxShadow: 'inset 0 1px 0 var(--neu-shadow-light)',
               }}
             >
               <FileText size={24} strokeWidth={2} />
@@ -191,7 +183,7 @@ export default function KnowledgeBasePage() {
             <div style={{ minWidth: 0, flex: 1 }}>
               <h1
                 style={{
-                  color: LABEL,
+                  color: 'var(--neu-text-primary)',
                   fontSize: '1rem',
                   fontWeight: 700,
                   margin: 0,
@@ -202,7 +194,7 @@ export default function KnowledgeBasePage() {
               </h1>
               <p
                 style={{
-                  color: SUBTITLE,
+                  color: 'var(--neu-text-secondary)',
                   fontSize: '0.75rem',
                   margin: '2px 0 0',
                   lineHeight: 1.4,
@@ -276,10 +268,10 @@ export default function KnowledgeBasePage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: ICON_BG,
-                    border: ICON_BORDER,
-                    color: ICON_TEXT,
-                    boxShadow: ICON_SHADOW,
+                    background: 'var(--neu-accent)',
+                    border: '1px solid var(--neu-border)',
+                    color: 'var(--neu-accent-foreground)',
+                    boxShadow: 'inset 0 1px 0 var(--neu-shadow-light)',
                   }}
                 >
                   {React.createElement(selectedCategoryData.icon, {
@@ -289,7 +281,7 @@ export default function KnowledgeBasePage() {
                 <div style={{ minWidth: 0 }}>
                   <p
                     style={{
-                      color: LABEL,
+                      color: 'var(--neu-text-primary)',
                       fontSize: '0.8125rem',
                       fontWeight: 700,
                       margin: 0,
@@ -299,7 +291,7 @@ export default function KnowledgeBasePage() {
                   </p>
                   <p
                     style={{
-                      color: SUBTITLE,
+                      color: 'var(--neu-text-secondary)',
                       fontSize: '0.6875rem',
                       margin: 0,
                     }}
@@ -321,7 +313,7 @@ export default function KnowledgeBasePage() {
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   background: 'rgba(0, 155, 242, 0.15)',
-                  color: ACCENT,
+                  color: 'var(--neu-accent)',
                   border: '1px solid rgba(0, 155, 242, 0.25)',
                   cursor: 'pointer',
                 }}
@@ -343,7 +335,7 @@ export default function KnowledgeBasePage() {
           >
             <p
               style={{
-                color: LABEL,
+                color: 'var(--neu-text-primary)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 margin: 0,
@@ -354,7 +346,7 @@ export default function KnowledgeBasePage() {
                 ? `Results for "${searchQuery}"`
                 : (selectedCategoryData?.title ?? 'Articles')}
               {filteredArticles.length > 0 && (
-                <span style={{ color: SUBTITLE, fontWeight: 400 }}>
+                <span style={{ color: 'var(--neu-text-muted)', fontWeight: 400 }}>
                   {' '}
                   ({filteredArticles.length})
                 </span>
@@ -389,11 +381,11 @@ export default function KnowledgeBasePage() {
                 <Search
                   size={40}
                   strokeWidth={1.5}
-                  style={{ color: ACCENT, opacity: 0.4 }}
+                  style={{ color: 'var(--neu-accent)', opacity: 0.4 }}
                 />
                 <p
                   style={{
-                    color: LABEL,
+                    color: 'var(--neu-text-primary)',
                     fontSize: '0.8125rem',
                     fontWeight: 500,
                     margin: 0,
@@ -403,7 +395,7 @@ export default function KnowledgeBasePage() {
                     ? `No articles found for "${searchQuery}"`
                     : 'No articles in this category'}
                 </p>
-                <p style={{ color: SUBTITLE, fontSize: '0.75rem', margin: 0 }}>
+                <p style={{ color: 'var(--neu-text-muted)', fontSize: '0.75rem', margin: 0 }}>
                   Try different keywords or browse categories
                 </p>
               </div>
@@ -418,7 +410,7 @@ export default function KnowledgeBasePage() {
           >
             <p
               style={{
-                color: LABEL,
+                color: 'var(--neu-text-primary)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 margin: 0,
@@ -450,7 +442,7 @@ export default function KnowledgeBasePage() {
                       <div className={badgeStyles.kbCategoryCardTop}>
                         <div
                           className={badgeStyles.kbCategoryCardIcon}
-                          style={{ color: ACCENT }}
+                          style={{ color: 'var(--neu-accent)' }}
                         >
                           <IconComponent className="h-5 w-5" />
                         </div>

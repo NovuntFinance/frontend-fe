@@ -28,25 +28,14 @@ interface TeamMemberRow {
   referrer?: { account?: string; username?: string };
 }
 
-// Dashboard design system: same as WelcomeBackCard and stakes page
-const NEU_RAISED_SHADOW =
-  '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)';
-const NEU_RAISED_HOVER =
-  '10px 10px 24px rgba(4, 8, 18, 0.75), -10px -10px 24px rgba(25, 40, 72, 0.55)';
-const NEU_BORDER = '1px solid rgba(0, 155, 242, 0.08)';
+// Dashboard design system: use theme tokens for consistent card shadow
+const NEU_RAISED_SHADOW = 'var(--neu-shadow-raised)';
+const NEU_RAISED_HOVER = 'var(--neu-shadow-raised-hover)';
+const NEU_BORDER = '1px solid var(--neu-border)';
 const NEU_INSET =
   'inset 4px 4px 8px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.04)';
 
-const MAIN_CARD_BG = '#0D162C';
-const MAIN_LABEL = 'rgba(255, 255, 255, 0.9)';
-const MAIN_SUBTITLE = 'rgba(255, 255, 255, 0.7)';
-const SUB_CARD_BG = '#009BF2';
-const SUB_LABEL = 'rgba(13, 22, 44, 0.85)';
-const SUB_VALUE = '#0D162C';
-const SUB_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
-const ACCENT = '#009BF2';
-const ACCENT_MUTED = 'rgba(0, 155, 242, 0.7)';
-const ACCENT_SOFT = 'rgba(0, 155, 242, 0.12)';
+/* Theme tokens (--neu-*) for dashboard light/dark */
 
 export default function TeamPage() {
   const [copiedLink, setCopiedLink] = useState(false);
@@ -139,21 +128,21 @@ export default function TeamPage() {
   };
 
   const cardStyle = {
-    background: MAIN_CARD_BG,
+    background: 'var(--neu-bg)',
     boxShadow: NEU_RAISED_SHADOW,
     border: NEU_BORDER,
   };
   const inputInsetStyle = {
-    background: MAIN_CARD_BG,
+    background: 'var(--neu-bg)',
     borderRadius: 12,
     boxShadow: NEU_INSET,
     border: '1px solid rgba(0, 155, 242, 0.12)',
-    color: ACCENT,
+    color: 'var(--neu-accent)',
     padding: '12px 16px',
   };
   const btnRaisedStyle = {
-    background: ACCENT,
-    color: '#fff',
+    background: 'var(--neu-accent)',
+    color: 'var(--neu-accent-foreground)',
     borderRadius: 12,
     boxShadow: NEU_RAISED_SHADOW,
     border: '1px solid rgba(0, 155, 242, 0.3)',
@@ -163,7 +152,7 @@ export default function TeamPage() {
     return (
       <div
         className="min-h-screen lg:h-full lg:min-h-0"
-        style={{ background: MAIN_CARD_BG }}
+        style={{ background: 'var(--neu-bg)' }}
       >
         <div className="flex flex-col gap-5">
           <div className="h-48 rounded-2xl" style={{ ...cardStyle }} />
@@ -178,7 +167,7 @@ export default function TeamPage() {
   return (
     <div
       className="min-h-screen lg:h-full lg:min-h-0"
-      style={{ background: MAIN_CARD_BG }}
+      style={{ background: 'var(--neu-bg)' }}
     >
       <div className="flex flex-col gap-5">
         {/* 1. Welcome-style card: Team stats (Direct L1 + Indirect L2+) */}
@@ -201,9 +190,9 @@ export default function TeamPage() {
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
               style={{
-                background: SUB_CARD_BG,
-                border: SUB_BORDER,
-                color: SUB_VALUE,
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
                 boxShadow:
                   '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
               }}
@@ -213,13 +202,13 @@ export default function TeamPage() {
             <div className="min-w-0">
               <h1
                 className="text-base font-bold sm:text-lg"
-                style={{ color: MAIN_LABEL }}
+                style={{ color: 'var(--neu-text-primary)' }}
               >
                 Team
               </h1>
               <p
                 className="text-xs sm:text-sm"
-                style={{ color: MAIN_SUBTITLE }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Direct and indirect referrals
               </p>
@@ -230,9 +219,9 @@ export default function TeamPage() {
             <div
               className="rounded-xl p-5 transition-all duration-200 sm:p-6"
               style={{
-                background: SUB_CARD_BG,
+                background: 'var(--neu-accent)',
                 boxShadow: NEU_RAISED_SHADOW,
-                border: SUB_BORDER,
+                border: '1px solid var(--neu-border)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
@@ -244,19 +233,19 @@ export default function TeamPage() {
               <div className="mb-1 flex items-center gap-2">
                 <Users
                   className="h-4 w-4 sm:h-5 sm:w-5"
-                  style={{ color: SUB_VALUE }}
+                  style={{ color: 'var(--neu-accent-foreground)' }}
                   strokeWidth={2}
                 />
                 <p
                   className="text-[10px] font-medium tracking-wide sm:text-xs"
-                  style={{ color: SUB_LABEL }}
+                  style={{ color: 'var(--neu-text-secondary)' }}
                 >
                   Direct (L1)
                 </p>
               </div>
               <p
                 className="text-xl font-bold sm:text-2xl md:text-3xl"
-                style={{ color: SUB_VALUE }}
+                style={{ color: 'var(--neu-accent-foreground)' }}
               >
                 {referralMetrics?.referrals?.total_direct ?? 0}
               </p>
@@ -264,8 +253,8 @@ export default function TeamPage() {
                 className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase"
                 style={{
                   background: 'rgba(13, 22, 44, 0.15)',
-                  color: SUB_VALUE,
-                  border: SUB_BORDER,
+                  color: 'var(--neu-accent-foreground)',
+                  border: '1px solid var(--neu-border)',
                 }}
               >
                 {referralMetrics?.referrals?.active_direct ?? 0} Active
@@ -275,9 +264,9 @@ export default function TeamPage() {
             <div
               className="rounded-xl p-5 transition-all duration-200 sm:p-6"
               style={{
-                background: SUB_CARD_BG,
+                background: 'var(--neu-accent)',
                 boxShadow: NEU_RAISED_SHADOW,
-                border: SUB_BORDER,
+                border: '1px solid var(--neu-border)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = NEU_RAISED_HOVER;
@@ -289,19 +278,19 @@ export default function TeamPage() {
               <div className="mb-1 flex items-center gap-2">
                 <Users
                   className="h-4 w-4 sm:h-5 sm:w-5"
-                  style={{ color: SUB_VALUE }}
+                  style={{ color: 'var(--neu-accent-foreground)' }}
                   strokeWidth={2}
                 />
                 <p
                   className="text-[10px] font-medium tracking-wide sm:text-xs"
-                  style={{ color: SUB_LABEL }}
+                  style={{ color: 'var(--neu-text-secondary)' }}
                 >
                   Indirect (L2+)
                 </p>
               </div>
               <p
                 className="text-xl font-bold sm:text-2xl md:text-3xl"
-                style={{ color: SUB_VALUE }}
+                style={{ color: 'var(--neu-accent-foreground)' }}
               >
                 {referralMetrics?.team?.total_members ?? 0}
               </p>
@@ -309,8 +298,8 @@ export default function TeamPage() {
                 className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase"
                 style={{
                   background: 'rgba(13, 22, 44, 0.15)',
-                  color: SUB_VALUE,
-                  border: SUB_BORDER,
+                  color: 'var(--neu-accent-foreground)',
+                  border: '1px solid var(--neu-border)',
                 }}
               >
                 {referralMetrics?.team?.active_members ?? 0} Active
@@ -336,11 +325,11 @@ export default function TeamPage() {
           <div className="mb-3 flex items-center gap-2">
             <Share2
               className="h-4 w-4 sm:h-5 sm:w-5"
-              style={{ color: ACCENT }}
+              style={{ color: 'var(--neu-accent)' }}
             />
             <h2
               className="text-sm font-semibold sm:text-base"
-              style={{ color: MAIN_LABEL }}
+              style={{ color: 'var(--neu-text-primary)' }}
             >
               Share Referral Link
             </h2>
@@ -365,7 +354,7 @@ export default function TeamPage() {
               <button
                 type="button"
                 onClick={copyLink}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 hover:opacity-90 focus:ring-2 focus:ring-[rgba(0,155,242,0.5)] focus:ring-offset-2 focus:ring-offset-[#0D162C] focus:outline-none active:scale-[0.98]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 hover:opacity-90 focus:ring-2 focus:ring-[rgba(0,155,242,0.5)] focus:ring-offset-2 focus:ring-offset-[var(--neu-bg)] focus:outline-none active:scale-[0.98]"
                 style={btnRaisedStyle}
                 aria-label="Copy link"
               >
@@ -379,7 +368,7 @@ export default function TeamPage() {
           ) : (
             <p
               className="flex items-center gap-2 text-xs"
-              style={{ color: ACCENT_MUTED }}
+              style={{ color: 'var(--neu-text-secondary)' }}
             >
               <AlertCircle className="h-3.5 w-3.5" /> Link not available.
             </p>
@@ -388,7 +377,7 @@ export default function TeamPage() {
             <div className="mt-3 flex items-center gap-2">
               <span
                 className="shrink-0 text-[10px] font-medium uppercase"
-                style={{ color: ACCENT_MUTED }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Code
               </span>
@@ -420,12 +409,12 @@ export default function TeamPage() {
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs"
             style={{
-              background: ACCENT_SOFT,
-              color: ACCENT,
+              background: 'rgba(var(--neu-accent-rgb), 0.12)',
+              color: 'var(--neu-accent)',
               border: '1px solid rgba(0,155,242,0.15)',
             }}
           >
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#009BF2] border-t-transparent" />
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--neu-border)] border-t-transparent" />
             Loading referral details…
           </div>
         )}
@@ -433,8 +422,8 @@ export default function TeamPage() {
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs"
             style={{
-              background: ACCENT_SOFT,
-              color: ACCENT_MUTED,
+              background: 'rgba(var(--neu-accent-rgb), 0.12)',
+              color: 'var(--neu-text-secondary)',
               border: '1px solid rgba(0,155,242,0.15)',
             }}
           >
@@ -450,19 +439,18 @@ export default function TeamPage() {
           transition={{ delay: 0.2 }}
           className="rounded-2xl p-5 sm:p-6"
           style={{
-            background: '#0D162C',
-            boxShadow:
-              '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-            border: '1px solid rgba(0, 155, 242, 0.08)',
+            background: 'var(--neu-bg)',
+            boxShadow: NEU_RAISED_SHADOW,
+            border: NEU_BORDER,
           }}
         >
           <div className="mb-4 flex items-center gap-3">
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
               style={{
-                background: '#009BF2',
-                border: '1px solid rgba(13, 22, 44, 0.2)',
-                color: '#0D162C',
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
               }}
             >
@@ -471,7 +459,7 @@ export default function TeamPage() {
             <div className="min-w-0 flex-1">
               <h2
                 className="text-base font-bold sm:text-lg"
-                style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+                style={{ color: 'var(--neu-text-primary)' }}
               >
                 Team Members
                 {hasUnknownLevels && (
@@ -482,7 +470,7 @@ export default function TeamPage() {
               </h2>
               <p
                 className="text-xs sm:text-sm"
-                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Search by account or username
               </p>
@@ -499,9 +487,9 @@ export default function TeamPage() {
               }}
               className="h-10 w-full rounded-[14px] border px-3 py-2 text-sm outline-none placeholder:opacity-60 sm:h-11 sm:max-w-[280px]"
               style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(0, 155, 242, 0.2)',
-                color: 'rgba(255, 255, 255, 0.95)',
+                background: 'rgba(0, 0, 0, 0.04)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-text-primary)',
               }}
               aria-label="Search team members"
             />
@@ -521,8 +509,7 @@ export default function TeamPage() {
                 key={i}
                 className={`rounded-[14px] ${neuStyles['neu-card']}`}
                 style={{
-                  boxShadow:
-                    '4px 4px 10px var(--neu-shadow-dark), -4px -4px 10px var(--neu-shadow-light)',
+                  boxShadow: NEU_RAISED_SHADOW,
                 }}
               >
                 <div className="h-16 animate-pulse px-3 py-2.5 sm:px-4 sm:py-3" />
@@ -536,8 +523,7 @@ export default function TeamPage() {
             transition={{ delay: 0.1 }}
             className={`rounded-[18px] p-6 text-center sm:p-8 md:hidden ${neuStyles['neu-card']}`}
             style={{
-              boxShadow:
-                '4px 4px 10px var(--neu-shadow-dark), -4px -4px 10px var(--neu-shadow-light)',
+              boxShadow: NEU_RAISED_SHADOW,
             }}
           >
             <p
@@ -637,6 +623,33 @@ export default function TeamPage() {
           </motion.div>
         )}
 
+        {/* 4b. Mobile: pagination (same as desktop so users can change page on small screens) */}
+        {!allTeamMembersLoading &&
+          teamMembers.length > 0 &&
+          pagination.totalPages > 1 && (
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+              animate={reducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className={`flex flex-wrap items-center justify-between gap-2 rounded-2xl px-4 py-3 text-xs md:hidden ${neuStyles['neu-card']}`}
+              style={{
+                color: 'var(--neu-text-secondary)',
+                boxShadow: NEU_RAISED_SHADOW,
+              }}
+            >
+              <span>
+                Page {pagination.page} of {pagination.totalPages} (
+                {pagination.total} total)
+              </span>
+              <NumberedPagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={setAllPage}
+                maxVisiblePages={4}
+              />
+            </motion.div>
+          )}
+
         {/* 5. Desktop: table inside a card */}
         <motion.section
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
@@ -655,15 +668,15 @@ export default function TeamPage() {
             <div
               className="flex items-center gap-2 px-4 py-2 text-xs"
               style={{
-                background: ACCENT_SOFT,
+                background: 'rgba(var(--neu-accent-rgb), 0.12)',
                 borderBottom: '1px solid rgba(0,155,242,0.1)',
               }}
             >
               <AlertCircle
                 className="h-3.5 w-3.5 shrink-0"
-                style={{ color: ACCENT }}
+                style={{ color: 'var(--neu-accent)' }}
               />
-              <span style={{ color: ACCENT_MUTED }}>
+              <span style={{ color: 'var(--neu-text-secondary)' }}>
                 Some members have unknown level (backend).
               </span>
             </div>
@@ -682,11 +695,11 @@ export default function TeamPage() {
           {!allTeamMembersLoading && teamMembers.length === 0 && (
             <div
               className="flex flex-col items-center justify-center px-4 py-16 text-center"
-              style={{ color: ACCENT_MUTED }}
+              style={{ color: 'var(--neu-text-secondary)' }}
             >
               <Users
                 className="mb-2 h-10 w-10 opacity-60"
-                style={{ color: ACCENT }}
+                style={{ color: 'var(--neu-accent)' }}
               />
               <p className="text-sm">No team members found.</p>
             </div>
@@ -712,7 +725,7 @@ export default function TeamPage() {
                         <th
                           key={h}
                           className="px-4 py-3 font-semibold"
-                          style={{ color: ACCENT_MUTED }}
+                          style={{ color: 'var(--neu-text-secondary)' }}
                         >
                           {h}
                         </th>
@@ -729,17 +742,17 @@ export default function TeamPage() {
                       >
                         <td
                           className="px-4 py-3 font-medium"
-                          style={{ color: ACCENT }}
+                          style={{ color: 'var(--neu-accent)' }}
                         >
                           {member.account}
                         </td>
-                        <td className="px-4 py-3" style={{ color: MAIN_LABEL }}>
+                        <td className="px-4 py-3" style={{ color: 'var(--neu-text-primary)' }}>
                           {member.username || '–'}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className="rounded-md px-2 py-0.5 text-xs"
-                            style={{ background: ACCENT_SOFT, color: ACCENT }}
+                            style={{ background: 'rgba(var(--neu-accent-rgb), 0.12)', color: 'var(--neu-accent)' }}
                           >
                             {member.level === 'Unknown' || !member.level
                               ? 'Unknown'
@@ -752,28 +765,28 @@ export default function TeamPage() {
                               className="rounded-md px-2 py-0.5 text-xs"
                               style={{
                                 background: 'rgba(0,155,242,0.08)',
-                                color: ACCENT_MUTED,
+                                color: 'var(--neu-text-secondary)',
                               }}
                             >
                               {member.rank}
                             </span>
                           ) : (
-                            <span style={{ color: ACCENT_MUTED }}>–</span>
+                            <span style={{ color: 'var(--neu-text-secondary)' }}>–</span>
                           )}
                         </td>
-                        <td className="px-4 py-3" style={{ color: MAIN_LABEL }}>
+                        <td className="px-4 py-3" style={{ color: 'var(--neu-text-primary)' }}>
                           {formatCurrency(member.personalStake ?? 0)}
                         </td>
-                        <td className="px-4 py-3" style={{ color: MAIN_LABEL }}>
+                        <td className="px-4 py-3" style={{ color: 'var(--neu-text-primary)' }}>
                           {formatCurrency(member.teamStake ?? 0)}
                         </td>
                         <td
                           className="px-4 py-3"
-                          style={{ color: ACCENT_MUTED }}
+                          style={{ color: 'var(--neu-text-secondary)' }}
                         >
                           {member.joined}
                         </td>
-                        <td className="px-4 py-3" style={{ color: MAIN_LABEL }}>
+                        <td className="px-4 py-3" style={{ color: 'var(--neu-text-primary)' }}>
                           {member.referrer
                             ? `${member.referrer.account}${member.referrer.username ? ` @${member.referrer.username}` : ''}`
                             : '–'}
@@ -788,7 +801,7 @@ export default function TeamPage() {
                 className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-xs"
                 style={{
                   borderTop: '1px solid rgba(0,155,242,0.1)',
-                  color: ACCENT_MUTED,
+                  color: 'var(--neu-text-secondary)',
                 }}
               >
                 <span>

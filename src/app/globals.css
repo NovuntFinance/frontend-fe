@@ -108,6 +108,33 @@
   --app-shadow-dark: rgba(0, 0, 0, 0.12);
   --app-shadow-light: rgba(255, 255, 255, 0.9);
   --app-overlay: rgba(0, 0, 0, 0.05);
+
+  /* Dashboard light theme – base #FFFFFF, shadow #E0E5EC; card text #0D162C for readability, accent #009BF2 */
+  --neu-bg: #FFFFFF;
+  --neu-bg-primary: #FFFFFF;
+  --neu-bg-secondary: #FFFFFF;
+  --neu-accent: #009BF2;
+  --neu-accent-rgb: 0, 155, 242;
+  --neu-text-primary: #0D162C;
+  --neu-text-secondary: #434445;
+  --neu-text-muted: #434445;
+  --neu-border: rgba(163, 177, 198, 0.35);
+  --neu-shadow-dark: #E0E5EC;
+  --neu-shadow-light: #E0E5EC;
+  --neu-focus-ring: rgba(13, 22, 44, 0.12);
+  --neu-accent-foreground: #0D162C;
+  /* Single soft card shadow – same for all dashboard containers */
+  --neu-shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --neu-shadow-raised-hover: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
+  /* Modals – solid background in light */
+  --neu-modal-bg: #FFFFFF;
+  /* Inset shadows – form fields, pressed state (used by modals) */
+  --neu-shadow-inset:
+    inset 5px 5px 10px var(--neu-shadow-dark),
+    inset -5px -5px 10px var(--neu-shadow-light);
+  --neu-shadow-inset-press:
+    inset 6px 6px 12px var(--neu-shadow-dark),
+    inset -6px -6px 12px var(--neu-shadow-light);
 }
 .dark {
   /* Novunt Brand Colors - Dark Mode */
@@ -162,6 +189,33 @@
   --sidebar-border: oklch(0.3 0.05 250);
   --sidebar-ring: oklch(0.65 0.2 250);
   --app-overlay-hover: rgba(0, 0, 0, 0.08);
+
+  /* Dashboard dark theme – #0D162C bg, #009BF2 accent, white text (unchanged) */
+  --neu-bg: #0d162c;
+  --neu-bg-primary: #0d162c;
+  --neu-bg-secondary: #0d162c;
+  --neu-accent: #009bf2;
+  --neu-accent-rgb: 0, 155, 242;
+  --neu-text-primary: #ffffff;
+  --neu-text-secondary: rgba(255, 255, 255, 0.9);
+  --neu-text-muted: rgba(255, 255, 255, 0.7);
+  --neu-border: rgba(0, 155, 242, 0.08);
+  --neu-shadow-dark: rgba(0, 0, 0, 0.45);
+  --neu-shadow-light: rgba(255, 255, 255, 0.04);
+  --neu-focus-ring: rgba(0, 155, 242, 0.2);
+  --neu-accent-foreground: #0D162C;
+  /* Same soft card shadow – consistent with light mode style */
+  --neu-shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.12);
+  --neu-shadow-raised-hover: 0 6px 16px rgba(0, 0, 0, 0.25), 0 3px 8px rgba(0, 0, 0, 0.15);
+  /* Modals – gradient in dark */
+  --neu-modal-bg: linear-gradient(165deg, #0f1930 0%, #0d162c 45%, #0b1222 100%);
+  /* Inset shadows – same formula, use .dark --neu-shadow-dark/light */
+  --neu-shadow-inset:
+    inset 5px 5px 10px var(--neu-shadow-dark),
+    inset -5px -5px 10px var(--neu-shadow-light);
+  --neu-shadow-inset-press:
+    inset 6px 6px 12px var(--neu-shadow-dark),
+    inset -6px -6px 12px var(--neu-shadow-light);
 }
 
 @layer base {
@@ -285,6 +339,49 @@
 }
 @media (min-width: 1024px) {
   .page-container--section-spacing {
+    gap: 40px;
+  }
+}
+
+/* Dashboard: desktop-only centered max-width container (navbar stays full-bleed) */
+.dashboard-page-container {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 640px) {
+  .dashboard-page-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-page-container {
+    max-width: 1320px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .dashboard-page-container {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+.dashboard-page-container--section-spacing {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 1024px) {
+  .dashboard-page-container--section-spacing {
+    gap: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .dashboard-page-container--section-spacing {
     gap: 40px;
   }
 }

@@ -7,7 +7,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { renderWithProviders, setupLocalStorageMock } from '@/lib/test-utils';
 import { useAuth } from '../useAuth';
 
-// Mock the auth store
+// Mock the auth store (useAuth calls isAdmin() and isVerified() so they must be functions)
 jest.mock('@/store/authStore', () => ({
     useAuthStore: () => ({
         user: {
@@ -21,6 +21,9 @@ jest.mock('@/store/authStore', () => ({
         login: jest.fn(),
         logout: jest.fn(),
         checkAuth: jest.fn(),
+        hasRole: jest.fn().mockReturnValue(false),
+        isAdmin: jest.fn().mockReturnValue(false),
+        isVerified: jest.fn().mockReturnValue(true),
     }),
 }));
 
@@ -37,11 +40,11 @@ describe('useAuth', () => {
         expect(result.current.isAuthenticated).toBe(true);
     });
 
-    it('should provide login function', () => {
+    it('should provide requireAuth function', () => {
         const { result } = renderHook(() => useAuth());
 
-        expect(result.current.login).toBeDefined();
-        expect(typeof result.current.login).toBe('function');
+        expect(result.current.requireAuth).toBeDefined();
+        expect(typeof result.current.requireAuth).toBe('function');
     });
 
     it('should provide logout function', () => {

@@ -106,10 +106,9 @@ function getActivityTitle(type: PlatformActivity['type']): string {
 
 /** Dashboard card style (match Activity Feed, Live Trading Signals) */
 const CARD_STYLE = {
-  background: '#0D162C',
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-  border: '1px solid var(--app-border)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
+  border: '1px solid var(--neu-border)',
 } as const;
 
 /**
@@ -194,7 +193,7 @@ export function LivePlatformActivities() {
               <div className="mb-2">
                 <p
                   className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
-                  style={{ color: '#009BF2', filter: 'none' }}
+                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                 >
                   {getActivityTitle(currentActivity.type)}
                   <span
@@ -211,7 +210,7 @@ export function LivePlatformActivities() {
                   <span
                     className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                     style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
+                      color: 'var(--neu-text-primary)',
                       filter: 'none',
                     }}
                   >
@@ -221,7 +220,7 @@ export function LivePlatformActivities() {
                   <span
                     className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
                     style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
+                      color: 'var(--neu-text-primary)',
                       filter: 'none',
                     }}
                   >
@@ -230,7 +229,7 @@ export function LivePlatformActivities() {
                 )}
                 <span
                   className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-                  style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
+                  style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
                 >
                   Completed
                 </span>

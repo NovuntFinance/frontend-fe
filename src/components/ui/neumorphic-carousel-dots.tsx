@@ -42,16 +42,16 @@ export function NeumorphicCarouselDots({
                 key={index}
                 type="button"
                 onClick={() => onSelect(index)}
-                className="rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009BF2]/50"
+                className="rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--neu-accent)] focus-visible:ring-opacity-50"
                 style={{
                   width: isActive ? 32 : 10,
                   height: 10,
                   background: isActive
-                    ? '#009BF2'
+                    ? 'var(--neu-accent)'
                     : 'rgba(255, 255, 255, 0.08)',
                   boxShadow: isActive
-                    ? '0 2px 12px rgba(0, 155, 242, 0.5), 0 0 16px rgba(0, 155, 242, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                    : 'inset 1px 1px 2px rgba(0, 0, 0, 0.4), inset -1px -1px 1px rgba(255, 255, 255, 0.02)',
+                    ? '0 2px 12px rgba(var(--neu-accent-rgb), 0.5), 0 0 16px rgba(var(--neu-accent-rgb), 0.25), inset 0 1px 0 var(--neu-shadow-light)'
+                    : 'inset 1px 1px 2px var(--neu-shadow-dark), inset -1px -1px 1px var(--neu-shadow-light)',
                 }}
                 aria-label={`${ariaLabelPrefix} ${index + 1}`}
               />

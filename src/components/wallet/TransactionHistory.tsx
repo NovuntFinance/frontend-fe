@@ -1046,15 +1046,14 @@ export function TransactionHistory({
 
   if (variant === 'compact') {
     const compactCardStyle = {
-      background: '#0D162C',
-      boxShadow:
-        '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-      border: '1px solid rgba(0, 155, 242, 0.08)',
+      background: 'var(--neu-bg)',
+      boxShadow: 'var(--neu-shadow-raised)',
+      border: '1px solid var(--neu-border)',
     } as const;
     const compactInputStyle = {
-      background: 'rgba(255, 255, 255, 0.06)',
-      border: '1px solid rgba(0, 155, 242, 0.2)',
-      color: 'rgba(255, 255, 255, 0.95)',
+      background: 'var(--neu-bg)',
+      border: '1px solid var(--neu-border)',
+      color: 'var(--neu-text-primary)',
       borderRadius: 14,
     };
     return (
@@ -1071,9 +1070,9 @@ export function TransactionHistory({
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
               style={{
-                background: '#009BF2',
-                border: '1px solid rgba(13, 22, 44, 0.2)',
-                color: '#0D162C',
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
               }}
             >
@@ -1082,13 +1081,13 @@ export function TransactionHistory({
             <div className="min-w-0">
               <h2
                 className="text-base font-bold sm:text-lg"
-                style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+                style={{ color: 'var(--neu-text-primary)' }}
               >
                 Transaction History
               </h2>
               <p
                 className="text-xs sm:text-sm"
-                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Search and filter your transactions
               </p>
@@ -1101,7 +1100,7 @@ export function TransactionHistory({
               <div className="relative sm:col-span-1">
                 <Search
                   className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                  style={{ color: 'var(--neu-text-muted)' }}
                 />
                 <Input
                   placeholder="Search by amount, ref, description..."
@@ -1122,7 +1121,7 @@ export function TransactionHistory({
                       setDebouncedSearch('');
                     }}
                     className="absolute top-1/2 right-3 h-6 w-6 -translate-y-1/2 rounded opacity-70 hover:opacity-100"
-                    style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                    style={{ color: 'var(--neu-text-muted)' }}
                     title="Clear search"
                     aria-label="Clear search"
                   >
@@ -1203,9 +1202,9 @@ export function TransactionHistory({
                   onClick={clearFilters}
                   className="h-10 shrink-0 rounded-[14px] px-4 text-sm font-medium transition-opacity hover:opacity-90 sm:h-11"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    color: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid rgba(0, 155, 242, 0.3)',
+                    background: 'rgba(var(--neu-accent-rgb), 0.12)',
+                    color: 'var(--neu-text-primary)',
+                    border: '1px solid var(--neu-border)',
                   }}
                 >
                   Clear filters
@@ -1229,8 +1228,7 @@ export function TransactionHistory({
                 key={transaction._id}
                 className={`rounded-[14px] ${neuStyles['neu-card']}`}
                 style={{
-                  boxShadow:
-                    '4px 4px 10px var(--neu-shadow-dark), -4px -4px 10px var(--neu-shadow-light)',
+                  boxShadow: 'var(--neu-shadow-raised)',
                 }}
               >
                 <CompactTransactionItem

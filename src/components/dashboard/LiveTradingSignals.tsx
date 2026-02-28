@@ -15,10 +15,9 @@ const getTimeAgo = (minutes: number): string => {
 
 /** Dashboard card style (match Activity Feed, Daily ROS, stake card) */
 const CARD_STYLE = {
-  background: '#0D162C',
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-  border: '1px solid var(--app-border)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
+  border: '1px solid var(--neu-border)',
 } as const;
 
 const ROTATE_INTERVAL_MS = 5000;
@@ -53,12 +52,12 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
       <div className="mb-1.5">
         <p
           className="truncate text-left text-xs font-semibold sm:text-sm"
-          style={{ color: '#009BF2', filter: 'none' }}
+          style={{ color: 'var(--neu-accent)', filter: 'none' }}
         >
           {trade.symbol} {trade.direction}
           <span
             className="ml-1.5 font-normal"
-            style={{ color: 'rgba(0, 155, 242, 0.75)' }}
+            style={{ color: 'var(--neu-text-secondary)' }}
           >
             · {getTimeAgo(trade.minutesAgo)}
           </span>
@@ -67,40 +66,40 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
       {/* Compact Entry → Exit row with times */}
       <div
         className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs"
-        style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
+        style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
       >
         <span className="shrink-0">
           Entry{' '}
           <span
             className="font-medium"
-            style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {trade.entryPrice.toFixed(decimals)}
           </span>
           {entryTimeStr && (
             <span
               className="ml-0.5"
-              style={{ color: 'rgba(0, 155, 242, 0.6)' }}
+              style={{ color: 'var(--neu-text-muted)' }}
             >
               @ {entryTimeStr}
             </span>
           )}
         </span>
-        <span className="shrink-0" style={{ color: 'rgba(0, 155, 242, 0.5)' }}>
+        <span className="shrink-0" style={{ color: 'var(--neu-text-muted)' }}>
           →
         </span>
         <span className="min-w-0 truncate">
           Exit{' '}
           <span
             className="font-medium"
-            style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {trade.exitPrice.toFixed(decimals)}
           </span>
           {exitTimeStr && (
             <span
               className="ml-0.5"
-              style={{ color: 'rgba(0, 155, 242, 0.6)' }}
+              style={{ color: 'var(--neu-text-muted)' }}
             >
               @ {exitTimeStr}
             </span>
@@ -111,7 +110,7 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
         <span
           className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
           style={{
-            color: 'rgba(255, 255, 255, 0.95)',
+            color: 'var(--neu-text-primary)',
             filter: 'none',
           }}
         >
@@ -119,7 +118,7 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
         </span>
         <span
           className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-          style={{ color: 'rgba(0, 155, 242, 0.7)', filter: 'none' }}
+          style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
         >
           {trade.isProfitable ? 'Profitable' : 'Closed'}
         </span>
@@ -265,14 +264,14 @@ export function LiveTradingSignals() {
               <div className="mb-2">
                 <p
                   className="text-left text-xs font-semibold sm:text-sm"
-                  style={{ color: '#009BF2', filter: 'none' }}
+                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                 >
                   Live Trading Signals
                 </p>
               </div>
               <p
                 className="text-left text-sm"
-                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
+                style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
               >
                 Loading...
               </p>
@@ -282,14 +281,14 @@ export function LiveTradingSignals() {
               <div className="mb-2">
                 <p
                   className="text-left text-xs font-semibold sm:text-sm"
-                  style={{ color: '#009BF2', filter: 'none' }}
+                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
                 >
                   Live Trading Signals
                 </p>
               </div>
               <p
                 className="text-left text-xs"
-                style={{ color: 'rgba(255, 255, 255, 0.7)', filter: 'none' }}
+                style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
               >
                 {error}
               </p>

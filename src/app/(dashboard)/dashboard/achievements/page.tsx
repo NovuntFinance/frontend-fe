@@ -21,23 +21,12 @@ import {
 import { toast } from '@/components/ui/enhanced-toast';
 import { prefersReducedMotion } from '@/lib/accessibility';
 
-/* Dashboard design tokens (match Stakes, WelcomeBackCard, Quick Actions) */
-const MAIN_BG = '#0D162C';
+/* Dashboard theme tokens (--neu-*) for light/dark */
 const CARD_STYLE = {
-  background: MAIN_BG,
-  boxShadow:
-    '8px 8px 20px rgba(4, 8, 18, 0.7), -8px -8px 20px rgba(25, 40, 72, 0.5)',
-  border: '1px solid rgba(0, 155, 242, 0.08)',
+  background: 'var(--neu-bg)',
+  boxShadow: 'var(--neu-shadow-raised)',
+  border: '1px solid var(--neu-border)',
 } as const;
-const ACCENT = '#009BF2';
-const LABEL = 'rgba(255, 255, 255, 0.9)';
-const SUBTITLE = 'rgba(255, 255, 255, 0.8)';
-const ACCENT_SOFT = 'rgba(0, 155, 242, 0.12)';
-const ACCENT_MUTED = 'rgba(0, 155, 242, 0.7)';
-const ICON_BG = ACCENT;
-const ICON_TEXT = MAIN_BG;
-const ICON_BORDER = '1px solid rgba(13, 22, 44, 0.2)';
-const ICON_SHADOW = 'inset 0 1px 0 rgba(255,255,255,0.2)';
 
 export default function AchievementsPage() {
   const {
@@ -97,7 +86,7 @@ export default function AchievementsPage() {
     return (
       <div
         className="min-h-screen lg:h-full lg:min-h-0"
-        style={{ background: MAIN_BG }}
+        style={{ background: 'var(--neu-bg)' }}
       >
         <div className="flex flex-col gap-5">
           <div className="h-48 rounded-2xl" style={CARD_STYLE} />
@@ -107,11 +96,11 @@ export default function AchievementsPage() {
           >
             <div
               className="h-24 rounded-xl"
-              style={{ background: ACCENT_SOFT }}
+              style={{ background: 'rgba(var(--neu-accent-rgb), 0.12)' }}
             />
             <div
               className="h-24 rounded-xl"
-              style={{ background: ACCENT_SOFT }}
+              style={{ background: 'rgba(var(--neu-accent-rgb), 0.12)' }}
             />
           </div>
           <div className="h-96 rounded-2xl" style={CARD_STYLE} />
@@ -128,7 +117,7 @@ export default function AchievementsPage() {
     return (
       <div
         className="min-h-screen lg:h-full lg:min-h-0"
-        style={{ background: MAIN_BG }}
+        style={{ background: 'var(--neu-bg)' }}
       >
         <div className="flex flex-col gap-5">
           <div className="flex min-h-[300px] items-center justify-center p-4">
@@ -153,7 +142,7 @@ export default function AchievementsPage() {
   return (
     <div
       className="min-h-screen lg:h-full lg:min-h-0"
-      style={{ background: MAIN_BG }}
+      style={{ background: 'var(--neu-bg)' }}
     >
       <div className="flex flex-col gap-5">
         {/* Error Banner (if some queries failed but not all) */}
@@ -163,15 +152,15 @@ export default function AchievementsPage() {
               initial={reducedMotion ? false : { opacity: 0, y: -10 }}
               animate={reducedMotion ? false : { opacity: 1, y: 0 }}
               className="flex items-center gap-2 rounded-xl border border-[rgba(0,155,242,0.2)] p-3 sm:p-4"
-              style={{ background: ACCENT_SOFT }}
+              style={{ background: 'rgba(var(--neu-accent-rgb), 0.12)' }}
             >
               <AlertCircle
                 className="h-4 w-4 shrink-0"
-                style={{ color: ACCENT }}
+                style={{ color: 'var(--neu-accent)' }}
               />
               <p
                 className="text-sm leading-relaxed sm:text-base"
-                style={{ color: ACCENT_MUTED }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Some data couldn&apos;t be loaded. Showing available
                 information.
@@ -191,10 +180,10 @@ export default function AchievementsPage() {
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
               style={{
-                background: ICON_BG,
-                border: ICON_BORDER,
-                color: ICON_TEXT,
-                boxShadow: ICON_SHADOW,
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
+                boxShadow: 'inset 0 1px 0 var(--neu-shadow-light)',
               }}
             >
               <Award className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2} />
@@ -202,11 +191,11 @@ export default function AchievementsPage() {
             <div className="min-w-0">
               <h1
                 className="text-base font-bold sm:text-lg"
-                style={{ color: LABEL }}
+                style={{ color: 'var(--neu-text-primary)' }}
               >
                 Achievements & NXP
               </h1>
-              <p className="text-xs sm:text-sm" style={{ color: SUBTITLE }}>
+              <p className="text-xs sm:text-sm" style={{ color: 'var(--neu-text-secondary)' }}>
                 Track your badges and experience points
               </p>
             </div>
@@ -256,10 +245,10 @@ export default function AchievementsPage() {
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11"
                 style={{
-                  background: ICON_BG,
-                  border: ICON_BORDER,
-                  color: ICON_TEXT,
-                  boxShadow: ICON_SHADOW,
+                  background: 'var(--neu-accent)',
+                  border: '1px solid var(--neu-border)',
+                  color: 'var(--neu-accent-foreground)',
+                  boxShadow: 'inset 0 1px 0 var(--neu-shadow-light)',
                 }}
                 aria-hidden
               >
@@ -268,11 +257,11 @@ export default function AchievementsPage() {
               <div>
                 <h2
                   className="text-sm font-bold sm:text-base"
-                  style={{ color: LABEL }}
+                  style={{ color: 'var(--neu-text-primary)' }}
                 >
                   Your Badges
                 </h2>
-                <p className="text-xs" style={{ color: SUBTITLE }}>
+                <p className="text-xs" style={{ color: 'var(--neu-text-secondary)' }}>
                   {earnedBadges.length} badge
                   {earnedBadges.length !== 1 ? 's' : ''} earned
                 </p>
@@ -320,10 +309,10 @@ export default function AchievementsPage() {
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11"
               style={{
-                background: ICON_BG,
-                border: ICON_BORDER,
-                color: ICON_TEXT,
-                boxShadow: ICON_SHADOW,
+                background: 'var(--neu-accent)',
+                border: '1px solid var(--neu-border)',
+                color: 'var(--neu-accent-foreground)',
+                boxShadow: 'inset 0 1px 0 var(--neu-shadow-light)',
               }}
               aria-hidden
             >
@@ -332,11 +321,11 @@ export default function AchievementsPage() {
             <div>
               <h2
                 className="text-sm font-bold sm:text-base"
-                style={{ color: LABEL }}
+                style={{ color: 'var(--neu-text-primary)' }}
               >
                 Badge Catalog
               </h2>
-              <p className="text-xs" style={{ color: SUBTITLE }}>
+              <p className="text-xs" style={{ color: 'var(--neu-text-secondary)' }}>
                 Explore all available badges and track your progress
               </p>
             </div>

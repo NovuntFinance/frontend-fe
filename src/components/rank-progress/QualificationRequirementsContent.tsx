@@ -2,8 +2,7 @@
 
 /**
  * Qualification Requirements modal content.
- * Mobile-first neumorphic design. Strict palette: #0D162C (bg), #009BF2 (accent), #FFFFFF (low opacity only).
- * Hierarchy via opacity, spacing, and neumorphic depth. All content/layout logic unchanged.
+ * Theme-aware: uses --neu-bg, --neu-accent, --neu-border, etc. (light/dark from globals).
  */
 
 import React from 'react';
@@ -37,13 +36,11 @@ import {
   getPremiumPoolDownlineRequirement,
   getPremiumPoolProgressHelperText,
 } from '@/lib/utils/premiumPoolUtils';
-import {
-  NEU_TOKENS,
-  neuInset,
-  neuRaised,
-  neuProgressFillHighlight,
-  neuRadius,
-} from './neumorphicTokens';
+import { neuRadius } from './neumorphicTokens';
+
+const neuInset = 'var(--neu-shadow-inset)';
+const neuRaised = 'var(--neu-shadow-raised)';
+const neuProgressFillHighlight = '0 0 12px rgba(var(--neu-accent-rgb), 0.25)';
 
 function useQualificationData() {
   const { data, isLoading, error, refetch } = useRankProgressLightweight();
@@ -210,9 +207,9 @@ export function QualificationRequirementsContent() {
       : (premPool?.message ?? 'Requires lower-rank downlines');
 
   const blockInsetStyle = {
-    background: NEU_TOKENS.bg,
+    background: 'var(--neu-bg)',
     boxShadow: neuInset,
-    border: `1px solid ${NEU_TOKENS.border}`,
+    border: '1px solid var(--neu-border)',
     borderRadius: neuRadius.lg,
   };
 
@@ -239,9 +236,9 @@ export function QualificationRequirementsContent() {
             <div
               className="flex h-20 w-20 items-center justify-center"
               style={{
-                background: NEU_TOKENS.bg,
+                background: 'var(--neu-bg)',
                 boxShadow: neuRaised,
-                border: `1px solid ${NEU_TOKENS.border}`,
+                border: '1px solid var(--neu-border)',
                 borderRadius: neuRadius.xl,
               }}
             >
@@ -253,16 +250,16 @@ export function QualificationRequirementsContent() {
           <div
             className="absolute -right-2 -bottom-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase"
             style={{
-              background: NEU_TOKENS.bg,
+              background: 'var(--neu-bg)',
               boxShadow: neuRaised,
-              border: `1px solid ${NEU_TOKENS.border}`,
-              color: NEU_TOKENS.accent,
+              border: '1px solid var(--neu-border)',
+              color: 'var(--neu-accent)',
             }}
           >
             Current
           </div>
         </div>
-        <p className="text-xl font-bold" style={{ color: NEU_TOKENS.accent }}>
+        <p className="text-xl font-bold" style={{ color: 'var(--neu-accent)' }}>
           {stripEmojis(currentRank)}
         </p>
       </div>
@@ -270,7 +267,7 @@ export function QualificationRequirementsContent() {
         <>
           <div
             className="hidden flex-col items-center gap-1 md:flex"
-            style={{ color: NEU_TOKENS.white60 }}
+            style={{ color: 'var(--neu-text-secondary)' }}
           >
             <span className="text-xs tracking-widest uppercase">Progress</span>
             <TrendingUp className="h-6 w-6" />
@@ -297,9 +294,9 @@ export function QualificationRequirementsContent() {
                 <div
                   className="flex h-14 w-14 items-center justify-center"
                   style={{
-                    background: NEU_TOKENS.bg,
+                    background: 'var(--neu-bg)',
                     boxShadow: neuRaised,
-                    border: `1px solid ${NEU_TOKENS.border}`,
+                    border: '1px solid var(--neu-border)',
                     borderRadius: neuRadius.lg,
                   }}
                 >
@@ -311,10 +308,10 @@ export function QualificationRequirementsContent() {
               <div
                 className="absolute -bottom-2 -left-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase md:-right-2 md:left-auto"
                 style={{
-                  background: NEU_TOKENS.bg,
+                  background: 'var(--neu-bg)',
                   boxShadow: neuRaised,
-                  border: `1px solid ${NEU_TOKENS.border}`,
-                  color: NEU_TOKENS.white80,
+                  border: '1px solid var(--neu-border)',
+                  color: 'var(--neu-text-primary)',
                 }}
               >
                 Next
@@ -322,7 +319,7 @@ export function QualificationRequirementsContent() {
             </div>
             <p
               className="text-lg font-bold"
-              style={{ color: NEU_TOKENS.white80 }}
+              style={{ color: 'var(--neu-text-primary)' }}
             >
               {nextRank ? stripEmojis(nextRank) : ''}
             </p>
@@ -340,18 +337,18 @@ export function QualificationRequirementsContent() {
             <div
               className="rounded-lg p-1.5"
               style={{
-                background: NEU_TOKENS.bg,
+                background: 'var(--neu-bg)',
                 boxShadow: neuRaised,
-                border: `1px solid ${NEU_TOKENS.border}`,
+                border: '1px solid var(--neu-border)',
                 borderRadius: neuRadius.md,
               }}
             >
               <Target
                 className="h-3.5 w-3.5"
-                style={{ color: NEU_TOKENS.accent }}
+                style={{ color: 'var(--neu-accent)' }}
               />
             </div>
-            <span className="font-medium" style={{ color: NEU_TOKENS.white80 }}>
+            <span className="font-medium" style={{ color: 'var(--neu-text-primary)' }}>
               {title}
             </span>
             <TooltipProvider>
@@ -359,23 +356,23 @@ export function QualificationRequirementsContent() {
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded p-0.5 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D162C]"
-                    style={{ color: NEU_TOKENS.white60 }}
+                    className="rounded p-0.5 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--neu-bg)]"
+                    style={{ color: 'var(--neu-text-secondary)' }}
                     aria-label="Info"
                   >
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent
-                  className="max-w-xs border-[#009BF2]/20 bg-[#0D162C]"
-                  style={{ color: NEU_TOKENS.white80 }}
+                  className="max-w-xs"
+                  style={{ color: 'var(--neu-text-primary)', border: '1px solid var(--neu-border)', background: 'var(--neu-bg)' }}
                 >
                   {performanceTooltip}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <span className="font-bold" style={{ color: NEU_TOKENS.accent }}>
+          <span className="font-bold" style={{ color: 'var(--neu-accent)' }}>
             {performanceProgress}%
           </span>
         </div>
@@ -387,7 +384,7 @@ export function QualificationRequirementsContent() {
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${performanceProgress}%`,
-              background: NEU_TOKENS.accent,
+              background: 'var(--neu-accent)',
               boxShadow: neuProgressFillHighlight,
             }}
           />
@@ -399,18 +396,18 @@ export function QualificationRequirementsContent() {
             <div
               className="rounded-lg p-1.5"
               style={{
-                background: NEU_TOKENS.bg,
+                background: 'var(--neu-bg)',
                 boxShadow: neuRaised,
-                border: `1px solid ${NEU_TOKENS.border}`,
+                border: '1px solid var(--neu-border)',
                 borderRadius: neuRadius.md,
               }}
             >
               <Shield
                 className="h-3.5 w-3.5"
-                style={{ color: NEU_TOKENS.accent }}
+                style={{ color: 'var(--neu-accent)' }}
               />
             </div>
-            <span className="font-medium" style={{ color: NEU_TOKENS.white80 }}>
+            <span className="font-medium" style={{ color: 'var(--neu-text-primary)' }}>
               Premium Pool Qualification
             </span>
             <TooltipProvider>
@@ -418,16 +415,16 @@ export function QualificationRequirementsContent() {
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded p-0.5 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D162C]"
-                    style={{ color: NEU_TOKENS.white60 }}
+                    className="rounded p-0.5 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--neu-bg)]"
+                    style={{ color: 'var(--neu-text-secondary)' }}
                     aria-label="Info"
                   >
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent
-                  className="max-w-xs border-[#009BF2]/20 bg-[#0D162C]"
-                  style={{ color: NEU_TOKENS.white80 }}
+                  className="max-w-xs"
+                  style={{ color: 'var(--neu-text-primary)', border: '1px solid var(--neu-border)', background: 'var(--neu-bg)' }}
                 >
                   {premiumTooltip}
                 </TooltipContent>
@@ -437,12 +434,12 @@ export function QualificationRequirementsContent() {
           {isStakeholder ? (
             <span
               className="text-xs font-medium"
-              style={{ color: NEU_TOKENS.white40 }}
+              style={{ color: 'var(--neu-text-muted)' }}
             >
               Not Eligible
             </span>
           ) : (
-            <span className="font-bold" style={{ color: NEU_TOKENS.accent }}>
+            <span className="font-bold" style={{ color: 'var(--neu-accent)' }}>
               {premiumProgress}%
             </span>
           )}
@@ -455,7 +452,7 @@ export function QualificationRequirementsContent() {
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: isStakeholder ? 0 : `${premiumProgress}%`,
-              background: NEU_TOKENS.accent,
+              background: 'var(--neu-accent)',
               boxShadow: neuProgressFillHighlight,
             }}
           />
@@ -463,14 +460,14 @@ export function QualificationRequirementsContent() {
         {isStakeholder && (
           <p
             className="flex items-center gap-1 text-xs"
-            style={{ color: NEU_TOKENS.white40 }}
+            style={{ color: 'var(--neu-text-muted)' }}
           >
             <Lock className="h-3 w-3" /> Stakeholders are not eligible for
             Premium Pool
           </p>
         )}
         {!isStakeholder && premiumProgress < 100 && premiumHelperText && (
-          <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+          <p className="text-xs" style={{ color: 'var(--neu-text-secondary)' }}>
             {premiumHelperText}
           </p>
         )}
@@ -482,9 +479,9 @@ export function QualificationRequirementsContent() {
     <div className="space-y-3">
       <h4
         className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: NEU_TOKENS.accent }}
+        style={{ color: 'var(--neu-accent)' }}
       >
-        <Star className="h-4 w-4" style={{ color: NEU_TOKENS.accent }} />
+        <Star className="h-4 w-4" style={{ color: 'var(--neu-accent)' }} />
         Requirements
       </h4>
       <div className="space-y-2.5">
@@ -521,7 +518,7 @@ export function QualificationRequirementsContent() {
             {lrReq.stakeRequirement && (
               <p
                 className="ml-11 text-xs"
-                style={{ color: NEU_TOKENS.white60 }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Each must have {lrReq.stakeRequirement} (Premium Pool
                 requirement)
@@ -537,9 +534,9 @@ export function QualificationRequirementsContent() {
     <div className="space-y-3">
       <h4
         className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: NEU_TOKENS.accent }}
+        style={{ color: 'var(--neu-accent)' }}
       >
-        <Shield className="h-4 w-4" style={{ color: NEU_TOKENS.accent }} />
+        <Shield className="h-4 w-4" style={{ color: 'var(--neu-accent)' }} />
         Pool Qualifications
       </h4>
       <div className="grid gap-3">
@@ -570,19 +567,19 @@ export function QualificationRequirementsContent() {
   const maxRankBlock = isMaxRank && (
     <div className="p-6 text-center" style={blockInsetStyle}>
       <div className="mb-3 flex justify-center gap-2">
-        <Star className="h-5 w-5" style={{ color: NEU_TOKENS.accent }} />
-        <Star className="h-5 w-5" style={{ color: NEU_TOKENS.accent }} />
-        <Star className="h-5 w-5" style={{ color: NEU_TOKENS.accent }} />
+        <Star className="h-5 w-5" style={{ color: 'var(--neu-accent)' }} />
+        <Star className="h-5 w-5" style={{ color: 'var(--neu-accent)' }} />
+        <Star className="h-5 w-5" style={{ color: 'var(--neu-accent)' }} />
       </div>
       <h3
         className="mb-1 text-lg font-bold"
-        style={{ color: NEU_TOKENS.accent }}
+        style={{ color: 'var(--neu-accent)' }}
       >
         Congratulations!
       </h3>
-      <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+      <p className="text-sm" style={{ color: 'var(--neu-text-secondary)' }}>
         You&apos;ve reached the highest rank:{' '}
-        <strong style={{ color: NEU_TOKENS.white80 }}>
+        <strong style={{ color: 'var(--neu-text-primary)' }}>
           {stripEmojis(currentRank)}
         </strong>
       </p>
@@ -597,27 +594,27 @@ export function QualificationRequirementsContent() {
       <div
         className="rounded-xl p-2 sm:p-3"
         style={{
-          background: NEU_TOKENS.bg,
+          background: 'var(--neu-bg)',
           boxShadow: neuRaised,
-          border: `1px solid ${NEU_TOKENS.border}`,
+          border: '1px solid var(--neu-border)',
           borderRadius: neuRadius.lg,
         }}
       >
         <Target
           className="h-5 w-5 sm:h-6 sm:w-6"
-          style={{ color: NEU_TOKENS.accent }}
+          style={{ color: 'var(--neu-accent)' }}
         />
       </div>
       <div className="min-w-0 flex-1">
         <h2
           className="text-sm font-bold sm:text-base md:text-lg"
-          style={{ color: NEU_TOKENS.accent }}
+          style={{ color: 'var(--neu-accent)' }}
         >
           {title}
         </h2>
         <p
           className="text-[10px] sm:text-xs"
-          style={{ color: NEU_TOKENS.white60 }}
+          style={{ color: 'var(--neu-text-secondary)' }}
         >
           {subtitle}
         </p>
@@ -636,7 +633,7 @@ export function QualificationRequirementsContent() {
         {maxRankBlock}
         <div
           className="space-y-6 pt-6"
-          style={{ borderTop: `1px solid ${NEU_TOKENS.border}` }}
+          style={{ borderTop: '1px solid var(--neu-border)' }}
         >
           <div style={sectionWrapperStyle}>{requirementsSection}</div>
           <div style={sectionWrapperStyle}>{poolSection}</div>
@@ -650,7 +647,7 @@ export function QualificationRequirementsContent() {
         {maxRankBlock}
         <div
           className="space-y-4 pt-6"
-          style={{ borderTop: `1px solid ${NEU_TOKENS.border}` }}
+          style={{ borderTop: '1px solid var(--neu-border)' }}
         >
           <div style={sectionWrapperStyle}>{requirementsSection}</div>
           <div style={sectionWrapperStyle}>{poolSection}</div>
@@ -679,56 +676,56 @@ function RequirementRow({
     <div
       className="flex items-center gap-3 rounded-[20px] p-3"
       style={{
-        background: NEU_TOKENS.bg,
+        background: 'var(--neu-bg)',
         boxShadow: neuInset,
-        border: `1px solid ${NEU_TOKENS.border}`,
+        border: '1px solid var(--neu-border)',
         borderRadius: neuRadius.xl,
       }}
     >
       <div
         className="rounded-lg p-2"
         style={{
-          background: NEU_TOKENS.bg,
+          background: 'var(--neu-bg)',
           boxShadow: isMet ? undefined : neuRaised,
-          border: `1px solid ${NEU_TOKENS.border}`,
+          border: '1px solid var(--neu-border)',
           borderRadius: neuRadius.md,
         }}
       >
         <Icon
           className="h-4 w-4"
-          style={{ color: isMet ? NEU_TOKENS.accent : NEU_TOKENS.white40 }}
+          style={{ color: isMet ? 'var(--neu-accent)' : 'var(--neu-text-muted)' }}
         />
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center justify-between">
           <span
             className="truncate text-sm font-medium"
-            style={{ color: NEU_TOKENS.white80 }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {title}
           </span>
           {isMet ? (
             <CheckCircle2
               className="h-4 w-4 flex-shrink-0"
-              style={{ color: NEU_TOKENS.accent }}
+              style={{ color: 'var(--neu-accent)' }}
             />
           ) : (
             <Circle
               className="h-4 w-4 flex-shrink-0"
-              style={{ color: NEU_TOKENS.white40 }}
+              style={{ color: 'var(--neu-text-muted)' }}
             />
           )}
         </div>
         <div
           className="flex items-center justify-between text-xs"
-          style={{ color: NEU_TOKENS.white60 }}
+          style={{ color: 'var(--neu-text-secondary)' }}
         >
           <span>
             {unit}
             {current.toLocaleString()} / {unit}
             {required.toLocaleString()}
           </span>
-          <span style={{ color: isMet ? NEU_TOKENS.accent : undefined }}>
+          <span style={{ color: isMet ? 'var(--neu-accent)' : undefined }}>
             {isMet ? 'Completed' : 'In Progress'}
           </span>
         </div>
@@ -752,27 +749,27 @@ function PoolRow({
     <div
       className="flex flex-col gap-2 rounded-[20px] p-3 transition-all"
       style={{
-        background: NEU_TOKENS.bg,
+        background: 'var(--neu-bg)',
         boxShadow: neuInset,
-        border: `1px solid ${isQualified && !isStakeholder ? NEU_TOKENS.borderStrong : NEU_TOKENS.border}`,
+        border: `1px solid ${isQualified && !isStakeholder ? 'rgba(var(--neu-accent-rgb), 0.25)' : 'var(--neu-border)'}`,
         borderRadius: neuRadius.xl,
       }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isStakeholder ? (
-            <Lock className="h-4 w-4" style={{ color: NEU_TOKENS.white40 }} />
+            <Lock className="h-4 w-4" style={{ color: 'var(--neu-text-muted)' }} />
           ) : isQualified ? (
             <CheckCircle2
               className="h-4 w-4"
-              style={{ color: NEU_TOKENS.accent }}
+              style={{ color: 'var(--neu-accent)' }}
             />
           ) : (
-            <Circle className="h-4 w-4" style={{ color: NEU_TOKENS.white40 }} />
+            <Circle className="h-4 w-4" style={{ color: 'var(--neu-text-muted)' }} />
           )}
           <span
             className="text-sm font-medium"
-            style={{ color: NEU_TOKENS.white80 }}
+            style={{ color: 'var(--neu-text-primary)' }}
           >
             {title}
           </span>
@@ -781,10 +778,10 @@ function PoolRow({
           className="text-xs font-medium"
           style={{
             color: isStakeholder
-              ? NEU_TOKENS.white40
+              ? 'var(--neu-text-muted)'
               : isQualified
-                ? NEU_TOKENS.accent
-                : NEU_TOKENS.white60,
+                ? 'var(--neu-accent)'
+                : 'var(--neu-text-secondary)',
           }}
         >
           {isStakeholder
@@ -794,7 +791,7 @@ function PoolRow({
               : 'Not Qualified'}
         </span>
       </div>
-      <p className="pl-6 text-xs" style={{ color: NEU_TOKENS.white60 }}>
+      <p className="pl-6 text-xs" style={{ color: 'var(--neu-text-secondary)' }}>
         {message}
       </p>
     </div>

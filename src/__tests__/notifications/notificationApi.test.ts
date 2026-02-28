@@ -2,7 +2,6 @@
  * Notification API Service Tests
  */
 
-import axios, { type AxiosInstance } from 'axios';
 import {
   getNotifications,
   getUnreadCount,
@@ -11,14 +10,30 @@ import {
   deleteNotification,
   handleNotificationError,
 } from '@/services/notificationApi';
+import axios from 'axios';
 
-// Mock axios
-jest.mock('axios');
+// Mock the API client module so notificationApi does not load real api.ts (which uses interceptors at module load)
+const mockGet = jest.fn();
+const mockPatch = jest.fn();
+const mockDelete = jest.fn();
+
+jest.mock('@/lib/api', () => ({
+  __esModule: true,
+  default: {
+    get: (...args: unknown[]) => mockGet(...args),
+    patch: (...args: unknown[]) => mockPatch(...args),
+    delete: (...args: unknown[]) => mockDelete(...args),
+  },
+}));
+
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    isAxiosError: jest.fn(),
+    create: jest.fn(),
+  },
+}));
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-const createAxiosInstanceMock = (
-  overrides: Partial<AxiosInstance>
-): AxiosInstance => overrides as AxiosInstance;
 
 describe('Notification API Service', () => {
   beforeEach(() => {
@@ -47,11 +62,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          get: jest.fn().mockResolvedValue(mockResponse),
-        })
-      );
+      mockGet.mockResolvedValueOnce(mockResponse);
 
       const result = await getNotifications({ page: 1, limit: 20 });
 
@@ -70,12 +81,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      const mockGet = jest.fn().mockResolvedValue(mockResponse);
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          get: mockGet,
-        })
-      );
+      mockGet.mockResolvedValueOnce(mockResponse);
 
       await getNotifications({
         page: 2,
@@ -84,14 +90,12 @@ describe('Notification API Service', () => {
         unreadOnly: true,
       });
 
-      expect(mockGet).toHaveBeenCalledWith('', {
-        params: {
-          page: '2',
-          limit: '10',
-          type: 'deposit',
-          unreadOnly: 'true',
-        },
-      });
+      // Service builds URL with query string: /notifications?page=2&limit=10&...
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /\/notifications\?.*page=2.*limit=10.*type=deposit.*unreadOnly=true/
+        )
+      );
     });
   });
 
@@ -104,11 +108,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          get: jest.fn().mockResolvedValue(mockResponse),
-        })
-      );
+      mockGet.mockResolvedValueOnce(mockResponse);
 
       const count = await getUnreadCount();
 
@@ -125,11 +125,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          patch: jest.fn().mockResolvedValue(mockResponse),
-        })
-      );
+      mockPatch.mockResolvedValueOnce(mockResponse);
 
       const result = await markAsRead('123');
 
@@ -147,11 +143,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          patch: jest.fn().mockResolvedValue(mockResponse),
-        })
-      );
+      mockPatch.mockResolvedValueOnce(mockResponse);
 
       const result = await markAllAsRead();
 
@@ -169,11 +161,7 @@ describe('Notification API Service', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue(
-        createAxiosInstanceMock({
-          delete: jest.fn().mockResolvedValue(mockResponse),
-        })
-      );
+      mockDelete.mockResolvedValueOnce(mockResponse);
 
       const result = await deleteNotification('123');
 
