@@ -27,6 +27,7 @@ import {
   type User,
 } from '@/types/user';
 import { CreateStakePayload, WithdrawEarlyPayload } from '@/types/stake';
+import { normalizeGoalForApi } from './mutations/stakingMutations';
 import {
   TransferBetweenWalletsPayload,
   InitiateDepositPayload,
@@ -967,35 +968,41 @@ export function useCreateStake() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateStakePayload) =>
-      api.post('/staking/create', payload),
+    mutationFn: (payload: CreateStakePayload) => {
+      // Backend expects: amount, duration (0), sourceWallet ('auto'), optional goal, optional goalTitle (no twoFactorCode)
+      const goalText = (payload.goalTitle ?? '').trim();
+      const apiGoal = goalText ? normalizeGoalForApi(goalText) : undefined;
+      const goalTitle = apiGoal === 'other' && goalText ? goalText : undefined;
+      const body = {
+        amount: payload.amount,
+        sourceWallet: 'auto',
+        duration: 0,
+        ...(apiGoal && { goal: apiGoal }),
+        ...(goalTitle && { goalTitle }),
+      };
+      return api.post('/staking/create', body);
+    },
     onSuccess: async (response: any) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activeStakes });
       queryClient.invalidateQueries({ queryKey: queryKeys.stakeStats });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
 
       // Process registration bonus if this is the first stake
-      const stakeData = response?.data?.stake || response?.stake;
+      const stakeData =
+        response?.data?.stake || response?.data?.data?.stake || response?.stake;
       const isFirstStake =
         response?.data?.isFirstStake || stakeData?.isFirstStake;
       const isBonusEligible =
         response?.data?.registrationBonusEligible || false;
+      const stakeId = stakeData?.id ?? stakeData?._id;
 
-      if (
-        isFirstStake &&
-        isBonusEligible &&
-        stakeData?._id &&
-        stakeData?.amount
-      ) {
+      if (isFirstStake && isBonusEligible && stakeId && stakeData?.amount) {
         try {
           // Dynamically import to avoid circular dependencies
           const { registrationBonusApi } = await import(
             '@/services/registrationBonusApi'
           );
-          await registrationBonusApi.processStake(
-            stakeData._id,
-            stakeData.amount
-          );
+          await registrationBonusApi.processStake(stakeId, stakeData.amount);
 
           // Invalidate registration bonus status to refresh banner
           queryClient.invalidateQueries({

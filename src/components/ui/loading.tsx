@@ -1,26 +1,28 @@
 /**
  * Branded Loading Components
- * Loading indicators with Novunt branding
+ * Loading indicators with Novunt branding (rotating logo)
  */
 
 'use client';
 
-import { Logo } from '@/components/ui/logo';
 import { cn } from '@/lib/utils';
 import { ShimmerCard } from '@/components/ui/shimmer';
+import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 
 interface LoadingProps {
   /** Optional label shown under the spinner. */
   label?: string;
   /** Additional tailwind classes for the container. */
   className?: string;
-  /** Size of the spinner in rem units (default 3rem). */
-  size?: number;
+  /** Size of the spinner: sm, md, lg, xl (default lg). */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const Loading = ({ label = 'Loading…', className, size = 3 }: LoadingProps) => {
-  const spinnerSize = `${size}rem`;
-
+const Loading = ({
+  label = 'Loading…',
+  className,
+  size = 'lg',
+}: LoadingProps) => {
   return (
     <div
       role="status"
@@ -30,10 +32,7 @@ const Loading = ({ label = 'Loading…', className, size = 3 }: LoadingProps) =>
         className
       )}
     >
-      <div
-        className="border-primary/80 animate-spin rounded-full border-4 border-t-transparent"
-        style={{ width: spinnerSize, height: spinnerSize }}
-      />
+      <NovuntSpinner size={size} />
       {label ? <span className="text-sm font-medium">{label}</span> : null}
     </div>
   );
@@ -42,17 +41,15 @@ const Loading = ({ label = 'Loading…', className, size = 3 }: LoadingProps) =>
 export default Loading;
 
 /**
- * Full-screen loading component with Novunt branding
+ * Full-screen loading component with Novunt branding (rotating logo)
  */
 export function LoadingScreen({
   message = 'Loading...',
-  showLogo = true,
-  size = 'lg',
+  size = 'xl',
   className,
 }: {
   message?: string;
-  showLogo?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }) {
   return (
@@ -69,19 +66,9 @@ export function LoadingScreen({
         <div className="bg-primary/20 absolute right-1/4 bottom-1/4 h-96 w-96 animate-pulse rounded-full blur-3xl" />
       </div>
 
-      {/* Content */}
+      {/* Content: rotating Novunt logo (same as index/auth) */}
       <div className="relative z-10 flex flex-col items-center gap-8">
-        {showLogo && (
-          <div className="animate-pulse">
-            <Logo size={size} clickable={false} />
-          </div>
-        )}
-
-        {/* Loading spinner */}
-        <div className="relative">
-          <div className="border-primary/20 border-t-primary h-16 w-16 animate-spin rounded-full border-4" />
-        </div>
-
+        <NovuntSpinner size={size} />
         {message && (
           <p className="animate-pulse text-lg font-medium text-white/90">
             {message}

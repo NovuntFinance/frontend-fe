@@ -11,7 +11,10 @@ import { CheckCircle2, ShieldCheck, Target } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useCreateStake } from '@/lib/mutations/stakingMutations';
+import {
+  useCreateStake,
+  normalizeGoalForApi,
+} from '@/lib/mutations/stakingMutations';
 import { useWalletBalance } from '@/lib/queries';
 import { toast } from '@/components/ui/enhanced-toast';
 import { useUIStore } from '@/store/uiStore';
@@ -43,7 +46,6 @@ export function CreateStakeModal() {
   const [source, setSource] = useState<'funded' | 'earning' | 'both'>('both');
   const [goal, setGoal] = useState<string>('');
   const [goalTitle, setGoalTitle] = useState('');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const { data: walletBalance } = useWalletBalance();
@@ -54,7 +56,6 @@ export function CreateStakeModal() {
   const targetReturn = amountNum * (stakingConfig.goalTargetPercentage / 100);
   const minStake = stakingConfig.minAmount;
   const maxStake = stakingConfig.maxAmount;
-  const requires2FA = amountNum > 100000;
 
   const availableBalance =
     source === 'funded'
@@ -71,7 +72,6 @@ export function CreateStakeModal() {
       setSource('both');
       setGoal('');
       setGoalTitle('');
-      setTwoFactorCode('');
       setError(null);
       closeModal('create-stake');
     }
@@ -98,23 +98,23 @@ export function CreateStakeModal() {
       );
       return;
     }
-    if (requires2FA && !twoFactorCode) {
-      toast.error('2FA Required', {
-        description:
-          'High-value stakes require Two-Factor Authentication for security',
-      });
-      return;
-    }
     setStep(2);
   };
 
   const handleConfirm = async () => {
+    const userGoalText = (goal || goalTitle || '').trim();
+    const apiGoal = userGoalText
+      ? normalizeGoalForApi(userGoalText)
+      : undefined;
+    const sendGoalTitle =
+      userGoalText && apiGoal === 'other' ? userGoalText : undefined;
+
     try {
       await createStake.mutateAsync({
         amount: amountNum,
         source,
-        ...((goal || goalTitle) && { goal: goal || goalTitle }),
-        ...(requires2FA && twoFactorCode && { twoFactorCode }),
+        ...(apiGoal && { goal: apiGoal }),
+        ...(sendGoalTitle && { goalTitle: sendGoalTitle }),
       });
       setStep(3);
     } catch (error: unknown) {
@@ -303,47 +303,6 @@ export function CreateStakeModal() {
                   </p>
                 )}
               </div>
-
-              {requires2FA && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-2 rounded-xl p-4"
-                  style={{
-                    ...insetStyle,
-                    borderColor: 'rgba(245, 158, 11, 0.25)',
-                  }}
-                >
-                  <div className="flex items-start gap-2">
-                    <ShieldCheck className="mt-0.5 size-4 flex-shrink-0 text-amber-400" />
-                    <div>
-                      <p className="text-xs font-semibold text-amber-300">
-                        2FA Required
-                      </p>
-                      <p className="mt-0.5 text-xs text-amber-200/80">
-                        High-value stakes require Two-Factor Authentication.
-                      </p>
-                    </div>
-                  </div>
-                  <Label
-                    htmlFor="twoFactorCode"
-                    className="text-sm font-medium text-amber-200/90"
-                  >
-                    Authenticator Code
-                  </Label>
-                  <Input
-                    id="twoFactorCode"
-                    type="text"
-                    maxLength={6}
-                    value={twoFactorCode}
-                    onChange={(e) =>
-                      setTwoFactorCode(e.target.value.replace(/\D/g, ''))
-                    }
-                    placeholder="000000"
-                    className="neu-input h-10 border-amber-500/30 text-center font-mono text-lg tracking-widest"
-                  />
-                </motion.div>
-              )}
 
               <InfoCallout
                 icon={

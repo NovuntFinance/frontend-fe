@@ -6,7 +6,9 @@ import { api } from '@/lib/api';
  */
 
 export interface Stake {
-  _id: string;
+  /** Create response uses id; dashboard/lists use _id. Use getStakeId(stake) for a single id. */
+  id?: string;
+  _id?: string;
   userId: string;
   amount: number;
   createdAt: string;
@@ -21,7 +23,8 @@ export interface Stake {
   currentROSPercent?: number;
   /** Target ROS % (e.g. 200 for regular stakes, 100 for bonus). */
   targetROSPercent?: number;
-  goal?: string; // Goal for this stake (e.g., "Wedding", "Housing")
+  goal?: string | null; // Backend enum: wedding, housing, vehicle, travel, education, emergency, retirement, business, other
+  goalTitle?: string | null; // User's custom label when goal is "other" (e.g. "Dream Vacation")
   weeklyPayouts: Array<{
     week: number;
     amount: number;
@@ -32,6 +35,31 @@ export interface Stake {
   type?: 'regular' | 'registration_bonus' | 'referral_bonus'; // Stake type
   isRegistrationBonus?: boolean; // Flag for bonus stakes
   maxReturnMultiplier?: number; // 2.0 for regular, 1.0 for bonus (100% cap)
+}
+
+/** Normalize stake id: create returns id, dashboard/lists return _id. */
+export function getStakeId(stake: Stake): string {
+  return stake.id ?? stake._id ?? '';
+}
+
+/** Display label for goal enum (e.g. "Travel" for "travel"). */
+const GOAL_DISPLAY_LABELS: Record<string, string> = {
+  wedding: 'Wedding',
+  housing: 'Housing',
+  vehicle: 'Vehicle',
+  travel: 'Travel',
+  education: 'Education',
+  emergency: 'Emergency',
+  retirement: 'Retirement',
+  business: 'Business',
+  other: 'Other',
+};
+
+/** Show goalTitle when present; otherwise show label for goal (so "other" shows as user's words). */
+export function getGoalDisplayLabel(stake: Stake): string {
+  if (stake.goalTitle && stake.goalTitle.trim()) return stake.goalTitle.trim();
+  if (stake.goal) return GOAL_DISPLAY_LABELS[stake.goal] ?? stake.goal;
+  return '';
 }
 
 /** True when stake has numerically reached the ROS target (totalEarned >= targetReturn or remainingToTarget <= 0). Use for "200% ROS Target Achieved!" banner. */
@@ -199,7 +227,7 @@ export function useStakeDashboard() {
             console.warn(
               '⚠️ [useStakeDashboard] ⚠️ WARNING: First stake has totalEarned = 0',
               {
-                stakeId: firstStake._id,
+                stakeId: getStakeId(firstStake as Stake),
                 amount: firstStake.amount,
                 targetReturn: firstStake.targetReturn,
                 updatedAt: firstStake.updatedAt,

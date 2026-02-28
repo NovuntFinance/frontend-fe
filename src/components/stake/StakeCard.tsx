@@ -3,7 +3,12 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
-import { Stake, hasReached200Target } from '@/lib/queries/stakingQueries';
+import {
+  Stake,
+  hasReached200Target,
+  getStakeId,
+  getGoalDisplayLabel,
+} from '@/lib/queries/stakingQueries';
 import { useStakingConfig } from '@/hooks/useStakingConfig';
 import { useUIStore } from '@/store/uiStore';
 import { prefersReducedMotion } from '@/lib/accessibility';
@@ -56,7 +61,7 @@ export function StakeCard({
   // 🔍 DEBUG: Log stake data being rendered
   if (process.env.NODE_ENV === 'development') {
     console.log('[StakeCard] 🔍 Rendering stake:', {
-      _id: stake._id,
+      id: getStakeId(stake),
       amount: stake.amount,
       totalEarned: stake.totalEarned,
       progressToTarget: stake.progressToTarget,
@@ -86,11 +91,11 @@ export function StakeCard({
   useEffect(() => {
     if (!hasReachedTarget || typeof window === 'undefined') return;
     if (prefersReducedMotion()) return;
-    const key = `${STAKES_200_CONFETTI_KEY}_${stake._id}`;
+    const key = `${STAKES_200_CONFETTI_KEY}_${getStakeId(stake)}`;
     if (localStorage.getItem(key) === 'true') return;
     localStorage.setItem(key, 'true');
     celebrateStake200AndDashboard();
-  }, [hasReachedTarget, stake._id]);
+  }, [hasReachedTarget, getStakeId(stake)]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -296,8 +301,8 @@ export function StakeCard({
           </div>
         )}
 
-        {/* Goal */}
-        {stake.goal && (
+        {/* Goal: show goalTitle when present, otherwise label for goal (per backend sync doc) */}
+        {getGoalDisplayLabel(stake) && (
           <div
             className="mb-3 rounded-[16px] p-2 text-center"
             style={{
@@ -310,7 +315,7 @@ export function StakeCard({
               className="text-[10px] font-medium sm:text-xs"
               style={{ color: secondaryColor }}
             >
-              🎯 {stake.goal}
+              🎯 {getGoalDisplayLabel(stake)}
             </p>
           </div>
         )}

@@ -5,38 +5,86 @@ import { queryKeys } from '@/lib/queries';
 import { registrationBonusApi } from '@/services/registrationBonusApi';
 
 /**
+ * Backend only accepts these goal values (lowercase). Any other text is sent as goal: 'other' with goalTitle for display.
+ */
+export const ALLOWED_GOAL_VALUES = [
+  'wedding',
+  'housing',
+  'vehicle',
+  'travel',
+  'education',
+  'emergency',
+  'retirement',
+  'business',
+  'other',
+] as const;
+
+export type AllowedGoal = (typeof ALLOWED_GOAL_VALUES)[number];
+
+/**
+ * Normalize user goal text for the API: if it matches an allowed value (case-insensitive), return it lowercase; otherwise return 'other'.
+ */
+export function normalizeGoalForApi(userGoal: string): AllowedGoal {
+  const normalized = userGoal.trim().toLowerCase();
+  return ALLOWED_GOAL_VALUES.includes(normalized as AllowedGoal)
+    ? (normalized as AllowedGoal)
+    : 'other';
+}
+
+/**
  * Create Stake Request/Response Types
  */
-
 export interface CreateStakeRequest {
   amount: number;
   source?: 'funded' | 'earning' | 'both'; // Frontend uses this
   sourceWallet?: 'funded' | 'earning' | 'both'; // Backend expects this
   duration?: string; // Backend requires this field
-  goal?: string; // Optional goal for this stake (e.g., 'wedding', 'housing', etc.)
-  twoFactorCode?: string; // Required if 2FA enabled and amount > $100,000
+  goal?: string; // Must be one of ALLOWED_GOAL_VALUES (use normalizeGoalForApi for user text)
+  goalTitle?: string; // User's own words for display (sent when goal is 'other')
+  twoFactorCode?: string; // No longer used for stake creation (removed for UX)
 }
 
+/** Create-stake response shape (backend: data.stake, data.transaction, data.walletAfterStake). apiRequest unwraps to this. */
 export interface CreateStakeResponse {
-  success: boolean;
-  message: string;
+  success?: boolean;
+  message?: string;
   stake: {
-    _id: string;
+    id?: string;
+    _id?: string;
     userId: string;
     amount: number;
-    targetReturn: number; // 200% of amount
-    createdAt: string;
-    status: 'active';
-    source: string;
-    goal?: string; // Optional goal field
-    weeklyPayouts: Array<{
+    goal?: string | null;
+    goalTitle?: string | null;
+    targetReturn: number;
+    startDate?: string;
+    active?: boolean;
+    nextPayoutDate?: string;
+    model?: string;
+    createdAt?: string;
+    status: string;
+    source?: string;
+    weeklyPayouts?: Array<{
       week: number;
       expectedAmount: number;
       estimatedDate: string;
-      status: 'pending';
+      status: string;
     }>;
   };
-  newBalance: {
+  transaction?: {
+    reference: string;
+    type: string;
+    amount: number;
+    timestamp: string;
+  };
+  /** Backend name; legacy response may use newBalance. */
+  walletAfterStake?: {
+    fundedWallet: number;
+    earningWallet: number;
+    totalBalance: number;
+    deductionBreakdown?: { fromFunded: number; fromEarning: number };
+  };
+  /** Legacy: same as walletAfterStake when backend used this name. */
+  newBalance?: {
     fundedWallet: number;
     earningWallet: number;
     totalBalance: number;
@@ -54,7 +102,7 @@ export interface CreateStakeResponse {
  * - Can stake from Deposit Wallet, Earnings Wallet, or both
  * - Receives weekly ROI payouts until 200% return achieved
  * - Stakes are permanent (cannot withdraw principal)
- * - 2FA required if amount > $100,000 and user has 2FA enabled
+ * - 2FA is not required for stake creation. 2FA is only required for withdrawal, transfer, and change of password.
  */
 export function useCreateStake() {
   const queryClient = useQueryClient();
@@ -65,7 +113,6 @@ export function useCreateStake() {
         amount: data.amount,
         source: data.source || 'both',
         goal: data.goal || 'none',
-        has2FA: !!data.twoFactorCode,
       });
 
       // Backend has a validation bug where duration: 0 is treated as missing
@@ -76,9 +123,9 @@ export function useCreateStake() {
         duration: 0, // Backend requires 0 for permanent stake (200% ROS)
       };
 
-      // Add optional fields
+      // Add optional fields: goal must be one of allowed enum values (handled by caller via normalizeGoalForApi)
       if (data.goal) payload.goal = data.goal;
-      if (data.twoFactorCode) payload.twoFactorCode = data.twoFactorCode;
+      if (data.goalTitle) payload.goalTitle = data.goalTitle;
 
       console.log(
         '[Staking Mutation] 📦 Final payload being sent:',
@@ -91,11 +138,13 @@ export function useCreateStake() {
         payload
       );
 
+      const stakeId = response.stake?.id ?? response.stake?._id;
+      const wallet = response.walletAfterStake ?? response.newBalance;
       console.log('[Staking Mutation] ✅ Stake created successfully:', {
-        stakeId: response.stake._id,
+        stakeId,
         amount: response.stake.amount,
         targetReturn: response.stake.targetReturn,
-        newBalance: response.newBalance,
+        walletAfterStake: wallet,
       });
 
       return response;
@@ -127,7 +176,7 @@ export function useCreateStake() {
       // Process stake for registration bonus in the background (non-blocking)
       // Use a timeout wrapper to prevent it from hanging
       const processBonusWithTimeout = async () => {
-        const stakeId = data?.stake?._id;
+        const stakeId = data?.stake?.id ?? data?.stake?._id;
         const stakeAmount = data?.stake?.amount;
 
         if (!stakeId || !stakeAmount) {

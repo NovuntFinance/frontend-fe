@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Plus } from 'lucide-react';
 import type { Stake, StakingDashboard } from '@/lib/queries/stakingQueries';
-import { useStakeDashboard } from '@/lib/queries/stakingQueries';
+import { useStakeDashboard, getStakeId } from '@/lib/queries/stakingQueries';
 import { useUIStore } from '@/store/uiStore';
 import { StakeCard } from '@/components/stake/StakeCard';
 import { TransactionHistory } from '@/components/wallet';
@@ -182,7 +182,7 @@ export default function StakesPage() {
                 : activeStakes.slice(0, INITIAL_STAKE_DISPLAY)
               ).map((stake: Stake, index: number) => (
                 <motion.div
-                  key={stake._id}
+                  key={getStakeId(stake)}
                   initial={reducedMotion ? false : { opacity: 0, y: 20 }}
                   animate={reducedMotion ? false : { opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * index }}
@@ -263,7 +263,7 @@ export default function StakesPage() {
                 : stakeHistory.slice(0, INITIAL_STAKE_DISPLAY)
               ).map((stake: Stake, index: number) => (
                 <motion.div
-                  key={stake._id}
+                  key={getStakeId(stake)}
                   initial={reducedMotion ? false : { opacity: 0, y: 20 }}
                   animate={reducedMotion ? false : { opacity: 1, y: 0 }}
                   transition={{ delay: 0.75 + 0.1 * index }}

@@ -387,7 +387,7 @@ function AdminLoginForm() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loading className="mr-2 h-4 w-4" />
+                  <Loading size="sm" className="mr-2" />
                   Logging in...
                 </>
               ) : (
@@ -415,7 +415,7 @@ export default function AdminLoginPage() {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6">
               <div className="flex items-center justify-center">
-                <Loading className="h-8 w-8" />
+                <Loading size="lg" />
               </div>
             </CardContent>
           </Card>
