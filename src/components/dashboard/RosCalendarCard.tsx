@@ -30,12 +30,15 @@ function seededRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-/** Generate daily ROS for a date range: 0.1% - 2.2%, one decimal */
+/** Generate daily ROS for a date range: 0.1% - 2.2%, one decimal. Keys are YYYY-MM-DD (calendar date) to match backend. */
 function generateMockRosByDate(start: Date, end: Date): Record<string, number> {
   const out: Record<string, number> = {};
   const d = new Date(start);
   while (d <= end) {
-    const key = d.toISOString().slice(0, 10);
+    const y = d.getFullYear(),
+      m = d.getMonth(),
+      day = d.getDate();
+    const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const seed = d.getTime() * 0.001;
     const raw = seededRandom(seed);
     const value = MIN_ROS + raw * (MAX_ROS - MIN_ROS);
@@ -97,9 +100,13 @@ export function RosCalendarCard() {
     [dataEnd]
   );
 
+  /** Build YYYY-MM-DD from calendar date so it matches backend keys (platform UTC dates). Avoid toISOString() which would shift the key in timezones ahead of UTC. */
   const getRosForDate = useMemo(
     () => (date: Date) => {
-      const key = date.toISOString().slice(0, 10);
+      const y = date.getFullYear();
+      const m = date.getMonth();
+      const d = date.getDate();
+      const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const calendar = backendData?.calendar;
       if (calendar && typeof calendar[key] === 'number') {
         return calendar[key];
