@@ -37,7 +37,41 @@ import { WalletModal } from '@/components/wallet/WalletModal';
 import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
+import { IoHeadsetOutline } from 'react-icons/io5';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
 import neuStyles from '@/styles/neumorphic.module.css';
+
+/** Theme toggle for dashboard header — sits next to headset button to avoid overlap with global fixed button */
+function DashboardThemeToggle({
+  neuStyles: ns,
+}: {
+  neuStyles: Record<string, string>;
+}) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = resolvedTheme === 'dark';
+  if (!mounted) {
+    return (
+      <div
+        className={`h-10 w-10 shrink-0 rounded-full sm:h-11 sm:w-11 ${ns['neu-icon-button']}`}
+        aria-hidden
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${ns['neu-icon-button']} ${ns['neu-icon-button-accent-default']}`}
+      style={{ filter: 'none' }}
+      aria-label="Toggle theme"
+    >
+      {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+    </button>
+  );
+}
 
 /**
  * Dashboard Layout
@@ -143,11 +177,11 @@ export default function DashboardLayout({
           paddingRight: 'env(safe-area-inset-right, 0px)',
         }}
       >
-        {/* Header: fixed, always visible; insets so it doesn't sit under notch */}
+        {/* Header: fixed, always visible; insets so it doesn't sit under notch/status bar on real devices */}
         <div
           className="fixed right-0 left-0 z-30"
           style={{
-            top: 'env(safe-area-inset-top, 0px)',
+            top: 'max(env(safe-area-inset-top, 0px), 12px)',
             paddingLeft: 'env(safe-area-inset-left, 0px)',
             paddingRight: 'env(safe-area-inset-right, 0px)',
           }}
@@ -158,9 +192,12 @@ export default function DashboardLayout({
               background: 'var(--neu-bg)',
               borderBottom: '1px solid var(--neu-border)',
               boxShadow: 'var(--neu-shadow-raised)',
+              paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
+              paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0px))',
             }}
           >
-            <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-16 sm:pr-20">
+            <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-4 sm:px-4">
               {/* Profile Section - Left side */}
               <div className="flex shrink-0 items-center gap-3">
                 <DropdownMenu
@@ -291,6 +328,19 @@ export default function DashboardLayout({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+
+              {/* Support + Theme - Right side (neumorphic buttons, side by side) */}
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  onClick={() => setAssistantOpen(true)}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${neuStyles['neu-icon-button']} ${neuStyles['neu-icon-button-accent-default']}`}
+                  style={{ filter: 'none' }}
+                  aria-label="Open customer support"
+                >
+                  <IoHeadsetOutline className="h-5 w-5" />
+                </button>
+                <DashboardThemeToggle neuStyles={neuStyles} />
+              </div>
             </div>
 
             {/* Notification Center Dropdown - positioned at top-right, controlled via state */}
@@ -399,12 +449,12 @@ export default function DashboardLayout({
           </header>
         </div>
 
-        {/* Spacer so content starts below fixed header */}
+        {/* Spacer so content starts below fixed header (match header top offset) */}
         <div
           aria-hidden="true"
           className="shrink-0"
           style={{
-            minHeight: 'calc(4rem + env(safe-area-inset-top, 0px))',
+            minHeight: 'calc(4rem + max(env(safe-area-inset-top, 0px), 12px))',
           }}
         />
 
@@ -438,13 +488,13 @@ export default function DashboardLayout({
           </div>
         )}
 
-        {/* Page content - scrolls here so bottom nav does not block; bottom padding clears fixed nav + safe area */}
+        {/* Page content - scrolls here so bottom nav does not block; generous bottom padding so last item is never under nav on real devices */}
         <main
           id="main-content"
           className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:pt-8"
           style={{
             paddingBottom:
-              'max(6rem, calc(5.5rem + env(safe-area-inset-bottom, 0px)))',
+              'max(7rem, calc(82px + env(safe-area-inset-bottom, 0px)))',
           }}
         >
           <div className="dashboard-page-container">{children}</div>
