@@ -20,8 +20,8 @@ export function RegistrationBonusModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-h-[90vh] max-w-[calc(100%-1rem)] overflow-y-auto sm:max-w-lg md:max-w-xl"
-        showCloseButton
+        className="max-w-[calc(100%-1rem)] sm:max-w-lg md:max-w-xl"
+        showCloseButton={false}
       >
         <DialogTitle className="sr-only">Registration Bonus</DialogTitle>
         <RegistrationBonusBanner onClose={onClose} defaultExpanded />

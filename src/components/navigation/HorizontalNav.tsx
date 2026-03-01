@@ -130,7 +130,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
             style={{
               minHeight: 'calc(66px + env(safe-area-inset-bottom, 0px))',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'center',
               background: 'var(--neu-bg)',
               border: 'none',
@@ -139,6 +139,7 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
               WebkitMask: NOTCH_MASK,
               mask: NOTCH_MASK,
               boxShadow: BAR_NEU_SHADOW,
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.boxShadow = BAR_NEU_SHADOW_HOVER;
@@ -147,7 +148,10 @@ export function HorizontalNav({ barsVisible = true }: HorizontalNavProps) {
               e.currentTarget.style.boxShadow = BAR_NEU_SHADOW;
             }}
           >
-            <div className="flex w-full items-center px-3 sm:px-4">
+            <div
+              className="flex w-full items-center px-3 sm:px-4"
+              style={{ paddingTop: '10px' }}
+            >
               <div className="flex flex-1 justify-around">
                 {NAV_ITEMS.slice(0, 2).map(renderNavItem)}
               </div>

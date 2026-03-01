@@ -37,12 +37,11 @@ import { WalletModal } from '@/components/wallet/WalletModal';
 import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
-import { IoHeadsetOutline } from 'react-icons/io5';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import neuStyles from '@/styles/neumorphic.module.css';
 
-/** Theme toggle for dashboard header — sits next to headset button to avoid overlap with global fixed button */
+/** Theme toggle for dashboard header */
 function DashboardThemeToggle({
   neuStyles: ns,
 }: {
@@ -181,18 +180,18 @@ export default function DashboardLayout({
         <div
           className="fixed right-0 left-0 z-30"
           style={{
-            top: 'max(env(safe-area-inset-top, 0px), 12px)',
+            top: '0',
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)',
             paddingLeft: 'env(safe-area-inset-left, 0px)',
             paddingRight: 'env(safe-area-inset-right, 0px)',
           }}
         >
           <header
-            className="shrink-0 py-2 transition-shadow duration-200"
+            className="shrink-0 py-3 transition-shadow duration-200"
             style={{
               background: 'var(--neu-bg)',
               borderBottom: '1px solid var(--neu-border)',
               boxShadow: 'var(--neu-shadow-raised)',
-              paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
               paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
               paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0px))',
             }}
@@ -279,7 +278,7 @@ export default function DashboardLayout({
                       <User
                         className="mr-2 h-4 w-4"
                         style={{
-                          color: 'var(--dashboard-icon, #ffffff)',
+                          color: 'var(--neu-text-primary)',
                           filter: 'none',
                         }}
                       />
@@ -301,7 +300,7 @@ export default function DashboardLayout({
                       <Bell
                         className="mr-2 h-4 w-4"
                         style={{
-                          color: 'var(--dashboard-icon, #ffffff)',
+                          color: 'var(--neu-text-primary)',
                           filter: 'none',
                         }}
                       />
@@ -329,16 +328,8 @@ export default function DashboardLayout({
                 </DropdownMenu>
               </div>
 
-              {/* Support + Theme - Right side (neumorphic buttons, side by side) */}
+              {/* Theme toggle - Right side */}
               <div className="flex shrink-0 items-center gap-2">
-                <button
-                  onClick={() => setAssistantOpen(true)}
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${neuStyles['neu-icon-button']} ${neuStyles['neu-icon-button-accent-default']}`}
-                  style={{ filter: 'none' }}
-                  aria-label="Open customer support"
-                >
-                  <IoHeadsetOutline className="h-5 w-5" />
-                </button>
                 <DashboardThemeToggle neuStyles={neuStyles} />
               </div>
             </div>
@@ -454,7 +445,7 @@ export default function DashboardLayout({
           aria-hidden="true"
           className="shrink-0"
           style={{
-            minHeight: 'calc(4rem + max(env(safe-area-inset-top, 0px), 12px))',
+            minHeight: 'calc(5rem + env(safe-area-inset-top, 0px))',
           }}
         />
 
@@ -493,8 +484,7 @@ export default function DashboardLayout({
           id="main-content"
           className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:pt-8"
           style={{
-            paddingBottom:
-              'max(7rem, calc(82px + env(safe-area-inset-bottom, 0px)))',
+            paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 12px))',
           }}
         >
           <div className="dashboard-page-container">{children}</div>

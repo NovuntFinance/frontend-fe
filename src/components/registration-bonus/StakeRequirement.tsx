@@ -8,10 +8,7 @@
 import React from 'react';
 import { TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react';
 import { StakeRequirementProps } from '@/types/registrationBonus';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import { useUIStore } from '@/store/uiStore';
 
 /**
@@ -32,75 +29,206 @@ export function StakeRequirement({
 
   if (isComplete) {
     return (
-      <Card className="flex h-full flex-col border-2 border-green-500/30 bg-green-500/5 transition-all duration-300 hover:border-green-500/50">
-        <CardContent className="flex flex-1 flex-col p-4">
-          <div className="mb-3 flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg border border-green-500/30 bg-green-500/20 p-2.5">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h3 className="text-foreground mb-0.5 text-sm font-bold">
-                  First Stake
-                </h3>
-                {stakeData.amount && (
-                  <p className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Staked {formatCurrency(stakeData.amount)}
-                  </p>
-                )}
-              </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          padding: '12px',
+          borderRadius: '12px',
+          background: 'var(--neu-bg)',
+          boxShadow: 'var(--neu-shadow-inset)',
+          border: '2px solid rgba(34, 197, 94, 0.2)',
+          transition: 'all 0.3s ease',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: '8px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+                borderRadius: '10px',
+                background: 'rgba(34, 197, 94, 0.1)',
+                padding: '8px',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+                flexShrink: 0,
+              }}
+            >
+              <CheckCircle2
+                className="h-5 w-5"
+                style={{ color: 'rgb(34, 197, 94)' }}
+              />
             </div>
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3
+                style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                  marginBottom: '2px',
+                  color: 'var(--neu-text-primary)',
+                  lineHeight: '1.2',
+                  wordBreak: 'break-word',
+                }}
+              >
+                First Stake
+              </h3>
+              {stakeData.amount && (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '0.6875rem',
+                    fontWeight: 500,
+                    color: 'rgb(34, 197, 94)',
+                    lineHeight: '1.3',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  <CheckCircle2 className="h-3 w-3" style={{ flexShrink: 0 }} />
+                  Staked {formatCurrency(stakeData.amount)}
+                </p>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <CheckCircle2
+            className="h-4 w-4"
+            style={{ flexShrink: 0, color: 'rgb(34, 197, 94)' }}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="border-novunt-gold-500/30 from-novunt-gold-500/5 to-background hover:border-novunt-gold-500/50 hover:shadow-novunt-gold-500/10 group relative flex h-full flex-col overflow-hidden border-2 bg-gradient-to-br transition-all duration-300 hover:shadow-lg">
-      {/* Gold shimmer effect */}
-      <motion.div
-        className="via-novunt-gold-500/10 absolute inset-0 bg-gradient-to-r from-transparent to-transparent"
-        animate={{
-          x: ['-100%', '200%'],
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        borderRadius: '12px',
+        background: 'var(--neu-bg)',
+        boxShadow: 'var(--neu-shadow-inset)',
+        transition: 'all 0.3s ease',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          padding: '12px',
+          gap: '10px',
         }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          repeatDelay: 3,
-        }}
-      />
-
-      <CardContent className="relative z-10 flex flex-1 flex-col p-4">
-        <div className="mb-3 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-novunt-gold-500/20 border-novunt-gold-500/30 group-hover:bg-novunt-gold-500/30 rounded-lg border p-2.5 transition-colors">
-              <TrendingUp className="text-novunt-gold-600 dark:text-novunt-gold-500 h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-foreground mb-0.5 text-sm font-bold">
-                First Stake
-              </h3>
-              <p className="text-muted-foreground text-xs">
-                Stake at least 20 USDT
-              </p>
-            </div>
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px',
+          }}
+        >
+          <div
+            style={{
+              borderRadius: '10px',
+              background: 'var(--neu-bg)',
+              boxShadow: 'var(--neu-shadow-inset)',
+              padding: '8px',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+            }}
+          >
+            <TrendingUp
+              className="h-5 w-5"
+              style={{ color: 'var(--neu-accent)' }}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                marginBottom: '2px',
+                color: 'var(--neu-text-primary)',
+                lineHeight: '1.2',
+                wordBreak: 'break-word',
+              }}
+            >
+              First Stake
+            </h3>
+            <p
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--neu-text-secondary)',
+                lineHeight: '1.3',
+                wordBreak: 'break-word',
+              }}
+            >
+              Stake ≥ 20 USDT
+            </p>
           </div>
         </div>
 
-        <div className="mt-auto pt-2">
-          <Button
+        <div style={{ marginTop: 'auto' }}>
+          <button
             onClick={handleStakeClick}
-            className="from-novunt-gold-500 to-novunt-gold-600 hover:from-novunt-gold-600 hover:to-novunt-gold-700 shadow-novunt-gold-500/20 hover:shadow-novunt-gold-500/30 w-full border-0 bg-gradient-to-r text-white shadow-md transition-all duration-300 hover:shadow-lg"
-            size="sm"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'var(--neu-accent)',
+              boxShadow: '0 2px 8px rgba(0, 155, 242, 0.3)',
+              color: '#FFFFFF',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow =
+                '0 4px 12px rgba(0, 155, 242, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow =
+                '0 2px 8px rgba(0, 155, 242, 0.3)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
           >
             Get Started
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

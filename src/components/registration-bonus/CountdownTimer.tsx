@@ -58,12 +58,33 @@ export function CountdownTimer({
   ];
 
   return (
-    <div className="from-novunt-gold-500/10 via-novunt-gold-500/5 to-novunt-gold-500/10 border-novunt-gold-500/20 flex items-center gap-3 rounded-xl border bg-gradient-to-r p-4 backdrop-blur-sm">
-      <div className="bg-novunt-gold-500/20 border-novunt-gold-500/30 rounded-lg border p-2">
-        <Clock className="text-novunt-gold-600 dark:text-novunt-gold-500 h-5 w-5 shrink-0" />
+    <div
+      className="flex items-center gap-3 rounded-xl p-4"
+      style={{
+        background: 'var(--neu-bg)',
+        boxShadow:
+          'inset 3px 3px 8px var(--neu-shadow-dark), inset -3px -3px 8px var(--neu-shadow-light)',
+      }}
+    >
+      {/* Icon - Soft elevated */}
+      <div
+        className="shrink-0 rounded-lg p-2"
+        style={{
+          background: 'var(--neu-bg)',
+          boxShadow:
+            '2px 2px 5px var(--neu-shadow-dark), -2px -2px 5px var(--neu-shadow-light)',
+        }}
+      >
+        <Clock
+          className="h-5 w-5"
+          style={{ color: 'var(--neu-text-secondary)' }}
+        />
       </div>
       <div className="flex-1">
-        <p className="text-muted-foreground mb-1.5 text-xs font-medium">
+        <p
+          className="mb-1.5 text-xs font-medium"
+          style={{ color: 'var(--neu-text-secondary)' }}
+        >
           Time Remaining
         </p>
         <div className="flex items-center gap-2 md:gap-3">
@@ -79,20 +100,27 @@ export function CountdownTimer({
                 key={unit.value}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
-                className={cn(
-                  'text-lg font-bold tabular-nums md:text-xl',
-                  unit.value <= 1 && unit.label === 'Days'
-                    ? 'text-destructive'
-                    : 'text-novunt-gold-600 dark:text-novunt-gold-500'
-                )}
+                className="text-lg font-bold tabular-nums md:text-xl"
+                style={{
+                  color:
+                    unit.value <= 1 && unit.label === 'Days'
+                      ? '#ef4444'
+                      : 'var(--neu-text-primary)',
+                }}
               >
                 {String(unit.value).padStart(2, '0')}
               </motion.span>
-              <span className="text-muted-foreground text-xs font-medium">
+              <span
+                className="text-xs font-medium"
+                style={{ color: 'var(--neu-text-secondary)' }}
+              >
                 {unit.short}
               </span>
               {index < timeUnits.length - 1 && (
-                <span className="text-novunt-gold-500/50 mx-0.5 text-lg">
+                <span
+                  className="mx-0.5 text-lg"
+                  style={{ color: 'var(--neu-text-secondary)', opacity: 0.5 }}
+                >
                   :
                 </span>
               )}

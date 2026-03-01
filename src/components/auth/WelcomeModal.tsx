@@ -40,7 +40,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
       {isOpen && (
         <Dialog open={isOpen} onOpenChange={onClose}>
           <DialogContent
-            className="from-background via-background to-primary/5 max-h-[90vh] overflow-hidden border-none bg-gradient-to-br p-0 sm:max-w-2xl"
+            className="from-background via-background to-primary/5 overflow-hidden border-none bg-gradient-to-br p-0 sm:max-w-2xl"
             showCloseButton={false}
           >
             {/* Custom Close Button - positioned above content */}
@@ -68,8 +68,8 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
               />
             </div>
 
-            {/* Scrollable Content */}
-            <div className="relative z-10 max-h-[90vh] overflow-y-auto p-6 sm:p-8">
+            {/* Scrollable Content - no max-h override, base dialog handles it */}
+            <div className="relative z-10 p-6 sm:p-8">
               {/* Header with Animation */}
               <motion.div
                 initial={{ opacity: 0, y: -20 }}

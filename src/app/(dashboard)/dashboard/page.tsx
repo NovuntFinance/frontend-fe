@@ -55,6 +55,8 @@ import {
 import { useUIStore } from '@/store/uiStore';
 import { openShareModal } from '@/store/shareModalStore';
 import { useUser } from '@/hooks/useUser';
+import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
+import { RegistrationBonusStatus } from '@/types/registrationBonus';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -87,6 +89,11 @@ export default function DashboardPage() {
   const { user } = useUser();
   const {} = useResponsive();
   const openModal = useUIStore((s) => s.openModal);
+  const { data: bonusResponse } = useRegistrationBonusStatus();
+  const bonusStatus = bonusResponse?.data?.status;
+  const bonusCollected =
+    bonusStatus === RegistrationBonusStatus.BONUS_ACTIVE ||
+    bonusStatus === RegistrationBonusStatus.COMPLETED;
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -1056,7 +1063,7 @@ export default function DashboardPage() {
                           transition={{ delay: 0.3 + index * 0.05 }}
                           className="flex touch-manipulation flex-col items-center gap-1.5 sm:gap-2"
                         >
-                          {/* Circular neumorphic button – same as Quick Actions: default light blue + dark icon, hover dark + light blue; label white */}
+                          {/* Circular neumorphic button – same as Quick Actions; welcome bonus gets status indicator */}
                           <div
                             className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16"
                             style={{
@@ -1077,14 +1084,44 @@ export default function DashboardPage() {
                               className="h-5 w-5 sm:h-6 sm:w-6"
                               style={{ color: '#ffffff' }}
                             />
+                            {/* Welcome bonus status: unclaimed = obvious pulse; claimed = green online dot */}
+                            {isWelcomeBonus && (
+                              <span
+                                className={`absolute top-0 right-0 h-3 w-3 rounded-full sm:h-3.5 sm:w-3.5 ${!bonusCollected ? 'animate-pulse' : ''}`}
+                                style={{
+                                  background: bonusCollected
+                                    ? '#22c55e'
+                                    : '#f59e0b',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                title={
+                                  bonusCollected
+                                    ? 'Bonus claimed'
+                                    : 'Claim your bonus'
+                                }
+                                aria-hidden
+                              />
+                            )}
                           </div>
-                          {/* Label – inverts with theme: dark in light mode, white in dark mode */}
+                          {/* Label + status line for welcome bonus */}
                           <span
                             className="text-center text-[10px] font-medium sm:text-xs"
                             style={{ color: 'var(--neu-text-primary)' }}
                           >
                             {button.label}
                           </span>
+                          {isWelcomeBonus && (
+                            <span
+                              className="text-[9px] font-medium sm:text-[10px]"
+                              style={{
+                                color: bonusCollected
+                                  ? '#22c55e'
+                                  : 'var(--neu-accent)',
+                              }}
+                            >
+                              {bonusCollected ? 'Claimed' : 'Tap to claim'}
+                            </span>
+                          )}
                         </motion.button>
                       );
 

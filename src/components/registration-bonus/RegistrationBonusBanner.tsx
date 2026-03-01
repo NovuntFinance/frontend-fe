@@ -299,132 +299,162 @@ export function RegistrationBonusBanner({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="bg-card/50 group relative overflow-hidden border-0 shadow-lg backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl">
-              {/* Animated Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-transparent" />
-
-              {/* Animated Floating Blob */}
-              <motion.div
-                animate={{
-                  x: [0, -15, 0],
-                  y: [0, 10, 0],
-                  scale: [1, 1.15, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute -bottom-12 -left-12 h-24 w-24 rounded-full bg-amber-500/30 blur-2xl"
-              />
-
-              <CardHeader className="relative p-4 sm:p-6">
-                <div className="mb-2 flex items-center justify-between gap-2 sm:gap-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: -10 }}
-                      className="rounded-xl bg-gradient-to-br from-amber-500/30 to-yellow-500/20 p-2 shadow-lg backdrop-blur-sm sm:p-3"
+            {/* Header & content – no outer card wrapper */}
+            <div className="relative p-4 sm:p-6">
+              <div className="mb-4 flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                  {/* Icon - Soft elevated */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="shrink-0 rounded-xl p-2.5 sm:p-3"
+                    style={{
+                      background: 'var(--neu-bg)',
+                      boxShadow:
+                        '3px 3px 8px var(--neu-shadow-dark), -3px -3px 8px var(--neu-shadow-light)',
+                    }}
+                  >
+                    <Gift
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      style={{ color: 'var(--neu-accent)' }}
+                    />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="truncate text-sm font-bold sm:text-base md:text-lg"
+                      style={{ color: 'var(--neu-accent)' }}
                     >
-                      <Gift className="h-5 w-5 text-amber-500 sm:h-6 sm:w-6" />
-                    </motion.div>
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="truncate bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-sm font-bold text-transparent sm:text-base md:text-lg">
-                        Welcome Bonus: {bonusPercentage}% on First Stake!
-                      </CardTitle>
-                      <CardDescription className="truncate text-[10px] sm:text-xs">
-                        Complete all 5 steps within 7 days to unlock your bonus
-                      </CardDescription>
+                      Welcome Bonus: {bonusPercentage}% on First Stake!
+                    </h3>
+                    <p
+                      className="truncate text-[10px] sm:text-xs"
+                      style={{ color: 'var(--neu-text-secondary)' }}
+                    >
+                      Complete all 5 steps within 7 days to unlock your bonus
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                  {/* Toggle button - Neumorphic */}
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-medium transition-all"
+                    style={{
+                      background: 'var(--neu-bg)',
+                      color: 'var(--neu-accent)',
+                      boxShadow: isExpanded
+                        ? 'inset 2px 2px 5px var(--neu-shadow-dark), inset -2px -2px 5px var(--neu-shadow-light)'
+                        : '2px 2px 5px var(--neu-shadow-dark), -2px -2px 5px var(--neu-shadow-light)',
+                    }}
+                  >
+                    {isExpanded ? 'Hide' : 'Details'}
+                    {isExpanded ? (
+                      <ChevronUp className="h-3 w-3" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                  {/* Close button */}
+                  <button
+                    onClick={onClose ?? handleDismiss}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all"
+                    style={{
+                      background: 'var(--neu-bg)',
+                      color: 'var(--neu-text-secondary)',
+                      boxShadow:
+                        '2px 2px 5px var(--neu-shadow-dark), -2px -2px 5px var(--neu-shadow-light)',
+                    }}
+                    aria-label={onClose ? 'Close' : 'Dismiss banner'}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Countdown Timer */}
+              {countdownDeadline && (
+                <div className="mb-4">
+                  <CountdownTimer
+                    deadline={countdownDeadline}
+                    timeRemaining={bonusData.timeRemaining ?? 0}
+                    onExpire={() => refetch()}
+                  />
+                </div>
+              )}
+
+              {/* Overall Progress */}
+              <div className="mb-4 sm:mb-5">
+                <div className="mb-2 flex items-center justify-between">
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: 'var(--neu-text-primary)' }}
+                  >
+                    Overall Progress
+                  </span>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: 'var(--neu-accent)' }}
+                  >
+                    {safeProgressPercentage}%
+                  </span>
+                </div>
+                {/* Progress Track - Inset */}
+                <div
+                  className="relative h-3 overflow-hidden rounded-full"
+                  style={{
+                    background: 'var(--neu-bg)',
+                    boxShadow:
+                      'inset 3px 3px 6px var(--neu-shadow-dark), inset -3px -3px 6px var(--neu-shadow-light)',
+                  }}
+                >
+                  {/* Progress Fill - Illuminated */}
+                  <motion.div
+                    className="h-full rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${safeProgressPercentage}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    style={{
+                      background: 'var(--neu-accent)',
+                      boxShadow: `0 0 8px rgba(var(--neu-accent-rgb), 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.2)`,
+                    }}
+                  />
+                </div>
+                <p
+                  className="mt-1.5 text-[10px]"
+                  style={{ color: 'var(--neu-text-secondary)' }}
+                >
+                  {safeProgressPercentage < 100
+                    ? `${Math.ceil((100 - safeProgressPercentage) / 20)} step${Math.ceil((100 - safeProgressPercentage) / 20) !== 1 ? 's' : ''} remaining`
+                    : 'All steps complete!'}
+                </p>
+              </div>
+
+              {/* Requirements Section – expanded */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div
+                      className="mt-4 border-t pt-4"
+                      style={{ borderColor: 'var(--neu-border)' }}
+                    >
+                      <RequirementSection
+                        requirements={bonusData.requirements}
+                        nextStepDescription={
+                          bonusData.nextStepDescription ??
+                          'Complete the requirements above to activate your bonus'
+                        }
+                        onRefresh={refetch}
+                      />
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="h-8 gap-1 text-xs"
-                    >
-                      {isExpanded ? 'Hide' : 'Details'}
-                      {isExpanded ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onClose ?? handleDismiss}
-                      className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0 rounded-full"
-                      aria-label={onClose ? 'Close' : 'Dismiss banner'}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="relative overflow-visible p-4 pt-0 sm:p-6 sm:pt-0">
-                {/* Countdown Timer */}
-                {countdownDeadline && (
-                  <div className="mb-4">
-                    <CountdownTimer
-                      deadline={countdownDeadline}
-                      timeRemaining={bonusData.timeRemaining ?? 0}
-                      onExpire={() => refetch()}
-                    />
-                  </div>
+                  </motion.div>
                 )}
-
-                {/* Overall Progress */}
-                <div className="mb-4 sm:mb-5">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-foreground text-sm font-semibold">
-                      Overall Progress
-                    </span>
-                    <span className="bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-sm font-bold text-transparent">
-                      {safeProgressPercentage}%
-                    </span>
-                  </div>
-                  <div className="bg-muted/50 relative h-3 overflow-hidden rounded-full">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 shadow-lg shadow-amber-500/50"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${safeProgressPercentage}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                    />
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-[10px]">
-                    {safeProgressPercentage < 100
-                      ? `${Math.ceil((100 - safeProgressPercentage) / 20)} step${Math.ceil((100 - safeProgressPercentage) / 20) !== 1 ? 's' : ''} remaining`
-                      : 'All steps complete!'}
-                  </p>
-                </div>
-
-                {/* Requirements Section – expanded */}
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="border-border/50 mt-4 border-t pt-4">
-                        <RequirementSection
-                          requirements={bonusData.requirements}
-                          nextStepDescription={
-                            bonusData.nextStepDescription ??
-                            'Complete the requirements above to activate your bonus'
-                          }
-                          onRefresh={refetch}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
+              </AnimatePresence>
+            </div>
           </motion.div>
         </AnimatePresence>
       );

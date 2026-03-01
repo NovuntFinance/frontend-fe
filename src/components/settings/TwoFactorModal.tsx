@@ -330,7 +330,7 @@ export function TwoFactorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-[95vw] overflow-y-auto p-4 sm:max-w-lg">
+      <DialogContent className="max-w-[95vw] p-4 sm:max-w-lg">
         <DialogHeader className="items-center space-y-1 text-center">
           <DialogTitle className="flex items-center justify-center gap-2 text-lg font-bold">
             <Shield className="h-5 w-5" />

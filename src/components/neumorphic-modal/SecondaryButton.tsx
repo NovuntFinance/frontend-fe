@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { NEU_TOKENS, neuRaised } from './tokens';
+import { NEU_TOKENS } from './tokens';
 
 export interface SecondaryButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,7 +11,8 @@ export interface SecondaryButtonProps
 }
 
 /**
- * Secondary action (Cancel / Back): text link or subtle raised, white60.
+ * Secondary action (Cancel / Back): theme-aware text so it's visible in both
+ * light and dark mode (primary text = dark on light bg, light on dark bg).
  */
 export function SecondaryButton({
   children,
@@ -25,7 +26,7 @@ export function SecondaryButton({
         'text-center text-sm font-medium transition-opacity hover:opacity-90',
         className
       )}
-      style={{ color: NEU_TOKENS.white60 }}
+      style={{ color: NEU_TOKENS.white80 }}
       {...props}
     >
       {children}

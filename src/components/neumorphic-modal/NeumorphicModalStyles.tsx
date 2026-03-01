@@ -24,12 +24,16 @@ export function NeumorphicModalStyles() {
     <style>{`
       .neu-modal [data-slot="dialog-close"],
       .neu-modal .neu-close-btn {
-        background: ${NEU_TOKENS.bg};
+        background: var(--neu-close-btn-bg);
         box-shadow: ${neuRaised};
         border: 1px solid ${NEU_TOKENS.border};
-        color: ${NEU_TOKENS.accent};
+        color: ${NEU_TOKENS.white80};
         border-radius: ${neuRadius.md};
         transition: box-shadow 0.2s ease;
+      }
+      .neu-modal [data-slot="dialog-close"] svg,
+      .neu-modal .neu-close-btn svg {
+        color: inherit;
       }
       .neu-modal [data-slot="dialog-close"]:hover,
       .neu-modal .neu-close-btn:hover {
