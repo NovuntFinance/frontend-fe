@@ -468,7 +468,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     <>
       <ConfettiBurst trigger={showConfetti} />
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
               <Shield className="text-primary h-6 w-6" />

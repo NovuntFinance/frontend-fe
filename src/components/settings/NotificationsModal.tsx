@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, Mail, Mail as MessageIcon, DollarSign, TrendingUp, Users, Check } from 'lucide-react';
+import {
+  Bell,
+  Mail,
+  Mail as MessageIcon,
+  DollarSign,
+  TrendingUp,
+  Users,
+  Check,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +35,10 @@ interface NotificationSetting {
   enabled: boolean;
 }
 
-export function NotificationsModal({ open, onOpenChange }: NotificationsModalProps) {
+export function NotificationsModal({
+  open,
+  onOpenChange,
+}: NotificationsModalProps) {
   const [settings, setSettings] = useState<NotificationSetting[]>([
     {
       id: 'email',
@@ -89,9 +100,9 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] p-4 sm:max-w-xl sm:p-6 md:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
             <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
             Notification Settings
           </DialogTitle>
@@ -100,23 +111,26 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-6">
+        <div className="mt-6 space-y-6">
           {settings.map((setting) => {
             const Icon = setting.icon;
             return (
               <div
                 key={setting.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+                className="border-border bg-card hover:bg-accent/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
               >
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Icon className="h-5 w-5 text-primary" />
+                <div className="flex flex-1 items-start gap-4">
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <Icon className="text-primary h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <Label htmlFor={setting.id} className="text-base font-medium cursor-pointer">
+                    <Label
+                      htmlFor={setting.id}
+                      className="cursor-pointer text-base font-medium"
+                    >
                       {setting.title}
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       {setting.description}
                     </p>
                   </div>
@@ -131,7 +145,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
           })}
         </div>
 
-        <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
+        <div className="mt-6 flex justify-end gap-3 border-t pt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -147,4 +161,3 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
     </Dialog>
   );
 }
-

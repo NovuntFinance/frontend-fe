@@ -73,13 +73,13 @@ export function RequirementSection({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
         {/* 2FA Setup */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="h-full"
+          className="h-full min-w-[200px]"
         >
           <TwoFARequirement
             twoFAData={{
@@ -95,7 +95,7 @@ export function RequirementSection({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="h-full"
+          className="h-full min-w-[200px]"
         >
           <WithdrawalAddressRequirement
             addressData={{
@@ -115,7 +115,7 @@ export function RequirementSection({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="h-full"
+          className="h-full min-w-[200px]"
         >
           <SocialMediaRequirement
             socialData={{
@@ -133,7 +133,7 @@ export function RequirementSection({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="h-full"
+          className="h-full min-w-[200px]"
         >
           <StakeRequirement
             stakeData={{

@@ -150,7 +150,7 @@ export function AddAdminModal({ open, onOpenChange }: AddAdminModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-[700px]">
+      <DialogContent className="flex flex-col sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Create New Admin</DialogTitle>
           <DialogDescription>

@@ -6,14 +6,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import {
   SocialMediaRequirementProps,
   SocialMediaPlatform,
 } from '@/types/registrationBonus';
 import { PLATFORM_CONFIG } from '@/config/socialMediaIcons';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { socialMediaApi } from '@/services/socialMediaApi';
@@ -344,59 +342,113 @@ export function SocialMediaRequirement({
         onConfirm={handleDialogConfirm}
         onCancel={handleDialogCancel}
       />
-      <Card
+      <div
         id="social-media-requirement"
-        className={cn(
-          'group relative flex h-full flex-col overflow-hidden border-2 transition-all duration-300',
-          isComplete
-            ? 'border-green-500/30 bg-green-500/5 hover:border-green-500/50'
-            : 'border-novunt-gold-500/30 from-novunt-gold-500/5 to-background hover:border-novunt-gold-500/50 hover:shadow-novunt-gold-500/10 bg-gradient-to-br hover:shadow-lg'
-        )}
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          borderRadius: '12px',
+          background: 'var(--neu-bg)',
+          boxShadow: 'var(--neu-shadow-inset)',
+          border: isComplete ? '2px solid rgba(34, 197, 94, 0.2)' : 'none',
+          transition: 'all 0.3s ease',
+          overflow: 'hidden',
+        }}
       >
-        {/* Gold shimmer effect when not complete */}
-        {!isComplete && (
-          <motion.div
-            className="via-novunt-gold-500/10 absolute inset-0 bg-gradient-to-r from-transparent to-transparent"
-            animate={{
-              x: ['-100%', '200%'],
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            padding: '12px',
+            gap: '10px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: '8px',
             }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 3,
-            }}
-          />
-        )}
-
-        <CardContent className="relative z-10 flex flex-1 flex-col p-4">
-          <div className="mb-3 flex items-start justify-between">
-            <div className="flex items-center gap-3">
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
               <div
-                className={cn(
-                  'rounded-lg border p-2.5 transition-all duration-300',
-                  isComplete
-                    ? 'border-green-500/30 bg-green-500/20'
-                    : 'bg-novunt-gold-500/20 border-novunt-gold-500/30 group-hover:bg-novunt-gold-500/30'
-                )}
+                style={{
+                  borderRadius: '10px',
+                  background: isComplete
+                    ? 'rgba(34, 197, 94, 0.1)'
+                    : 'var(--neu-bg)',
+                  boxShadow: isComplete ? 'none' : 'var(--neu-shadow-inset)',
+                  border: isComplete
+                    ? '1px solid rgba(34, 197, 94, 0.2)'
+                    : 'none',
+                  padding: '8px',
+                  transition: 'all 0.3s ease',
+                  flexShrink: 0,
+                }}
               >
-                <span className="text-lg">📱</span>
+                <span style={{ fontSize: '1.125rem' }}>📱</span>
               </div>
-              <div>
-                <h3 className="text-foreground mb-0.5 text-sm font-bold">
-                  Verify All {socialData.total} Socials
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    marginBottom: '2px',
+                    color: 'var(--neu-text-primary)',
+                    lineHeight: '1.2',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  Verify {socialData.total} Socials
                 </h3>
-                <p className="text-muted-foreground text-xs">
+                <p
+                  style={{
+                    fontSize: '0.6875rem',
+                    color: isComplete
+                      ? 'rgb(34, 197, 94)'
+                      : 'var(--neu-text-secondary)',
+                    lineHeight: '1.3',
+                    fontWeight: isComplete ? 500 : 400,
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {socialData.completed}/{socialData.total} verified
                 </p>
               </div>
             </div>
             {isComplete && (
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
+              <CheckCircle2
+                className="h-4 w-4"
+                style={{ flexShrink: 0, color: 'rgb(34, 197, 94)' }}
+              />
             )}
           </div>
 
-          {/* Platform Icons Grid - Display All 5 Platforms */}
-          <div className="grid grid-cols-5 gap-4">
+          {/* Platform Icons - flex wrap so all 5 fit or wrap cleanly */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: 'auto',
+              justifyContent: 'flex-start',
+              alignContent: 'center',
+            }}
+          >
             {displayedPlatforms.map((platform) => {
               const config = PLATFORM_CONFIG[platform.platform];
               const isVerified = platform.isVerified;
@@ -421,31 +473,56 @@ export function SocialMediaRequirement({
                         : 'cursor-pointer hover:scale-110 active:scale-95'
                   )}
                   title={config.name}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                  }}
                 >
-                  <div className="relative">
+                  <div style={{ position: 'relative' }}>
                     <IconComponent
-                      className={cn(
-                        'transition-all duration-300',
-                        isVerified
-                          ? 'h-8 w-8 text-green-600 dark:text-green-400'
+                      className="h-7 w-7 transition-all duration-300"
+                      style={{
+                        color: isVerified
+                          ? 'rgb(34, 197, 94)'
                           : isVerifying
-                            ? 'text-novunt-gold-600 dark:text-novunt-gold-500 h-8 w-8'
-                            : 'text-muted-foreground hover:text-novunt-gold-600 dark:hover:text-novunt-gold-500 h-8 w-8'
-                      )}
+                            ? 'var(--neu-accent)'
+                            : 'var(--neu-text-secondary)',
+                      }}
                     />
                     {isVerified && (
-                      <CheckCircle2 className="bg-background absolute -right-1 -bottom-1 h-4 w-4 rounded-full text-green-600 dark:text-green-400" />
+                      <CheckCircle2
+                        className="h-3.5 w-3.5"
+                        style={{
+                          background: 'var(--neu-bg)',
+                          position: 'absolute',
+                          right: '-3px',
+                          bottom: '-3px',
+                          borderRadius: '50%',
+                          color: 'rgb(34, 197, 94)',
+                        }}
+                      />
                     )}
                     {isVerifying && (
-                      <Loader2 className="text-novunt-gold-600 dark:text-novunt-gold-500 bg-background absolute -right-1 -bottom-1 h-4 w-4 animate-spin rounded-full" />
+                      <Loader2
+                        className="h-3.5 w-3.5 animate-spin"
+                        style={{
+                          background: 'var(--neu-bg)',
+                          position: 'absolute',
+                          right: '-3px',
+                          bottom: '-3px',
+                          borderRadius: '50%',
+                          color: 'var(--neu-accent)',
+                        }}
+                      />
                     )}
                   </div>
                 </button>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </>
   );
 }

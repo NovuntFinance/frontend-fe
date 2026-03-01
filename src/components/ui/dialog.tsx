@@ -71,8 +71,9 @@ function DialogContent({
         className={cn(
           // Position and sizing
           'fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%]',
-          // Mobile-first sizing with max constraints
-          'max-h-[calc(100vh-2rem)] max-w-[calc(100%-2rem)]',
+          // Mobile-first sizing with max constraints - safe area aware
+          'max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)]',
+          'max-w-[calc(100%-2rem)]',
           'sm:max-w-lg md:max-w-xl lg:max-w-2xl',
           // Spacing and layout
           'gap-6 p-6 sm:p-8',
@@ -92,8 +93,10 @@ function DialogContent({
           'data-[state=closed]:slide-out-to-top-[2%]',
           'data-[state=open]:slide-in-from-top-[2%]',
           'data-[state=closed]:duration-200 data-[state=open]:duration-300',
-          // Scrollable content
+          // Scrollable content with mobile momentum
           'overflow-y-auto',
+          '-webkit-overflow-scrolling-touch',
+          'overscroll-behavior-contain',
           // Custom scrollbar
           '[&::-webkit-scrollbar]:w-2',
           '[&::-webkit-scrollbar-track]:bg-transparent',
