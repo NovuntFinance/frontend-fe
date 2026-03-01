@@ -1,20 +1,26 @@
 'use client';
 
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import neuStyles from '@/styles/neumorphic.module.css';
 
 /**
  * Global theme toggle — fixed position, neumorphic design, visible on every page.
- * Follows device (system) by default; click toggles between light and dark and stores preference.
+ * Hidden on dashboard (theme toggle lives in dashboard header next to headset to avoid overlap).
  * Icon: Moon = dark mode. Sun = light mode.
  */
 export function GlobalThemeButton() {
+  const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  if (pathname?.startsWith('/dashboard')) {
+    return null;
+  }
 
   const isDark = resolvedTheme === 'dark';
 
