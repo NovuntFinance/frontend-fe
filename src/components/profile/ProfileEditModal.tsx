@@ -1,25 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   User as UserIcon,
   Mail,
   Lock,
   Eye,
   EyeOff,
-  Check,
-  X,
   AtSign,
-  Calendar,
-  Home as MapPinIcon,
+  Key,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useAuth } from '@/hooks/useAuth';
-import { useUpdateProfile } from '@/lib/mutations';
+import {
+  useChangePassword,
+  useRequestChangePasswordOtp,
+} from '@/lib/mutations';
 import { useProfile } from '@/lib/queries';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -33,101 +32,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from '@/components/ui/enhanced-toast';
 import { AvatarSelector } from '@/components/profile/AvatarSelector';
 import { BadgeAvatarSelector } from '@/components/achievements/BadgeAvatarSelector';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { passwordSchema } from '@/lib/validation';
-import {
-  useDefaultWithdrawalAddress,
-  useSetDefaultWithdrawalAddress,
-} from '@/hooks/useWallet';
-import {
-  validateBEP20Address,
-  formatAddress,
-  copyToClipboard,
-} from '@/lib/utils/wallet';
-import { Wallet, Copy, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MoratoriumCountdown } from '@/components/wallet/MoratoriumCountdown';
 
-// Profile edit schema
-const profileEditSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, 'First name must be at least 2 characters')
-    .max(50, 'First name must not exceed 50 characters')
-    .regex(
-      /^[a-zA-Z\s'-]+$/,
-      'First name can only contain letters, spaces, hyphens, and apostrophes'
-    ),
-  lastName: z
-    .string()
-    .min(2, 'Last name must be at least 2 characters')
-    .max(50, 'Last name must not exceed 50 characters')
-    .regex(
-      /^[a-zA-Z\s'-]+$/,
-      'Last name can only contain letters, spaces, hyphens, and apostrophes'
-    ),
-  dateOfBirth: z
-    .string()
-    .min(1, 'Date of birth is required')
-    .refine((date) => {
-      // Validate date format and age (must be at least 18 years old)
-      const birthDate = new Date(date);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      const dayDiff = today.getDate() - birthDate.getDate();
-      const actualAge =
-        monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
-      return actualAge >= 18;
-    }, 'You must be at least 18 years old'),
-  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say'], {
-    message: 'Please select a gender option',
-  }),
-  addressStreet: z
-    .string()
-    .min(2, 'Street address is required')
-    .max(200, 'Street address must not exceed 200 characters'),
-  addressCity: z
-    .string()
-    .min(2, 'City is required')
-    .max(100, 'City must not exceed 100 characters'),
-  addressState: z
-    .string()
-    .min(2, 'State/Province is required')
-    .max(100, 'State/Province must not exceed 100 characters'),
-  addressCountry: z
-    .string()
-    .min(2, 'Country is required')
-    .max(100, 'Country must not exceed 100 characters'),
-  addressPostalCode: z
-    .string()
-    .min(2, 'Postal/ZIP code is required')
-    .max(20, 'Postal/ZIP code must not exceed 20 characters'),
-  profilePhoto: z.string().optional(),
-});
-
-// Change password schema
+// Change password schema – 2FA is required for all users (default ON at registration, cannot be turned off)
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: passwordSchema,
     confirmNewPassword: z.string(),
+    emailOtp: z
+      .string()
+      .min(1, 'Email OTP is required')
+      .regex(/^\d{6}$/, 'Enter the 6-digit code from your email'),
+    twoFACode: z
+      .string()
+      .min(1, '2FA code is required')
+      .regex(/^\d{6}$/, '2FA code must be 6 digits'),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: 'Passwords do not match',
     path: ['confirmNewPassword'],
   });
 
-type ProfileEditFormData = z.infer<typeof profileEditSchema>;
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 interface ProfileEditModalProps {
@@ -142,7 +75,8 @@ export function ProfileEditModal({
   const { user } = useAuth();
   const { updateUser } = useAuthStore();
   const { data: profileData, refetch: refetchProfile } = useProfile();
-  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
+  const requestOtpMutation = useRequestChangePasswordOtp();
   const [activeTab, setActiveTab] = useState('personal');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -150,112 +84,18 @@ export function ProfileEditModal({
   const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(
     undefined
   );
-
-  // Withdrawal address state
-  const { data: withdrawalAddressData, isLoading: withdrawalAddressLoading } =
-    useDefaultWithdrawalAddress();
-  const { mutate: setWithdrawalAddress, isPending: isSettingAddress } =
-    useSetDefaultWithdrawalAddress();
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
-  const [withdrawalAddress2FA, setWithdrawalAddress2FA] = useState('');
-  const [addressCopied, setAddressCopied] = useState(false);
-
-  // Profile edit form
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors, isDirty, isSubmitting },
-    setError,
-  } = useForm<ProfileEditFormData>({
-    resolver: zodResolver(profileEditSchema),
-    defaultValues: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      dateOfBirth: (() => {
-        // Format date from profile data if available
-        // profileData may have nested profile or flat structure
-        const profile = (profileData as any)?.profile || profileData;
-        if (profile?.dateOfBirth) {
-          const date = new Date(profile.dateOfBirth);
-          return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        }
-        return '';
-      })(),
-      gender: ((profileData as any)?.profile?.gender ||
-        (profileData as any)?.gender ||
-        'prefer_not_to_say') as
-        | 'male'
-        | 'female'
-        | 'other'
-        | 'prefer_not_to_say',
-      addressStreet: ((profileData as any)?.profile?.address?.street ||
-        '') as string,
-      addressCity: ((profileData as any)?.profile?.address?.city ||
-        '') as string,
-      addressState: ((profileData as any)?.profile?.address?.state ||
-        '') as string,
-      addressCountry: ((profileData as any)?.profile?.address?.country ||
-        '') as string,
-      addressPostalCode: ((profileData as any)?.profile?.address?.zipCode ||
-        '') as string,
-      profilePhoto: ((profileData as any)?.profile?.profilePhoto ||
-        profileData?.avatar ||
-        '') as string,
-    },
-  });
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   // Change password form
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     reset: resetPasswordForm,
+    setValue: setPasswordValue,
     formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
   });
-
-  // Update form when user data changes
-  useEffect(() => {
-    if (user && profileData) {
-      // Format date of birth
-      let formattedDateOfBirth = '';
-      const profile = (profileData as any)?.profile || profileData;
-      if (profile?.dateOfBirth) {
-        const date = new Date(profile.dateOfBirth);
-        formattedDateOfBirth = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      }
-
-      reset({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        dateOfBirth: formattedDateOfBirth,
-        gender: ((profileData as any)?.profile?.gender ||
-          (profileData as any)?.gender ||
-          'prefer_not_to_say') as
-          | 'male'
-          | 'female'
-          | 'other'
-          | 'prefer_not_to_say',
-        addressStreet: ((profileData as any)?.profile?.address?.street ||
-          '') as string,
-        addressCity: ((profileData as any)?.profile?.address?.city ||
-          '') as string,
-        addressState: ((profileData as any)?.profile?.address?.state ||
-          '') as string,
-        addressCountry: ((profileData as any)?.profile?.address?.country ||
-          '') as string,
-        addressPostalCode: ((profileData as any)?.profile?.address?.zipCode ||
-          '') as string,
-        profilePhoto: ((profileData as any)?.profile?.profilePhoto ||
-          profileData?.avatar ||
-          '') as string,
-      });
-    }
-  }, [user, profileData, reset]);
 
   // Update profile data
   useEffect(() => {
@@ -279,155 +119,85 @@ export function ProfileEditModal({
     }, 500);
   };
 
-  const onSubmitProfile = async (data: ProfileEditFormData) => {
+  const onSubmitPassword = async (data: ChangePasswordFormData) => {
     try {
-      // Prepare payload according to backend API: PUT /api/v1/user/profile
-      // Build fullName from firstName and lastName
-      const fullName = `${data.firstName} ${data.lastName}`.trim();
-
-      // Build address object according to schema
-      const addressObject = {
-        street: data.addressStreet,
-        city: data.addressCity,
-        state: data.addressState,
-        country: data.addressCountry,
-        postalCode: data.addressPostalCode,
-      };
-
-      const payload = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        fullName,
-        dateOfBirth: data.dateOfBirth,
-        gender: data.gender,
-        address: addressObject,
-        profilePhoto: data.profilePhoto || undefined,
-      };
-
-      // Add user ID to payload if available (for fallback endpoint)
-      const payloadWithUserId = {
-        ...payload,
-        userId:
-          user?._id || user?.id || profileData?._id || (profileData as any)?.id,
-      };
-
-      console.log(
-        '[ProfileEditModal] Submitting profile update:',
-        payloadWithUserId
-      );
-      console.log('[ProfileEditModal] User ID:', payloadWithUserId.userId);
-      await updateProfileMutation.mutateAsync(payloadWithUserId);
-      // Toast is shown by the mutation itself - no need for duplicate
-      refetchProfile();
-    } catch (error: any) {
-      // Better error logging with serialization
-      const errorDetails = {
-        message: error instanceof Error ? error.message : String(error),
-        code: error?.code,
-        statusCode: error?.statusCode,
-        response: error?.response
-          ? {
-              status: error.response.status,
-              statusText: error.response.statusText,
-              data: error.response.data,
-            }
-          : undefined,
-        request: error?.request
-          ? {
-              url: error.request.responseURL,
-              method: error?.config?.method,
-            }
-          : undefined,
-      };
-
-      console.error('Profile update error:', errorDetails);
-      console.error('Full error object:', error);
-
-      // Extract error message
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        errorDetails.message ||
-        'Failed to update profile';
-
-      // Handle username uniqueness error (username is not in form, show as root error)
-      if (
-        errorMessage.toLowerCase().includes('username') &&
-        (errorMessage.toLowerCase().includes('taken') ||
-          errorMessage.toLowerCase().includes('exists') ||
-          errorMessage.toLowerCase().includes('already'))
-      ) {
-        setError('root', {
-          type: 'manual',
-          message:
-            'This username is already taken. Please choose a different one.',
-        });
-        toast.error('Username already taken', {
-          description:
-            'This username is already in use. Please choose another.',
-        });
-        return;
-      }
-
-      // Handle "under development" error
-      if (
-        errorMessage.toLowerCase().includes('under development') ||
-        errorMessage.toLowerCase().includes('not implemented')
-      ) {
-        toast.error('Feature not available', {
-          description:
-            'This feature is currently under development. Please try again later.',
-        });
-        return;
-      }
-
-      // Generic error
-      toast.error('Failed to update profile', {
-        description: errorMessage,
+      await changePasswordMutation.mutateAsync({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmNewPassword,
+        emailOtp: data.emailOtp,
+        twoFACode: data.twoFACode,
       });
+      resetPasswordForm();
+      turnstileRef.current?.reset();
+      setActiveTab('personal');
+    } catch {
+      // Error toast is shown by useChangePassword
     }
   };
 
-  const onSubmitPassword = async (data: ChangePasswordFormData) => {
-    try {
-      // TODO: Implement password change API call
-      console.log('Change password:', {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
+  const handleSendOtp = () => {
+    const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+    if (!turnstileToken) {
+      toast.error('Verification required', {
+        description: 'Please complete the verification check above first.',
       });
-      toast.success('Password changed successfully!');
-      resetPasswordForm();
-      setActiveTab('personal');
-    } catch (error) {
-      console.error('Password change error:', error);
-      toast.error('Failed to change password. Please try again.');
+      return;
     }
+    requestOtpMutation.mutate(
+      { turnstileToken },
+      {
+        onError: (error: unknown) => {
+          const err = error as { response?: { data?: { code?: string } } };
+          if (err?.response?.data?.code === 'TURNSTILE_FAILED') {
+            turnstileRef.current?.reset();
+          }
+        },
+      }
+    );
   };
 
   if (!user) return null;
 
+  const neuCardRaised = {
+    background: 'var(--neu-modal-bg)',
+    border: '1px solid var(--neu-border)',
+    borderRadius: '1.5rem',
+    boxShadow:
+      '6px 6px 16px var(--neu-shadow-dark), -6px -6px 16px var(--neu-shadow-light), inset 1px 1px 0 rgba(255,255,255,0.03)',
+  };
+  const neuSectionInset = {
+    background: 'var(--neu-bg)',
+    border: '1px solid var(--neu-border)',
+    borderRadius: '1rem',
+    boxShadow: 'var(--neu-shadow-inset)',
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[85vh] max-w-[95vw] overflow-y-auto border p-4 shadow-2xl backdrop-blur-xl sm:max-h-[90vh] sm:max-w-xl sm:p-6 md:max-w-2xl"
-        style={{
-          background: 'var(--neu-modal-bg)',
-          borderColor: 'var(--neu-border)',
-        }}
+        className="max-h-[85vh] max-w-[95vw] overflow-y-auto p-4 backdrop-blur-xl sm:max-h-[90vh] sm:max-w-xl sm:p-6 md:max-w-2xl"
+        style={neuCardRaised}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold sm:text-2xl" style={{ color: 'var(--neu-text-primary)' }}>
+          <DialogTitle
+            className="text-xl font-bold sm:text-2xl"
+            style={{ color: 'var(--neu-text-primary)' }}
+          >
             Edit Profile
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base" style={{ color: 'var(--neu-text-secondary)' }}>
+          <DialogDescription
+            className="text-sm sm:text-base"
+            style={{ color: 'var(--neu-text-secondary)' }}
+          >
             Update your personal information and account settings
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList
-            className="grid w-full grid-cols-3 border backdrop-blur-sm"
-            style={{ borderColor: 'var(--neu-border)', background: 'rgba(var(--neu-accent-rgb), 0.08)' }}
+            className="grid w-full grid-cols-3 rounded-xl p-1"
+            style={neuSectionInset}
           >
             <TabsTrigger
               value="personal"
@@ -454,300 +224,46 @@ export function ProfileEditModal({
 
           {/* Personal Information Tab */}
           <TabsContent value="personal" className="mt-6 space-y-6">
-            {/* Editable Fields Form */}
-            <form
-              onSubmit={handleSubmit(onSubmitProfile)}
-              className="space-y-6"
-            >
-              {/* Name Section */}
-              <div className="rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-4 backdrop-blur-sm">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--neu-text-primary)]">
-                  Full Name
-                </h3>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-[var(--neu-text-primary)]/90">
-                      First Name <span className="text-red-400">*</span>
-                    </Label>
-                    <div className="relative">
-                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                      <Input
-                        id="firstName"
-                        {...register('firstName')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="John"
-                      />
-                    </div>
-                    {errors.firstName && (
-                      <p className="text-sm text-red-400">
-                        {errors.firstName.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-[var(--neu-text-primary)]/90">
-                      Last Name <span className="text-red-400">*</span>
-                    </Label>
-                    <div className="relative">
-                      <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                      <Input
-                        id="lastName"
-                        {...register('lastName')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="Doe"
-                      />
-                    </div>
-                    {errors.lastName && (
-                      <p className="text-sm text-red-400">
-                        {errors.lastName.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Date of Birth Section */}
-              <div className="rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-4 backdrop-blur-sm">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--neu-text-primary)]">
-                  Date of Birth
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth" className="text-[var(--neu-text-primary)]/90">
-                    Date of Birth <span className="text-red-400">*</span>
-                  </Label>
-                  <div className="relative">
-                    <Calendar className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      {...register('dateOfBirth')}
-                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                      max={(() => {
-                        // Set max date to 18 years ago
-                        const today = new Date();
-                        const maxDate = new Date(
-                          today.getFullYear() - 18,
-                          today.getMonth(),
-                          today.getDate()
-                        );
-                        return maxDate.toISOString().split('T')[0];
-                      })()}
-                    />
-                  </div>
-                  {errors.dateOfBirth && (
-                    <p className="text-sm text-red-400">
-                      {errors.dateOfBirth.message}
-                    </p>
-                  )}
-                  <p className="text-xs text-[var(--neu-text-primary)]/60">
-                    You must be at least 18 years old
-                  </p>
-                </div>
-              </div>
-
-              {/* Gender Section */}
-              <div className="rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-4 backdrop-blur-sm">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--neu-text-primary)]">
-                  Gender
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="gender" className="text-[var(--neu-text-primary)]/90">
-                    Gender <span className="text-red-400">*</span>
-                  </Label>
-                  <Controller
-                    name="gender"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger className="w-full border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]">
-                          <UserIcon className="mr-2 h-4 w-4 text-[var(--neu-text-muted)]" />
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent
-                        className="border backdrop-blur-xl"
-                        style={{
-                          background: 'var(--neu-bg)',
-                          borderColor: 'var(--neu-border)',
-                          color: 'var(--neu-text-primary)',
-                        }}
-                      >
-                          <SelectItem
-                            value="prefer_not_to_say"
-                            className="text-[var(--neu-text-primary)] focus:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                          >
-                            Prefer not to say
-                          </SelectItem>
-                          <SelectItem
-                            value="male"
-                            className="text-[var(--neu-text-primary)] focus:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                          >
-                            Male
-                          </SelectItem>
-                          <SelectItem
-                            value="female"
-                            className="text-[var(--neu-text-primary)] focus:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                          >
-                            Female
-                          </SelectItem>
-                          <SelectItem
-                            value="other"
-                            className="text-[var(--neu-text-primary)] focus:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                          >
-                            Other
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.gender && (
-                    <p className="text-sm text-red-400">
-                      {errors.gender.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Address Section */}
-              <div className="rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-4 backdrop-blur-sm">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--neu-text-primary)]">
-                  Address
-                </h3>
-                <div className="space-y-4">
-                  {/* Street Address */}
-                  <div className="space-y-2">
-                    <Label htmlFor="addressStreet" className="text-[var(--neu-text-primary)]/90">
-                      Street Address <span className="text-red-400">*</span>
-                    </Label>
-                    <div className="relative">
-                      <MapPinIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                      <Input
-                        id="addressStreet"
-                        {...register('addressStreet')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="123 Main Street"
-                      />
-                    </div>
-                    {errors.addressStreet && (
-                      <p className="text-sm text-red-400">
-                        {errors.addressStreet.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* City and State */}
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="addressCity" className="text-[var(--neu-text-primary)]/90">
-                        City <span className="text-red-400">*</span>
-                      </Label>
-                      <Input
-                        id="addressCity"
-                        {...register('addressCity')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="City"
-                      />
-                      {errors.addressCity && (
-                        <p className="text-sm text-red-400">
-                          {errors.addressCity.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="addressState" className="text-[var(--neu-text-primary)]/90">
-                        State/Province <span className="text-red-400">*</span>
-                      </Label>
-                      <Input
-                        id="addressState"
-                        {...register('addressState')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="State/Province"
-                      />
-                      {errors.addressState && (
-                        <p className="text-sm text-red-400">
-                          {errors.addressState.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Country and Postal Code */}
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="addressCountry" className="text-[var(--neu-text-primary)]/90">
-                        Country <span className="text-red-400">*</span>
-                      </Label>
-                      <Input
-                        id="addressCountry"
-                        {...register('addressCountry')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="Country"
-                      />
-                      {errors.addressCountry && (
-                        <p className="text-sm text-red-400">
-                          {errors.addressCountry.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="addressPostalCode"
-                        className="text-[var(--neu-text-primary)]/90"
-                      >
-                        Postal/ZIP Code <span className="text-red-400">*</span>
-                      </Label>
-                      <Input
-                        id="addressPostalCode"
-                        {...register('addressPostalCode')}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                        placeholder="12345"
-                      />
-                      {errors.addressPostalCode && (
-                        <p className="text-sm text-red-400">
-                          {errors.addressPostalCode.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Save Button */}
-              <div className="flex justify-end gap-3">
-                <Button
-                  type="submit"
-                  disabled={!isDirty || isSubmitting}
-                  className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-[var(--neu-text-primary)] shadow-lg shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/70 active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <NovuntSpinner size="sm" className="mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-
-            {/* Read-only Fields */}
-            <div className="space-y-4 border-t border-[var(--neu-border)] pt-6">
+            {/* Read-only Account Information – neumorphic inset card */}
+            <div className="space-y-4 rounded-xl p-4" style={neuSectionInset}>
               <h3 className="text-sm font-semibold text-[var(--neu-text-secondary)]">
                 Account Information (Cannot be changed)
               </h3>
 
+              {/* Full Name (Read-only) */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullName"
+                  className="text-[var(--neu-text-primary)]/90"
+                >
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                  <Input
+                    id="fullName"
+                    value={
+                      user?.fullName ??
+                      ([user?.firstName, user?.lastName]
+                        .filter(Boolean)
+                        .join(' ') ||
+                        ((profileData as any)?.profile?.fullName ?? ''))
+                    }
+                    disabled
+                    className="cursor-not-allowed border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] pl-10 text-[var(--neu-text-primary)]/60 opacity-60"
+                  />
+                </div>
+                <p className="text-xs text-[var(--neu-text-primary)]/60">
+                  Full name is set during registration and cannot be changed
+                </p>
+              </div>
+
               {/* Email (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[var(--neu-text-primary)]/90">
+                <Label
+                  htmlFor="email"
+                  className="text-[var(--neu-text-primary)]/90"
+                >
                   Email
                 </Label>
                 <div className="relative">
@@ -766,7 +282,10 @@ export function ProfileEditModal({
 
               {/* Username (Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-[var(--neu-text-primary)]/90">
+                <Label
+                  htmlFor="username"
+                  className="text-[var(--neu-text-primary)]/90"
+                >
                   Username
                 </Label>
                 <div className="relative">
@@ -787,15 +306,18 @@ export function ProfileEditModal({
 
           {/* Avatar Tab */}
           <TabsContent value="avatar" className="mt-6">
-            <div className="space-y-6">
+            <div
+              className="space-y-6 rounded-xl p-4 sm:p-5"
+              style={neuSectionInset}
+            >
               {/* Sub-tabs for Avatar Selection */}
-              <Tabs defaultValue="generated" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] backdrop-blur-sm">
+              <Tabs defaultValue="notionist" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-1">
                   <TabsTrigger
-                    value="generated"
+                    value="notionist"
                     className="text-[var(--neu-text-secondary)] data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.1)] data-[state=active]:text-[var(--neu-text-primary)]"
                   >
-                    Generated Avatars
+                    Notionist
                   </TabsTrigger>
                   <TabsTrigger
                     value="badges"
@@ -805,12 +327,13 @@ export function ProfileEditModal({
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="generated" className="mt-4">
+                <TabsContent value="notionist" className="mt-4">
                   <AvatarSelector
                     currentAvatar={currentAvatar || user?.avatar}
                     userId={user.id || user._id || ''}
                     userName={user.username || user.email || 'User'}
                     onAvatarSelected={handleAvatarUploadComplete}
+                    allowedStyles={['notionists']}
                   />
                 </TabsContent>
 
@@ -833,426 +356,290 @@ export function ProfileEditModal({
           </TabsContent>
 
           {/* Security Tab */}
-          <TabsContent value="security" className="mt-6 space-y-6">
-            <form
-              onSubmit={handlePasswordSubmit(onSubmitPassword)}
-              className="space-y-6"
-            >
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-[var(--neu-text-primary)]">
-                  Change Password
-                </h3>
-                <p className="text-sm text-[var(--neu-text-primary)]/60">
-                  Ensure your account stays secure by using a strong password
-                </p>
-              </div>
-
-              {/* Current Password */}
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-[var(--neu-text-primary)]/90">
-                  Current Password <span className="text-red-400">*</span>
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                  <Input
-                    id="currentPassword"
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    {...registerPassword('currentPassword')}
-                    className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                    placeholder="Enter current password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
-                  >
-                    {showCurrentPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {passwordErrors.currentPassword && (
-                  <p className="text-sm text-red-400">
-                    {passwordErrors.currentPassword.message}
-                  </p>
-                )}
-              </div>
-
-              {/* New Password */}
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-[var(--neu-text-primary)]/90">
-                  New Password <span className="text-red-400">*</span>
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                  <Input
-                    id="newPassword"
-                    type={showNewPassword ? 'text' : 'password'}
-                    {...registerPassword('newPassword')}
-                    className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                    placeholder="Enter new password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {passwordErrors.newPassword && (
-                  <p className="text-sm text-red-400">
-                    {passwordErrors.newPassword.message}
-                  </p>
-                )}
-                <p className="text-muted-foreground text-xs">
-                  Must be at least 8 characters with uppercase, lowercase,
-                  number, and special character (@_$!%*?&)
-                </p>
-              </div>
-
-              {/* Confirm New Password */}
-              <div className="space-y-2">
-                <Label htmlFor="confirmNewPassword" className="text-[var(--neu-text-primary)]/90">
-                  Confirm New Password <span className="text-red-400">*</span>
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
-                  <Input
-                    id="confirmNewPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    {...registerPassword('confirmNewPassword')}
-                    className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                    placeholder="Confirm new password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {passwordErrors.confirmNewPassword && (
-                  <p className="text-sm text-red-400">
-                    {passwordErrors.confirmNewPassword.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    resetPasswordForm();
-                    setActiveTab('personal');
-                  }}
-                  className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] text-[var(--neu-text-primary)]/90 backdrop-blur-sm hover:border-white/30 hover:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isPasswordSubmitting}
-                  className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-[var(--neu-text-primary)] shadow-lg shadow-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/70 active:scale-[0.98]"
-                >
-                  {isPasswordSubmitting ? (
-                    <>
-                      <NovuntSpinner size="sm" className="mr-2" />
-                      Changing...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Change Password
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-
-            {/* Withdrawal Address Section */}
-            <div className="mt-8 space-y-4 rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-6 backdrop-blur-sm">
-              <div className="space-y-2">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--neu-text-primary)]">
-                  <Wallet className="h-5 w-5" />
-                  Withdrawal Address
-                </h3>
-                <p className="text-sm text-[var(--neu-text-primary)]/60">
-                  Set your default withdrawal address. All withdrawals will be
-                  sent to this address. You can change it after 72 hours for
-                  security reasons.
-                </p>
-              </div>
-
-              {withdrawalAddressLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <NovuntSpinner size="sm" />
-                </div>
-              ) : !isEditingAddress &&
-                (withdrawalAddressData?.hasDefaultAddress ||
-                  !!withdrawalAddressData?.address) ? (
+          <TabsContent value="security" className="mt-6">
+            <div className="rounded-xl p-4 sm:p-5" style={neuSectionInset}>
+              <form
+                onSubmit={handlePasswordSubmit(onSubmitPassword)}
+                className="space-y-6"
+              >
                 <div className="space-y-4">
-                  {/* Current Address Display */}
-                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold tracking-wider text-emerald-400 uppercase">
-                        Saved Address
-                      </span>
-                      {withdrawalAddressData.canChange && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setIsEditingAddress(true);
-                            setNewWithdrawalAddress(
-                              withdrawalAddressData.address || ''
-                            );
-                          }}
-                          className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] text-[var(--neu-text-primary)]/90 hover:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                        >
-                          Modify
-                        </Button>
+                  <h3 className="text-lg font-semibold text-[var(--neu-text-primary)]">
+                    Change Password
+                  </h3>
+                  <p className="text-sm text-[var(--neu-text-primary)]/60">
+                    Enter your passwords first, then complete verification
+                    below.
+                  </p>
+                </div>
+
+                {/* Passwords – at the top */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="currentPassword"
+                    className="text-[var(--neu-text-primary)]/90"
+                  >
+                    Current Password <span className="text-red-400">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                    <Input
+                      id="currentPassword"
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      {...registerPassword('currentPassword')}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
+                    >
+                      {showCurrentPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
                       )}
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <code className="flex-1 font-mono text-sm break-all text-[var(--neu-text-primary)]">
-                        {withdrawalAddressData.address}
-                      </code>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={async () => {
-                          if (withdrawalAddressData.address) {
-                            const success = await copyToClipboard(
-                              withdrawalAddressData.address
-                            );
-                            if (success) {
-                              setAddressCopied(true);
-                              setTimeout(() => setAddressCopied(false), 2000);
-                              toast.success('Address copied to clipboard');
-                            }
-                          }
-                        }}
-                        className="h-8 w-8 shrink-0"
-                      >
-                        {addressCopied ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-400" />
-                        ) : (
-                          <Copy className="h-4 w-4 text-[var(--neu-text-muted)]" />
-                        )}
-                      </Button>
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs text-[var(--neu-text-muted)]">Network:</span>
-                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-400">
-                        {withdrawalAddressData.network}
-                      </span>
-                    </div>
+                    </button>
                   </div>
-
-                  {/* Moratorium Status */}
-                  {withdrawalAddressData.moratorium?.active && (
-                    <Alert className="border-amber-500/30 bg-amber-500/10">
-                      <Clock className="h-4 w-4 text-amber-400" />
-                      <AlertTitle className="text-sm font-semibold text-amber-400">
-                        Address Change Locked
-                      </AlertTitle>
-                      <AlertDescription className="space-y-2 text-xs text-amber-300/80">
-                        <p>
-                          {withdrawalAddressData.note ||
-                            `You can change this address in ${withdrawalAddressData.moratorium.hoursRemaining} hour(s) and ${withdrawalAddressData.moratorium.minutesRemaining} minute(s).`}
-                        </p>
-                        {withdrawalAddressData.moratorium
-                          .canChangeAtFormatted && (
-                          <p className="mt-1">
-                            You can change this address on{' '}
-                            {
-                              withdrawalAddressData.moratorium
-                                .canChangeAtFormatted
-                            }
-                          </p>
-                        )}
-                        {/* Live countdown timer */}
-                        <MoratoriumCountdown
-                          moratorium={withdrawalAddressData.moratorium}
-                          onExpired={() => {
-                            // Refetch address status when moratorium expires
-                            // This will be handled by React Query's refetch
-                          }}
-                        />
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {!withdrawalAddressData.moratorium?.active && (
-                    <Alert className="border-green-500/30 bg-green-500/10">
-                      <CheckCircle2 className="h-4 w-4 text-green-400" />
-                      <AlertDescription className="text-xs text-green-300/80">
-                        {withdrawalAddressData.note ||
-                          'You can change this address now.'}
-                      </AlertDescription>
-                    </Alert>
+                  {passwordErrors.currentPassword && (
+                    <p className="text-sm text-red-400">
+                      {passwordErrors.currentPassword.message}
+                    </p>
                   )}
                 </div>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!validateBEP20Address(newWithdrawalAddress)) {
-                      toast.error('Invalid Address', {
-                        description:
-                          'Please enter a valid BEP20 (BSC) address starting with 0x.',
-                      });
-                      return;
-                    }
-                    if (
-                      !withdrawalAddress2FA ||
-                      withdrawalAddress2FA.length !== 6
-                    ) {
-                      toast.error('2FA Required', {
-                        description: 'Please enter your 6-digit 2FA code.',
-                      });
-                      return;
-                    }
-                    setWithdrawalAddress(
-                      {
-                        address: newWithdrawalAddress,
-                        network: 'BEP20',
-                        twoFACode: withdrawalAddress2FA,
-                      },
-                      {
-                        onSuccess: () => {
-                          setIsEditingAddress(false);
-                          setWithdrawalAddress2FA('');
-                          toast.success(
-                            'Withdrawal address updated successfully!'
-                          );
-                        },
-                        onError: (error: any) => {
-                          const errorMessage =
-                            error?.response?.data?.message ||
-                            error?.message ||
-                            'Failed to update withdrawal address';
-                          if (
-                            error?.response?.data?.code ===
-                            'ADDRESS_MORATORIUM_ACTIVE'
-                          ) {
-                            toast.error('Cannot Change Address Yet', {
-                              description: errorMessage,
-                            });
-                          } else {
-                            toast.error('Update Failed', {
-                              description: errorMessage,
-                            });
-                          }
-                        },
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="newPassword"
+                    className="text-[var(--neu-text-primary)]/90"
+                  >
+                    New Password <span className="text-red-400">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                    <Input
+                      id="newPassword"
+                      type={showNewPassword ? 'text' : 'password'}
+                      {...registerPassword('newPassword')}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-red-400">
+                      {passwordErrors.newPassword.message}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground text-xs">
+                    Must be at least 8 characters with uppercase, lowercase,
+                    number, and special character (@_$!%*?&)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirmNewPassword"
+                    className="text-[var(--neu-text-primary)]/90"
+                  >
+                    Confirm New Password <span className="text-red-400">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                    <Input
+                      id="confirmNewPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      {...registerPassword('confirmNewPassword')}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pr-10 pl-10 text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
                       }
-                    );
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--neu-text-muted)] hover:text-[var(--neu-text-primary)]/80"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordErrors.confirmNewPassword && (
+                    <p className="text-sm text-red-400">
+                      {passwordErrors.confirmNewPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Verification – after passwords */}
+                <div className="border-t border-[var(--neu-border)] pt-6">
+                  <p className="mb-4 text-sm font-medium text-[var(--neu-text-primary)]">
+                    Then complete verification (in order):
+                  </p>
+                </div>
+
+                {/* 1. Turnstile */}
+                <div className="space-y-2">
+                  <Label className="text-[var(--neu-text-primary)]/90">
+                    1. Verification <span className="text-red-400">*</span>
+                  </Label>
+                  <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+                  <p className="text-xs text-[var(--neu-text-primary)]/60">
+                    Complete the check above, then request your email code.
+                  </p>
+                </div>
+
+                {/* 2. Email OTP */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
                     <Label
-                      htmlFor="withdrawalAddress"
+                      htmlFor="emailOtp"
                       className="text-[var(--neu-text-primary)]/90"
                     >
-                      Withdrawal Address <span className="text-red-400">*</span>
-                    </Label>
-                    <Input
-                      id="withdrawalAddress"
-                      type="text"
-                      value={newWithdrawalAddress}
-                      onChange={(e) => setNewWithdrawalAddress(e.target.value)}
-                      placeholder="0x..."
-                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] font-mono text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                    />
-                    <p className="text-xs text-[var(--neu-text-muted)]">
-                      Enter a valid BEP20 (Binance Smart Chain) wallet address
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="withdrawal2FA" className="text-[var(--neu-text-primary)]/90">
-                      2FA Verification Code{' '}
+                      2. Email verification code{' '}
                       <span className="text-red-400">*</span>
                     </Label>
-                    <Input
-                      id="withdrawal2FA"
-                      type="text"
-                      value={withdrawalAddress2FA}
-                      onChange={(e) => {
-                        const value = e.target.value
-                          .replace(/\D/g, '')
-                          .slice(0, 6);
-                        setWithdrawalAddress2FA(value);
-                      }}
-                      placeholder="000000"
-                      maxLength={6}
-                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
-                    />
-                    <p className="text-xs text-[var(--neu-text-muted)]">
-                      Enter your 6-digit code from your authenticator app
-                    </p>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
-                    {withdrawalAddressData?.hasDefaultAddress && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditingAddress(false);
-                          setNewWithdrawalAddress(
-                            withdrawalAddressData.address || ''
-                          );
-                          setWithdrawalAddress2FA('');
-                        }}
-                        className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] text-[var(--neu-text-primary)]/90 hover:bg-[rgba(var(--neu-accent-rgb),0.1)]"
-                      >
-                        Cancel
-                      </Button>
-                    )}
                     <Button
-                      type="submit"
-                      disabled={
-                        isSettingAddress ||
-                        !newWithdrawalAddress ||
-                        !withdrawalAddress2FA
-                      }
-                      className="bg-gradient-to-r from-cyan-600 to-blue-600 text-[var(--neu-text-primary)] shadow-lg shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/70 active:scale-[0.98]"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={requestOtpMutation.isPending}
+                      onClick={handleSendOtp}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] text-[var(--neu-text-primary)]/90 hover:bg-[rgba(var(--neu-accent-rgb),0.1)]"
                     >
-                      {isSettingAddress ? (
+                      {requestOtpMutation.isPending ? (
                         <>
                           <NovuntSpinner size="sm" className="mr-2" />
-                          Saving...
+                          Sending...
                         </>
                       ) : (
                         <>
-                          <Wallet className="mr-2 h-4 w-4" />
-                          {withdrawalAddressData?.hasDefaultAddress
-                            ? 'Update Address'
-                            : 'Set Address'}
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send OTP to my email
                         </>
                       )}
                     </Button>
                   </div>
-                </form>
-              )}
+                  <div className="relative">
+                    <Key className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                    <Input
+                      id="emailOtp"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="000000"
+                      {...registerPassword('emailOtp', {
+                        onChange: (e) => {
+                          const v = e.target.value
+                            .replace(/\D/g, '')
+                            .slice(0, 6);
+                          e.target.value = v;
+                          setPasswordValue('emailOtp', v, {
+                            shouldValidate: true,
+                          });
+                        },
+                      })}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 font-mono tracking-widest text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
+                    />
+                  </div>
+                  {passwordErrors.emailOtp && (
+                    <p className="text-sm text-red-400">
+                      {passwordErrors.emailOtp.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-[var(--neu-text-primary)]/60">
+                    Enter the 6-digit code from your email
+                  </p>
+                </div>
+
+                {/* 3. 2FA code */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="twoFACode"
+                    className="text-[var(--neu-text-primary)]/90"
+                  >
+                    3. 2FA code <span className="text-red-400">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--neu-text-muted)]" />
+                    <Input
+                      id="twoFACode"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      {...registerPassword('twoFACode', {
+                        onChange: (e) => {
+                          const v = e.target.value
+                            .replace(/\D/g, '')
+                            .slice(0, 6);
+                          e.target.value = v;
+                          setPasswordValue('twoFACode', v, {
+                            shouldValidate: true,
+                          });
+                        },
+                      })}
+                      className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.1)] pl-10 font-mono tracking-widest text-[var(--neu-text-primary)] placeholder:text-[var(--neu-text-muted)] focus:border-[var(--neu-border)] focus:bg-[rgba(var(--neu-accent-rgb),0.12)]"
+                    />
+                  </div>
+                  {passwordErrors.twoFACode && (
+                    <p className="text-sm text-red-400">
+                      {passwordErrors.twoFACode.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-[var(--neu-text-primary)]/60">
+                    Enter the 6-digit code from your authenticator app
+                  </p>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      resetPasswordForm();
+                      setActiveTab('personal');
+                    }}
+                    className="border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] text-[var(--neu-text-primary)]/90 backdrop-blur-sm hover:border-white/30 hover:bg-[rgba(var(--neu-accent-rgb),0.1)]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isPasswordSubmitting}
+                    className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-[var(--neu-text-primary)] shadow-lg shadow-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/70 active:scale-[0.98]"
+                  >
+                    {isPasswordSubmitting ? (
+                      <>
+                        <NovuntSpinner size="sm" className="mr-2" />
+                        Changing...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Change Password
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
             </div>
           </TabsContent>
         </Tabs>

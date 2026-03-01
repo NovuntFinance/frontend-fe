@@ -14,6 +14,8 @@ interface AvatarSelectorProps {
   userId: string;
   userName?: string;
   onAvatarSelected?: (url: string) => void;
+  /** When set, only these style ids are shown (e.g. ['notionists'] for Notionist-only) */
+  allowedStyles?: string[];
 }
 
 type AvatarStyle = {
@@ -23,25 +25,13 @@ type AvatarStyle = {
   color: string;
 };
 
-// Beautiful avatar styles - modern and friendly!
+// Only Notionists style is offered in the app (Badge avatars are in a separate tab).
 const AVATAR_STYLES: AvatarStyle[] = [
-  {
-    id: 'lorelei',
-    name: 'Lorelei',
-    description: 'Beautiful portraits',
-    color: 'from-pink-500 to-rose-500',
-  },
   {
     id: 'notionists',
     name: 'Notionists',
     description: 'Professional style',
     color: 'from-blue-500 to-cyan-500',
-  },
-  {
-    id: 'fun-emoji',
-    name: 'Emoji',
-    description: 'Fun & playful',
-    color: 'from-yellow-500 to-orange-500',
   },
 ];
 
@@ -82,8 +72,17 @@ export function AvatarSelector({
   userId,
   userName = 'User',
   onAvatarSelected,
+  allowedStyles,
 }: AvatarSelectorProps) {
-  const [selectedStyle, setSelectedStyle] = useState<string>('adventurer');
+  const allowed = allowedStyles ?? [];
+  const stylesToShow =
+    allowed.length > 0
+      ? AVATAR_STYLES.filter((s) => allowed.includes(s.id))
+      : AVATAR_STYLES;
+  const defaultStyle = stylesToShow[0]?.id ?? AVATAR_STYLES[0].id;
+  const isRestrictedToSingleStyle = allowed.length === 1;
+
+  const [selectedStyle, setSelectedStyle] = useState<string>(defaultStyle);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [hoveredAvatar, setHoveredAvatar] = useState<string | null>(null);
 
@@ -172,64 +171,77 @@ export function AvatarSelector({
         </div>
       </Card>
 
-      {/* Style Selector */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="font-semibold">Choose Style</h4>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRandomize}
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Random
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {AVATAR_STYLES.map((style) => (
-            <motion.div
-              key={style.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+      {/* Style Selector - hide when only one style is allowed (e.g. Notionist-only in profile) */}
+      {!isRestrictedToSingleStyle && stylesToShow.length > 1 && (
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="font-semibold">Choose Style</h4>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRandomize}
+              className="gap-2"
             >
-              <Card
-                className={`cursor-pointer p-4 transition-all ${
-                  selectedStyle === style.id
-                    ? 'ring-primary border-primary ring-2'
-                    : 'hover:border-primary/50'
-                } `}
-                onClick={() => {
-                  setSelectedStyle(style.id);
-                  setSelectedAvatar(null); // Reset selection when changing style
-                }}
+              <RefreshCw className="h-4 w-4" />
+              Random
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {stylesToShow.map((style) => (
+              <motion.div
+                key={style.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-12 w-12 rounded-full bg-gradient-to-br ${style.color} flex items-center justify-center`}
-                  >
-                    {selectedStyle === style.id && (
-                      <Check className="h-6 w-6 text-white" />
-                    )}
+                <Card
+                  className={`cursor-pointer p-4 transition-all ${
+                    selectedStyle === style.id
+                      ? 'ring-primary border-primary ring-2'
+                      : 'hover:border-primary/50'
+                  } `}
+                  onClick={() => {
+                    setSelectedStyle(style.id);
+                    setSelectedAvatar(null); // Reset selection when changing style
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-12 w-12 rounded-full bg-gradient-to-br ${style.color} flex items-center justify-center`}
+                    >
+                      {selectedStyle === style.id && (
+                        <Check className="h-6 w-6 text-white" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{style.name}</p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {style.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{style.name}</p>
-                    <p className="text-muted-foreground truncate text-xs">
-                      {style.description}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Avatar Grid */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="font-semibold">Choose Avatar</h4>
-          <Badge variant="outline">{variants.length} options</Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRandomize}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Random
+            </Button>
+            <Badge variant="outline">{variants.length} options</Badge>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-6">
           <AnimatePresence mode="popLayout">

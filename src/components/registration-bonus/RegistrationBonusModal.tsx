@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { RegistrationBonusBanner } from './RegistrationBonusBanner';
 
 interface RegistrationBonusModalProps {
@@ -23,6 +23,7 @@ export function RegistrationBonusModal({
         className="max-h-[90vh] max-w-[calc(100%-1rem)] overflow-y-auto sm:max-w-lg md:max-w-xl"
         showCloseButton
       >
+        <DialogTitle className="sr-only">Registration Bonus</DialogTitle>
         <RegistrationBonusBanner onClose={onClose} defaultExpanded />
       </DialogContent>
     </Dialog>

@@ -83,6 +83,8 @@ export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+  emailOtp: string;
+  twoFACode?: string;
 }
 
 export interface KYCDocument {

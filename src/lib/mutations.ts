@@ -673,8 +673,32 @@ export function useResetPassword() {
 }
 
 /**
- * Update password
- * Phase 1: PATCH /auth/password
+ * Request email OTP for change-password (sends OTP to user's email)
+ * Backend: POST /better-auth/request-change-password-otp [Protected]
+ * When backend has TURNSTILE_SECRET_KEY set, pass { turnstileToken: '...' }.
+ */
+export function useRequestChangePasswordOtp() {
+  return useMutation({
+    mutationFn: async (payload?: { turnstileToken?: string }) => {
+      return authService.requestChangePasswordOtp(payload?.turnstileToken);
+    },
+    onSuccess: (response) => {
+      toast.success('OTP sent', {
+        description:
+          response.message || 'Check your email for the verification code',
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error('Could not send OTP', {
+        description: extractErrorMessage(error, 'Please try again later'),
+      });
+    },
+  });
+}
+
+/**
+ * Update password (requires email OTP from request-change-password-otp)
+ * Backend: POST /better-auth/change-password [Protected]
  */
 export function useChangePassword() {
   return useMutation({

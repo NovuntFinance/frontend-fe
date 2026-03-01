@@ -320,9 +320,26 @@ export const authService = {
   },
 
   /**
+   * Request email OTP for change-password action [Protected]
+   * Backend: POST /better-auth/request-change-password-otp (body {}).
+   * When TURNSTILE_SECRET_KEY is set, send turnstileToken in body as cf-turnstile-response.
+   * See backend docs/FRONTEND_CHANGE_PASSWORD_OTP_API.md.
+   */
+  requestChangePasswordOtp: async (
+    turnstileToken?: string
+  ): Promise<InternalGenericResponse> => {
+    const body: Record<string, string> = {};
+    if (turnstileToken) body['cf-turnstile-response'] = turnstileToken;
+    return api.post<InternalGenericResponse>(
+      '/better-auth/request-change-password-otp',
+      body
+    );
+  },
+
+  /**
    * 9. Change password (requires authentication)
    * POST /better-auth/change-password [Protected]
-   * @param payload - Current password, new password, confirm password
+   * @param payload - Current password, new password, confirm password, emailOtp
    * @returns Success message
    */
   updatePassword: async (
@@ -465,6 +482,28 @@ export const extractErrorMessage = (
 ): string => {
   if (!error) return fallback;
   if (typeof error === 'string') return error;
+
+  // Axios (and similar) errors are Error instances but have response.status – check that first so we don't show "Request failed with status code 401"
+  const errAny = error as Record<string, unknown> | undefined;
+  const status =
+    errAny?.response && typeof (errAny.response as any)?.status === 'number'
+      ? (errAny.response as any).status
+      : typeof errAny?.statusCode === 'number'
+        ? errAny.statusCode
+        : null;
+  if (status !== null) {
+    const statusMessages: Record<number, string> = {
+      400: 'Invalid request. Please check your input',
+      401: 'Invalid email or password. Please check your credentials and try again.',
+      403: 'Access denied',
+      404: 'Resource not found',
+      500: 'Server error. Please try again later',
+      501: 'This feature is currently under development',
+    };
+    const statusMessage = statusMessages[status];
+    if (statusMessage) return statusMessage;
+  }
+
   if (error instanceof Error) return error.message;
 
   if (typeof error === 'object') {

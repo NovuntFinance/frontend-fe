@@ -82,6 +82,10 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+  /** 6-digit code from email; required by backend */
+  emailOtp: string;
+  /** 6-digit 2FA code; required only when user has 2FA enabled (see FRONTEND_CHANGE_PASSWORD_OTP_API.md) */
+  twoFACode?: string;
 }
 
 export interface RevokeTokenRequest {
