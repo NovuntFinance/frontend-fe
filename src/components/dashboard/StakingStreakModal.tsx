@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Check, TrendingUp, Shield } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { useStakingStreak } from '@/lib/queries';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,8 @@ export function StakingStreakModal({
     borderRadius: neuRadius.lg,
     padding: 6,
   };
-  const todayChipGlow = '0 0 0 2px var(--neu-accent), 0 0 14px rgba(var(--neu-accent-rgb), 0.4)';
+  const todayChipGlow =
+    '0 0 0 2px var(--neu-accent), 0 0 14px rgba(var(--neu-accent-rgb), 0.4)';
   const textGlow =
     '0 0 12px rgba(var(--neu-accent-rgb), 0.9), 0 0 24px rgba(var(--neu-accent-rgb), 0.5)';
   const textGlowStrong =
@@ -80,6 +81,7 @@ export function StakingStreakModal({
           borderRadius: neuRadius.lg,
         }}
       >
+        <DialogTitle className="sr-only">Staking streak</DialogTitle>
         <div className="relative min-w-0">
           <style>{`
             .staking-streak-neu-inner {
@@ -395,7 +397,10 @@ function DayChip({
         </span>
       )}
       {state === 'empty' && futureLabel != null && (
-        <span className="text-[10px]" style={{ color: 'var(--neu-text-muted)' }}>
+        <span
+          className="text-[10px]"
+          style={{ color: 'var(--neu-text-muted)' }}
+        >
           {futureLabel}
         </span>
       )}

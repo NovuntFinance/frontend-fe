@@ -71,7 +71,7 @@ export default function WalletsPage() {
 
       {/* Wallet Cards */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Funded Wallet */}
+        {/* Deposit Wallet */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -88,7 +88,7 @@ export default function WalletsPage() {
                     <Wallet className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <CardTitle>Funded Wallet</CardTitle>
+                    <CardTitle>Deposit Wallet</CardTitle>
                     <CardDescription>Main staking wallet</CardDescription>
                   </div>
                 </div>
@@ -280,7 +280,7 @@ export default function WalletsPage() {
 
       {/* Recent Transactions */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Funded Wallet Transactions */}
+        {/* Deposit Wallet Transactions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -290,7 +290,7 @@ export default function WalletsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                Funded Wallet Activity
+                Deposit Wallet Activity
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -48,6 +48,9 @@ export const cspDirectives = {
   // Frames: Turnstile widget
   'frame-src': ["'self'", 'https://challenges.cloudflare.com'],
 
+  // Workers: Turnstile creates a worker from blob: URL; without this, script-src is used and blocks it
+  'worker-src': ["'self'", 'blob:'],
+
   'media-src': ["'self'"],
 
   'object-src': ["'none'"],

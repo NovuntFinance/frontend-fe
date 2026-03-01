@@ -482,13 +482,17 @@ export function useCreateWithdrawal() {
         toast.error('Amount too high', {
           description: message,
         });
-      } else if (code === 'WALLET_ADDRESS_REQUIRED') {
+      } else if (
+        code === 'WITHDRAWAL_ADDRESS_REQUIRED' ||
+        code === 'WALLET_ADDRESS_REQUIRED'
+      ) {
         const requiresSetup = errorData?.requiresSetup;
         toast.error('Withdrawal address required', {
-          description: requiresSetup
-            ? message ||
-              'Please set your default withdrawal address first. You will be redirected to the setup page.'
-            : 'Please enter a wallet address or set a default address',
+          description:
+            message ||
+            (requiresSetup
+              ? 'Please set your default withdrawal address first. Open Wallet → Withdrawal Whitelist to set it.'
+              : 'Please set your whitelisted BEP20 address in Wallet → Withdrawal Whitelist first.'),
         });
       } else if (code === 'INVALID_ADDRESS') {
         toast.error('Invalid address', {

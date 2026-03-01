@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Eye, EyeOff, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, EyeOff, Copy, Wallet } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -12,12 +12,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/store/uiStore';
 import { motion } from 'framer-motion';
-import { openShareModal } from '@/store/shareModalStore';
 import { useWalletBalance } from '@/lib/queries';
-import { formatCurrency } from '@/lib/utils/wallet';
+import { formatCurrency, formatAddress } from '@/lib/utils/wallet';
+import { useDefaultWithdrawalAddress } from '@/hooks/useWallet';
+import { copyToClipboard } from '@/lib/utils';
+import { toast } from '@/components/ui/enhanced-toast';
 
 /* Welcome card: all text white in both light and dark mode for consistency on dark/blue surfaces */
 const WELCOME_TEXT_WHITE = '#ffffff';
@@ -45,9 +46,17 @@ export function WelcomeBackCard({
   totalEarnings = 0,
   noCard = false,
 }: WelcomeBackCardProps) {
-  const router = useRouter();
   const openModal = useUIStore((s) => s.openModal);
   const { data: walletBalance } = useWalletBalance();
+  const { data: addressData, isLoading: addressLoading } =
+    useDefaultWithdrawalAddress();
+  const [addressCopied, setAddressCopied] = useState(false);
+
+  const savedAddress =
+    addressData?.address ??
+    (addressData as { data?: { address?: string } })?.data?.address ??
+    '';
+  const hasWithdrawalAddress = savedAddress.length > 0;
 
   const depositBalance = walletBalance?.funded?.availableBalance ?? 0;
   const earningsBalance = walletBalance?.earnings?.availableBalance ?? 0;
@@ -59,7 +68,7 @@ export function WelcomeBackCard({
 
   const content = (
     <div className="relative z-10 p-5 sm:p-6">
-      {/* Top row: Total Assets + Share + Eye (neumorphic icon buttons) */}
+      {/* Top row: Total Assets + Eye (neumorphic icon buttons) */}
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
           <Popover>
@@ -120,55 +129,32 @@ export function WelcomeBackCard({
           )}
         </div>
 
-        {/* Share + Eye: inverted (light blue circle, dark icon) to match card */}
-        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => {
-                  openShareModal('profit', {
-                    title: 'Share Your Success!',
-                    message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
-                    amount: totalEarnings,
-                  });
-                }}
-                className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
-                style={{
-                  background: 'var(--neu-accent)',
-                  color: WELCOME_TEXT_WHITE,
-                  border: '1px solid var(--neu-border)',
-                  boxShadow:
-                    '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
-                }}
-                aria-label="Share"
-              >
-                <Share2 className="h-5 w-5" strokeWidth={2} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Share your success</p>
-            </TooltipContent>
-          </Tooltip>
+        {/* Eye + Rank badge: stacked, centered */}
+        <div className="flex flex-shrink-0 flex-col items-center gap-2">
           <button
             type="button"
             onClick={() => setBalanceVisible(!balanceVisible)}
-            className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:opacity-90 active:scale-95 sm:h-11 sm:w-11"
-            style={{
-              background: 'var(--neu-accent)',
-              color: WELCOME_TEXT_WHITE,
-              border: '1px solid var(--neu-border)',
-              boxShadow:
-                '0 2px 8px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light)',
-            }}
+            data-welcome-eye
+            className="flex items-center justify-center transition-all hover:opacity-80 active:scale-95"
+            style={{ color: 'var(--neu-accent)' }}
             aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
           >
             {balanceVisible ? (
-              <Eye className="h-5 w-5" strokeWidth={2} />
+              <Eye className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
             ) : (
-              <EyeOff className="h-5 w-5" strokeWidth={2} />
+              <EyeOff className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
             )}
           </button>
+          <span
+            className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+            style={{
+              background: 'rgba(var(--neu-accent-rgb), 0.35)',
+              color: 'var(--neu-accent)',
+              border: '1px solid var(--neu-border)',
+            }}
+          >
+            {user?.rank || 'Stakeholder'}
+          </span>
         </div>
       </div>
 
@@ -253,6 +239,109 @@ export function WelcomeBackCard({
             </p>
           )}
         </button>
+      </div>
+
+      {/* Withdrawal address: show when set, or CTA when not set */}
+      <div className="mt-4 sm:mt-5">
+        {addressLoading ? (
+          <div
+            className="flex items-center gap-3 rounded-xl px-4 py-3 sm:px-5 sm:py-3.5"
+            style={{
+              background: 'var(--neu-accent)',
+              border: '1px solid var(--neu-border)',
+              boxShadow: 'var(--neu-shadow-inset)',
+            }}
+          >
+            <div
+              className="h-4 w-24 animate-pulse rounded bg-white/30 sm:w-32"
+              style={{ color: WELCOME_TEXT_WHITE }}
+            />
+          </div>
+        ) : hasWithdrawalAddress ? (
+          <button
+            type="button"
+            onClick={() => openModal('wallet')}
+            className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-all duration-200 sm:px-5 sm:py-3.5"
+            style={{
+              background: 'var(--neu-accent)',
+              boxShadow: 'var(--neu-shadow-raised)',
+              border: '1px solid var(--neu-border)',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow =
+                'var(--neu-shadow-raised-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = 'var(--neu-shadow-raised)';
+            }}
+          >
+            <span
+              className="text-[10px] font-medium tracking-wide sm:text-xs"
+              style={{ color: WELCOME_TEXT_WHITE }}
+            >
+              Withdrawal address
+            </span>
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className="truncate font-mono text-xs font-medium sm:text-sm"
+                style={{ color: WELCOME_TEXT_WHITE }}
+                title={savedAddress}
+              >
+                {formatAddress(savedAddress)}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(savedAddress);
+                      setAddressCopied(true);
+                      setTimeout(() => setAddressCopied(false), 2000);
+                      toast.success('Address copied to clipboard');
+                    }}
+                    className="flex-shrink-0 rounded p-1.5 transition hover:bg-white/20"
+                    aria-label="Copy address"
+                  >
+                    <Copy
+                      className="h-4 w-4"
+                      style={{ color: WELCOME_TEXT_WHITE }}
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{addressCopied ? 'Copied!' : 'Copy full address'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openModal('wallet')}
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-3.5 text-left transition-all duration-200 sm:px-5 sm:py-4"
+            style={{
+              background: 'rgba(0,155,242,0.08)',
+              borderColor: 'var(--neu-accent)',
+              color: 'var(--neu-accent)',
+              cursor: 'pointer',
+            }}
+          >
+            <Wallet
+              className="h-5 w-5 flex-shrink-0 opacity-90"
+              strokeWidth={2}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold sm:text-sm">
+                Withdrawal address not set
+              </p>
+              <p className="mt-0.5 text-[10px] opacity-90 sm:text-xs">
+                Set your whitelisted BEP20 address to enable withdrawals
+              </p>
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );

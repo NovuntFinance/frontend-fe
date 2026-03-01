@@ -331,13 +331,25 @@ export const walletApi = {
   /**
    * Set default withdrawal address (requires 2FA)
    * POST /api/v1/wallets/withdrawal/default-address
+   * Backend accepts: address, twoFactorCode, network (rejects walletAddress/twoFACode as unknown).
+   * Some backends also read 2FA from X-2FA-Code header; we send both.
    */
   async setDefaultWithdrawalAddress(
     payload: SetDefaultAddressRequest
   ): Promise<DefaultWithdrawalAddress> {
+    const code = payload.twoFACode?.trim() || undefined;
+    const body: Record<string, string> = {
+      address: payload.address,
+      network: payload.network,
+      ...(code ? { twoFactorCode: code } : {}),
+    };
+    const config = code
+      ? { headers: { 'X-2FA-Code': code } as Record<string, string> }
+      : undefined;
     const response = await api.post<DefaultWithdrawalAddress>(
       '/wallets/withdrawal/default-address',
-      payload
+      body,
+      config
     );
     return response;
   },

@@ -133,7 +133,7 @@
   /* Modals – solid background in light */
   --neu-modal-bg: #ffffff;
   /* Auth / Onboarding page background (light) */
-  --neu-auth-base: #FFFFFF;
+  --neu-auth-base: #ffffff;
   /* Inset shadows – form fields, pressed state (used by modals) */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -225,7 +225,12 @@
     #0b1222 100%
   );
   /* Auth / Onboarding page background (dark) */
-  --neu-auth-base: radial-gradient(ellipse at 50% 30%, #152244 0%, #0d162c 50%, #0a1122 100%);
+  --neu-auth-base: radial-gradient(
+    ellipse at 50% 30%,
+    #152244 0%,
+    #0d162c 50%,
+    #0a1122 100%
+  );
   /* Inset shadows – same formula, use .dark --neu-shadow-dark/light */
   --neu-shadow-inset:
     inset 5px 5px 10px var(--neu-shadow-dark),
@@ -233,6 +238,11 @@
   --neu-shadow-inset-press:
     inset 6px 6px 12px var(--neu-shadow-dark),
     inset -6px -6px 12px var(--neu-shadow-light);
+}
+
+/* Welcome card eye: white in dark mode (light mode uses inline var(--neu-accent)) */
+.dark [data-welcome-eye] {
+  color: #ffffff !important;
 }
 
 @layer base {
@@ -293,6 +303,14 @@
 /* Dashboard: all icons (SVG) white in light and dark theme */
 .dashboard-layout svg {
   color: var(--dashboard-icon, #ffffff);
+}
+
+/* Welcome card eye: light blue in light mode, white in dark mode (override dashboard svg rule) */
+.dashboard-layout [data-welcome-eye] svg {
+  color: var(--neu-accent) !important;
+}
+.dark .dashboard-layout [data-welcome-eye] svg {
+  color: #ffffff !important;
 }
 
 /* Bottom nav: menu item icons use --nav-inactive-icon (light blue in light, white in dark) */

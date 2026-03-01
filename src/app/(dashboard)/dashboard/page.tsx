@@ -18,7 +18,9 @@ import {
   CreditCard,
   Settings,
   HelpCircle,
+  Share2,
 } from 'lucide-react';
+import { IoHeadsetOutline } from 'react-icons/io5';
 // Semantic aliases: use type-resolving icons (Trophy/Flame/BookOpen/Sparkles have declaration issues in some setups)
 const Trophy = Award;
 const Flame = Clock;
@@ -51,6 +53,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useUIStore } from '@/store/uiStore';
+import { openShareModal } from '@/store/shareModalStore';
 import { useUser } from '@/hooks/useUser';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
@@ -991,10 +994,10 @@ export default function DashboardPage() {
                         href: '/dashboard/onboarding',
                       },
                       {
-                        id: 'nxp-gamification',
-                        label: 'NXP',
-                        icon: Sparkles,
-                        href: '/dashboard/achievements',
+                        id: 'share',
+                        label: 'Share',
+                        icon: Share2,
+                        href: '#',
                       },
                       {
                         id: 'rank',
@@ -1021,10 +1024,10 @@ export default function DashboardPage() {
                         href: '/dashboard',
                       },
                       {
-                        id: 'knowledge-base',
-                        label: 'Knowledge base',
-                        icon: BookOpen,
-                        href: '/dashboard/knowledge-base',
+                        id: 'support',
+                        label: 'Support',
+                        icon: IoHeadsetOutline,
+                        href: '#',
                       },
                       {
                         id: 'settings',
@@ -1043,6 +1046,8 @@ export default function DashboardPage() {
                       const isRank = button.id === 'rank';
                       const isWelcomeBonus = button.id === 'welcome-bonus';
                       const isWallet = button.id === 'wallet-address';
+                      const isSupport = button.id === 'support';
+                      const isShare = button.id === 'share';
                       const buttonContent = (
                         <motion.button
                           type="button"
@@ -1181,6 +1186,58 @@ export default function DashboardPage() {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
                                   openModal('wallet');
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isSupport ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() =>
+                                window.dispatchEvent(
+                                  new CustomEvent('openAssistant', {
+                                    bubbles: true,
+                                  })
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  window.dispatchEvent(
+                                    new CustomEvent('openAssistant', {
+                                      bubbles: true,
+                                    })
+                                  );
+                                }
+                              }}
+                              className="cursor-pointer border-0 bg-transparent p-0 text-left"
+                              {...hoverPressProps}
+                            >
+                              {buttonContent}
+                            </div>
+                          ) : isShare ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() =>
+                                openShareModal('profit', {
+                                  title: 'Share Your Success!',
+                                  message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                                  amount: totalEarnings,
+                                })
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openShareModal('profit', {
+                                    title: 'Share Your Success!',
+                                    message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                                    amount: totalEarnings,
+                                  });
                                 }
                               }}
                               className="cursor-pointer border-0 bg-transparent p-0 text-left"

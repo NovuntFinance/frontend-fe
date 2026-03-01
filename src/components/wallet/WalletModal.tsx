@@ -104,11 +104,19 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
       });
       return;
     }
+    const code = twoFACode?.trim();
+    if (!code || code.length !== 6) {
+      toast.error('2FA code required', {
+        description:
+          'Please enter your 6-digit verification code from your authenticator app.',
+      });
+      return;
+    }
     setAddress(
       {
         address: newAddress,
         network: 'BEP20',
-        twoFACode: twoFACode || undefined,
+        twoFACode: code,
       },
       {
         onSuccess: () => {
@@ -227,7 +235,11 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
             <ModalFooter className="pt-2">
               <PrimaryButton
                 type="submit"
-                disabled={isPending || !newAddress}
+                disabled={
+                  isPending ||
+                  !newAddress ||
+                  (twoFACode?.trim()?.length ?? 0) !== 6
+                }
                 loading={isPending}
               >
                 {hasAddress ? 'Update Address' : 'Confirm & Save Address'}

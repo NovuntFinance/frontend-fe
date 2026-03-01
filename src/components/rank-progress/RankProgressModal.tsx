@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { QualificationRequirementsContent } from './QualificationRequirementsContent';
 import { neuRadius } from './neumorphicTokens';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,7 @@ export function RankProgressModal({
           border: '1px solid var(--neu-border)',
         }}
       >
+        <DialogTitle className="sr-only">Rank progress</DialogTitle>
         {/* Inner padding: mobile 16px, tablet 24px, desktop 32px */}
         <div className="relative p-4 sm:p-6 lg:p-8">
           <style>{`
