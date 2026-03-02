@@ -106,6 +106,17 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used internally for polling state management
   const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
+  
+  // Fee estimate state
+  const [feeEstimate, setFeeEstimate] = useState<{
+    youWillReceive: number;
+    youNeedToSend: number;
+    estimatedNetworkFee: number;
+    estimatedServiceFee: number;
+    totalFee: number;
+    feePercentage: number;
+  } | null>(null);
+  const [isFetchingFees, setIsFetchingFees] = useState(false);
 
   const MIN_DEPOSIT = 20;
 
@@ -170,6 +181,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setError('');
       setQrCodeUrl('');
       setIsPolling(false);
+      setFeeEstimate(null);
     } else {
       // Cancel polling when modal closes
       if (pollCancelRef.current) {
@@ -188,6 +200,42 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setIsPolling(false);
     };
   }, [isOpen]);
+
+  // Fetch fee estimate when amount changes
+  useEffect(() => {
+    const amountNum = parseFloat(amount);
+    
+    if (!amount || amountNum < MIN_DEPOSIT) {
+      setFeeEstimate(null);
+      return;
+    }
+
+    const fetchFeeEstimate = async () => {
+      setIsFetchingFees(true);
+      try {
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.novunt.com/api/v1';
+        const response = await fetch(
+          `${baseURL}/enhanced-transactions/deposit/fee-estimate?amount=${amountNum}`
+        );
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          setFeeEstimate(data.data);
+        } else {
+          console.error('[DepositModal] Fee estimate failed:', data);
+        }
+      } catch (err) {
+        console.error('[DepositModal] Error fetching fee estimate:', err);
+        // Don't show error to user, just proceed without fee display
+      } finally {
+        setIsFetchingFees(false);
+      }
+    };
+
+    // Debounce the API call
+    const timeoutId = setTimeout(fetchFeeEstimate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [amount]);
 
   // Generate QR code when deposit data is available
   useEffect(() => {
@@ -542,7 +590,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   className="text-sm font-medium"
                   style={{ color: NEU_TOKENS.white60 }}
                 >
-                  Amount (USDT)
+                  Amount you want to receive (USDT)
                 </Label>
                 <Input
                   id="amount"
@@ -555,6 +603,75 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   className="neu-input h-12 w-full border-0 text-lg focus-visible:ring-0"
                 />
               </div>
+
+              {/* Fee Breakdown Display */}
+              {feeEstimate && !isFetchingFees && (
+                <div className="rounded-xl p-4 space-y-3" style={insetStyle}>
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: NEU_TOKENS.white80 }}
+                  >
+                    💸 Fee Breakdown
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span style={{ color: NEU_TOKENS.white60 }}>
+                        Network fee:
+                      </span>
+                      <span style={{ color: NEU_TOKENS.white60 }}>
+                        + {feeEstimate.estimatedNetworkFee.toFixed(2)} USDT
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: NEU_TOKENS.white60 }}>
+                        Service fee:
+                      </span>
+                      <span style={{ color: NEU_TOKENS.white60 }}>
+                        + {feeEstimate.estimatedServiceFee.toFixed(2)} USDT
+                      </span>
+                    </div>
+                    <div
+                      className="h-px"
+                      style={{ backgroundColor: NEU_TOKENS.border }}
+                    />
+                    <div className="flex justify-between font-semibold">
+                      <span style={{ color: NEU_TOKENS.white80 }}>
+                        You need to send:
+                      </span>
+                      <span style={{ color: NEU_TOKENS.accent }}>
+                        {feeEstimate.youNeedToSend.toFixed(2)} USDT
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: NEU_TOKENS.white80 }}>
+                        You will receive:
+                      </span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: '#10b981' }}
+                      >
+                        {feeEstimate.youWillReceive.toFixed(2)} USDT ✓
+                      </span>
+                    </div>
+                  </div>
+                  <p
+                    className="text-xs mt-2"
+                    style={{ color: NEU_TOKENS.white40 }}
+                  >
+                    Total fee: {feeEstimate.totalFee.toFixed(2)} USDT (
+                    {feeEstimate.feePercentage.toFixed(2)}%)
+                  </p>
+                </div>
+              )}
+
+              {isFetchingFees && parseFloat(amount) >= MIN_DEPOSIT && (
+                <div className="rounded-xl p-4 flex items-center gap-2" style={insetStyle}>
+                  <div className="animate-spin h-4 w-4 border-2 border-t-transparent rounded-full" style={{ borderColor: NEU_TOKENS.accent }} />
+                  <span className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+                    Calculating fees...
+                  </span>
+                </div>
+              )}
 
               <InfoCallout
                 icon={
@@ -584,10 +701,11 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   className="mt-2 list-inside list-decimal space-y-1 text-xs"
                   style={{ color: NEU_TOKENS.white60 }}
                 >
-                  <li>Enter deposit amount</li>
-                  <li>Send USDT to the provided address</li>
-                  <li>Wait for blockchain confirmation</li>
-                  <li>Funds credited to your Deposit Wallet</li>
+                  <li>Enter the amount you want to receive</li>
+                  <li>Review the fee breakdown (network + service fees)</li>
+                  <li>Send the total amount (your amount + fees) to the provided address</li>
+                  <li>Wait for blockchain confirmation (5-15 minutes)</li>
+                  <li>Receive exactly the amount you requested ✓</li>
                 </ol>
               </div>
 
@@ -614,7 +732,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
         <>
           <ModalHeader
             title="Deposit USDT"
-            subtitle={`${depositData.amount} USDT · BEP20`}
+            subtitle={`Send to receive ${depositData.amount} USDT · BEP20`}
             onClose={handleClose}
           />
           <ModalBody>
@@ -623,6 +741,22 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-4"
             >
+              {/* Amount to send reminder */}
+              {feeEstimate && (
+                <InfoCallout
+                  icon={
+                    <span
+                      className="text-xs font-bold"
+                      style={{ color: NEU_TOKENS.accent }}
+                    >
+                      💰
+                    </span>
+                  }
+                  title={`Send exactly ${feeEstimate.youNeedToSend.toFixed(2)} USDT`}
+                  description={`This includes ${feeEstimate.totalFee.toFixed(2)} USDT in fees. You will receive ${feeEstimate.youWillReceive.toFixed(2)} USDT.`}
+                />
+              )}
+
               {qrCodeUrl && (
                 <div
                   className="flex justify-center rounded-xl p-4"
