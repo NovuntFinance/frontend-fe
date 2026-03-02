@@ -37,7 +37,6 @@ import { WalletModal } from '@/components/wallet/WalletModal';
 import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
-import { DashboardFooter } from '@/components/layout/DashboardFooter';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import neuStyles from '@/styles/neumorphic.module.css';
@@ -489,9 +488,6 @@ export default function DashboardLayout({
           }}
         >
           <div className="dashboard-page-container">{children}</div>
-
-          {/* Global Footer */}
-          <DashboardFooter />
         </main>
 
         {/* Modals */}
