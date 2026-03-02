@@ -3,7 +3,15 @@
  * Prepares the platform for multi-language support
  */
 
-export const supportedLocales = ['en', 'es', 'fr', 'de', 'pt', 'zh', 'ja'] as const;
+export const supportedLocales = [
+  'en',
+  'es',
+  'fr',
+  'de',
+  'pt',
+  'zh',
+  'ja',
+] as const;
 export type Locale = (typeof supportedLocales)[number];
 
 export const defaultLocale: Locale = 'en';
@@ -77,6 +85,8 @@ export function formatNumber(
   locale: Locale = defaultLocale,
   options?: Intl.NumberFormatOptions
 ): string {
-  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : locale, options).format(number);
+  return new Intl.NumberFormat(
+    locale === 'en' ? 'en-US' : locale,
+    options
+  ).format(number);
 }
-
