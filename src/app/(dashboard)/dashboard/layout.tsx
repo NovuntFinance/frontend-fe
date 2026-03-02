@@ -169,7 +169,7 @@ export default function DashboardLayout({
   return (
     <DashboardGuard>
       <div
-        className="dashboard-layout flex h-[100dvh] max-h-[100dvh] min-h-screen flex-col overflow-hidden"
+        className="dashboard-layout flex flex-col overflow-hidden"
         style={{
           background: 'var(--neu-bg)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -446,7 +446,7 @@ export default function DashboardLayout({
           aria-hidden="true"
           className="shrink-0"
           style={{
-            minHeight: 'calc(5rem + env(safe-area-inset-top, 0px))',
+            minHeight: 'calc(5.5rem + env(safe-area-inset-top, 0px))',
           }}
         />
 
@@ -485,11 +485,11 @@ export default function DashboardLayout({
           id="main-content"
           className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:pt-8"
           style={{
-            paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 12px))',
+            paddingBottom: 'calc(110px + env(safe-area-inset-bottom, 16px))',
           }}
         >
           <div className="dashboard-page-container">{children}</div>
-          
+
           {/* Global Footer */}
           <DashboardFooter />
         </main>
