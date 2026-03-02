@@ -129,8 +129,8 @@ export function WelcomeBackCard({
           )}
         </div>
 
-        {/* Eye + Rank badge: stacked, centered */}
-        <div className="flex flex-shrink-0 flex-col items-center gap-2">
+        {/* Eye + Rank badge: stacked, right-aligned */}
+        <div className="flex flex-shrink-0 flex-col items-end gap-2">
           <button
             type="button"
             onClick={() => setBalanceVisible(!balanceVisible)}

@@ -82,7 +82,7 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
             onTouchEnd={() => setPressedIndex(null)}
           >
             <div
-              className="flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16"
+              className="flex h-16 w-16 items-center justify-center rounded-full sm:h-20 sm:w-20"
               style={{
                 background: isActive ? DARK_NAVY : ACCENT_BLUE,
                 boxShadow: isPressed
@@ -97,12 +97,12 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
               }}
             >
               <action.icon
-                className="h-6 w-6 sm:h-7 sm:w-7"
+                className="h-7 w-7 sm:h-9 sm:w-9"
                 style={{ color: '#ffffff' }}
               />
             </div>
             <span
-              className="text-center text-xs font-medium sm:text-sm"
+              className="text-center text-sm font-medium sm:text-base"
               style={{ color: 'var(--neu-text-primary)' }}
             >
               {action.label}
