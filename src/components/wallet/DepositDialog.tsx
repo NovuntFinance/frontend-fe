@@ -30,7 +30,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const depositSchema = z.object({
-  amount: z.coerce.number().min(10, 'Minimum deposit is 10 USDT'),
+  amount: z.coerce.number().min(20, 'Minimum deposit is 20 USDT'),
 });
 
 type DepositFormValues = z.infer<typeof depositSchema>;

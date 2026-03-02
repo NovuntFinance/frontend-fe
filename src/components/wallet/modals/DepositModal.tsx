@@ -107,7 +107,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
-  const MIN_DEPOSIT = 10;
+  const MIN_DEPOSIT = 20;
 
   // Mutation hooks and query client for refreshing wallet balance
   const queryClient = useQueryClient();

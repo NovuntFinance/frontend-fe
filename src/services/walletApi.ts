@@ -84,7 +84,7 @@ export interface DetailedWallet extends UserWallet {
 }
 
 export interface DepositRequest {
-  amount: number; // Min: 10, Max: 100000
+  amount: number; // Min: 20, Max: 100000
 }
 
 export interface DepositResponse {
