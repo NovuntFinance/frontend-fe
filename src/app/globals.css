@@ -331,26 +331,50 @@
 @media (display-mode: standalone) {
   html,
   body {
-    min-height: 100dvh;
-    min-height: -webkit-fill-available;
+    height: 100dvh;
+    height: -webkit-fill-available;
   }
 }
 
-/* Mobile browser improvements: ensure proper viewport handling and prevent content from being hidden behind browser UI */
+/* Mobile browser: use dvh so the layout tracks the dynamic viewport (visible area minus browser chrome). */
 @supports (height: 100dvh) {
   html {
     height: 100dvh;
   }
+  body {
+    height: 100dvh;
+  }
 }
 
-/* Ensure body fills available space on mobile, accounting for address bar collapse */
+/* Safari iOS: -webkit-fill-available is the most reliable unit for the visible viewport */
 @supports (-webkit-touch-callout: none) {
   html {
     height: -webkit-fill-available;
   }
   body {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
+  }
+}
+
+/*
+ * Dashboard shell: explicit fallback chain for height.
+ * The last property the browser supports wins:
+ *   100vh  → old browsers (includes hidden address-bar area on mobile)
+ *   100dvh → modern browsers (tracks dynamic viewport)
+ *   -webkit-fill-available → Safari iOS (most reliable unit)
+ * max-height prevents the shell from ever exceeding the visible viewport.
+ */
+.dashboard-layout {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .dashboard-layout {
+    height: -webkit-fill-available;
+    max-height: -webkit-fill-available;
   }
 }
 
