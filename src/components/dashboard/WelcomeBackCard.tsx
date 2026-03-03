@@ -258,9 +258,16 @@ export function WelcomeBackCard({
             />
           </div>
         ) : hasWithdrawalAddress ? (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => openModal('wallet')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openModal('wallet');
+              }
+            }}
             className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-all duration-200 sm:px-5 sm:py-3.5"
             style={{
               background: 'var(--neu-accent)',
@@ -315,7 +322,7 @@ export function WelcomeBackCard({
                 </TooltipContent>
               </Tooltip>
             </span>
-          </button>
+          </div>
         ) : (
           <button
             type="button"

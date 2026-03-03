@@ -23,6 +23,12 @@ export const registrationBonusApi = {
     try {
       const response = await api.get<any>('/registration-bonus/status');
 
+      // Debug: log the raw response from backend to diagnose stale data issues
+      console.log(
+        '[registrationBonusApi] 📥 Raw status response:',
+        JSON.stringify(response, null, 2).slice(0, 1000)
+      );
+
       let normalizedResponse: RegistrationBonusStatusResponse;
 
       if (response && typeof response === 'object') {

@@ -176,22 +176,38 @@ export function useCreateStake() {
       // Process stake for registration bonus in the background (non-blocking)
       // Use a timeout wrapper to prevent it from hanging
       const processBonusWithTimeout = async () => {
-        const stakeId = data?.stake?.id ?? data?.stake?._id;
-        const stakeAmount = data?.stake?.amount;
+        // Handle both response shapes:
+        //   1. { stake: { id/\_id, amount } }  — stake nested under "stake" key
+        //   2. { id/\_id, amount }              — stake IS the response (apiRequest unwraps "data")
+        const stakeId =
+          data?.stake?.id ??
+          data?.stake?._id ??
+          (data as any)?.id ??
+          (data as any)?._id;
+        const stakeAmount = data?.stake?.amount ?? (data as any)?.amount;
+
+        console.log('[Staking Mutation] 🔍 Bonus processing - extracted:', {
+          stakeId,
+          stakeAmount,
+          responseKeys: data ? Object.keys(data) : 'null',
+        });
 
         if (!stakeId || !stakeAmount) {
           console.warn(
-            '[Staking Mutation] ⚠️ Missing stakeId or amount, skipping bonus processing'
+            '[Staking Mutation] ⚠️ Missing stakeId or amount, skipping bonus processing.',
+            'Response shape:',
+            JSON.stringify(data, null, 2)
           );
           return;
         }
 
         try {
-          // Create a timeout promise that rejects after 5 seconds
+          // Create a timeout promise that rejects after 15 seconds
+          // (bonus processing may involve creating a bonus stake on the backend)
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(
               () => reject(new Error('Bonus processing timeout')),
-              5000
+              15000
             );
           });
 

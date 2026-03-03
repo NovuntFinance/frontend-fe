@@ -28,8 +28,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/enhanced-toast';
 import type { SupportEscalationRequest } from '@/types/assistant';
-import { useAuthStore } from '@/store/authStore';
-import { api } from '@/lib/api';
+import { createSupportTicket } from '@/services/assistantApi';
 
 interface SupportEscalationFormProps {
   isOpen: boolean;
@@ -64,31 +63,19 @@ export function SupportEscalationForm({
     setIsSubmitting(true);
 
     try {
-      const token = useAuthStore.getState().token;
-      if (!token) {
-        toast.error('Authentication required', {
-          description: 'Please log in to submit a support request.',
-        });
-        return;
-      }
-
-      const data = await api.post<{
-        success: boolean;
-        data: { ticketId: string };
-        message?: string;
-      }>('/assistant/support/escalate', {
+      const response = await createSupportTicket({
         subject: formData.subject,
         description: formData.description,
         priority: formData.priority,
         category: formData.category,
-        conversationId: conversationId || undefined, // Link to conversation if available
+        conversationId: conversationId || undefined,
       });
 
-      if (!data.success || !data.data) {
-        throw new Error(data.message || 'Failed to submit support request');
+      if (!response?.success || !response?.data) {
+        throw new Error('Failed to submit support request');
       }
 
-      const ticketData = data.data;
+      const ticketData = response.data;
       if (onTicketCreated && ticketData.ticketId) {
         onTicketCreated(ticketData.ticketId);
       }

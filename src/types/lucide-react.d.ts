@@ -86,4 +86,14 @@ declare module 'lucide-react' {
   export const Settings2: Icon;
   export const MapPin: Icon;
   export const Loader: Icon;
+  export const MessageSquare: Icon;
+  export const Ticket: Icon;
+  export const RotateCcw: Icon;
+  export const ThumbsUp: Icon;
+  export const ThumbsDown: Icon;
+  export const Zap: Icon;
+  export const Bot: Icon;
+  export const ArrowUpDown: Icon;
+  export const Tag: Icon;
+  export const Plus: Icon;
 }

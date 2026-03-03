@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRegistrationBonus } from '@/hooks/useRegistrationBonus';
 import { RegistrationBonusStatus } from '@/types/registrationBonus';
+import { useActiveStakes } from '@/lib/queries';
+import { registrationBonusApi } from '@/services/registrationBonusApi';
 import {
   Card,
   CardContent,
@@ -45,11 +47,75 @@ export function RegistrationBonusBanner({
   defaultExpanded = false,
 }: RegistrationBonusBannerProps = {}) {
   const { data, isLoading, error, refetch } = useRegistrationBonus();
+  const { data: activeStakes } = useActiveStakes();
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasShownConfetti, setHasShownConfetti] = useState(false);
   const confettiIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const confettiFiredRef = React.useRef(false);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const selfHealAttemptedRef = React.useRef(false);
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Self-healing: If bonus status says firstStakeCompleted = false but the
+  // user already has an active stake >= 20 USDT, the backend missed it.
+  // Call process-stake once to fix the record, then refetch status.
+  // ──────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (selfHealAttemptedRef.current) return;
+
+    const bonusData = data?.data;
+    if (!bonusData) return;
+
+    // Only run when bonus is still pending and first stake is NOT marked
+    const isPending = bonusData.status === RegistrationBonusStatus.PENDING;
+    const firstStakeMissing =
+      !bonusData.requirements?.firstStakeCompleted &&
+      !bonusData.requirements?.firstStake?.completed;
+
+    if (!isPending || !firstStakeMissing) return;
+
+    // Find a qualifying active stake (amount >= 20, not a bonus stake)
+    const stakes = Array.isArray(activeStakes) ? activeStakes : [];
+    const qualifyingStake = stakes.find(
+      (s: any) =>
+        s.amount >= 20 &&
+        s.type !== 'registration_bonus' &&
+        !s.isRegistrationBonus &&
+        s.active !== false &&
+        s.status !== 'cancelled'
+    );
+
+    if (!qualifyingStake) return;
+
+    const stakeId = qualifyingStake.id ?? (qualifyingStake as any)._id;
+    if (!stakeId) return;
+
+    // Attempt self-heal
+    selfHealAttemptedRef.current = true;
+    console.log(
+      '[RegistrationBonusBanner] 🔧 Self-healing: backend missed first stake. Calling process-stake...',
+      { stakeId, amount: qualifyingStake.amount }
+    );
+
+    registrationBonusApi
+      .processStake(stakeId, qualifyingStake.amount)
+      .then((res) => {
+        console.log(
+          '[RegistrationBonusBanner] ✅ Self-heal process-stake succeeded:',
+          res
+        );
+        // Refetch bonus status after a short delay to let backend update
+        setTimeout(() => refetch(), 1500);
+      })
+      .catch((err) => {
+        console.error(
+          '[RegistrationBonusBanner] ❌ Self-heal process-stake failed:',
+          err
+        );
+        // Even if it fails, refetch — the backend "self-healing on GET" might have kicked in
+        setTimeout(() => refetch(), 2000);
+      });
+  }, [data, activeStakes, refetch]);
 
   // Check localStorage on mount
   useEffect(() => {

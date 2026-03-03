@@ -1011,35 +1011,85 @@ export function useCreateStake() {
       queryClient.invalidateQueries({ queryKey: queryKeys.stakeStats });
       queryClient.invalidateQueries({ queryKey: queryKeys.walletBalance });
 
-      // Process registration bonus if this is the first stake
+      // Process registration bonus after stake creation
+      // Handle multiple response shapes (apiRequest may unwrap the data wrapper):
+      //   1. { data: { stake: { _id, amount } } }  → response.data.stake
+      //   2. { stake: { _id, amount } }             → response.stake
+      //   3. { _id, amount }                        → response itself IS the stake
       const stakeData =
-        response?.data?.stake || response?.data?.data?.stake || response?.stake;
-      const isFirstStake =
-        response?.data?.isFirstStake || stakeData?.isFirstStake;
-      const isBonusEligible =
-        response?.data?.registrationBonusEligible || false;
-      const stakeId = stakeData?.id ?? stakeData?._id;
+        response?.data?.stake ||
+        response?.data?.data?.stake ||
+        response?.stake ||
+        response;
+      const stakeId =
+        stakeData?.id ??
+        stakeData?._id ??
+        response?.data?.id ??
+        response?.data?._id;
+      const stakeAmount = stakeData?.amount ?? response?.data?.amount;
 
-      if (isFirstStake && isBonusEligible && stakeId && stakeData?.amount) {
+      console.log(
+        '[useCreateStake] 🔍 Registration bonus - response shape debug:',
+        {
+          responseType: typeof response,
+          responseKeys: response ? Object.keys(response) : 'null',
+          hasDataKey: !!response?.data,
+          hasStakeKey: !!response?.stake,
+          hasIdKey: !!response?._id || !!response?.id,
+          extractedStakeId: stakeId,
+          extractedAmount: stakeAmount,
+          stakeDataKeys: stakeData ? Object.keys(stakeData) : 'null',
+        }
+      );
+
+      // Always attempt bonus processing — the backend will no-op if it's not the first stake
+      // or if bonus is already processed. Removing the isFirstStake/isBonusEligible guards
+      // which the backend may not return.
+      if (stakeId && stakeAmount) {
         try {
+          console.log('[useCreateStake] 📤 Calling process-stake with:', {
+            stakeId,
+            stakeAmount,
+          });
           // Dynamically import to avoid circular dependencies
           const { registrationBonusApi } = await import(
             '@/services/registrationBonusApi'
           );
-          await registrationBonusApi.processStake(stakeId, stakeData.amount);
+          const bonusResult = await registrationBonusApi.processStake(
+            stakeId,
+            stakeAmount
+          );
+          console.log(
+            '[useCreateStake] ✅ process-stake response:',
+            JSON.stringify(bonusResult, null, 2)
+          );
 
           // Invalidate registration bonus status to refresh banner
           queryClient.invalidateQueries({
             queryKey: queryKeys.registrationBonus,
           });
-        } catch (bonusError) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.registrationBonusStatus,
+          });
+        } catch (bonusError: any) {
           // Don't fail the stake creation if bonus processing fails
           console.error(
-            '[useCreateStake] Bonus processing failed:',
-            bonusError
+            '[useCreateStake] ❌ Bonus processing failed:',
+            bonusError?.message || bonusError,
+            'Status:',
+            bonusError?.statusCode || bonusError?.response?.status
           );
           // Stake is still created successfully, bonus processing is optional
         }
+      } else {
+        console.warn(
+          '[useCreateStake] ⚠️ Could not extract stakeId or stakeAmount for bonus processing.',
+          {
+            stakeId,
+            stakeAmount,
+            fullResponse: JSON.stringify(response, null, 2).slice(0, 500),
+          }
+        );
       }
 
       toast.success('Stake created successfully! 🎉', {
