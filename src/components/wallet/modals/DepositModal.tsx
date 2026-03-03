@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, CheckCircle2 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
+import LottieIcon from '@/components/LottieIcon';
+import successAnimation from '@/assets/lottie/success.json';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,7 +108,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used internally for polling state management
   const [isPolling, setIsPolling] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
-  
+
   // Fee estimate state
   const [feeEstimate, setFeeEstimate] = useState<{
     youWillReceive: number;
@@ -204,7 +206,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // Fetch fee estimate when amount changes
   useEffect(() => {
     const amountNum = parseFloat(amount);
-    
+
     if (!amount || amountNum < MIN_DEPOSIT) {
       setFeeEstimate(null);
       return;
@@ -213,12 +215,13 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     const fetchFeeEstimate = async () => {
       setIsFetchingFees(true);
       try {
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.novunt.com/api/v1';
+        const baseURL =
+          process.env.NEXT_PUBLIC_API_URL || 'https://api.novunt.com/api/v1';
         const response = await fetch(
           `${baseURL}/enhanced-transactions/deposit/fee-estimate?amount=${amountNum}`
         );
         const data = await response.json();
-        
+
         if (data.success && data.data) {
           setFeeEstimate(data.data);
         } else {
@@ -606,7 +609,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
               {/* Fee Breakdown Display */}
               {feeEstimate && !isFetchingFees && (
-                <div className="rounded-xl p-4 space-y-3" style={insetStyle}>
+                <div className="space-y-3 rounded-xl p-4" style={insetStyle}>
                   <p
                     className="text-sm font-semibold"
                     style={{ color: NEU_TOKENS.white80 }}
@@ -655,7 +658,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </div>
                   </div>
                   <p
-                    className="text-xs mt-2"
+                    className="mt-2 text-xs"
                     style={{ color: NEU_TOKENS.white40 }}
                   >
                     Total fee: {feeEstimate.totalFee.toFixed(2)} USDT (
@@ -665,9 +668,18 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
               )}
 
               {isFetchingFees && parseFloat(amount) >= MIN_DEPOSIT && (
-                <div className="rounded-xl p-4 flex items-center gap-2" style={insetStyle}>
-                  <div className="animate-spin h-4 w-4 border-2 border-t-transparent rounded-full" style={{ borderColor: NEU_TOKENS.accent }} />
-                  <span className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+                <div
+                  className="flex items-center gap-2 rounded-xl p-4"
+                  style={insetStyle}
+                >
+                  <div
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
+                    style={{ borderColor: NEU_TOKENS.accent }}
+                  />
+                  <span
+                    className="text-sm"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
                     Calculating fees...
                   </span>
                 </div>
@@ -703,7 +715,10 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 >
                   <li>Enter the amount you want to receive</li>
                   <li>Review the fee breakdown (network + service fees)</li>
-                  <li>Send the total amount (your amount + fees) to the provided address</li>
+                  <li>
+                    Send the total amount (your amount + fees) to the provided
+                    address
+                  </li>
                   <li>Wait for blockchain confirmation (5-15 minutes)</li>
                   <li>Receive exactly the amount you requested ✓</li>
                 </ol>
@@ -836,8 +851,9 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 className="text-center text-sm"
                 style={{ color: NEU_TOKENS.white60 }}
               >
-                Confirming… This screen will switch to &quot;Deposit Confirmed!&quot; when
-                the payment is received. You can also close and we&apos;ll notify you.
+                Confirming… This screen will switch to &quot;Deposit
+                Confirmed!&quot; when the payment is received. You can also
+                close and we&apos;ll notify you.
               </p>
             </motion.div>
           </ModalBody>
@@ -853,9 +869,12 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
             className="mx-auto inline-flex rounded-full p-6"
             style={raisedStyle}
           >
-            <CheckCircle2
-              className="size-12"
-              style={{ color: NEU_TOKENS.accent }}
+            <LottieIcon
+              animationData={successAnimation}
+              width={80}
+              height={80}
+              loop={false}
+              speed={1.2}
             />
           </motion.div>
           <h3

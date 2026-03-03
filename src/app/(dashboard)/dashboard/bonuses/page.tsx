@@ -14,7 +14,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Confetti from 'react-confetti';
-import { useBonusHistory, useClaimBonus, useRegistrationBonusStatus } from '@/lib/queries';
+import {
+  useBonusHistory,
+  useClaimBonus,
+  useRegistrationBonusStatus,
+} from '@/lib/queries';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,7 +61,9 @@ export default function BonusesPage() {
   const claimBonusMutation = useClaimBonus();
 
   // Separate claimable and claimed bonuses
-  const claimableBonuses = bonuses.filter((b: Bonus) => b.status === 'claimable');
+  const claimableBonuses = bonuses.filter(
+    (b: Bonus) => b.status === 'claimable'
+  );
   const claimedBonuses = bonuses.filter((b: Bonus) => b.status === 'claimed');
   const pendingBonuses = bonuses.filter((b: Bonus) => b.status === 'pending');
 
@@ -66,20 +72,22 @@ export default function BonusesPage() {
     const totalEarned = bonuses
       .filter((b) => b.status === 'claimed')
       .reduce((sum, b) => sum + b.amount, 0);
-    
+
     const totalPending = bonuses
       .filter((b) => b.status === 'claimable')
       .reduce((sum, b) => sum + b.amount, 0);
-    
-    const thisMonth = bonuses.filter((b) => {
-      const bonusDate = new Date(b.createdAt);
-      const now = new Date();
-      return (
-        bonusDate.getMonth() === now.getMonth() &&
-        bonusDate.getFullYear() === now.getFullYear() &&
-        b.status === 'claimed'
-      );
-    }).reduce((sum, b) => sum + b.amount, 0);
+
+    const thisMonth = bonuses
+      .filter((b) => {
+        const bonusDate = new Date(b.createdAt);
+        const now = new Date();
+        return (
+          bonusDate.getMonth() === now.getMonth() &&
+          bonusDate.getFullYear() === now.getFullYear() &&
+          b.status === 'claimed'
+        );
+      })
+      .reduce((sum, b) => sum + b.amount, 0);
 
     return {
       totalEarned,
@@ -94,15 +102,19 @@ export default function BonusesPage() {
     try {
       setClaimingBonusId(bonusId);
       await claimBonusMutation.mutateAsync(bonusId);
-      
+
       // Show celebration
       setShowConfetti(true);
-      toast.success('Bonus Claimed!', { description: 'Your bonus has been added to your earnings wallet' });
-      
+      toast.success('Bonus Claimed!', {
+        description: 'Your bonus has been added to your earnings wallet',
+      });
+
       // Hide confetti after 5 seconds
       setTimeout(() => setShowConfetti(false), 5000);
     } catch {
-      toast.error('Claim Failed', { description: 'Failed to claim bonus. Please try again.' });
+      toast.error('Claim Failed', {
+        description: 'Failed to claim bonus. Please try again.',
+      });
     } finally {
       setClaimingBonusId(null);
     }
@@ -199,7 +211,7 @@ export default function BonusesPage() {
                 </Badge>
               )}
               {isClaimable && (
-                <Badge variant="default" className="gap-1 animate-pulse">
+                <Badge variant="default" className="animate-pulse gap-1">
                   <Star className="h-3 w-3" />
                   Claimable
                 </Badge>
@@ -210,8 +222,10 @@ export default function BonusesPage() {
             <div className="mt-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{bonus.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{bonus.description}</p>
+                  <h3 className="text-lg font-semibold">{bonus.title}</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {bonus.description}
+                  </p>
                 </div>
               </div>
 
@@ -220,8 +234,12 @@ export default function BonusesPage() {
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, delay: index * 0.05 + 0.2 }}
-                  className="text-3xl font-bold text-primary"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 200,
+                    delay: index * 0.05 + 0.2,
+                  }}
+                  className="text-primary text-3xl font-bold"
                 >
                   {formatCurrency(bonus.amount)}
                 </motion.span>
@@ -237,27 +255,32 @@ export default function BonusesPage() {
 
               {/* Metadata */}
               {bonus.metadata && (
-                <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="text-muted-foreground space-y-1 text-sm">
                   {bonus.metadata.depositAmount && (
-                    <p>• Deposit: {formatCurrency(bonus.metadata.depositAmount)}</p>
+                    <p>
+                      • Deposit: {formatCurrency(bonus.metadata.depositAmount)}
+                    </p>
                   )}
                   {bonus.metadata.referralLevel && (
                     <p>• Level {bonus.metadata.referralLevel} Referral</p>
                   )}
                   {bonus.metadata.oldRank && bonus.metadata.newRank && (
                     <p>
-                      • Rank Up: {bonus.metadata.oldRank} → {bonus.metadata.newRank}
+                      • Rank Up: {bonus.metadata.oldRank} →{' '}
+                      {bonus.metadata.newRank}
                     </p>
                   )}
                   {bonus.metadata.poolAmount && (
-                    <p>• Pool Share: {formatCurrency(bonus.metadata.poolAmount)}</p>
+                    <p>
+                      • Pool Share: {formatCurrency(bonus.metadata.poolAmount)}
+                    </p>
                   )}
                 </div>
               )}
 
               {/* Footer */}
-              <div className="flex items-center justify-between pt-3 border-t">
-                <p className="text-xs text-muted-foreground">
+              <div className="flex items-center justify-between border-t pt-3">
+                <p className="text-muted-foreground text-xs">
                   {isClaimed && bonus.claimedAt
                     ? `Claimed ${format(new Date(bonus.claimedAt), 'MMM dd, yyyy')}`
                     : `Issued ${format(new Date(bonus.createdAt), 'MMM dd, yyyy')}`}
@@ -317,14 +340,18 @@ export default function BonusesPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <Card className="border-primary/20 from-primary/5 to-primary/10 bg-gradient-to-br">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Earned</p>
-                  <p className="text-3xl font-bold text-primary">{formatCurrency(stats.totalEarned)}</p>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    Total Earned
+                  </p>
+                  <p className="text-primary text-3xl font-bold">
+                    {formatCurrency(stats.totalEarned)}
+                  </p>
                 </div>
-                <Gift className="h-10 w-10 text-primary" />
+                <Gift className="text-primary h-10 w-10" />
               </div>
             </CardContent>
           </Card>
@@ -339,9 +366,15 @@ export default function BonusesPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Claimable</p>
-                  <p className="text-3xl font-bold text-amber-600">{formatCurrency(stats.totalPending)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stats.claimableCount} bonuses</p>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    Claimable
+                  </p>
+                  <p className="text-3xl font-bold text-amber-600">
+                    {formatCurrency(stats.totalPending)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {stats.claimableCount} bonuses
+                  </p>
                 </div>
                 <Star className="h-10 w-10 text-amber-600" />
               </div>
@@ -358,10 +391,14 @@ export default function BonusesPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                  <p className="text-3xl font-bold">{formatCurrency(stats.thisMonth)}</p>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    This Month
+                  </p>
+                  <p className="text-3xl font-bold">
+                    {formatCurrency(stats.thisMonth)}
+                  </p>
                 </div>
-                <Calendar className="h-10 w-10 text-muted-foreground" />
+                <Calendar className="text-muted-foreground h-10 w-10" />
               </div>
             </CardContent>
           </Card>
@@ -376,10 +413,12 @@ export default function BonusesPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Bonuses</p>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    Total Bonuses
+                  </p>
                   <p className="text-3xl font-bold">{bonuses.length}</p>
                 </div>
-                <Gift className="h-10 w-10 text-muted-foreground" />
+                <Gift className="text-muted-foreground h-10 w-10" />
               </div>
             </CardContent>
           </Card>
@@ -428,9 +467,11 @@ export default function BonusesPage() {
           ) : claimableBonuses.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
-                <Star className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No bonuses to claim</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <Star className="text-muted-foreground mx-auto h-12 w-12" />
+                <h3 className="mt-4 text-lg font-semibold">
+                  No bonuses to claim
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm">
                   Keep earning to unlock more bonuses and rewards
                 </p>
               </CardContent>
@@ -463,9 +504,11 @@ export default function BonusesPage() {
           ) : claimedBonuses.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
-                <Check className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No claimed bonuses</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <Check className="text-muted-foreground mx-auto h-12 w-12" />
+                <h3 className="mt-4 text-lg font-semibold">
+                  No claimed bonuses
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm">
                   Your claimed bonuses will appear here
                 </p>
               </CardContent>
@@ -498,9 +541,11 @@ export default function BonusesPage() {
           ) : pendingBonuses.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
-                <Clock className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No pending bonuses</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <Clock className="text-muted-foreground mx-auto h-12 w-12" />
+                <h3 className="mt-4 text-lg font-semibold">
+                  No pending bonuses
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm">
                   Your pending bonuses will appear here
                 </p>
               </CardContent>
@@ -537,7 +582,7 @@ function RegistrationBonusSection() {
         transition={{ duration: 0.3 }}
         className="mt-8"
       >
-        <Skeleton className="h-10 w-64 mb-4" />
+        <Skeleton className="mb-4 h-10 w-64" />
         <Skeleton className="h-96 w-full" />
       </motion.div>
     );
@@ -545,7 +590,7 @@ function RegistrationBonusSection() {
 
   // Only show if user has or had a bonus
   const status = bonusStatus?.data?.status;
-  if (!status || (status !== 'bonus_active' && status !== 'completed')) {
+  if (!status || (status !== 'BONUS_ACTIVE' && status !== 'COMPLETED')) {
     return null;
   }
 
@@ -557,7 +602,9 @@ function RegistrationBonusSection() {
       className="mt-8 space-y-4"
     >
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Registration Bonus</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Registration Bonus
+        </h2>
         <p className="text-muted-foreground mt-1">
           Track your registration bonus payout history
         </p>

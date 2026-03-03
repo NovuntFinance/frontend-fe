@@ -1058,35 +1058,111 @@ export default function DashboardPage() {
                       const buttonContent = (
                         <motion.button
                           type="button"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{
+                            delay: 0.3 + index * 0.05,
+                            type: 'spring',
+                            stiffness: 260,
+                            damping: 20,
+                          }}
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.92 }}
                           className="flex touch-manipulation flex-col items-center gap-1.5 sm:gap-2"
                         >
                           {/* Circular neumorphic button – same as Quick Actions; welcome bonus gets status indicator */}
-                          <div
-                            className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16"
+                          <motion.div
+                            className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16 dark:hover:bg-[#0D162C]"
                             style={{
-                              background: isActive ? '#0D162C' : '#009BF2',
+                              background: isActive
+                                ? 'var(--neu-hover-bg, #ffffff)'
+                                : '#009BF2',
                               boxShadow: isPressed
                                 ? 'var(--neu-shadow-inset-press)'
                                 : 'var(--neu-shadow-raised)',
-                              border: '1px solid var(--neu-border)',
+                              border: isActive
+                                ? '2px solid #009BF2'
+                                : '1px solid var(--neu-border)',
                               transform:
                                 isHovered && !isPressed
                                   ? 'translateY(-2px)'
                                   : 'translateY(0)',
                               transition:
-                                'box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1), background 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                'box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1), background 250ms cubic-bezier(0.4, 0, 0.2, 1), border 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                            animate={{
+                              y: [0, -3, 0, -1.5, 0],
+                              scale: [1, 1.015, 1, 1.008, 1],
+                              boxShadow: isHovered
+                                ? [
+                                    'var(--neu-shadow-raised)',
+                                    '0 6px 18px rgba(0, 155, 242, 0.25)',
+                                    'var(--neu-shadow-raised)',
+                                  ]
+                                : [
+                                    'var(--neu-shadow-raised)',
+                                    '0 3px 10px rgba(0, 155, 242, 0.12)',
+                                    'var(--neu-shadow-raised)',
+                                  ],
+                            }}
+                            transition={{
+                              y: {
+                                duration: 2.8 + index * 0.3,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                              },
+                              scale: {
+                                duration: 2.3 + index * 0.2,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                              },
+                              boxShadow: {
+                                duration: 1.8 + index * 0.25,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                              },
                             }}
                           >
-                            <IconComponent
-                              className="h-5 w-5 sm:h-6 sm:w-6"
-                              style={{ color: '#ffffff' }}
-                            />
+                            {/* Ripple effect on click */}
+                            {isPressed && (
+                              <motion.span
+                                className="absolute inset-0 rounded-full"
+                                style={{ background: 'rgba(0, 155, 242, 0.3)' }}
+                                initial={{ scale: 0, opacity: 1 }}
+                                animate={{ scale: 2.5, opacity: 0 }}
+                                transition={{ duration: 0.6 }}
+                              />
+                            )}
+                            <motion.div
+                              animate={{
+                                rotate: isHovered
+                                  ? [0, -8, 8, -8, 0]
+                                  : [0, -2, 2, -1.5, 0],
+                                scale: isHovered ? [1, 1.15, 1] : [1, 1.08, 1],
+                              }}
+                              transition={{
+                                rotate: {
+                                  duration: isHovered ? 0.5 : 3.5 + index * 0.4,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                },
+                                scale: {
+                                  duration: isHovered ? 0.5 : 2.8 + index * 0.3,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                },
+                              }}
+                            >
+                              <IconComponent
+                                className="h-5 w-5 sm:h-6 sm:w-6"
+                                style={{
+                                  color: isActive ? '#009BF2' : '#ffffff',
+                                }}
+                              />
+                            </motion.div>
                             {/* Welcome bonus status: unclaimed = obvious pulse; claimed = green online dot */}
                             {isWelcomeBonus && (
-                              <span
+                              <motion.span
                                 className={`absolute top-0 right-0 h-3 w-3 rounded-full sm:h-3.5 sm:w-3.5 ${!bonusCollected ? 'animate-pulse' : ''}`}
                                 style={{
                                   background: bonusCollected
@@ -1099,28 +1175,50 @@ export default function DashboardPage() {
                                     ? 'Bonus claimed'
                                     : 'Claim your bonus'
                                 }
+                                animate={{
+                                  scale: !bonusCollected ? [1, 1.2, 1] : 1,
+                                }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: !bonusCollected ? Infinity : 0,
+                                }}
                                 aria-hidden
                               />
                             )}
-                          </div>
+                          </motion.div>
                           {/* Label + status line for welcome bonus */}
-                          <span
+                          <motion.span
                             className="text-center text-[10px] font-medium sm:text-xs"
                             style={{ color: 'var(--neu-text-primary)' }}
+                            animate={{
+                              y: isHovered ? [-1, 0, -1] : 0,
+                            }}
+                            transition={{
+                              duration: 1.2,
+                              repeat: isHovered ? Infinity : 0,
+                              ease: 'easeInOut',
+                            }}
                           >
                             {button.label}
-                          </span>
+                          </motion.span>
                           {isWelcomeBonus && (
-                            <span
+                            <motion.span
                               className="text-[9px] font-medium sm:text-[10px]"
                               style={{
                                 color: bonusCollected
                                   ? '#22c55e'
                                   : 'var(--neu-accent)',
                               }}
+                              animate={{
+                                opacity: !bonusCollected ? [1, 0.6, 1] : 1,
+                              }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: !bonusCollected ? Infinity : 0,
+                              }}
                             >
                               {bonusCollected ? 'Claimed' : 'Tap to claim'}
-                            </span>
+                            </motion.span>
                           )}
                         </motion.button>
                       );

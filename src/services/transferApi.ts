@@ -92,10 +92,27 @@ export const transferApi = {
     const response = await apiRequest<TransferHistoryResponse>('get', url);
 
     console.log('[transferApi] Transfer history fetched:', {
-      totalRecords: response.data.pagination.totalRecords,
-      currentPage: response.data.pagination.currentPage,
-      transfersCount: response.data.transfers.length,
+      totalRecords: response.data?.pagination?.totalRecords || 0,
+      currentPage: response.data?.pagination?.currentPage || 1,
+      transfersCount: response.data?.transfers?.length || 0,
     });
+
+    // Return with defaults if data is missing
+    if (!response.data) {
+      return {
+        success: response.success || false,
+        data: {
+          transfers: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalRecords: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      };
+    }
 
     return response;
   },
@@ -194,8 +211,8 @@ export const transferApi = {
     );
 
     console.log('[transferApi] 2FA code retrieved:', {
-      timeRemaining: response.data.data.timeRemaining,
-      user: response.data.data.user.username,
+      timeRemaining: response.data?.data?.timeRemaining || 0,
+      user: response.data?.data?.user?.username || 'unknown',
     });
 
     return response.data;
