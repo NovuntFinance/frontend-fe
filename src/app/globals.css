@@ -299,6 +299,15 @@
     user-select: none;
   }
 
+  /* Prevent iOS Safari auto-zoom on input focus – 16px is the threshold */
+  @media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
   /* Ensure images are responsive by default */
   img {
     max-width: 100%;

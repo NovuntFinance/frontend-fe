@@ -1919,7 +1919,7 @@ function TransactionItem({
                 <FileText className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Transaction Receipt</DialogTitle>
                 <DialogDescription>

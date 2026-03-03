@@ -27,7 +27,7 @@ export function RankProgressModal({
         className={cn(
           'rank-progress-neu-modal',
           'overflow-hidden border-0 p-0 shadow-none',
-          'max-h-[calc(100vh-2rem)] max-w-[calc(100%-2rem)]',
+          'max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] max-w-[calc(100%-2rem)]',
           'sm:max-w-lg md:max-w-xl lg:max-w-2xl',
           'overflow-y-auto',
           'rounded-[20px]',

@@ -1692,7 +1692,9 @@
   box-shadow:
     12px 12px 32px rgba(0, 0, 0, 0.5),
     -12px -12px 32px rgba(255, 255, 255, 0.03);
-  max-height: 90vh;
+  max-height: calc(
+    100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem
+  );
   overflow-y: auto;
   color: var(--badge-accent);
 }

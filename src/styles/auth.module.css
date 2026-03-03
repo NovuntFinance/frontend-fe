@@ -154,7 +154,8 @@
   border-radius: 0.875rem;
   box-shadow: var(--neu-shadow-inset);
   color: var(--neu-text-primary);
-  font-size: 0.875rem;
+  /* 16px prevents iOS Safari auto-zoom on focus */
+  font-size: 1rem;
   padding: 0.875rem 2.75rem 0.875rem 2.75rem;
   width: 100%;
   outline: none;

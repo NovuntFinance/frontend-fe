@@ -212,7 +212,7 @@ export function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl p-0" showCloseButton={false}>
+      <DialogContent className="p-0 sm:max-w-2xl" showCloseButton={false}>
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>Quick Navigation</DialogTitle>
           <DialogDescription>

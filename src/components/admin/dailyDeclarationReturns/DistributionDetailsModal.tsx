@@ -34,7 +34,7 @@ export function DistributionDetailsModal({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>📋 Distribution Details - {date}</DialogTitle>
           <DialogDescription>

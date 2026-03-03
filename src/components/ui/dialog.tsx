@@ -94,9 +94,11 @@ function DialogContent({
           'data-[state=open]:slide-in-from-top-[2%]',
           'data-[state=closed]:duration-200 data-[state=open]:duration-300',
           // Scrollable content with mobile momentum
-          'overflow-y-auto',
+          'overflow-x-hidden overflow-y-auto',
           '-webkit-overflow-scrolling-touch',
           'overscroll-behavior-contain',
+          // Prevent modal from overflowing viewport
+          'box-border',
           // Custom scrollbar
           '[&::-webkit-scrollbar]:w-2',
           '[&::-webkit-scrollbar-track]:bg-transparent',

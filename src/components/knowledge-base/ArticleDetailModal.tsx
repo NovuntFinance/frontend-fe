@@ -35,7 +35,7 @@ export function ArticleDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-w-4xl gap-0 overflow-hidden !border-0 !bg-transparent p-0 !shadow-none"
+        className="gap-0 overflow-hidden !border-0 !bg-transparent p-0 !shadow-none sm:max-w-4xl"
         overlayClassName={badgeStyles.kbModalOverlay}
         showCloseButton={false}
       >

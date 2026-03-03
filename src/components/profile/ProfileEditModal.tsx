@@ -176,7 +176,7 @@ export function ProfileEditModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] p-4 backdrop-blur-xl sm:max-w-xl sm:p-6 md:max-w-2xl"
+        className="p-4 sm:max-w-xl sm:p-6 md:max-w-2xl"
         style={neuCardRaised}
       >
         <DialogHeader>
