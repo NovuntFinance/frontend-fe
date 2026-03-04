@@ -2,7 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Download,
+  Upload,
+  Send,
+  TrendingUp,
+  Gift,
+  DollarSign,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
+import { formatCurrency } from '@/lib/utils';
 import type {
   PlatformActivity,
   PlatformActivityType,
@@ -97,11 +108,35 @@ function getActivityTitle(type: PlatformActivity['type']): string {
     promotion: 'Promotion',
     transfer: 'Transfer',
     registration_bonus: 'Bonus',
-    stake_completion: 'Stake completed',
+    stake_completion: 'Stake Completed',
     bonus_activation: 'Bonus',
-    new_signup: 'New signup',
+    new_signup: 'New Signup',
   };
   return map[type] || type;
+}
+
+function getActivityIcon(type: PlatformActivity['type']) {
+  switch (type) {
+    case 'deposit':
+      return Download;
+    case 'withdraw':
+      return Upload;
+    case 'transfer':
+      return Send;
+    case 'stake':
+    case 'stake_completion':
+      return TrendingUp;
+    case 'referral':
+    case 'registration_bonus':
+    case 'bonus_activation':
+      return Gift;
+    case 'ros':
+      return DollarSign;
+    case 'new_signup':
+      return Users;
+    default:
+      return Wallet;
+  }
 }
 
 /** Dashboard card style (match Activity Feed, Live Trading Signals) */
@@ -148,36 +183,41 @@ export function LivePlatformActivities() {
 
   return (
     <div
-      className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
+      className="rounded-2xl px-7 py-3 transition-all duration-300 sm:px-8 sm:py-4"
       style={CARD_STYLE}
     >
-      {/* Minimal: label + value only (match Stats, Recent Activity, Live Trading Signals); crossfade, no empty gap */}
-      <div className="relative min-h-[88px]">
+      {/* Same template as stat card / ActivityFeed / LiveTradingSignals */}
+      <div className="relative min-h-[64px]">
         {loading ? (
+          /* Loading skeleton — matches ActivityFeed skeleton */
           <div className="w-full">
-            <div className="mb-2">
+            <div className="mb-1">
               <div
-                className="h-3 w-24 animate-pulse rounded"
+                className="h-3 w-28 animate-pulse rounded"
                 style={{ background: 'rgba(0, 155, 242, 0.25)' }}
               />
             </div>
-            <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-center gap-2 pr-12">
               <div
-                className="h-7 w-28 animate-pulse rounded sm:h-8"
+                className="h-6 w-24 animate-pulse rounded sm:h-7"
                 style={{ background: 'rgba(0, 155, 242, 0.25)' }}
               />
               <div
-                className="h-3 w-16 shrink-0 animate-pulse rounded"
+                className="h-4 w-16 shrink-0 animate-pulse rounded"
                 style={{ background: 'rgba(0, 155, 242, 0.2)' }}
               />
             </div>
+            <div
+              className="absolute top-1/2 right-0 h-10 w-10 -translate-y-1/2 animate-pulse rounded-full"
+              style={{ background: 'rgba(0, 155, 242, 0.15)' }}
+            />
           </div>
         ) : displayActivities.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center py-6 text-center text-sm"
-            style={{ color: 'var(--app-text-muted)' }}
+            className="flex items-center"
+            style={{ color: 'var(--neu-text-secondary)' }}
           >
-            <p>No activities found</p>
+            <p className="text-sm">No activities yet</p>
           </div>
         ) : currentActivity ? (
           <AnimatePresence initial={false}>
@@ -189,8 +229,8 @@ export function LivePlatformActivities() {
               transition={{ duration: 0.25 }}
               className="absolute inset-0 w-full"
             >
-              {/* Label line (match Recent Activity card) */}
-              <div className="mb-2">
+              {/* Row 1: type label (accent) · time · user (muted) */}
+              <div className="mb-0.5 pr-12">
                 <p
                   className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
                   style={{ color: 'var(--neu-accent)', filter: 'none' }}
@@ -198,42 +238,43 @@ export function LivePlatformActivities() {
                   {getActivityTitle(currentActivity.type)}
                   <span
                     className="ml-1.5 font-normal"
-                    style={{ color: 'rgba(0, 155, 242, 0.75)' }}
+                    style={{ color: 'var(--neu-text-secondary)' }}
                   >
-                    · {currentActivity.timeAgo} • {currentActivity.user}
+                    · {currentActivity.timeAgo} · {currentActivity.user}
                   </span>
                 </p>
               </div>
-              {/* Value + status row (match Recent Activity, Live Trading Signals) */}
-              <div className="flex items-baseline justify-between gap-2">
-                {currentActivity.amount != null ? (
-                  <span
-                    className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                    style={{
-                      color: 'var(--neu-text-primary)',
-                      filter: 'none',
-                    }}
-                  >
-                    +${currentActivity.amount.toLocaleString()}
-                  </span>
-                ) : (
-                  <span
-                    className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                    style={{
-                      color: 'var(--neu-text-primary)',
-                      filter: 'none',
-                    }}
-                  >
-                    —
-                  </span>
-                )}
+
+              {/* Row 2: amount (large bold) + status badge */}
+              <div className="flex items-center gap-2 pr-12">
                 <span
-                  className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-                  style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
+                  className="flex-1 text-lg font-black sm:text-xl"
+                  style={{ color: 'var(--neu-text-primary)', filter: 'none' }}
+                >
+                  {currentActivity.amount != null
+                    ? `+${formatCurrency(currentActivity.amount)}`
+                    : '—'}
+                </span>
+                <span
+                  className="flex-shrink-0 rounded-md px-2 py-0.5 text-xs font-bold capitalize"
+                  style={{ background: 'var(--neu-accent)', color: 'white' }}
                 >
                   Completed
                 </span>
               </div>
+
+              {/* Icon — absolute right, vertically centred */}
+              {(() => {
+                const IconComp = getActivityIcon(currentActivity.type);
+                return (
+                  <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                    <IconComp
+                      className="h-10 w-10"
+                      style={{ color: '#009BF2' }}
+                    />
+                  </div>
+                );
+              })()}
             </motion.div>
           </AnimatePresence>
         ) : null}

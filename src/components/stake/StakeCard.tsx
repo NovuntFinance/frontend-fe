@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Calendar, DollarSign, Target, Clock } from 'lucide-react';
+import { TrendingUp, Calendar, DollarSign } from 'lucide-react';
 import {
   Stake,
   hasReached200Target,
@@ -39,8 +39,12 @@ export function StakeCard({
   const balanceVisible = useUIStore((s) => s.balanceVisible);
   const isDashboard = variant === 'dashboard';
   const maskAmounts = isDashboard && !balanceVisible;
-  const primaryColor = isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)';
-  const textColor = isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-text)';
+  const primaryColor = isDashboard
+    ? 'var(--neu-text-primary)'
+    : 'var(--wallet-accent)';
+  const textColor = isDashboard
+    ? 'var(--neu-text-primary)'
+    : 'var(--wallet-text)';
   const mutedColor = isDashboard
     ? 'var(--neu-text-muted)'
     : 'var(--wallet-text-muted)';
@@ -109,7 +113,7 @@ export function StakeCard({
   const nextPayout = stake.weeklyPayouts?.find((p) => p.status === 'pending');
 
   const reducedMotion = prefersReducedMotion();
-  const cardClass = `${neuStyles['neu-card']} rounded-[18px] p-4 sm:p-6 md:p-7 ${isRegistrationBonus ? 'border-[1px] border-[rgba(0,155,242,0.25)]' : ''}`;
+  const cardClass = `${neuStyles['neu-card']} rounded-[18px] p-4 sm:p-6 md:p-7 ${isRegistrationBonus ? 'border border-amber-400/40' : 'border border-amber-400/20'}`;
 
   return (
     <motion.div
@@ -146,7 +150,7 @@ export function StakeCard({
               </p>
               <p className="text-xs" style={{ color: mutedColor }}>
                 {isRegistrationBonus
-                  ? 'Registration Bonus'
+                  ? 'Welcome Bonus'
                   : formatDate(stake.createdAt)}
               </p>
             </div>
@@ -155,22 +159,15 @@ export function StakeCard({
             <span
               className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
               style={{
-                color: isDashboard
-                  ? 'var(--neu-text-muted)'
-                  : 'var(--neu-text-secondary)',
+                background: 'var(--neu-accent)',
+                color: '#ffffff',
+                border: '1px solid var(--neu-accent)',
               }}
             >
               {stake.status
                 ? stake.status.charAt(0).toUpperCase() + stake.status.slice(1)
                 : 'Unknown'}
             </span>
-            {isRegistrationBonus && (
-              <span
-                className={`${neuStyles['neu-badge']} ${neuStyles['neu-badge-accent']} text-[10px] sm:text-xs`}
-              >
-                {maxReturnCap}% Cap
-              </span>
-            )}
           </div>
         </div>
 
@@ -183,6 +180,11 @@ export function StakeCard({
                 ? `${stake.currentROSPercent}% of ${stake.targetROSPercent}%`
                 : `${stake.progressToTarget || '0%'} of ${maxReturnCap}%`}
             </span>
+            {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
+              <span className="font-semibold" style={{ color: mutedColor }}>
+                ${maskAmounts ? MASK : fmt4(stake.remainingToTarget)} left
+              </span>
+            )}
           </div>
           <div
             className="overflow-hidden rounded-[16px]"
@@ -201,7 +203,7 @@ export function StakeCard({
               transition={{ duration: 0.6, delay: 0.15 }}
               className="h-full rounded-[16px] transition-[width] duration-300"
               style={{
-                background: 'var(--neu-accent)',
+                background: '#f59e0b',
               }}
             />
           </div>
@@ -217,46 +219,58 @@ export function StakeCard({
         {/* Stats Grid */}
         <div className="mb-4 grid grid-cols-2 gap-2 sm:gap-3">
           <div
-            className="flex items-center gap-2 rounded-[16px] p-2 sm:gap-3 sm:p-3"
+            className="flex items-center justify-between rounded-[16px] p-2 sm:p-3"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
-              border: '1px solid var(--neu-border)',
+              border: '1px solid var(--neu-accent)',
               background: 'var(--neu-bg)',
             }}
           >
+            <div className="flex flex-col gap-0.5">
+              <span
+                className="text-[9px] font-semibold tracking-wide uppercase"
+                style={{ color: 'var(--neu-accent)' }}
+              >
+                Earned
+              </span>
+              <p
+                className="min-w-0 truncate text-sm font-black sm:text-base"
+                style={{ color: 'var(--neu-text-primary)' }}
+              >
+                ${maskAmounts ? MASK : fmt4(stake.totalEarned)}
+              </p>
+            </div>
             <DollarSign
-              className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
-              style={{
-                color: isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)',
-              }}
+              className="h-5 w-5 shrink-0"
+              style={{ color: 'var(--neu-accent)' }}
             />
-            <p
-              className="min-w-0 truncate text-sm font-bold sm:text-base"
-              style={{ color: primaryColor }}
-            >
-              ${maskAmounts ? MASK : fmt4(stake.totalEarned)}
-            </p>
           </div>
           <div
-            className="flex items-center gap-2 rounded-[16px] p-2 sm:gap-3 sm:p-3"
+            className="flex items-center justify-between rounded-[16px] p-2 sm:p-3"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
-              border: '1px solid var(--neu-border)',
+              border: '1px solid var(--neu-accent)',
               background: 'var(--neu-bg)',
             }}
           >
-            <Target
-              className="h-3 w-3 shrink-0 sm:h-4 sm:w-4"
-              style={{
-                color: isDashboard ? 'var(--neu-text-primary)' : 'var(--wallet-accent)',
-              }}
+            <div className="flex flex-col gap-0.5">
+              <span
+                className="text-[9px] font-semibold tracking-wide uppercase"
+                style={{ color: 'var(--neu-accent)' }}
+              >
+                Target
+              </span>
+              <p
+                className="min-w-0 truncate text-sm font-black sm:text-base"
+                style={{ color: 'var(--neu-text-primary)' }}
+              >
+                ${maskAmounts ? MASK : fmt4(stake.targetReturn)}
+              </p>
+            </div>
+            <TrendingUp
+              className="h-5 w-5 shrink-0"
+              style={{ color: 'var(--neu-accent)' }}
             />
-            <p
-              className="min-w-0 truncate text-sm font-bold sm:text-base"
-              style={{ color: primaryColor }}
-            >
-              ${maskAmounts ? MASK : fmt4(stake.targetReturn)}
-            </p>
           </div>
         </div>
 
@@ -287,32 +301,19 @@ export function StakeCard({
           </div>
         )}
 
-        {/* Remaining to Target */}
-        {!isCompleted && (stake.remainingToTarget ?? 0) > 0 && (
-          <div className="mb-3 flex items-center justify-between text-xs sm:text-sm">
-            <Clock
-              className="h-3 w-3 sm:h-4 sm:w-4"
-              style={{ color: mutedColor }}
-            />
-            <span className="font-semibold" style={{ color: primaryColor }}>
-              ${maskAmounts ? MASK : fmt4(stake.remainingToTarget)}
-            </span>
-          </div>
-        )}
-
         {/* Goal: show goalTitle when present, otherwise label for goal (per backend sync doc) */}
         {getGoalDisplayLabel(stake) && (
           <div
             className="mb-3 rounded-[16px] p-2 text-center"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
-              border: '1px solid var(--neu-border)',
+              border: '1px solid var(--neu-accent)',
               background: 'var(--neu-bg)',
             }}
           >
             <p
-              className="text-[10px] font-medium sm:text-xs"
-              style={{ color: secondaryColor }}
+              className="text-[10px] font-bold sm:text-xs"
+              style={{ color: 'var(--neu-accent)' }}
             >
               🎯 {getGoalDisplayLabel(stake)}
             </p>
@@ -325,13 +326,13 @@ export function StakeCard({
             className="rounded-[16px] p-2 text-center sm:p-3"
             style={{
               boxShadow: 'var(--neu-shadow-inset)',
-              border: '1px solid rgba(0,155,242,0.2)',
+              border: '1px solid var(--neu-accent)',
               background: 'var(--neu-bg)',
             }}
           >
             <p
-              className="text-xs font-medium sm:text-sm"
-              style={{ color: primaryColor }}
+              className="text-xs font-bold sm:text-sm"
+              style={{ color: 'var(--neu-accent)' }}
             >
               🎉 {maxReturnCap}% achieved
             </p>

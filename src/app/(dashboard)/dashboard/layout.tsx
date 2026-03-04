@@ -196,7 +196,7 @@ export default function DashboardLayout({
               paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0px))',
             }}
           >
-            <div className="flex flex-shrink-0 items-center justify-between gap-4 px-3 pr-4 sm:px-4">
+            <div className="flex flex-shrink-0 items-center justify-between gap-4">
               {/* Profile Section - Left side */}
               <div className="flex shrink-0 items-center gap-3">
                 <DropdownMenu

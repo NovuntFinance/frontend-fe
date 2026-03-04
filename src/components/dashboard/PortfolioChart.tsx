@@ -84,7 +84,7 @@ export function PortfolioChart() {
   const change = currentROS - previousROS;
   const changePercent = previousROS !== 0 ? (change / previousROS) * 100 : 0;
   const isPositive = change >= 0;
-  const averageROS = data.reduce((sum, d) => sum + d.ros, 0) / data.length;
+  const accumulatedROS = data.reduce((sum, d) => sum + d.ros, 0);
 
   // Calculate chart dimensions with better scaling for visibility
   const maxROS = Math.max(...data.map((d) => d.ros));
@@ -162,8 +162,10 @@ export function PortfolioChart() {
             </p>
           </div>
           <div className="bg-muted/30 rounded-xl p-4">
-            <p className="text-muted-foreground mb-1 text-xs">Average ROS</p>
-            <p className="text-2xl font-bold">{pct4(averageROS)}</p>
+            <p className="text-muted-foreground mb-1 text-xs">
+              Accumulated ROS
+            </p>
+            <p className="text-2xl font-bold">{pct4(accumulatedROS)}</p>
           </div>
           <div className="bg-muted/30 rounded-xl p-4">
             <p className="text-muted-foreground mb-1 text-xs">Change</p>

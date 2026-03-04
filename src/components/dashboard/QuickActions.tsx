@@ -47,10 +47,10 @@ export function QuickActions({ gridOnDesktop }: QuickActionsProps = {}) {
   };
 
   const actions: QuickAction[] = [
-    { id: 'stake', label: 'Stake', icon: TrendingUp },
     { id: 'deposit', label: 'Deposit', icon: ArrowDownLeft },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    { id: 'stake', label: 'Stake', icon: TrendingUp },
     { id: 'transfer', label: 'Transfer', icon: ArrowRightLeft },
+    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
   ];
 
   return (

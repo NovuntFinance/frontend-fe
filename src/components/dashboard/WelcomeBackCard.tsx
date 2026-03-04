@@ -19,6 +19,7 @@ import { formatCurrency, formatAddress } from '@/lib/utils/wallet';
 import { useDefaultWithdrawalAddress } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/lib/utils';
 import { toast } from '@/components/ui/enhanced-toast';
+import { useBTCPrice } from '@/lib/queries/btcPriceQuery';
 
 /* Welcome card: all text white in both light and dark mode for consistency on dark/blue surfaces */
 const WELCOME_TEXT_WHITE = '#ffffff';
@@ -65,6 +66,14 @@ export function WelcomeBackCard({
   const greetingName = user?.firstName
     ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
     : 'Stakeholder';
+
+  // BTC price fetcher
+  const {
+    data: btcPrice,
+    isLoading: btcLoading,
+    error: btcError,
+  } = useBTCPrice();
+  const totalAssetsBTC = btcPrice ? totalAssets / btcPrice : null;
 
   const content = (
     <div className="relative z-10 p-5 sm:p-6">
@@ -129,7 +138,7 @@ export function WelcomeBackCard({
           )}
         </div>
 
-        {/* Eye + Rank badge: stacked, right-aligned */}
+        {/* Eye only: right-aligned, BTC badge below */}
         <div className="flex flex-shrink-0 flex-col items-end gap-2">
           <button
             type="button"
@@ -145,16 +154,20 @@ export function WelcomeBackCard({
               <EyeOff className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
             )}
           </button>
-          <span
-            className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
-            style={{
-              background: 'rgba(var(--neu-accent-rgb), 0.35)',
-              color: 'var(--neu-accent)',
-              border: '1px solid var(--neu-border)',
-            }}
+          <div
+            className="mt-1 text-xs font-bold opacity-80"
+            style={{ color: '#f59e0b' }}
           >
-            {user?.rank || 'Stakeholder'}
-          </span>
+            {!balanceVisible
+              ? '•••• BTC'
+              : btcLoading
+                ? 'Loading BTC...'
+                : btcError
+                  ? 'BTC error'
+                  : totalAssetsBTC
+                    ? `${totalAssetsBTC.toFixed(6)} BTC`
+                    : ''}
+          </div>
         </div>
       </div>
 

@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowDownLeft,
   DollarSign,
   Users,
   Clock,
@@ -30,9 +32,14 @@ import {
   useWalletBalance,
   useActiveStakes,
   useDashboardOverview,
+  useTeamInfo,
+  useStakingStreak,
 } from '@/lib/queries';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
-import { useTransactionHistory } from '@/hooks/useWallet';
+import {
+  useTransactionHistory,
+  useDefaultWithdrawalAddress,
+} from '@/hooks/useWallet';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { StakeCard } from '@/components/stake/StakeCard';
@@ -56,10 +63,13 @@ import { useUIStore } from '@/store/uiStore';
 import { openShareModal } from '@/store/shareModalStore';
 import { useUser } from '@/hooks/useUser';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
+import { useRankProgressLightweight } from '@/lib/queries/rankProgressQueries';
 import { RegistrationBonusStatus } from '@/types/registrationBonus';
 import { usePlatformActivity } from '@/hooks/usePlatformActivity';
 import { useWallet } from '@/hooks/useWallet';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useUnreadCount } from '@/hooks/useNotifications';
+import { getMyTickets } from '@/services/assistantApi';
 import type { PlatformActivity } from '@/types/platformActivity';
 
 /**
@@ -94,6 +104,71 @@ export default function DashboardPage() {
   const bonusCollected =
     bonusStatus === RegistrationBonusStatus.BONUS_ACTIVE ||
     bonusStatus === RegistrationBonusStatus.COMPLETED;
+
+  // Abbreviated rank names for the feature button
+  const rankAbbreviations: Record<string, string> = {
+    Stakeholder: 'St. Holder',
+    'Associate Stakeholder': 'Ass. St. Holder',
+    'Principal Strategist': 'Pr. Strategist',
+    'Elite Capitalist': 'El. Capitalist',
+    'Wealth Architect': 'W. Architect',
+    'Finance Titan': 'Fn. Titan',
+  };
+  const userRankLabel = rankAbbreviations[user?.rank || ''] || 'St. Holder';
+
+  // Real rank progress from backend API (same source as the Rank Modal)
+  const { data: rankProgressData } = useRankProgressLightweight();
+  const rankProgress = Math.min(
+    Math.round(rankProgressData?.progress_percent ?? 0),
+    100
+  );
+
+  // Whitelisted wallet address for wallet badge
+  const { data: withdrawalAddressData } = useDefaultWithdrawalAddress();
+  const hasWalletAddress = withdrawalAddressData?.hasDefaultAddress ?? false;
+  const walletAddressLast3 = withdrawalAddressData?.address
+    ? withdrawalAddressData.address.slice(-3)
+    : null;
+
+  // Team member count for Team badge
+  const { data: teamInfoData } = useTeamInfo();
+  const totalTeamMembers = teamInfoData?.teamStats?.totalTeamMembers ?? 0;
+
+  // Staking streak days for Streak badge
+  const { data: streakData } = useStakingStreak();
+  const streakDays = streakData?.currentStreak ?? 0;
+
+  // Security score for Settings badge (3 items: email 33% + 2FA 33% + wallet 34%)
+  const securityScore = useMemo(() => {
+    let score = 0;
+    if (user?.emailVerified) score += 33;
+    if (user?.twoFAEnabled) score += 33;
+    if (hasWalletAddress) score += 34;
+    return score;
+  }, [user?.emailVerified, user?.twoFAEnabled, hasWalletAddress]);
+
+  // Unread notification/message count for Support badge
+  const { unreadCount: notificationUnreadCount } = useUnreadCount();
+
+  // Open support tickets count (submitted or in-progress)
+  const { data: openTicketsData } = useQuery({
+    queryKey: ['support-open-tickets'],
+    queryFn: async () => {
+      const res = await getMyTickets({ limit: 50 });
+      if (res?.success && res.data?.tickets) {
+        return res.data.tickets.filter(
+          (t) => t.status === 'submitted' || t.status === 'in_progress'
+        ).length;
+      }
+      return 0;
+    },
+    staleTime: 60_000, // refresh every 60s
+    refetchInterval: 60_000,
+  });
+  const openTicketCount = openTicketsData ?? 0;
+
+  // Combined support badge: notifications + open tickets
+  const supportUnreadCount = notificationUnreadCount + openTicketCount;
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -664,14 +739,14 @@ export default function DashboardPage() {
               {/* Stats Carousel Card */}
               <div>
                 <div
-                  className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
+                  className="rounded-2xl px-7 py-3 transition-all duration-300 sm:px-8 sm:py-4"
                   style={{
                     background: 'var(--neu-bg)',
                     boxShadow: 'var(--neu-shadow-raised)',
                     border: '1px solid var(--neu-border)',
                   }}
                 >
-                  <div className="relative min-h-[80px]">
+                  <div className="relative min-h-[56px]">
                     <AnimatePresence initial={false}>
                       {currentStat === 'earned' && (
                         <motion.div
@@ -682,7 +757,7 @@ export default function DashboardPage() {
                           transition={{ duration: 0.25 }}
                           className="absolute inset-0 w-full"
                         >
-                          <div className="mb-2">
+                          <div className="mb-1">
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -730,7 +805,7 @@ export default function DashboardPage() {
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.2 }}
                               key={totalEarned ?? 0}
-                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              className="text-lg font-black sm:text-xl"
                               style={{
                                 color: 'var(--neu-text-primary)',
                                 filter: 'none',
@@ -747,6 +822,12 @@ export default function DashboardPage() {
                                 : '••••••'}
                             </motion.div>
                           )}
+                          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                            <DollarSign
+                              className="h-10 w-10"
+                              style={{ color: '#009BF2' }}
+                            />
+                          </div>
                         </motion.div>
                       )}
                       {currentStat === 'staked' && (
@@ -758,7 +839,7 @@ export default function DashboardPage() {
                           transition={{ duration: 0.25 }}
                           className="absolute inset-0 w-full"
                         >
-                          <div className="mb-2">
+                          <div className="mb-1">
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -806,7 +887,7 @@ export default function DashboardPage() {
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.2 }}
                               key={totalStaked ?? 0}
-                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              className="text-lg font-black sm:text-xl"
                               style={{
                                 color: 'var(--neu-text-primary)',
                                 filter: 'none',
@@ -823,6 +904,12 @@ export default function DashboardPage() {
                                 : '••••••'}
                             </motion.div>
                           )}
+                          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                            <TrendingUp
+                              className="h-10 w-10"
+                              style={{ color: '#009BF2' }}
+                            />
+                          </div>
                         </motion.div>
                       )}
                       {currentStat === 'deposited' && (
@@ -834,7 +921,7 @@ export default function DashboardPage() {
                           transition={{ duration: 0.25 }}
                           className="absolute inset-0 w-full"
                         >
-                          <div className="mb-2">
+                          <div className="mb-1">
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -882,7 +969,7 @@ export default function DashboardPage() {
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.2 }}
                               key={totalDeposited ?? 0}
-                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              className="text-lg font-black sm:text-xl"
                               style={{
                                 color: 'var(--neu-text-primary)',
                                 filter: 'none',
@@ -899,6 +986,12 @@ export default function DashboardPage() {
                                 : '••••••'}
                             </motion.div>
                           )}
+                          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                            <ArrowDownLeft
+                              className="h-10 w-10"
+                              style={{ color: '#009BF2' }}
+                            />
+                          </div>
                         </motion.div>
                       )}
                       {currentStat === 'withdrawn' && (
@@ -910,7 +1003,7 @@ export default function DashboardPage() {
                           transition={{ duration: 0.25 }}
                           className="absolute inset-0 w-full"
                         >
-                          <div className="mb-2">
+                          <div className="mb-1">
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -958,7 +1051,7 @@ export default function DashboardPage() {
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.2 }}
                               key={totalWithdrawn ?? 0}
-                              className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                              className="text-lg font-black sm:text-xl"
                               style={{
                                 color: 'var(--neu-text-primary)',
                                 filter: 'none',
@@ -975,6 +1068,12 @@ export default function DashboardPage() {
                                 : '••••••'}
                             </motion.div>
                           )}
+                          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                            <ArrowUpRight
+                              className="h-10 w-10"
+                              style={{ color: '#009BF2' }}
+                            />
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -996,19 +1095,19 @@ export default function DashboardPage() {
                     {[
                       {
                         id: 'welcome-bonus',
-                        label: '10% Bonus',
+                        label: 'Freebies',
                         icon: Gift,
                         href: '/dashboard/onboarding',
                       },
                       {
                         id: 'share',
-                        label: 'Share',
+                        label: 'Refer&Earn',
                         icon: Share2,
                         href: '#',
                       },
                       {
                         id: 'rank',
-                        label: 'Rank',
+                        label: userRankLabel,
                         icon: Trophy,
                         href: '#',
                       },
@@ -1020,7 +1119,7 @@ export default function DashboardPage() {
                       },
                       {
                         id: 'community',
-                        label: 'Team',
+                        label: 'Community',
                         icon: Users,
                         href: '/dashboard/team',
                       },
@@ -1055,6 +1154,7 @@ export default function DashboardPage() {
                       const isWallet = button.id === 'wallet-address';
                       const isSupport = button.id === 'support';
                       const isShare = button.id === 'share';
+                      const isCommunity = button.id === 'community';
                       const buttonContent = (
                         <motion.button
                           type="button"
@@ -1066,108 +1166,74 @@ export default function DashboardPage() {
                             stiffness: 260,
                             damping: 20,
                           }}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.92 }}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
                           className="flex touch-manipulation flex-col items-center gap-1.5 sm:gap-2"
                         >
-                          {/* Circular neumorphic button – same as Quick Actions; welcome bonus gets status indicator */}
+                          {/* Containerless icon – same size as the old circle */}
                           <motion.div
-                            className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16 dark:hover:bg-[#0D162C]"
+                            className="relative flex h-12 w-12 items-center justify-center sm:h-14 sm:w-14 md:h-16 md:w-16"
                             style={{
-                              background: isActive
-                                ? 'var(--neu-hover-bg, #ffffff)'
-                                : '#009BF2',
-                              boxShadow: isPressed
-                                ? 'var(--neu-shadow-inset-press)'
-                                : 'var(--neu-shadow-raised)',
-                              border: isActive
-                                ? '2px solid #009BF2'
-                                : '1px solid var(--neu-border)',
                               transform:
                                 isHovered && !isPressed
-                                  ? 'translateY(-2px)'
+                                  ? 'translateY(-1px)'
                                   : 'translateY(0)',
                               transition:
-                                'box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1), background 250ms cubic-bezier(0.4, 0, 0.2, 1), border 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                             }}
                             animate={{
-                              y: [0, -3, 0, -1.5, 0],
-                              scale: [1, 1.015, 1, 1.008, 1],
-                              boxShadow: isHovered
-                                ? [
-                                    'var(--neu-shadow-raised)',
-                                    '0 6px 18px rgba(0, 155, 242, 0.25)',
-                                    'var(--neu-shadow-raised)',
-                                  ]
-                                : [
-                                    'var(--neu-shadow-raised)',
-                                    '0 3px 10px rgba(0, 155, 242, 0.12)',
-                                    'var(--neu-shadow-raised)',
-                                  ],
+                              y: [0, -1.5, 0, -0.8, 0],
+                              scale: [1, 1.008, 1, 1.004, 1],
                             }}
                             transition={{
                               y: {
-                                duration: 2.8 + index * 0.3,
+                                duration: 3.5 + index * 0.3,
                                 repeat: Infinity,
                                 ease: 'easeInOut',
                               },
                               scale: {
-                                duration: 2.3 + index * 0.2,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                              },
-                              boxShadow: {
-                                duration: 1.8 + index * 0.25,
+                                duration: 3 + index * 0.2,
                                 repeat: Infinity,
                                 ease: 'easeInOut',
                               },
                             }}
                           >
-                            {/* Ripple effect on click */}
-                            {isPressed && (
-                              <motion.span
-                                className="absolute inset-0 rounded-full"
-                                style={{ background: 'rgba(0, 155, 242, 0.3)' }}
-                                initial={{ scale: 0, opacity: 1 }}
-                                animate={{ scale: 2.5, opacity: 0 }}
-                                transition={{ duration: 0.6 }}
-                              />
-                            )}
                             <motion.div
                               animate={{
                                 rotate: isHovered
-                                  ? [0, -8, 8, -8, 0]
-                                  : [0, -2, 2, -1.5, 0],
-                                scale: isHovered ? [1, 1.15, 1] : [1, 1.08, 1],
+                                  ? [0, -4, 4, -4, 0]
+                                  : [0, -1, 1, -0.5, 0],
+                                scale: isHovered ? [1, 1.08, 1] : [1, 1.03, 1],
                               }}
                               transition={{
                                 rotate: {
-                                  duration: isHovered ? 0.5 : 3.5 + index * 0.4,
+                                  duration: isHovered ? 0.6 : 4 + index * 0.4,
                                   repeat: Infinity,
                                   ease: 'easeInOut',
                                 },
                                 scale: {
-                                  duration: isHovered ? 0.5 : 2.8 + index * 0.3,
+                                  duration: isHovered ? 0.6 : 3.5 + index * 0.3,
                                   repeat: Infinity,
                                   ease: 'easeInOut',
                                 },
                               }}
                             >
                               <IconComponent
-                                className="h-5 w-5 sm:h-6 sm:w-6"
+                                className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16"
                                 style={{
-                                  color: isActive ? '#009BF2' : '#ffffff',
+                                  color: '#009BF2',
                                 }}
                               />
                             </motion.div>
-                            {/* Welcome bonus status: unclaimed = obvious pulse; claimed = green online dot */}
+                            {/* Welcome bonus status badge */}
                             {isWelcomeBonus && (
                               <motion.span
-                                className={`absolute top-0 right-0 h-3 w-3 rounded-full sm:h-3.5 sm:w-3.5 ${!bonusCollected ? 'animate-pulse' : ''}`}
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[7px] font-bold sm:h-6 sm:w-6 sm:text-[8px]"
                                 style={{
                                   background: bonusCollected
                                     ? '#22c55e'
                                     : '#f59e0b',
+                                  color: '#ffffff',
                                   boxShadow: '0 0 0 2px var(--neu-bg)',
                                 }}
                                 title={
@@ -1176,14 +1242,188 @@ export default function DashboardPage() {
                                     : 'Claim your bonus'
                                 }
                                 animate={{
-                                  scale: !bonusCollected ? [1, 1.2, 1] : 1,
+                                  scale: bonusCollected ? 1 : [1, 1.15, 1],
                                 }}
                                 transition={{
-                                  duration: 1,
-                                  repeat: !bonusCollected ? Infinity : 0,
+                                  duration: 1.5,
+                                  repeat: bonusCollected ? 0 : Infinity,
+                                  ease: 'easeInOut',
                                 }}
                                 aria-hidden
-                              />
+                              >
+                                10%
+                              </motion.span>
+                            )}
+                            {/* Refer&Earn 5% badge */}
+                            {isShare && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
+                                style={{
+                                  background: '#f59e0b',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale: [1, 1.15, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                5%
+                              </motion.span>
+                            )}
+                            {/* Rank progress badge */}
+                            {isRank && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[7px] font-bold sm:h-6 sm:w-6 sm:text-[8px]"
+                                style={{
+                                  background:
+                                    rankProgress >= 100 ? '#22c55e' : '#f59e0b',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale: [1, 1.15, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {rankProgress}%
+                              </motion.span>
+                            )}
+                            {/* Wallet address badge: red "Not Set" or green with last 3 chars */}
+                            {isWallet && (
+                              <motion.span
+                                className={`absolute -top-1 -right-2 flex items-center justify-center rounded-full px-1 text-[7px] font-bold sm:text-[8px] ${
+                                  hasWalletAddress ? 'h-5 sm:h-6' : 'h-5 sm:h-6'
+                                }`}
+                                style={{
+                                  background: hasWalletAddress
+                                    ? '#22c55e'
+                                    : '#ef4444',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                  minWidth: hasWalletAddress ? '20px' : '32px',
+                                }}
+                                animate={{
+                                  scale: hasWalletAddress ? 1 : [1, 1.1, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: hasWalletAddress ? 0 : Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {hasWalletAddress
+                                  ? `..${walletAddressLast3}`
+                                  : 'Not Set'}
+                              </motion.span>
+                            )}
+                            {/* Team member count badge */}
+                            {isCommunity && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
+                                style={{
+                                  background:
+                                    totalTeamMembers > 0
+                                      ? '#22c55e'
+                                      : '#f59e0b',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale:
+                                    totalTeamMembers > 0 ? 1 : [1, 1.15, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: totalTeamMembers > 0 ? 0 : Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {totalTeamMembers}
+                              </motion.span>
+                            )}
+                            {/* Streak days badge */}
+                            {isStreak && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
+                                style={{
+                                  background:
+                                    streakDays > 0 ? '#22c55e' : '#f59e0b',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale: streakDays > 0 ? 1 : [1, 1.15, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: streakDays > 0 ? 0 : Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {streakDays}
+                              </motion.span>
+                            )}
+                            {/* Settings security score badge */}
+                            {isSettings && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[7px] font-bold sm:h-6 sm:w-6 sm:text-[8px]"
+                                style={{
+                                  background: '#f59e0b',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale: [1, 1.15, 1],
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {securityScore}%
+                              </motion.span>
+                            )}
+                            {/* Support unread messages badge */}
+                            {isSupport && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
+                                style={{
+                                  background:
+                                    supportUnreadCount > 0
+                                      ? '#ef4444'
+                                      : '#22c55e',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale:
+                                    supportUnreadCount > 0 ? [1, 1.15, 1] : 1,
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: supportUnreadCount > 0 ? Infinity : 0,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {supportUnreadCount}
+                              </motion.span>
                             )}
                           </motion.div>
                           {/* Label + status line for welcome bonus */}
@@ -1191,7 +1431,7 @@ export default function DashboardPage() {
                             className="text-center text-[10px] font-medium sm:text-xs"
                             style={{ color: 'var(--neu-text-primary)' }}
                             animate={{
-                              y: isHovered ? [-1, 0, -1] : 0,
+                              y: isHovered ? [-0.5, 0, -0.5] : 0,
                             }}
                             transition={{
                               duration: 1.2,
@@ -1201,25 +1441,6 @@ export default function DashboardPage() {
                           >
                             {button.label}
                           </motion.span>
-                          {isWelcomeBonus && (
-                            <motion.span
-                              className="text-[9px] font-medium sm:text-[10px]"
-                              style={{
-                                color: bonusCollected
-                                  ? '#22c55e'
-                                  : 'var(--neu-accent)',
-                              }}
-                              animate={{
-                                opacity: !bonusCollected ? [1, 0.6, 1] : 1,
-                              }}
-                              transition={{
-                                duration: 1.5,
-                                repeat: !bonusCollected ? Infinity : 0,
-                              }}
-                            >
-                              {bonusCollected ? 'Claimed' : 'Tap to claim'}
-                            </motion.span>
-                          )}
                         </motion.button>
                       );
 

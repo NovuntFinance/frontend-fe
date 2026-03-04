@@ -147,6 +147,20 @@ const isOutgoingTransaction = (tx: TransactionUnion): boolean => {
   return ['withdrawal', 'stake_created', 'transfer'].includes(tx.type);
 };
 
+// Helper to get masked related-user name (referrer, sender, etc.)
+const getRelatedUser = (tx: TransactionUnion): string | null => {
+  if (isEnhancedTransaction(tx)) {
+    return tx.fromUser?.name || tx.toUser?.name || null;
+  }
+  return null;
+};
+
+// Helper to get transaction status label
+const getTransactionStatus = (tx: TransactionUnion): string => {
+  if (isEnhancedTransaction(tx)) return tx.status;
+  return (tx as { status?: string }).status ?? 'completed';
+};
+
 /**
  * ActivityFeed Component
  * Neumorphic card matching Total Earned card design, showing one activity at a time with auto-rotation
@@ -193,15 +207,15 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         transition={{ delay: 0.5 }}
       >
         <div
-          className="rounded-2xl p-5 transition-all duration-300 sm:p-6"
+          className="rounded-2xl px-7 py-3 transition-all duration-300 sm:px-8 sm:py-4"
           style={{
             background: 'var(--neu-bg)',
             boxShadow: 'var(--neu-shadow-raised)',
             border: '1px solid var(--neu-border)',
           }}
         >
-          {/* Content Section - Minimal like Stats card: label + value only (crossfade, no empty gap) */}
-          <div className="relative min-h-[88px]">
+          {/* Content Section - stat-card layout: label + value row + status badge */}
+          <div className="relative min-h-[64px]">
             {isLoading || safeTransactions.length === 0 ? (
               <div
                 className="w-full cursor-pointer"
@@ -216,7 +230,7 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                 tabIndex={0}
                 aria-label="No activity yet, make a deposit to get started"
               >
-                <div className="mb-2">
+                <div className="mb-1">
                   <p
                     className="text-left text-xs font-semibold sm:text-sm"
                     style={{ color: 'var(--neu-accent)', filter: 'none' }}
@@ -225,17 +239,14 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   </p>
                 </div>
                 <p
-                  className="text-left text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
+                  className="text-lg font-black sm:text-xl"
                   style={{ color: 'var(--neu-text-primary)', filter: 'none' }}
                 >
                   +$0.00
                 </p>
-                <p
-                  className="mt-1 text-left text-[10px] sm:text-xs"
-                  style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
-                >
-                  Deposit or stake to see activity
-                </p>
+                <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                  <Wallet className="h-10 w-10" style={{ color: '#009BF2' }} />
+                </div>
               </div>
             ) : currentTransaction ? (
               <AnimatePresence initial={false}>
@@ -247,68 +258,95 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
                   transition={{ duration: 0.25 }}
                   className="absolute inset-0 w-full"
                 >
-                  <div className="mb-2">
-                    <p
-                      className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
-                      style={{ color: 'var(--neu-accent)', filter: 'none' }}
-                    >
-                      {getTransactionTypeLabel(currentTransaction)}
-                      <span
-                        className="ml-1.5 font-normal"
-                        style={{ color: 'var(--neu-text-secondary)' }}
-                      >
-                        ·{' '}
-                        {formatRelativeTime(
-                          getTransactionDate(currentTransaction)
-                        )}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-2">
-                    {(() => {
-                      const isStake = isStakeTransactionType(
-                        currentTransaction.type
-                      );
-                      const isOutgoing =
-                        !isStake && isOutgoingTransaction(currentTransaction);
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.98 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.2 }}
-                          key={currentTransaction.amount}
-                          className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-                          style={{
-                            color: isOutgoing
-                              ? '#ef4444'
-                              : 'var(--neu-text-primary)',
-                            filter: 'none',
-                          }}
-                        >
-                          {isStake ? '' : isOutgoing ? '-' : '+'}
-                          {balanceVisible
-                            ? formatCurrency(
-                                Math.abs(
-                                  Number(
-                                    (currentTransaction as { amount?: number })
-                                      .amount ?? 0
+                  {(() => {
+                    const isStake = isStakeTransactionType(
+                      currentTransaction.type
+                    );
+                    const isOutgoing =
+                      !isStake && isOutgoingTransaction(currentTransaction);
+                    const IconComp = getTransactionIcon(
+                      currentTransaction.type
+                    );
+                    const relatedUser = getRelatedUser(currentTransaction);
+                    const txStatus = getTransactionStatus(currentTransaction);
+                    return (
+                      <>
+                        {/* Label: type (accent) · time · masked user (muted) */}
+                        <div className="mb-0.5 pr-12">
+                          <p
+                            className="truncate text-left text-xs font-semibold capitalize sm:text-sm"
+                            style={{
+                              color: 'var(--neu-accent)',
+                              filter: 'none',
+                            }}
+                          >
+                            {getTransactionTypeLabel(currentTransaction)}
+                            <span
+                              className="ml-1.5 font-normal lowercase"
+                              style={{ color: 'var(--neu-text-secondary)' }}
+                            >
+                              ·{' '}
+                              {formatRelativeTime(
+                                getTransactionDate(currentTransaction)
+                              )}
+                              {relatedUser && <> · {relatedUser}</>}
+                            </span>
+                          </p>
+                        </div>
+
+                        {/* Amount + status badge row */}
+                        <div className="flex items-center gap-2 pr-12">
+                          <motion.p
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                            key={currentTransaction.amount}
+                            className="flex-1 text-lg font-black sm:text-xl"
+                            style={{
+                              color: isOutgoing
+                                ? '#ef4444'
+                                : 'var(--neu-text-primary)',
+                              filter: 'none',
+                            }}
+                          >
+                            {isStake ? '' : isOutgoing ? '-' : '+'}
+                            {balanceVisible
+                              ? formatCurrency(
+                                  Math.abs(
+                                    Number(
+                                      (
+                                        currentTransaction as {
+                                          amount?: number;
+                                        }
+                                      ).amount ?? 0
+                                    )
                                   )
                                 )
-                              )
-                            : '••••••'}
-                        </motion.div>
-                      );
-                    })()}
-                    <span
-                      className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-                      style={{
-                        color: 'var(--neu-text-secondary)',
-                        filter: 'none',
-                      }}
-                    >
-                      {currentTransaction.status}
-                    </span>
-                  </div>
+                              : '••••••'}
+                          </motion.p>
+
+                          {/* Status badge — accent bg + white text */}
+                          <span
+                            className="flex-shrink-0 rounded-md px-2 py-0.5 text-xs font-bold capitalize"
+                            style={{
+                              background: 'var(--neu-accent)',
+                              color: 'white',
+                            }}
+                          >
+                            {txStatus}
+                          </span>
+                        </div>
+
+                        {/* Icon — absolute right, vertically centred */}
+                        <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                          <IconComp
+                            className="h-10 w-10"
+                            style={{ color: '#009BF2' }}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
                 </motion.div>
               </AnimatePresence>
             ) : null}

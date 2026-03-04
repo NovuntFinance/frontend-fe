@@ -61,8 +61,8 @@ function getMonthData(
       count++;
     }
   }
-  const monthlyAvg = count > 0 ? sum / count : 0;
-  return { days, monthlyAvg };
+  const monthlyAccumulated = count > 0 ? sum : 0;
+  return { days, monthlyAccumulated };
 }
 
 const CARD_STYLE = {
@@ -130,7 +130,7 @@ export function RosCalendarCard() {
     [viewDate]
   );
 
-  const { days, monthlyAvg } = useMemo(
+  const { days, monthlyAccumulated } = useMemo(
     () => getMonthData(year, month, getRosForDate),
     [year, month, getRosForDate]
   );
@@ -166,20 +166,28 @@ export function RosCalendarCard() {
   return (
     <div className="rounded-[24px] p-4 sm:p-5" style={CARD_STYLE}>
       {/* Header: title + month nav */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3
-          className="text-sm font-semibold sm:text-base"
-          style={{ color: 'var(--neu-text-primary)' }}
-        >
-          ROS Calendar
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3
+            className="text-sm font-semibold sm:text-base"
+            style={{ color: 'var(--neu-text-primary)' }}
+          >
+            Month to Date
+          </h3>
+          <span
+            className="rounded-lg px-2 py-0.5 text-sm font-black sm:text-base"
+            style={{ color: ACCENT }}
+          >
+            {monthlyAccumulated.toFixed(1)}%
+          </span>
           {isLoading && (
             <span
-              className="ml-2 inline-block h-1.5 w-1.5 animate-pulse rounded-full"
+              className="inline-block h-1.5 w-1.5 animate-pulse rounded-full"
               style={{ background: ACCENT }}
               aria-hidden
             />
           )}
-        </h3>
+        </div>
         <div className="ros-calendar-month-nav flex items-center gap-1">
           <button
             type="button"
@@ -197,7 +205,7 @@ export function RosCalendarCard() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span
-            className="min-w-[120px] px-2 text-center text-sm font-medium"
+            className="min-w-[90px] px-1 text-center text-xs font-medium sm:text-sm"
             style={{ color: 'var(--neu-text-primary)' }}
           >
             {monthLabel}
@@ -247,6 +255,7 @@ export function RosCalendarCard() {
             (date.getDate() === today.getDate() &&
               date.getMonth() === today.getMonth() &&
               date.getFullYear() === today.getFullYear());
+          const isPast = !isToday && date < today;
           // Multi-slot sums can exceed 2.2%; cap bar at 100%
           const barHeight =
             ros != null && ros >= 0
@@ -259,10 +268,16 @@ export function RosCalendarCard() {
               className="flex aspect-square flex-col items-center justify-center rounded-[12px] p-0.5 transition-all"
               style={{
                 background: isToday
-                  ? 'rgba(var(--neu-accent-rgb), 0.4)'
-                  : 'var(--neu-bg)',
-                boxShadow: isToday ? 'none' : SHADOW_BUTTON,
-                border: '1px solid var(--neu-border)',
+                  ? '#f59e0b'
+                  : isPast
+                    ? '#009BF2'
+                    : 'var(--neu-bg)',
+                boxShadow: isToday || isPast ? 'none' : SHADOW_BUTTON,
+                border: isPast
+                  ? '1px solid #009BF2'
+                  : isToday
+                    ? '1px solid #f59e0b'
+                    : '1px solid var(--neu-border)',
               }}
             >
               <span
@@ -270,7 +285,9 @@ export function RosCalendarCard() {
                 style={{
                   color: isToday
                     ? 'var(--neu-accent-foreground)'
-                    : 'var(--neu-text-primary)',
+                    : isPast
+                      ? '#ffffff'
+                      : 'var(--neu-text-primary)',
                 }}
               >
                 {dayNum}
@@ -280,9 +297,10 @@ export function RosCalendarCard() {
                   <span
                     className="text-[9px] font-medium sm:text-[10px]"
                     style={{
-                      color: isToday
-                        ? 'var(--neu-accent-foreground)'
-                        : 'var(--neu-text-muted)',
+                      color:
+                        isToday || isPast
+                          ? 'rgba(255,255,255,0.85)'
+                          : 'var(--neu-text-muted)',
                     }}
                   >
                     {ros}%
@@ -292,16 +310,17 @@ export function RosCalendarCard() {
                     style={{
                       background: isToday
                         ? 'rgba(13, 22, 44, 0.2)'
-                        : 'rgba(0, 155, 242, 0.15)',
+                        : isPast
+                          ? 'rgba(255,255,255,0.25)'
+                          : 'rgba(0, 155, 242, 0.15)',
                     }}
                   >
                     <div
                       className="h-full rounded-full"
                       style={{
-                        width: `${Math.max(8, barHeight * 100)}%`,
-                        background: isToday
-                          ? 'var(--neu-accent-foreground)'
-                          : 'var(--neu-accent)',
+                        width: `${isToday || isPast ? Math.max(8, barHeight * 100) : barHeight * 100}%`,
+                        background:
+                          isToday || isPast ? '#ffffff' : 'var(--neu-accent)',
                       }}
                     />
                   </div>
@@ -310,29 +329,6 @@ export function RosCalendarCard() {
             </div>
           );
         })}
-      </div>
-
-      {/* Footer: Monthly Average */}
-      <div
-        className="mt-4 flex items-center justify-between rounded-[16px] px-4 py-3"
-        style={{
-          background: 'var(--neu-bg)',
-          boxShadow: SHADOW_INSET,
-          border: '1px solid var(--neu-border)',
-        }}
-      >
-        <span
-          className="text-sm font-medium"
-          style={{ color: 'var(--neu-text-primary)' }}
-        >
-          Monthly Average
-        </span>
-        <span
-          className="text-lg font-bold"
-          style={{ color: 'var(--neu-text-primary)' }}
-        >
-          {monthlyAvg.toFixed(1)}%
-        </span>
       </div>
     </div>
   );

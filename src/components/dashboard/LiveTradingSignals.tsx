@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
 import { formatErrorForLog } from '@/lib/error-utils';
 
@@ -34,11 +35,11 @@ const formatTime = (dateStr: string) => {
   }
 };
 
-/** Minimal signal row: label + entry/exit + value (P/L + status) */
+/** Minimal signal row: label + entry/exit + value (P/L) + contextual icon */
 function TradeRow({ trade }: { trade: TradingSignal }) {
+  const isProfit = trade.profitUSD >= 0;
   const amountStr =
-    (trade.profitUSD >= 0 ? '+' : '') +
-    (trade.profitUSD >= 0 ? '$' : '-$') +
+    (isProfit ? '+$' : '-$') +
     Math.abs(trade.profitUSD).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -46,13 +47,19 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
   const decimals = trade.symbol.includes('JPY') ? 3 : 5;
   const entryTimeStr = formatTime(trade.entryTime);
   const exitTimeStr = formatTime(trade.exitTime);
+  const SignalIcon = isProfit ? TrendingUp : TrendingDown;
 
   return (
-    <div className="w-full min-w-0">
-      <div className="mb-1.5">
+    <div className="relative w-full min-w-0 pr-12 pb-3">
+      {/* Contextual icon on the right */}
+      <div className="absolute top-1/2 right-0 -translate-y-1/2">
+        <SignalIcon className="h-10 w-10" style={{ color: '#009BF2' }} />
+      </div>
+
+      <div className="mb-1">
         <p
           className="truncate text-left text-xs font-semibold sm:text-sm"
-          style={{ color: 'var(--neu-accent)', filter: 'none' }}
+          style={{ color: 'var(--neu-accent)' }}
         >
           {trade.symbol} {trade.direction}
           <span
@@ -63,10 +70,11 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
           </span>
         </p>
       </div>
+
       {/* Compact Entry → Exit row with times */}
       <div
-        className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs"
-        style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
+        className="mb-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs"
+        style={{ color: 'var(--neu-text-secondary)' }}
       >
         <span className="shrink-0">
           Entry{' '}
@@ -77,10 +85,7 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
             {trade.entryPrice.toFixed(decimals)}
           </span>
           {entryTimeStr && (
-            <span
-              className="ml-0.5"
-              style={{ color: 'var(--neu-text-muted)' }}
-            >
+            <span className="ml-0.5" style={{ color: 'var(--neu-text-muted)' }}>
               @ {entryTimeStr}
             </span>
           )}
@@ -97,32 +102,19 @@ function TradeRow({ trade }: { trade: TradingSignal }) {
             {trade.exitPrice.toFixed(decimals)}
           </span>
           {exitTimeStr && (
-            <span
-              className="ml-0.5"
-              style={{ color: 'var(--neu-text-muted)' }}
-            >
+            <span className="ml-0.5" style={{ color: 'var(--neu-text-muted)' }}>
               @ {exitTimeStr}
             </span>
           )}
         </span>
       </div>
-      <div className="flex items-baseline justify-between gap-2">
-        <span
-          className="text-xl font-black sm:text-2xl md:text-3xl lg:text-xl xl:text-2xl"
-          style={{
-            color: 'var(--neu-text-primary)',
-            filter: 'none',
-          }}
-        >
-          {amountStr}
-        </span>
-        <span
-          className="shrink-0 text-[10px] font-medium capitalize sm:text-xs"
-          style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
-        >
-          {trade.isProfitable ? 'Profitable' : 'Closed'}
-        </span>
-      </div>
+
+      <span
+        className="text-sm font-black sm:text-base"
+        style={{ color: 'var(--neu-text-primary)' }}
+      >
+        {amountStr}
+      </span>
     </div>
   );
 }
@@ -257,41 +249,53 @@ export function LiveTradingSignals() {
       className="overflow-hidden rounded-2xl transition-shadow duration-300"
       style={CARD_STYLE}
     >
-      <div className="p-5 sm:p-6">
-        <div className="relative min-h-[88px]">
+      <div className="px-7 py-3 sm:px-8 sm:py-4">
+        <div className="relative min-h-[56px]">
           {trades.length === 0 && !error ? (
             <>
-              <div className="mb-2">
+              <div className="mb-1">
                 <p
                   className="text-left text-xs font-semibold sm:text-sm"
-                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                  style={{ color: 'var(--neu-accent)' }}
                 >
                   Live Trading Signals
                 </p>
               </div>
               <p
                 className="text-left text-sm"
-                style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 Loading...
               </p>
+              <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                <TrendingUp
+                  className="h-10 w-10"
+                  style={{ color: '#009BF2' }}
+                />
+              </div>
             </>
           ) : error ? (
             <>
-              <div className="mb-2">
+              <div className="mb-1">
                 <p
                   className="text-left text-xs font-semibold sm:text-sm"
-                  style={{ color: 'var(--neu-accent)', filter: 'none' }}
+                  style={{ color: 'var(--neu-accent)' }}
                 >
                   Live Trading Signals
                 </p>
               </div>
               <p
                 className="text-left text-xs"
-                style={{ color: 'var(--neu-text-secondary)', filter: 'none' }}
+                style={{ color: 'var(--neu-text-secondary)' }}
               >
                 {error}
               </p>
+              <div className="absolute top-1/2 right-0 -translate-y-1/2">
+                <TrendingUp
+                  className="h-10 w-10"
+                  style={{ color: '#009BF2' }}
+                />
+              </div>
             </>
           ) : currentTrade ? (
             <AnimatePresence initial={false}>
