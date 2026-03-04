@@ -28,6 +28,33 @@ const Trophy = Award;
 const Flame = Clock;
 const BookOpen = HelpCircle;
 const Sparkles = Star;
+// Coins icon — typed inline since lucide-react bundler types miss it in this version
+function CoinsIcon({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={style}
+    >
+      <circle cx="8" cy="11" r="5" />
+      <path d="M15.09 9.07A5 5 0 0 1 21 11" />
+      <path d="M15.09 14.93A5 5 0 0 1 8 16" />
+      <circle cx="16" cy="13" r="5" />
+    </svg>
+  );
+}
 import {
   useWalletBalance,
   useActiveStakes,
@@ -823,7 +850,7 @@ export default function DashboardPage() {
                             </motion.div>
                           )}
                           <div className="absolute top-1/2 right-0 -translate-y-1/2">
-                            <DollarSign
+                            <CoinsIcon
                               className="h-10 w-10"
                               style={{ color: '#009BF2' }}
                             />
