@@ -113,7 +113,18 @@ export function StakeCard({
   const nextPayout = stake.weeklyPayouts?.find((p) => p.status === 'pending');
 
   const reducedMotion = prefersReducedMotion();
-  const cardClass = `${neuStyles['neu-card']} rounded-[18px] p-4 sm:p-6 md:p-7 ${isRegistrationBonus ? 'border border-amber-400/40' : 'border border-amber-400/20'}`;
+  const cardClass = `rounded-[18px] p-4 sm:p-6 md:p-7 ${isRegistrationBonus ? 'border border-amber-400/40' : ''}`;
+  const glassmorphicStyle: React.CSSProperties = {
+    background: 'rgba(0, 155, 242, 0.07)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 4px 24px 0 rgba(0, 155, 242, 0.10), var(--neu-shadow-raised)',
+    border: isRegistrationBonus
+      ? undefined
+      : '1px solid rgba(0, 155, 242, 0.18)',
+    borderRadius: '18px',
+    transition: 'box-shadow 0.2s, transform 0.2s',
+  };
 
   return (
     <motion.div
@@ -123,7 +134,7 @@ export function StakeCard({
       onClick={onClick}
       className="cursor-pointer"
     >
-      <div className={cardClass}>
+      <div className={cardClass} style={glassmorphicStyle}>
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">

@@ -66,9 +66,11 @@ function getMonthData(
 }
 
 const CARD_STYLE = {
-  background: 'var(--neu-bg)',
-  boxShadow: SHADOW_RAISED,
-  border: '1px solid var(--neu-border)',
+  background: 'rgba(0, 155, 242, 0.07)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  boxShadow: '0 4px 24px 0 rgba(0, 155, 242, 0.10), ' + SHADOW_RAISED,
+  border: '1px solid rgba(0, 155, 242, 0.18)',
 } as const;
 
 /** Format date as YYYY-MM-DD (calendar date, no UTC shift) */

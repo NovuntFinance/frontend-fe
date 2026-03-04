@@ -60,6 +60,7 @@ import {
   useActiveStakes,
   useDashboardOverview,
   useTeamInfo,
+  useAllTeamMembers,
   useStakingStreak,
 } from '@/lib/queries';
 import { useStakeDashboard } from '@/lib/queries/stakingQueries';
@@ -157,9 +158,13 @@ export default function DashboardPage() {
     ? withdrawalAddressData.address.slice(-3)
     : null;
 
-  // Team member count for Team badge
+  // Team member count for Team badge (direct + indirect from all-team-members endpoint)
   const { data: teamInfoData } = useTeamInfo();
-  const totalTeamMembers = teamInfoData?.teamStats?.totalTeamMembers ?? 0;
+  const { data: allTeamData } = useAllTeamMembers(1, 1); // minimal fetch just for pagination.total
+  const totalTeamMembers =
+    allTeamData?.pagination?.total ??
+    teamInfoData?.teamStats?.totalTeamMembers ??
+    0;
 
   // Staking streak days for Streak badge
   const { data: streakData } = useStakingStreak();
@@ -745,7 +750,7 @@ export default function DashboardPage() {
                 />
               </motion.div>
 
-              {/* Quick Actions - Neumorphic card */}
+              {/* Quick Actions - Glassmorphic card */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -754,9 +759,12 @@ export default function DashboardPage() {
                 <div
                   className="rounded-2xl p-5 sm:p-6"
                   style={{
-                    background: 'var(--neu-bg)',
-                    boxShadow: 'var(--neu-shadow-raised)',
-                    border: '1px solid var(--neu-border)',
+                    background: 'rgba(0, 155, 242, 0.07)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    boxShadow:
+                      '0 4px 24px 0 rgba(0, 155, 242, 0.10), var(--neu-shadow-raised)',
+                    border: '1px solid rgba(0, 155, 242, 0.18)',
                   }}
                 >
                   <QuickActions />
@@ -1113,9 +1121,12 @@ export default function DashboardPage() {
                 <div
                   className="w-full rounded-2xl p-5 sm:p-6"
                   style={{
-                    background: 'var(--neu-bg)',
-                    boxShadow: 'var(--neu-shadow-raised)',
-                    border: '1px solid var(--neu-border)',
+                    background: 'rgba(0, 155, 242, 0.07)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    boxShadow:
+                      '0 4px 24px 0 rgba(0, 155, 242, 0.10), var(--neu-shadow-raised)',
+                    border: '1px solid rgba(0, 155, 242, 0.18)',
                   }}
                 >
                   <div className="grid grid-cols-4 justify-items-center gap-6 sm:gap-8 md:gap-10 lg:gap-8 xl:gap-10">
@@ -1678,7 +1689,7 @@ export default function DashboardPage() {
             </motion.div>
             {/* Stake Card – full width to align with Activity Feed and other column cards */}
             {featuredStake && (
-              <div className={`${walletStyles.nxpSectionRoot} w-full`}>
+              <div className="w-full">
                 <div className="relative min-h-0">
                   <AnimatePresence initial={false}>
                     <motion.div
