@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Shield } from 'lucide-react';
+import { CheckCircle2, Loader2, Shield } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,12 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useWalletBalance } from '@/lib/queries';
 import { useUIStore } from '@/store/uiStore';
-import { useCreateWithdrawal, useDefaultWithdrawalAddress } from '@/hooks/useWallet';
+import {
+  useCreateWithdrawal,
+  useDefaultWithdrawalAddress,
+  useRequestWithdrawalOtp,
+} from '@/hooks/useWallet';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { LargeWithdrawalDialog } from '@/components/dialogs/LargeWithdrawalDialog';
 import { DailyLimitDialog } from '@/components/dialogs/DailyLimitDialog';
 import { useWithdrawalConfig } from '@/hooks/useWithdrawalConfig';
@@ -51,8 +56,12 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [step, setStep] = useState<WithdrawStep>('form');
 
   const withdrawMutation = useCreateWithdrawal();
+  const requestOtp = useRequestWithdrawalOtp();
+  const otpCooldown = useOtpCooldown();
   const [formData, setFormData] = useState({ amount: '' });
   const [twoFACode, setTwoFACode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
   const [withdrawalId, setWithdrawalId] = useState('');
 
@@ -82,6 +91,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setStep('form');
       setFormData({ amount: '' });
       setTwoFACode('');
+      setEmailOtp('');
+      setOtpSent(false);
+      otpCooldown.resetCooldown();
       setError('');
       refetch();
     }
@@ -103,8 +115,26 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     return true;
   };
 
+  const handleRequestOtp = async () => {
+    setError('');
+    try {
+      await requestOtp.mutateAsync({ amount });
+      setOtpSent(true);
+      otpCooldown.triggerCooldown({ waitSeconds: 60 });
+    } catch (err) {
+      const handled = otpCooldown.triggerCooldown(err);
+      if (!handled) {
+        setError(err instanceof Error ? err.message : 'Failed to send OTP');
+      }
+    }
+  };
+
   const handleSubmit = async (skipDialogs = false) => {
     if (!validateForm()) return;
+    if (!emailOtp || emailOtp.length !== 6) {
+      setError('Enter the 6-digit email verification code');
+      return;
+    }
     if (!twoFACode || twoFACode.length !== 6) {
       setError('Enter your 6-digit 2FA code');
       return;
@@ -122,6 +152,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       const response = await withdrawMutation.mutateAsync({
         amount,
         twoFACode,
+        emailOtp,
         network: 'BEP20' as const,
         // walletAddress omitted - backend uses default whitelisted address
       });
@@ -143,7 +174,8 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       }
       if (
         errorMessage.toLowerCase().includes('2fa') ||
-        (err as { response?: { data?: { code?: string } } })?.response?.data?.code === '2FA_CODE_INVALID'
+        (err as { response?: { data?: { code?: string } } })?.response?.data
+          ?.code === '2FA_CODE_INVALID'
       ) {
         setError('Invalid 2FA code. Please try again.');
         setTwoFACode('');
@@ -206,11 +238,17 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   </div>
                 ) : !hasWhitelistedAddress ? (
                   <InfoCallout
-                    icon={<Shield className="size-4" style={{ color: NEU_TOKENS.accent }} />}
+                    icon={
+                      <Shield
+                        className="size-4"
+                        style={{ color: NEU_TOKENS.accent }}
+                      />
+                    }
                     title="Withdrawal address required"
                     description={
                       <>
-                        Set your whitelisted BEP20 address to enable withdrawals.{' '}
+                        Set your whitelisted BEP20 address to enable
+                        withdrawals.{' '}
                         <button
                           type="button"
                           className="font-semibold underline"
@@ -256,31 +294,43 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         placeholder={`Min ${MIN_WITHDRAWAL} USDT · ${FEE_PERCENTAGE}% fee`}
                         value={formData.amount}
                         onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, amount: e.target.value }))
+                          setFormData((prev) => ({
+                            ...prev,
+                            amount: e.target.value,
+                          }))
                         }
                         className="neu-input h-12 w-full border-0 text-lg focus-visible:ring-0"
                       />
                     </div>
 
                     <div className="rounded-xl p-3 text-sm" style={insetStyle}>
-                      <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                      <p
+                        className="text-xs"
+                        style={{ color: NEU_TOKENS.white60 }}
+                      >
                         To (whitelisted)
                       </p>
-                      <p className="font-mono text-xs break-all" style={{ color: NEU_TOKENS.white80 }}>
+                      <p
+                        className="font-mono text-xs break-all"
+                        style={{ color: NEU_TOKENS.white80 }}
+                      >
                         {formatAddress(whitelistedAddress)}
                       </p>
                     </div>
 
                     {amount >= MIN_WITHDRAWAL && (
-                      <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
+                      <p
+                        className="text-sm"
+                        style={{ color: NEU_TOKENS.white60 }}
+                      >
                         You&apos;ll receive:{' '}
                         <span
                           className="font-semibold"
                           style={{ color: NEU_TOKENS.accent }}
                         >
                           ${fmt4(youReceive)} USDT
-                        </span>
-                        {' '}(fee {FEE_PERCENTAGE}%)
+                        </span>{' '}
+                        (fee {FEE_PERCENTAGE}%)
                       </p>
                     )}
 
@@ -319,22 +369,39 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-4"
               >
-                <div className="space-y-2 rounded-xl p-4 text-sm" style={insetStyle}>
+                <div
+                  className="space-y-2 rounded-xl p-4 text-sm"
+                  style={insetStyle}
+                >
                   <div className="flex justify-between">
                     <span style={{ color: NEU_TOKENS.white60 }}>Amount</span>
-                    <span style={{ color: NEU_TOKENS.white80 }}>${fmt4(amount)} USDT</span>
+                    <span style={{ color: NEU_TOKENS.white80 }}>
+                      ${fmt4(amount)} USDT
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span style={{ color: NEU_TOKENS.white60 }}>Fee</span>
                     <span className="neu-error">-${fmt4(fee)}</span>
                   </div>
                   <div className="flex justify-between font-semibold">
-                    <span style={{ color: NEU_TOKENS.white80 }}>You receive</span>
-                    <span style={{ color: NEU_TOKENS.accent }}>${fmt4(youReceive)} USDT</span>
+                    <span style={{ color: NEU_TOKENS.white80 }}>
+                      You receive
+                    </span>
+                    <span style={{ color: NEU_TOKENS.accent }}>
+                      ${fmt4(youReceive)} USDT
+                    </span>
                   </div>
                   <div className="pt-2">
-                    <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>To</p>
-                    <p className="font-mono text-xs break-all" style={{ color: NEU_TOKENS.white80 }}>
+                    <p
+                      className="text-xs"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      To
+                    </p>
+                    <p
+                      className="font-mono text-xs break-all"
+                      style={{ color: NEU_TOKENS.white80 }}
+                    >
                       {formatAddress(whitelistedAddress)}
                     </p>
                   </div>
@@ -379,11 +446,72 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               >
                 <div className="rounded-xl p-4 text-center" style={insetStyle}>
                   <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
-                    ${fmt4(youReceive)} USDT → {formatAddress(whitelistedAddress)}
+                    ${fmt4(youReceive)} USDT →{' '}
+                    {formatAddress(whitelistedAddress)}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium" style={{ color: NEU_TOKENS.white60 }}>
+                  <Label
+                    className="text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
+                    Email Verification Code
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit code"
+                      value={emailOtp}
+                      onChange={(e) =>
+                        setEmailOtp(
+                          e.target.value.replace(/\D/g, '').slice(0, 6)
+                        )
+                      }
+                      className="neu-input w-32 border-0 text-center font-mono tracking-widest focus-visible:ring-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-0"
+                      style={raisedStyle}
+                      disabled={
+                        requestOtp.isPending ||
+                        otpCooldown.isOnCooldown ||
+                        amount < MIN_WITHDRAWAL
+                      }
+                      onClick={handleRequestOtp}
+                    >
+                      {requestOtp.isPending ? (
+                        <>
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          Sending...
+                        </>
+                      ) : otpCooldown.isOnCooldown ? (
+                        `Resend in ${otpCooldown.cooldownSeconds}s`
+                      ) : otpSent ? (
+                        'Resend Code'
+                      ) : (
+                        'Send Code'
+                      )}
+                    </Button>
+                  </div>
+                  {otpSent && (
+                    <p
+                      className="text-xs"
+                      style={{ color: NEU_TOKENS.white40 }}
+                    >
+                      Code sent to your email
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    className="text-sm font-medium"
+                    style={{ color: NEU_TOKENS.white60 }}
+                  >
                     2FA Code
                   </Label>
                   <TwoFactorInput
@@ -409,7 +537,11 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   </Button>
                   <PrimaryButton
                     onClick={() => handleSubmit()}
-                    disabled={withdrawMutation.isPending || twoFACode.length !== 6}
+                    disabled={
+                      withdrawMutation.isPending ||
+                      twoFACode.length !== 6 ||
+                      emailOtp.length !== 6
+                    }
                     loading={withdrawMutation.isPending}
                     className="h-11 flex-1"
                   >
@@ -439,13 +571,20 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               className="mx-auto inline-flex rounded-full p-6"
               style={raisedStyle}
             >
-              <CheckCircle2 className="size-12" style={{ color: NEU_TOKENS.accent }} />
+              <CheckCircle2
+                className="size-12"
+                style={{ color: NEU_TOKENS.accent }}
+              />
             </motion.div>
-            <h3 className="mb-2 text-2xl font-bold" style={{ color: NEU_TOKENS.accent }}>
+            <h3
+              className="mb-2 text-2xl font-bold"
+              style={{ color: NEU_TOKENS.accent }}
+            >
               Withdrawal submitted
             </h3>
             <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
-              ${fmt4(youReceive)} USDT · Pending approval (1–24 hours). You&apos;ll be notified when processed.
+              ${fmt4(youReceive)} USDT · Pending approval (1–24 hours).
+              You&apos;ll be notified when processed.
             </p>
             <PrimaryButton onClick={onClose} className="mt-6">
               Done

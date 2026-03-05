@@ -325,6 +325,8 @@ export function useSetDefaultWithdrawalAddress() {
       address: string;
       network: 'BEP20';
       twoFACode?: string;
+      emailOtp?: string;
+      turnstileToken?: string;
     }) => walletApi.setDefaultWithdrawalAddress(payload),
     onSuccess: async (response) => {
       // API client may return unwrapped { address, hasDefaultAddress, ... } or wrapped { data }
@@ -402,9 +404,19 @@ export function useSetDefaultWithdrawalAddress() {
             message ||
             'Invalid BEP20 address. Please enter a valid BSC wallet address.',
         });
-      } else if (code === '2FA_CODE_INVALID') {
+      } else if (code === '2FA_CODE_INVALID' || code === '2FA_CODE_REQUIRED') {
         toast.error('Invalid 2FA code', {
           description: 'Invalid 2FA code. Please try again.',
+        });
+      } else if (code === 'DUPLICATE_WITHDRAWAL_ADDRESS') {
+        toast.error('Address already in use', {
+          description:
+            'This withdrawal address is already registered to another user.',
+        });
+      } else if (code === 'INVALID_EMAIL_OTP') {
+        toast.error('Invalid email code', {
+          description:
+            'The email verification code is invalid or expired. Please request a new one.',
         });
       } else {
         toast.error('Save failed', {
@@ -416,7 +428,60 @@ export function useSetDefaultWithdrawalAddress() {
 }
 
 /**
- * Create withdrawal mutation (requires 2FA)
+ * Request email OTP for withdrawal
+ * POST /api/v1/enhanced-transactions/withdrawal/request-otp
+ */
+export function useRequestWithdrawalOtp() {
+  return useMutation({
+    mutationFn: ({
+      amount,
+      turnstileToken,
+    }: {
+      amount: number;
+      turnstileToken?: string;
+    }) => walletApi.requestWithdrawalOtp(amount, turnstileToken),
+    onError: (error: any) => {
+      const errorData = error?.response?.data;
+      const waitSeconds = errorData?.waitSeconds;
+      if (waitSeconds) {
+        toast.error('Please wait', {
+          description: `You can request another code in ${waitSeconds} seconds`,
+        });
+        return;
+      }
+      const message =
+        errorData?.message || error?.message || 'Failed to send OTP';
+      toast.error('OTP request failed', { description: message });
+    },
+  });
+}
+
+/**
+ * Request email OTP for address change
+ * POST /api/v1/wallets/withdrawal/default-address/request-otp
+ */
+export function useRequestAddressChangeOtp() {
+  return useMutation({
+    mutationFn: (turnstileToken?: string) =>
+      walletApi.requestAddressChangeOtp(turnstileToken),
+    onError: (error: any) => {
+      const errorData = error?.response?.data;
+      const waitSeconds = errorData?.waitSeconds;
+      if (waitSeconds) {
+        toast.error('Please wait', {
+          description: `You can request another code in ${waitSeconds} seconds`,
+        });
+        return;
+      }
+      const message =
+        errorData?.message || error?.message || 'Failed to send OTP';
+      toast.error('OTP request failed', { description: message });
+    },
+  });
+}
+
+/**
+ * Create withdrawal mutation (requires email OTP + 2FA + Turnstile)
  * POST /api/v1/enhanced-transactions/withdrawal/create
  */
 export function useCreateWithdrawal() {
@@ -427,8 +492,10 @@ export function useCreateWithdrawal() {
       amount: number;
       walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
       network?: 'BEP20'; // Only BEP20 is supported
-      twoFACode: string; // Required
+      twoFACode: string; // Required - 6-digit 2FA code
+      emailOtp: string; // Required - 6-digit email OTP from request-otp
       turnstileToken?: string; // Cloudflare Turnstile; required when backend has TURNSTILE_SECRET_KEY set
+      idempotencyKey?: string; // Optional - prevents duplicate submissions
     }) => walletApi.createWithdrawal(payload),
     onSuccess: (response) => {
       // Invalidate wallet queries
@@ -502,9 +569,52 @@ export function useCreateWithdrawal() {
         toast.error('2FA Error', {
           description: message || 'Invalid 2FA code. Please try again.',
         });
-      } else if (code === 'DAILY_LIMIT_EXCEEDED') {
-        toast.error('Daily limit exceeded', {
-          description: message,
+      } else if (code === 'INVALID_EMAIL_OTP') {
+        toast.error('Invalid email code', {
+          description:
+            'The email verification code is invalid or expired. Please request a new one.',
+        });
+      } else if (
+        code === 'DAILY_WITHDRAWAL_LIMIT_REACHED' ||
+        code === 'DAILY_LIMIT_EXCEEDED'
+      ) {
+        const limit = errorData?.limit;
+        const used = errorData?.used;
+        toast.error('Daily limit reached', {
+          description:
+            limit && used
+              ? `You have used ${used} of ${limit} daily withdrawals. ${message}`
+              : message,
+        });
+      } else if (
+        code === 'DUPLICATE_WITHDRAWAL' ||
+        code === 'DUPLICATE_TRANSACTION'
+      ) {
+        toast.error('Duplicate withdrawal', {
+          description: errorData?.reference
+            ? `This withdrawal is already being processed. Reference: ${errorData.reference}`
+            : message,
+        });
+      } else if (code === 'FRAUD_DETECTED') {
+        toast.error('Blocked for security', {
+          description:
+            'This transaction has been blocked for security reasons. Please contact support.',
+        });
+      } else if (code === 'ADDRESS_MORATORIUM_ACTIVE') {
+        const m = errorData?.moratorium;
+        toast.error('Withdrawals locked', {
+          description: m
+            ? `Your withdrawal address was recently changed. Try again in ${m.hoursRemaining}h ${m.minutesRemaining}m.`
+            : message,
+        });
+      } else if (code === 'PAYOUT_DISPATCH_FAILED') {
+        toast.error('Withdrawal failed', {
+          description:
+            'Payment gateway failed. Your balance has been refunded. Please try again later.',
+        });
+      } else if (code === 'LOCK_CREATION_FAILED') {
+        toast.error('Server busy', {
+          description: 'Please try again in a few seconds.',
         });
       } else if (error?.response?.status === 403) {
         toast.error('2FA Required', {

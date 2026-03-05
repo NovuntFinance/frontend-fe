@@ -183,15 +183,25 @@ export interface SetDefaultAddressRequest {
   address: string;
   network: 'BEP20'; // MANDATORY: Must be BEP20 for compliance
   twoFACode?: string; // Required for setting/updating address
+  emailOtp?: string; // Required when CHANGING an existing address (not first-time set)
+  turnstileToken?: string; // Cloudflare Turnstile token
+}
+
+export interface OtpRequestResponse {
+  success: boolean;
+  message: string;
+  expiresIn: number; // seconds (typically 600 = 10 minutes)
 }
 
 export interface WithdrawalRequest {
   amount: number;
   walletAddress?: string; // Optional - if not provided, backend uses user's default withdrawal address
   network?: 'BEP20'; // Optional, defaults to BEP20 (only supported network)
-  twoFACode: string; // Required
+  twoFACode: string; // Required - 6-digit 2FA code from authenticator app
+  emailOtp: string; // Required - 6-digit OTP sent to user's email via request-otp
   /** Cloudflare Turnstile token; required when backend has TURNSTILE_SECRET_KEY set */
   turnstileToken?: string;
+  idempotencyKey?: string; // Optional - prevents duplicate submissions
 }
 
 export interface WithdrawalResponse {
@@ -329,9 +339,26 @@ export const walletApi = {
   },
 
   /**
+   * Request OTP for withdrawal address change
+   * POST /api/v1/wallets/withdrawal/default-address/request-otp
+   * Only needed when CHANGING an existing address (not first-time set)
+   */
+  async requestAddressChangeOtp(
+    turnstileToken?: string
+  ): Promise<OtpRequestResponse> {
+    const body: Record<string, string> = {};
+    if (turnstileToken) body.turnstileToken = turnstileToken;
+    const response = await api.post<OtpRequestResponse>(
+      '/wallets/withdrawal/default-address/request-otp',
+      body
+    );
+    return response;
+  },
+
+  /**
    * Set default withdrawal address (requires 2FA)
    * POST /api/v1/wallets/withdrawal/default-address
-   * Backend accepts: address, twoFactorCode, network (rejects walletAddress/twoFACode as unknown).
+   * Backend accepts: address, twoFactorCode, network, emailOtp, turnstileToken.
    * Some backends also read 2FA from X-2FA-Code header; we send both.
    */
   async setDefaultWithdrawalAddress(
@@ -342,6 +369,10 @@ export const walletApi = {
       address: payload.address,
       network: payload.network,
       ...(code ? { twoFactorCode: code } : {}),
+      ...(payload.emailOtp ? { emailOtp: payload.emailOtp } : {}),
+      ...(payload.turnstileToken
+        ? { turnstileToken: payload.turnstileToken }
+        : {}),
     };
     const config = code
       ? { headers: { 'X-2FA-Code': code } as Record<string, string> }
@@ -355,7 +386,25 @@ export const walletApi = {
   },
 
   /**
-   * Create withdrawal request (requires 2FA)
+   * Request email OTP for withdrawal
+   * POST /api/v1/enhanced-transactions/withdrawal/request-otp
+   * Turnstile token is required. Amount is sent for validation.
+   */
+  async requestWithdrawalOtp(
+    amount: number,
+    turnstileToken?: string
+  ): Promise<OtpRequestResponse> {
+    const body: Record<string, unknown> = { amount };
+    if (turnstileToken) body.turnstileToken = turnstileToken;
+    const response = await api.post<OtpRequestResponse>(
+      '/enhanced-transactions/withdrawal/request-otp',
+      body
+    );
+    return response;
+  },
+
+  /**
+   * Create withdrawal request (requires email OTP + 2FA + Turnstile)
    * POST /api/v1/enhanced-transactions/withdrawal/create
    */
   async createWithdrawal(

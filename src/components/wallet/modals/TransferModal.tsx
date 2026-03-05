@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Shield,
+  Loader2,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import type { TransferResponse } from '@/types/transfer';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queries';
 import { useTransferLimits } from '@/hooks/useTransferLimits';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { fmt4 } from '@/utils/formatters';
 import {
   BaseModal,
@@ -71,6 +73,9 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const otpCooldown = useOtpCooldown();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -97,6 +102,9 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       setAmount('');
       setMemo('');
       setTwoFACode('');
+      setEmailOtp('');
+      setOtpSent(false);
+      otpCooldown.resetCooldown();
       setError('');
       refetch();
     }
@@ -158,8 +166,28 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     setStep('2fa');
   };
 
+  const handleRequestTransferOtp = async () => {
+    setError('');
+    try {
+      await transferApi.requestTransferOtp();
+      setOtpSent(true);
+      otpCooldown.triggerCooldown({ waitSeconds: 60 });
+    } catch (err) {
+      const handled = otpCooldown.triggerCooldown(err);
+      if (!handled) {
+        setError(err instanceof Error ? err.message : 'Failed to send OTP');
+      }
+    }
+  };
+
   const handleSubmitTransfer = async () => {
     if (!selectedUser) return;
+
+    // Validate email OTP
+    if (!emailOtp || emailOtp.length !== 6) {
+      setError('Enter the 6-digit email verification code');
+      return;
+    }
 
     // Validate 2FA code
     const twoFAValidation = transferApi.validate2FACode(twoFACode);
@@ -178,6 +206,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
         amount: parseFloat(amount),
         memo: memo || undefined,
         twoFACode: twoFACode,
+        emailOtp: emailOtp,
       };
 
       // If selectedUser has an email and it looks like one, use email
@@ -661,29 +690,52 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
             >
               <div className="space-y-2 rounded-xl p-4" style={insetStyle}>
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="rounded-full p-2 shrink-0" style={raisedStyle}>
-                      <Send className="size-4" style={{ color: NEU_TOKENS.accent }} />
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className="shrink-0 rounded-full p-2"
+                      style={raisedStyle}
+                    >
+                      <Send
+                        className="size-4"
+                        style={{ color: NEU_TOKENS.accent }}
+                      />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                      <p
+                        className="text-xs"
+                        style={{ color: NEU_TOKENS.white60 }}
+                      >
                         Sending
                       </p>
-                      <p className="text-xl font-bold truncate" style={{ color: NEU_TOKENS.accent }}>
+                      <p
+                        className="truncate text-xl font-bold"
+                        style={{ color: NEU_TOKENS.accent }}
+                      >
                         ${fmt4(parseFloat(amount))} USDT
                       </p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>To</p>
-                    <p className="text-sm font-medium truncate max-w-[140px]" style={{ color: NEU_TOKENS.white80 }}>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className="text-xs"
+                      style={{ color: NEU_TOKENS.white60 }}
+                    >
+                      To
+                    </p>
+                    <p
+                      className="max-w-[140px] truncate text-sm font-medium"
+                      style={{ color: NEU_TOKENS.white80 }}
+                    >
                       {selectedUser.email && selectedUser.email.includes('@')
                         ? selectedUser.email
                         : `@${selectedUser.username}`}
                     </p>
                   </div>
                 </div>
-                <div className="flex justify-between text-xs pt-1" style={{ color: NEU_TOKENS.white60 }}>
+                <div
+                  className="flex justify-between pt-1 text-xs"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
                   <span>Fee: FREE</span>
                   <span>Delivery: Instant</span>
                 </div>
@@ -691,11 +743,60 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
               <div className="space-y-1.5">
                 <Label
-                  htmlFor="twoFACode"
-                  className="text-sm font-medium flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 text-sm font-medium"
                   style={{ color: NEU_TOKENS.white80 }}
                 >
-                  <Shield className="size-4" style={{ color: NEU_TOKENS.accent }} />
+                  Email Verification Code
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    value={emailOtp}
+                    onChange={(e) =>
+                      setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    className="neu-input w-32 border-0 text-center font-mono tracking-widest focus-visible:ring-0"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-0"
+                    style={raisedStyle}
+                    disabled={
+                      otpCooldown.isOnCooldown ||
+                      !amount ||
+                      parseFloat(amount) < MIN_TRANSFER
+                    }
+                    onClick={handleRequestTransferOtp}
+                  >
+                    {otpCooldown.isOnCooldown
+                      ? `Resend in ${otpCooldown.cooldownSeconds}s`
+                      : otpSent
+                        ? 'Resend Code'
+                        : 'Send Code'}
+                  </Button>
+                </div>
+                {otpSent && (
+                  <p className="text-xs" style={{ color: NEU_TOKENS.white40 }}>
+                    Code sent to your email
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="twoFACode"
+                  className="flex items-center gap-1.5 text-sm font-medium"
+                  style={{ color: NEU_TOKENS.white80 }}
+                >
+                  <Shield
+                    className="size-4"
+                    style={{ color: NEU_TOKENS.accent }}
+                  />
                   Two-Factor Authentication
                 </Label>
                 <Input
@@ -733,7 +834,9 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 </Button>
                 <PrimaryButton
                   onClick={handleSubmitTransfer}
-                  disabled={loading || twoFACode.length !== 6}
+                  disabled={
+                    loading || twoFACode.length !== 6 || emailOtp.length !== 6
+                  }
                   loading={loading}
                   className="h-10 flex-1"
                 >

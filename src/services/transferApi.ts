@@ -17,6 +17,24 @@ import type {
 
 export const transferApi = {
   /**
+   * Request email OTP for transfer
+   * POST /api/v1/transfers/request-otp
+   * Turnstile token is required.
+   */
+  async requestTransferOtp(
+    turnstileToken?: string
+  ): Promise<{ success: boolean; message: string; expiresIn: number }> {
+    const body: Record<string, string> = {};
+    if (turnstileToken) body.turnstileToken = turnstileToken;
+    const response = await apiRequest<{
+      success: boolean;
+      message: string;
+      expiresIn: number;
+    }>('post', '/transfers/request-otp', body);
+    return response;
+  },
+
+  /**
    * Detect identifier type from user input
    * Returns the appropriate identifier fields based on input
    */
@@ -43,7 +61,7 @@ export const transferApi = {
 
   /**
    * Transfer Funds
-   * POST /api/v1/transfer
+   * POST /api/v1/enhanced-transactions/transfer
    */
   async transferFunds(data: TransferRequest): Promise<TransferResponse> {
     console.log('[transferApi] Initiating transfer:', {
@@ -53,14 +71,20 @@ export const transferApi = {
       hasMemo: !!data.memo,
     });
 
-    const response = await apiRequest<TransferResponse>('post', '/transfer', {
-      recipientId: data.recipientId,
-      recipientUsername: data.recipientUsername?.toLowerCase(),
-      recipientEmail: data.recipientEmail?.toLowerCase().trim(),
-      amount: data.amount,
-      memo: data.memo,
-      twoFACode: data.twoFACode,
-    });
+    const response = await apiRequest<TransferResponse>(
+      'post',
+      '/enhanced-transactions/transfer',
+      {
+        recipientId: data.recipientId,
+        recipientUsername: data.recipientUsername?.toLowerCase(),
+        recipientEmail: data.recipientEmail?.toLowerCase().trim(),
+        amount: data.amount,
+        memo: data.memo,
+        twoFACode: data.twoFACode,
+        ...(data.emailOtp ? { emailOtp: data.emailOtp } : {}),
+        ...(data.turnstileToken ? { turnstileToken: data.turnstileToken } : {}),
+      }
+    );
 
     console.log('[transferApi] Transfer successful:', {
       txId: response.txId,

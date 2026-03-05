@@ -52,7 +52,9 @@ import {
   useDefaultWithdrawalAddress,
   useSetDefaultWithdrawalAddress,
   useWallet,
+  useRequestWithdrawalOtp,
 } from '@/hooks/useWallet';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { useWalletBalance } from '@/lib/queries';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -97,12 +99,16 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     'form'
   );
   const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpExpiresAt, setOtpExpiresAt] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [withdrawalResult, setWithdrawalResult] = useState<any>(null);
   const [addressToSet, setAddressToSet] = useState('');
   const [setup2FACode, setSetup2FACode] = useState('');
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null); // Address detected from error response
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const otpCooldown = useOtpCooldown();
 
   // API hooks
   const queryClient = useQueryClient();
@@ -113,6 +119,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
   const { data: walletBalance } = useWalletBalance(); // Fallback for earnings balance
   const createWithdrawal = useCreateWithdrawal();
   const setDefaultAddress = useSetDefaultWithdrawalAddress();
+  const requestOtp = useRequestWithdrawalOtp();
 
   // Check if address exists - use hasDefaultAddress flag instead of checking if address exists
   // Check both the dedicated endpoint and wallet info endpoint
@@ -185,9 +192,13 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       reset();
       setStep('form');
       setTwoFactorCode('');
+      setEmailOtp('');
+      setOtpSent(false);
+      setOtpExpiresAt(0);
       setSetup2FACode('');
       setAddressToSet('');
       setWithdrawalResult(null);
+      otpCooldown.resetCooldown();
     }
   }, [open, reset]);
 
@@ -293,6 +304,36 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     );
   }, [amount, limits]);
 
+  // Handle requesting email OTP for withdrawal
+  const handleRequestOtp = async () => {
+    if (!amount || amount < minWithdrawal) {
+      toast.error('Invalid amount', {
+        description: `Minimum withdrawal is ${minWithdrawal} USDT`,
+      });
+      return;
+    }
+    try {
+      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+      const response = await requestOtp.mutateAsync({
+        amount,
+        turnstileToken,
+      });
+      setOtpSent(true);
+      const expiresIn = response?.expiresIn ?? 600;
+      setOtpExpiresAt(Date.now() + expiresIn * 1000);
+      toast.success('Code sent', {
+        description: 'Check your email for the 6-digit verification code.',
+      });
+    } catch (error: any) {
+      // Handle cooldown / rate limit
+      if (otpCooldown.triggerCooldown(error)) return;
+      // Turnstile failure
+      if (error?.response?.data?.code === 'TURNSTILE_FAILED') {
+        turnstileRef.current?.reset();
+      }
+    }
+  };
+
   const onSubmit = async (data: WithdrawalFormData) => {
     const finalNetwork = 'BEP20'; // Only BEP20 is supported
 
@@ -339,14 +380,24 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       return;
     }
 
-    // Submit withdrawal with 2FA code
+    // Check if email OTP is provided
+    if (!emailOtp || emailOtp.length !== 6) {
+      toast.error('Email verification code required', {
+        description:
+          'Please request and enter the 6-digit code sent to your email',
+      });
+      return;
+    }
+
+    // Submit withdrawal with 2FA code + email OTP
     // Backend will use default address automatically (BEP20 only)
-    await handleWithdrawalSubmit(data.amount, twoFactorCode);
+    await handleWithdrawalSubmit(data.amount, twoFactorCode, emailOtp);
   };
 
   const handleWithdrawalSubmit = async (
     amount: number,
     twoFACode: string,
+    emailOtpCode: string,
     customAddress?: string
   ) => {
     try {
@@ -358,11 +409,13 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         walletAddress?: string;
         network: 'BEP20';
         twoFACode: string;
+        emailOtp: string;
         turnstileToken?: string;
       } = {
         amount,
         network: 'BEP20', // Only BEP20 is supported
         twoFACode,
+        emailOtp: emailOtpCode,
         ...(turnstileToken ? { turnstileToken } : {}),
       };
 
@@ -432,7 +485,15 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
       return;
     }
 
-    await handleWithdrawalSubmit(amount, code);
+    // Check if email OTP is provided
+    if (!emailOtp || emailOtp.length !== 6) {
+      toast.error('Email verification required', {
+        description: 'Please click "Send Code" and enter the email OTP first',
+      });
+      return;
+    }
+
+    await handleWithdrawalSubmit(amount, code, emailOtp);
   };
 
   // Use withdrawal limits API balance, fallback to wallet balance if not available or is 0
@@ -1049,6 +1110,68 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
 
                 {/* Cloudflare Turnstile */}
                 <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+
+                {/* Email OTP Section */}
+                <div>
+                  <Label>Email Verification Code</Label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit code"
+                      value={emailOtp}
+                      onChange={(e) =>
+                        setEmailOtp(
+                          e.target.value.replace(/\D/g, '').slice(0, 6)
+                        )
+                      }
+                      className="w-32 text-center font-mono tracking-widest"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={
+                        requestOtp.isPending ||
+                        otpCooldown.isOnCooldown ||
+                        !amount ||
+                        amount < minWithdrawal
+                      }
+                      onClick={handleRequestOtp}
+                    >
+                      {requestOtp.isPending ? (
+                        <>
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          Sending...
+                        </>
+                      ) : otpCooldown.isOnCooldown ? (
+                        `Resend in ${otpCooldown.cooldownSeconds}s`
+                      ) : otpSent ? (
+                        'Resend Code'
+                      ) : (
+                        'Send Code'
+                      )}
+                    </Button>
+                  </div>
+                  {otpSent && (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Code sent to your email.{' '}
+                      {otpExpiresAt > Date.now() && (
+                        <>
+                          Expires in{' '}
+                          {Math.ceil((otpExpiresAt - Date.now()) / 60000)} min.
+                        </>
+                      )}
+                    </p>
+                  )}
+                  {!otpSent && (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Click &quot;Send Code&quot; to receive a verification code
+                      at your email
+                    </p>
+                  )}
+                </div>
 
                 {/* 2FA Input */}
                 <div>

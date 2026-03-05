@@ -14,7 +14,10 @@ import {
 import {
   useDefaultWithdrawalAddress,
   useSetDefaultWithdrawalAddress,
+  useRequestAddressChangeOtp,
 } from '@/hooks/useWallet';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
+import { TurnstileWidget } from '@/components/auth/TurnstileWidget';
 import { toast } from '@/components/ui/enhanced-toast';
 import { cn } from '@/lib/utils';
 import { copyToClipboard } from '@/lib/utils';
@@ -32,11 +35,19 @@ const NEU_MUTED = 'rgba(0,155,242,0.55)';
 export function WithdrawalAddressManager() {
   const { data: addressData, isLoading } = useDefaultWithdrawalAddress();
   const { mutate: setAddress, isPending } = useSetDefaultWithdrawalAddress();
+  const requestOtp = useRequestAddressChangeOtp();
+  const otpCooldown = useOtpCooldown();
 
   const [isEditing, setIsEditing] = useState(false);
   const [newAddress, setNewAddress] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const turnstileRef = React.useRef<{
+    reset: () => void;
+    getToken: () => string | null;
+  }>(null);
 
   useEffect(() => {
     const addr =
@@ -54,6 +65,20 @@ export function WithdrawalAddressManager() {
     }
   };
 
+  const handleRequestOtp = async () => {
+    try {
+      const turnstileToken = turnstileRef.current?.getToken?.() || undefined;
+      await requestOtp.mutateAsync(turnstileToken);
+      setOtpSent(true);
+      otpCooldown.triggerCooldown({ waitSeconds: 60 });
+    } catch (err) {
+      const handled = otpCooldown.triggerCooldown(err);
+      if (!handled) {
+        toast.error('Failed to send verification code');
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.startsWith('0x') || newAddress.length < 42) {
@@ -63,16 +88,22 @@ export function WithdrawalAddressManager() {
       });
       return;
     }
+    const turnstileToken = turnstileRef.current?.getToken?.() || undefined;
     setAddress(
       {
         address: newAddress,
         network: 'BEP20',
         twoFACode: twoFACode || undefined,
+        emailOtp: emailOtp || undefined,
+        turnstileToken,
       },
       {
         onSuccess: () => {
           setIsEditing(false);
           setTwoFACode('');
+          setEmailOtp('');
+          setOtpSent(false);
+          otpCooldown.resetCooldown();
         },
       }
     );
@@ -196,6 +227,63 @@ export function WithdrawalAddressManager() {
               />
             </div>
           </div>
+
+          {/* Turnstile widget */}
+          <TurnstileWidget widgetRef={turnstileRef} size="normal" />
+
+          {/* Email OTP (required when modifying existing address) */}
+          {hasAddress && (
+            <div className="space-y-1.5">
+              <label
+                className={`block ${walletStyles.labelUppercase}`}
+                style={{ color: NEU_MUTED }}
+              >
+                Email Verification Code
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="6-digit code"
+                  value={emailOtp}
+                  onChange={(e) =>
+                    setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
+                  maxLength={6}
+                  className={cn(
+                    inputClass,
+                    'w-32 text-center font-mono tracking-widest'
+                  )}
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  disabled={requestOtp.isPending || otpCooldown.isOnCooldown}
+                  onClick={handleRequestOtp}
+                  className="rounded-[16px] px-3 py-2 text-xs font-medium transition-[box-shadow,opacity] duration-[250ms] hover:opacity-90 disabled:opacity-50"
+                  style={{
+                    background: 'var(--neu-bg)',
+                    color: 'var(--neu-accent)',
+                    boxShadow: 'var(--neu-shadow-raised)',
+                    border: '1px solid var(--neu-border)',
+                  }}
+                >
+                  {requestOtp.isPending
+                    ? 'Sending...'
+                    : otpCooldown.isOnCooldown
+                      ? `Resend in ${otpCooldown.cooldownSeconds}s`
+                      : otpSent
+                        ? 'Resend Code'
+                        : 'Send Code'}
+                </button>
+              </div>
+              {otpSent && (
+                <p className="text-xs" style={{ color: NEU_MUTED }}>
+                  Code sent to your email
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label
