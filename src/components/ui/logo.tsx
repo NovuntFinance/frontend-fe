@@ -44,40 +44,52 @@ export function Logo({
   href = '/',
 }: LogoProps) {
   const dimensions = sizeMap[size];
-  
+
   // Theme-specific classes
   const themeClasses = {
     auto: '', // Uses default logo
     light: 'brightness-0 invert', // For dark backgrounds
     dark: '', // For light backgrounds
   };
-  
+
   const logoElement = (
     <div className={cn('relative flex items-center', className)}>
       {variant === 'icon' ? (
         // Icon-only version (first letter or icon)
-        <div 
+        <div
           className={cn(
             'flex items-center justify-center rounded-lg font-bold',
             'bg-primary text-primary-foreground',
             themeClasses[theme]
           )}
-          style={{ 
-            width: dimensions.iconSize, 
+          style={{
+            width: dimensions.iconSize,
             height: dimensions.iconSize,
-            fontSize: dimensions.iconSize * 0.5
+            fontSize: dimensions.iconSize * 0.5,
           }}
         >
           N
         </div>
       ) : (
-        <Image
-          src="/icons/novunt.png"
-          alt="Novunt"
-          width={dimensions.width}
-          height={dimensions.height}
-          className={cn('object-contain', themeClasses[theme])}
-          priority
+        // Use a mask-based element so the logo can be colored via CSS variables
+        <div
+          role="img"
+          aria-label="Novunt"
+          style={{
+            width: dimensions.width,
+            height: dimensions.height,
+            backgroundColor: 'var(--neu-accent)',
+            WebkitMaskImage: 'url(/icons/novunt.png)',
+            maskImage: 'url(/icons/novunt.png)',
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+            display: 'inline-block',
+          }}
+          className={cn(themeClasses[theme])}
         />
       )}
     </div>
@@ -85,9 +97,9 @@ export function Logo({
 
   if (clickable) {
     return (
-      <Link 
+      <Link
         href={href}
-        className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary rounded-lg transition-transform hover:scale-105"
+        className="focus:ring-primary inline-flex items-center rounded-lg transition-transform hover:scale-105 focus:ring-2 focus:outline-none"
       >
         {logoElement}
       </Link>
@@ -117,10 +129,10 @@ export function LogoWithText({
       <Logo size={size} clickable={false} />
       {showTagline && (
         <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-muted-foreground text-xs font-medium">
             Financial Freedom
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             Through Smart Staking
           </span>
         </div>
@@ -130,9 +142,9 @@ export function LogoWithText({
 
   if (clickable) {
     return (
-      <Link 
+      <Link
         href={href}
-        className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
+        className="focus:ring-primary inline-flex items-center rounded-lg focus:ring-2 focus:outline-none"
       >
         {content}
       </Link>
