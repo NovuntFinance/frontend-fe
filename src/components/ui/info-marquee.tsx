@@ -91,11 +91,13 @@ export function InfoMarquee({
         }}
       >
         {/* Speaker icon - fixed left */}
-        <div
-          className="z-20 flex shrink-0 items-center justify-center px-3 py-1.5"
-          style={{ color: 'var(--neu-accent)' }}
-        >
-          <FaVolumeUp className="h-4 w-4" />
+        <div className="z-20 flex shrink-0 items-center justify-center px-3 py-1.5">
+          <FaVolumeUp
+            className="h-4 w-4"
+            style={{ color: 'var(--neu-accent)' }}
+            aria-hidden={false}
+            role="img"
+          />
         </div>
 
         {/* Scrolling area */}
