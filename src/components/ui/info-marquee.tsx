@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Info, TrendingUp, Gift, AlertCircle } from 'lucide-react';
+import { FaVolumeUp } from 'react-icons/fa';
 import { cn } from '@/lib/utils';
 import { useActiveAnnouncements } from '@/lib/queries';
 import type { Announcement as AnnouncementType } from '@/types/announcement';
@@ -25,32 +25,6 @@ const defaultAnnouncements: AnnouncementType[] = [
     updatedAt: new Date().toISOString(),
   },
 ];
-
-const getIcon = (type: AnnouncementType['type']) => {
-  switch (type) {
-    case 'success':
-      return <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />;
-    case 'warning':
-      return <AlertCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />;
-    case 'promo':
-      return <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5" />;
-    default:
-      return <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />;
-  }
-};
-
-const getColorClasses = (type: AnnouncementType['type']) => {
-  switch (type) {
-    case 'success':
-      return 'text-emerald-600 dark:text-emerald-400';
-    case 'warning':
-      return 'text-amber-600 dark:text-amber-400';
-    case 'promo':
-      return 'text-purple-600 dark:text-purple-400';
-    default:
-      return 'text-indigo-600 dark:text-indigo-400';
-  }
-};
 
 export function InfoMarquee({
   announcements: propAnnouncements,
@@ -90,8 +64,10 @@ export function InfoMarquee({
     return null;
   }
 
-  // Duplicate announcements for seamless loop
+  // Quadruple announcements for seamless loop on wider screens
   const duplicatedAnnouncements = [
+    ...sortedAnnouncements,
+    ...sortedAnnouncements,
     ...sortedAnnouncements,
     ...sortedAnnouncements,
   ];
@@ -105,59 +81,80 @@ export function InfoMarquee({
     <>
       <div
         className={cn(
-          'relative flex h-full w-full items-center overflow-hidden',
+          'relative flex w-full items-center overflow-hidden',
           className
         )}
+        style={{
+          background: 'var(--neu-bg)',
+          borderTop: '1px solid rgba(var(--neu-accent-rgb), 0.25)',
+          borderBottom: '1px solid rgba(var(--neu-accent-rgb), 0.25)',
+        }}
       >
-        {/* Gradient fade on edges - theme aware */}
-        <div className="from-background via-background pointer-events-none absolute top-0 left-0 z-10 h-full w-16 bg-gradient-to-r to-transparent dark:from-slate-950 dark:via-slate-950" />
-        <div className="from-background via-background pointer-events-none absolute top-0 right-0 z-10 h-full w-16 bg-gradient-to-l to-transparent dark:from-slate-950 dark:via-slate-950" />
-
-        <motion.div
-          className="flex items-center gap-8"
-          animate={{
-            x: ['0%', '-50%'],
-          }}
-          transition={{
-            x: {
-              repeat: Infinity,
-              repeatType: 'loop',
-              duration: speed,
-              ease: 'linear',
-            },
-          }}
+        {/* Speaker icon - fixed left */}
+        <div
+          className="z-20 flex shrink-0 items-center justify-center px-3 py-1.5"
+          style={{ color: 'var(--neu-accent)' }}
         >
-          {duplicatedAnnouncements.map((announcement, index) => (
-            <button
-              key={`${announcement.id}-${index}`}
-              onClick={() => handleAnnouncementClick(announcement)}
-              className="focus-visible:ring-primary -mx-2 -my-1 flex shrink-0 cursor-pointer items-center gap-2 rounded px-2 py-1 whitespace-nowrap transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-              aria-label={`View announcement: ${announcement.text}`}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-center',
-                  getColorClasses(announcement.type)
-                )}
+          <FaVolumeUp className="h-4 w-4" />
+        </div>
+
+        {/* Scrolling area */}
+        <div className="relative flex-1 overflow-hidden py-1.5">
+          {/* Fade edges */}
+          <div
+            className="pointer-events-none absolute top-0 left-0 z-10 h-full w-8"
+            style={{
+              background:
+                'linear-gradient(to right, var(--neu-bg), transparent)',
+            }}
+          />
+          <div
+            className="pointer-events-none absolute top-0 right-0 z-10 h-full w-8"
+            style={{
+              background:
+                'linear-gradient(to left, var(--neu-bg), transparent)',
+            }}
+          />
+
+          <motion.div
+            className="flex items-center gap-10"
+            animate={{
+              x: ['0%', '-25%'],
+            }}
+            transition={{
+              x: {
+                repeat: Infinity,
+                repeatType: 'loop',
+                duration: speed,
+                ease: 'linear',
+              },
+            }}
+          >
+            {duplicatedAnnouncements.map((announcement, index) => (
+              <button
+                key={`${announcement.id}-${index}`}
+                onClick={() => handleAnnouncementClick(announcement)}
+                className="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap transition-opacity hover:opacity-70 focus-visible:outline-none"
               >
-                {announcement.icon ? (
-                  <span className="text-sm sm:text-base">
-                    {announcement.icon}
+                <span
+                  className="text-xs font-medium italic sm:text-sm"
+                  style={{ color: 'var(--neu-accent)' }}
+                >
+                  {announcement.text}
+                </span>
+                {/* Separator dot */}
+                {index < duplicatedAnnouncements.length - 1 && (
+                  <span
+                    className="mx-4 text-xs"
+                    style={{ color: 'rgba(var(--neu-accent-rgb), 0.4)' }}
+                  >
+                    •
                   </span>
-                ) : (
-                  getIcon(announcement.type)
                 )}
-              </div>
-              <span className="text-foreground text-xs font-medium sm:text-sm dark:text-white/90">
-                {announcement.text}
-              </span>
-              {/* Separator dot */}
-              {index < duplicatedAnnouncements.length - 1 && (
-                <div className="bg-foreground/30 mx-2 h-1 w-1 rounded-full dark:bg-white/30" />
-              )}
-            </button>
-          ))}
-        </motion.div>
+              </button>
+            ))}
+          </motion.div>
+        </div>
       </div>
 
       {/* Announcement Modal */}

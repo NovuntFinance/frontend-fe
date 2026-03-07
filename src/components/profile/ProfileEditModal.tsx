@@ -8,10 +8,14 @@ import {
   User as UserIcon,
   Mail,
   Lock,
+  LogOut,
   Eye,
   EyeOff,
   AtSign,
   Key,
+  Smartphone,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,13 +37,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/enhanced-toast';
-import { AvatarSelector } from '@/components/profile/AvatarSelector';
-import { BadgeAvatarSelector } from '@/components/achievements/BadgeAvatarSelector';
 import {
   TurnstileWidget,
   type TurnstileWidgetHandle,
 } from '@/components/auth/TurnstileWidget';
 import { passwordSchema } from '@/lib/validation';
+import { useTheme } from 'next-themes';
 
 // Change password schema – 2FA is required for all users (default ON at registration, cannot be turned off)
 const changePasswordSchema = z
@@ -66,11 +69,13 @@ type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 interface ProfileEditModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLogout?: () => void;
 }
 
 export function ProfileEditModal({
   open,
   onOpenChange,
+  onLogout,
 }: ProfileEditModalProps) {
   const { user } = useAuth();
   const { updateUser } = useAuthStore();
@@ -81,9 +86,8 @@ export function ProfileEditModal({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(
-    undefined
-  );
+  const [themeMounted, setThemeMounted] = useState(false);
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   // Change password form
@@ -104,20 +108,36 @@ export function ProfileEditModal({
     }
   }, [profileData, updateUser]);
 
-  const handleAvatarUploadComplete = (url: string) => {
-    setCurrentAvatar(url);
-    // Update avatar immediately in the store
-    updateUser({ avatar: url });
-    // Update the profilePhoto field in the form
-    // Note: The AvatarSelector uses useUpdateProfilePicture which updates separately
-    // This is just for form state consistency
-    // Force refetch to ensure consistency
-    refetchProfile();
-    // Force reload to update all avatar instances (toast removed to avoid duplicate before reload)
-    setTimeout(() => {
-      window.location.href = window.location.href;
-    }, 500);
-  };
+  useEffect(() => {
+    setThemeMounted(true);
+  }, []);
+
+  const selectedTheme = theme ?? 'system';
+  const appearanceOptions: Array<{
+    value: 'system' | 'light' | 'dark';
+    label: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }> = [
+    {
+      value: 'system',
+      label: 'System',
+      description: 'Follow your device theme automatically.',
+      icon: Smartphone,
+    },
+    {
+      value: 'light',
+      label: 'Light',
+      description: 'Always use the light theme.',
+      icon: Sun,
+    },
+    {
+      value: 'dark',
+      label: 'Dark',
+      description: 'Always use the dark theme.',
+      icon: Moon,
+    },
+  ];
 
   const onSubmitPassword = async (data: ChangePasswordFormData) => {
     try {
@@ -207,18 +227,18 @@ export function ProfileEditModal({
               Personal Info
             </TabsTrigger>
             <TabsTrigger
-              value="avatar"
-              className="data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.15)] data-[state=active]:text-[var(--neu-text-primary)]"
-              style={{ color: 'var(--neu-text-secondary)' }}
-            >
-              Avatar
-            </TabsTrigger>
-            <TabsTrigger
               value="security"
               className="data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.15)] data-[state=active]:text-[var(--neu-text-primary)]"
               style={{ color: 'var(--neu-text-secondary)' }}
             >
               Security
+            </TabsTrigger>
+            <TabsTrigger
+              value="appearance"
+              className="data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.15)] data-[state=active]:text-[var(--neu-text-primary)]"
+              style={{ color: 'var(--neu-text-secondary)' }}
+            >
+              Appearance
             </TabsTrigger>
           </TabsList>
 
@@ -301,57 +321,6 @@ export function ProfileEditModal({
                   Username is permanent and cannot be changed
                 </p>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Avatar Tab */}
-          <TabsContent value="avatar" className="mt-6">
-            <div
-              className="space-y-6 rounded-xl p-4 sm:p-5"
-              style={neuSectionInset}
-            >
-              {/* Sub-tabs for Avatar Selection */}
-              <Tabs defaultValue="notionist" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 rounded-lg border border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)] p-1">
-                  <TabsTrigger
-                    value="notionist"
-                    className="text-[var(--neu-text-secondary)] data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.1)] data-[state=active]:text-[var(--neu-text-primary)]"
-                  >
-                    Notionist
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="badges"
-                    className="text-[var(--neu-text-secondary)] data-[state=active]:bg-[rgba(var(--neu-accent-rgb),0.1)] data-[state=active]:text-[var(--neu-text-primary)]"
-                  >
-                    Badge Avatars
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="notionist" className="mt-4">
-                  <AvatarSelector
-                    currentAvatar={currentAvatar || user?.avatar}
-                    userId={user.id || user._id || ''}
-                    userName={user.username || user.email || 'User'}
-                    onAvatarSelected={handleAvatarUploadComplete}
-                    allowedStyles={['notionists']}
-                  />
-                </TabsContent>
-
-                <TabsContent value="badges" className="mt-4">
-                  <BadgeAvatarSelector
-                    user={user}
-                    currentAvatar={currentAvatar || user?.avatar}
-                    onClose={() => {
-                      // Refresh user data after badge selection
-                      if (handleAvatarUploadComplete) {
-                        handleAvatarUploadComplete(
-                          currentAvatar || user?.avatar || ''
-                        );
-                      }
-                    }}
-                  />
-                </TabsContent>
-              </Tabs>
             </div>
           </TabsContent>
 
@@ -640,6 +609,72 @@ export function ProfileEditModal({
                   </Button>
                 </div>
               </form>
+            </div>
+          </TabsContent>
+
+          {/* Appearance Tab */}
+          <TabsContent value="appearance" className="mt-6">
+            <div className="space-y-4 rounded-xl border border-[var(--neu-border)] bg-[var(--neu-bg)] p-4 shadow-[var(--neu-shadow-inset)] sm:p-5">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--neu-text-primary)]">
+                  Theme Preference
+                </h3>
+                <p className="text-sm text-[var(--neu-text-primary)]/60">
+                  Keep system mode, or choose a manual light/dark override.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {appearanceOptions.map((option) => {
+                  const Icon = option.icon;
+                  const active = selectedTheme === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTheme(option.value)}
+                      disabled={!themeMounted}
+                      className={`rounded-xl border p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70 ${
+                        active
+                          ? 'border-[rgba(var(--neu-accent-rgb),0.65)] bg-[rgba(var(--neu-accent-rgb),0.16)]'
+                          : 'border-[var(--neu-border)] bg-[rgba(var(--neu-accent-rgb),0.05)]'
+                      }`}
+                      aria-label={`Set ${option.label} theme`}
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-[var(--neu-text-primary)]" />
+                        <span className="font-medium text-[var(--neu-text-primary)]">
+                          {option.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--neu-text-secondary)]">
+                        {option.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-[var(--neu-text-primary)]/60">
+                Active display theme:{' '}
+                {resolvedTheme === 'dark' ? 'Dark' : 'Light'}
+              </p>
+
+              <div className="border-t border-[var(--neu-border)] pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onLogout?.();
+                  }}
+                  className="w-full border-red-400/40 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

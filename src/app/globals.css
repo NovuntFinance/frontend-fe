@@ -590,6 +590,20 @@
     touch-action: pan-y;
   }
 
+  /* Dashboard footer positioning: above bottom nav on mobile, at bottom on desktop */
+  .dashboard-footer {
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 1024px) {
+    .dashboard-footer {
+      bottom: 0;
+    }
+    /* On desktop, no bottom nav so reduce main content bottom padding */
+    .dashboard-main-scroll {
+      padding-bottom: 48px !important;
+    }
+  }
+
   /* Mobile modal and form constraints - prevent overflow on mobile devices */
   @supports (height: 100dvh) {
     /* Ensure modals don't exceed viewport on mobile */

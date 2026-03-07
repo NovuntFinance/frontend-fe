@@ -17,7 +17,7 @@ interface NotificationBadgeProps {
 
 export function NotificationBadge({
   className = '',
-  showZero = false,
+  showZero = true,
   maxCount = 99,
 }: NotificationBadgeProps) {
   const { unreadCount } = useUnreadCount();
@@ -27,12 +27,15 @@ export function NotificationBadge({
   }
 
   const displayCount = unreadCount > maxCount ? `${maxCount}+` : unreadCount;
+  const isZero = unreadCount === 0;
 
   return (
     <span
       className={cn(
-        'absolute -top-0.5 right-0 flex items-center justify-center',
-        'text-xs font-semibold text-red-500',
+        'absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full sm:h-6 sm:w-6',
+        'text-[8px] font-bold text-white sm:text-[9px]',
+        'shadow-[0_0_0_2px_var(--neu-bg)]',
+        isZero ? 'bg-emerald-500' : 'bg-orange-500',
         'animate-in zoom-in-50 duration-200',
         className
       )}

@@ -170,19 +170,16 @@ export default function DashboardPage() {
   const { data: streakData } = useStakingStreak();
   const streakDays = streakData?.currentStreak ?? 0;
 
-  // Security score for Settings badge (3 items: email 33% + 2FA 33% + wallet 34%)
-  const securityScore = useMemo(() => {
-    let score = 0;
-    if (user?.emailVerified) score += 33;
-    if (user?.twoFAEnabled) score += 33;
-    if (hasWalletAddress) score += 34;
-    return score;
+  // Incomplete security tasks for Settings badge (3 items: email, 2FA, wallet)
+  const incompleteSecurityTasks = useMemo(() => {
+    let incomplete = 0;
+    if (!user?.emailVerified) incomplete++;
+    if (!user?.twoFAEnabled) incomplete++;
+    if (!hasWalletAddress) incomplete++;
+    return incomplete;
   }, [user?.emailVerified, user?.twoFAEnabled, hasWalletAddress]);
 
-  // Unread notification/message count for Support badge
-  const { unreadCount: notificationUnreadCount } = useUnreadCount();
-
-  // Open support tickets count (submitted or in-progress)
+  // Open support tickets count (submitted or in-progress) for Support badge
   const { data: openTicketsData } = useQuery({
     queryKey: ['support-open-tickets'],
     queryFn: async () => {
@@ -198,9 +195,6 @@ export default function DashboardPage() {
     refetchInterval: 60_000,
   });
   const openTicketCount = openTicketsData ?? 0;
-
-  // Combined support badge: notifications + open tickets
-  const supportUnreadCount = notificationUnreadCount + openTicketCount;
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -1415,52 +1409,60 @@ export default function DashboardPage() {
                                 {streakDays}
                               </motion.span>
                             )}
-                            {/* Settings security score badge */}
+
+                            {/* Settings incomplete security tasks badge */}
                             {isSettings && (
-                              <motion.span
-                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[7px] font-bold sm:h-6 sm:w-6 sm:text-[8px]"
-                                style={{
-                                  background: '#f59e0b',
-                                  color: '#ffffff',
-                                  boxShadow: '0 0 0 2px var(--neu-bg)',
-                                }}
-                                animate={{
-                                  scale: [1, 1.15, 1],
-                                }}
-                                transition={{
-                                  duration: 1.5,
-                                  repeat: Infinity,
-                                  ease: 'easeInOut',
-                                }}
-                                aria-hidden
-                              >
-                                {securityScore}%
-                              </motion.span>
-                            )}
-                            {/* Support unread messages badge */}
-                            {isSupport && (
                               <motion.span
                                 className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
                                 style={{
                                   background:
-                                    supportUnreadCount > 0
-                                      ? '#ef4444'
-                                      : '#22c55e',
+                                    incompleteSecurityTasks === 0
+                                      ? '#22c55e'
+                                      : incompleteSecurityTasks === 1
+                                        ? '#f59e0b'
+                                        : '#ef4444',
                                   color: '#ffffff',
                                   boxShadow: '0 0 0 2px var(--neu-bg)',
                                 }}
                                 animate={{
                                   scale:
-                                    supportUnreadCount > 0 ? [1, 1.15, 1] : 1,
+                                    incompleteSecurityTasks > 0
+                                      ? [1, 1.15, 1]
+                                      : 1,
                                 }}
                                 transition={{
                                   duration: 1.5,
-                                  repeat: supportUnreadCount > 0 ? Infinity : 0,
+                                  repeat:
+                                    incompleteSecurityTasks > 0 ? Infinity : 0,
                                   ease: 'easeInOut',
                                 }}
                                 aria-hidden
                               >
-                                {supportUnreadCount}
+                                {incompleteSecurityTasks}
+                              </motion.span>
+                            )}
+
+                            {/* Support open tickets badge */}
+                            {isSupport && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
+                                style={{
+                                  background:
+                                    openTicketCount > 0 ? '#ef4444' : '#22c55e',
+                                  color: '#ffffff',
+                                  boxShadow: '0 0 0 2px var(--neu-bg)',
+                                }}
+                                animate={{
+                                  scale: openTicketCount > 0 ? [1, 1.15, 1] : 1,
+                                }}
+                                transition={{
+                                  duration: 1.5,
+                                  repeat: openTicketCount > 0 ? Infinity : 0,
+                                  ease: 'easeInOut',
+                                }}
+                                aria-hidden
+                              >
+                                {openTicketCount}
                               </motion.span>
                             )}
                           </motion.div>

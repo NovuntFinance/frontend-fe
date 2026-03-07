@@ -12,7 +12,7 @@ import { GlobalModalsProvider } from '@/contexts/GlobalModalsContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { TwoFAProvider } from '@/contexts/TwoFAContext';
 import { CommandPalette } from '@/components/search/CommandPalette';
-import { GlobalThemeButton } from '@/components/theme/GlobalThemeButton';
+import { ThemePreferenceMigration } from '@/components/theme/ThemePreferenceMigration';
 import { AuthSessionHandler } from '@/components/auth/AuthSessionHandler';
 import { initializePlatformSettings } from '@/services/platformSettingsService';
 
@@ -149,12 +149,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemePreferenceMigration />
           <TwoFAProvider>
             <ConfigProvider>
               <GlobalModalsProvider>
                 <AuthSessionHandler />
                 {children}
-                <GlobalThemeButton />
                 <Toaster position="top-right" richColors />
 
                 {/* Command Palette - Global Search (Cmd+K / Ctrl+K) */}

@@ -3,10 +3,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowUpRight, Clock, Wallet, Bell, LogOut, User } from 'lucide-react';
+import { ArrowUpRight, Clock, Wallet, Bell, ShieldCheck } from 'lucide-react';
 import { useRegistrationBonusStatus } from '@/lib/queries/registrationBonusQueries';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
+import { useDefaultWithdrawalAddress } from '@/hooks/useWallet';
 import { useDashboardOverview } from '@/lib/queries';
 import { useDisable2FA } from '@/lib/mutations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,12 +17,11 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DashboardGuard } from '@/components/auth/DashboardGuard';
 import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
+import { AvatarEditModal } from '@/components/profile/AvatarEditModal';
 import { NotificationsModal } from '@/components/settings/NotificationsModal';
 import { NotificationBadge } from '@/components/notifications/NotificationBadge';
 import { DateFilteredNotificationList } from '@/components/notifications/DateFilteredNotificationList';
@@ -36,41 +36,10 @@ import { TransferModal } from '@/components/wallet/modals/TransferModal';
 import { WalletModal } from '@/components/wallet/WalletModal';
 import { RegistrationBonusModal } from '@/components/registration-bonus/RegistrationBonusModal';
 import { HorizontalNav } from '@/components/navigation/HorizontalNav';
+import { DesktopSidebar } from '@/components/navigation/DesktopSidebar';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
-import { useTheme } from 'next-themes';
-import { Sun, Moon } from 'lucide-react';
-import neuStyles from '@/styles/neumorphic.module.css';
-
-/** Theme toggle for dashboard header */
-function DashboardThemeToggle({
-  neuStyles: ns,
-}: {
-  neuStyles: Record<string, string>;
-}) {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isDark = resolvedTheme === 'dark';
-  if (!mounted) {
-    return (
-      <div
-        className={`h-10 w-10 shrink-0 rounded-full sm:h-11 sm:w-11 ${ns['neu-icon-button']}`}
-        aria-hidden
-      />
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${ns['neu-icon-button']} ${ns['neu-icon-button-accent-default']}`}
-      style={{ filter: 'none' }}
-      aria-label="Toggle theme"
-    >
-      {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-    </button>
-  );
-}
+import { InfoMarquee } from '@/components/ui/info-marquee';
+import { DashboardFooter } from '@/components/layout/DashboardFooter';
 
 /**
  * Dashboard Layout
@@ -86,8 +55,8 @@ export default function DashboardLayout({
   const { isModalOpen, closeModal } = useUIStore();
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationTab, setNotificationTab] = useState<'all' | 'system'>(
     'all'
   );
@@ -130,6 +99,26 @@ export default function DashboardLayout({
   const { logout } = useAuth();
   const { user } = useUser();
   const displayName = user?.firstName || user?.fname || 'User';
+
+  // Check if user has withdrawal address for security score
+  const { data: withdrawalAddressData } = useDefaultWithdrawalAddress();
+  const hasWalletAddress = withdrawalAddressData?.hasDefaultAddress ?? false;
+
+  // Security score for profile indicator (email 33% + 2FA 33% + wallet 34%)
+  const securityScore = React.useMemo(() => {
+    let score = 0;
+    if (user?.emailVerified) score += 33;
+    if (user?.twoFAEnabled) score += 33;
+    if (hasWalletAddress) score += 34;
+    return score;
+  }, [user?.emailVerified, user?.twoFAEnabled, hasWalletAddress]);
+
+  // Determine security indicator color based on score
+  const getSecurityColor = () => {
+    if (securityScore >= 100) return '#22c55e'; // green
+    if (securityScore >= 66) return '#f59e0b'; // amber
+    return '#ef4444'; // red
+  };
   const { data: overview } = useDashboardOverview();
   const { data: bonusResponse } = useRegistrationBonusStatus();
 
@@ -178,7 +167,7 @@ export default function DashboardLayout({
       >
         {/* Header: fixed, always visible; insets so it doesn't sit under notch/status bar on real devices */}
         <div
-          className="fixed right-0 left-0 z-30"
+          className="fixed right-0 left-0 z-30 lg:left-[72px]"
           style={{
             top: '0',
             paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)',
@@ -199,138 +188,93 @@ export default function DashboardLayout({
             <div className="flex flex-shrink-0 items-center justify-between gap-4">
               {/* Profile Section - Left side */}
               <div className="flex shrink-0 items-center gap-3">
-                <DropdownMenu
-                  open={profileDropdownOpen}
-                  onOpenChange={setProfileDropdownOpen}
+                <button
+                  type="button"
+                  onClick={() => setAvatarModalOpen(true)}
+                  className="rounded-full transition-all"
+                  aria-label="Edit avatar"
                 >
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-3 rounded-full px-2 py-1.5 transition-all">
-                      <div className="relative shrink-0">
-                        <div
-                          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
-                          style={{
-                            background: 'rgba(var(--neu-accent-rgb), 0.15)',
-                            border: '1px solid var(--neu-border)',
-                            boxShadow:
-                              'inset 2px 2px 6px var(--neu-shadow-dark), inset -2px -2px 6px var(--neu-shadow-light)',
-                          }}
-                        >
-                          {user?.avatar && isBadgeIcon(user.avatar) ? (
-                            <BadgeAvatar
-                              badgeIcon={user.avatar}
-                              size="md"
-                              className="shrink-0"
-                            />
-                          ) : (
-                            <Avatar className="h-full w-full overflow-hidden rounded-full">
-                              <AvatarImage
-                                src={getUserAvatarUrl(user) ?? undefined}
-                                alt={`${displayName}`}
-                              />
-                              <AvatarFallback
-                                className="text-sm font-medium"
-                                style={{
-                                  background: 'transparent',
-                                  color: 'var(--neu-text-primary)',
-                                }}
-                              >
-                                {displayName[0]?.toUpperCase()}
-                                {user?.lastName?.[0] || user?.lname?.[0] || ''}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                        </div>
-                        <NotificationBadge className="-top-0.5 right-0" />
+                  <div className="relative shrink-0">
+                    <div
+                      className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full"
+                      style={{
+                        background: 'rgba(var(--neu-accent-rgb), 0.15)',
+                        border: '1px solid var(--neu-border)',
+                        boxShadow:
+                          'inset 2px 2px 6px var(--neu-shadow-dark), inset -2px -2px 6px var(--neu-shadow-light)',
+                      }}
+                    >
+                      {/* Security Status Indicator */}
+                      <div
+                        className="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full sm:h-5 sm:w-5"
+                        style={{
+                          background: getSecurityColor(),
+                          boxShadow: '0 0 0 2px var(--neu-bg)',
+                        }}
+                        title={`Security: ${securityScore}%`}
+                      >
+                        <ShieldCheck className="h-2.5 w-2.5 text-white sm:h-3 sm:w-3" />
                       </div>
-                      <div className="flex flex-col items-start">
-                        <span
-                          className="text-sm font-medium"
-                          style={{
-                            color: 'var(--neu-text-primary)',
-                            filter: 'none',
-                          }}
-                        >
-                          Hello, {displayName}.
-                        </span>
-                      </div>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-56 border p-2"
+                      {user?.avatar && isBadgeIcon(user.avatar) ? (
+                        <BadgeAvatar
+                          badgeIcon={user.avatar}
+                          size="md"
+                          className="shrink-0"
+                        />
+                      ) : (
+                        <Avatar className="h-full w-full overflow-hidden rounded-full">
+                          <AvatarImage
+                            src={getUserAvatarUrl(user) ?? undefined}
+                            alt={`${displayName}`}
+                          />
+                          <AvatarFallback
+                            className="text-sm font-medium"
+                            style={{
+                              background: 'transparent',
+                              color: 'var(--neu-text-primary)',
+                            }}
+                          >
+                            {displayName[0]?.toUpperCase()}
+                            {user?.lastName?.[0] || user?.lname?.[0] || ''}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setProfileModalOpen(true)}
+                  className="flex flex-col items-start rounded-md px-1 py-1 text-left transition-all"
+                  aria-label="Open profile settings"
+                >
+                  <span
+                    className="text-sm font-medium"
                     style={{
-                      background: 'var(--neu-bg)',
-                      borderColor: 'var(--neu-border)',
-                      boxShadow: 'var(--neu-shadow-raised)',
+                      color: 'var(--neu-text-primary)',
+                      filter: 'none',
                     }}
                   >
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setProfileDropdownOpen(false);
-                        setProfileModalOpen(true);
-                      }}
-                      className="cursor-pointer rounded-md focus:bg-[rgba(var(--neu-accent-rgb),0.15)]"
-                      style={{
-                        color: 'var(--neu-text-primary)',
-                        filter: 'none',
-                      }}
-                    >
-                      <User
-                        className="mr-2 h-4 w-4"
-                        style={{
-                          color: 'var(--neu-text-primary)',
-                          filter: 'none',
-                        }}
-                      />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setProfileDropdownOpen(false);
-                        setTimeout(() => {
-                          setNotificationCenterOpen(true);
-                        }, 100);
-                      }}
-                      className="relative cursor-pointer rounded-md focus:bg-[rgba(var(--neu-accent-rgb),0.15)]"
-                      style={{
-                        color: 'var(--neu-text-primary)',
-                        filter: 'none',
-                      }}
-                    >
-                      <Bell
-                        className="mr-2 h-4 w-4"
-                        style={{
-                          color: 'var(--neu-text-primary)',
-                          filter: 'none',
-                        }}
-                      />
-                      <span className="flex-1">Notifications</span>
-                      <NotificationBadge className="!static !h-5 !min-w-[20px] !px-1.5" />
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator
-                      className="my-1"
-                      style={{ background: 'var(--neu-border)' }}
-                    />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className="cursor-pointer rounded-md focus:bg-red-500/15"
-                      style={{
-                        color: '#f87171',
-                      }}
-                    >
-                      <LogOut
-                        className="mr-2 h-4 w-4"
-                        style={{ color: 'inherit' }}
-                      />
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    Hello, {displayName}.
+                  </span>
+                </button>
               </div>
 
-              {/* Theme toggle - Right side */}
-              <div className="flex shrink-0 items-center gap-2">
-                <DashboardThemeToggle neuStyles={neuStyles} />
+              {/* Notifications - Right side of header */}
+              <div className="mr-1 flex shrink-0 items-center sm:mr-2">
+                <button
+                  type="button"
+                  onClick={() => setNotificationCenterOpen(true)}
+                  className="group relative flex items-center justify-center p-1 transition-transform hover:scale-105 active:scale-95"
+                  aria-label="Open notifications"
+                >
+                  <Bell
+                    className="h-7 w-7 drop-shadow-[0_0_8px_rgba(var(--neu-accent-rgb),0.45)] sm:h-8 sm:w-8"
+                    style={{ color: 'var(--neu-accent)' }}
+                  />
+                  <NotificationBadge className="-top-1 -right-1" />
+                </button>
               </div>
             </div>
 
@@ -359,6 +303,10 @@ export default function DashboardLayout({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8"
+                    onClick={() => {
+                      setNotificationCenterOpen(false);
+                      setProfileModalOpen(true);
+                    }}
                   >
                     <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
@@ -438,14 +386,19 @@ export default function DashboardLayout({
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
+
+          {/* News Ticker - below header with spacing */}
+          <div className="mt-3">
+            <InfoMarquee speed={25} />
+          </div>
         </div>
 
-        {/* Spacer so content starts below fixed header (match header top offset) */}
+        {/* Spacer so content starts below fixed header + news ticker */}
         <div
           aria-hidden="true"
           className="shrink-0"
           style={{
-            minHeight: 'calc(5.5rem + env(safe-area-inset-top, 0px))',
+            minHeight: 'calc(7rem + env(safe-area-inset-top, 0px))',
           }}
         />
 
@@ -482,17 +435,20 @@ export default function DashboardLayout({
         {/* Page content - scrolls here so bottom nav does not block; generous bottom padding so last item is never under nav on real devices */}
         <main
           id="main-content"
-          className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:pt-8"
+          className="dashboard-main-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-6 sm:pt-6 md:pt-8 lg:ml-[72px] lg:pt-8"
           style={{
-            paddingBottom: 'calc(110px + env(safe-area-inset-bottom, 16px))',
+            paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 16px))',
           }}
         >
           <div className="dashboard-page-container">{children}</div>
         </main>
 
+        <DashboardFooter />
+
         {/* Modals */}
         <ProfileEditModal
           open={profileModalOpen}
+          onLogout={handleLogout}
           onOpenChange={(open) => {
             setProfileModalOpen(open);
             // Refetch registration bonus when modal closes to update progress
@@ -505,6 +461,10 @@ export default function DashboardLayout({
               }, 500);
             }
           }}
+        />
+        <AvatarEditModal
+          open={avatarModalOpen}
+          onOpenChange={setAvatarModalOpen}
         />
         <NotificationsModal
           open={notificationsModalOpen}
@@ -551,8 +511,13 @@ export default function DashboardLayout({
           onClose={() => setAssistantOpen(false)}
         />
 
-        {/* Bottom navigation — Stake, Wallet, Dashboard (logo), Team, NXP */}
-        <HorizontalNav />
+        {/* Bottom navigation — mobile/tablet only */}
+        <div className="lg:hidden">
+          <HorizontalNav />
+        </div>
+
+        {/* Desktop sidebar — lg+ only */}
+        <DesktopSidebar />
       </div>
     </DashboardGuard>
   );
