@@ -46,10 +46,22 @@ export function DashboardFooter() {
       <div className="flex items-center justify-between px-4 py-2 sm:px-6">
         {/* Left: Brand + copyright */}
         <div className="flex items-center gap-2">
-          <img
-            src="/icons/novunt_short.png"
-            alt="Novunt"
-            className="h-4 w-4 opacity-60"
+          <div
+            role="img"
+            aria-label="Novunt logo"
+            className="h-4 w-4"
+            style={{
+              backgroundColor: 'var(--neu-accent)',
+              maskImage: 'url(/icons/novunt_short.png)',
+              WebkitMaskImage: 'url(/icons/novunt_short.png)',
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskPosition: 'center',
+              opacity: 0.9,
+            }}
           />
           <span
             className="text-[10px] leading-none sm:text-xs"

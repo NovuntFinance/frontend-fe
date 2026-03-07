@@ -320,6 +320,28 @@
   color: var(--dashboard-icon, #ffffff);
 }
 
+/* Desktop sidebar: allow sidebar icons to inherit color from their wrapper so we can
+   style active/inactive colors independently from the global dashboard svg rule. */
+.dashboard-layout .desktop-sidebar svg {
+  color: inherit;
+  filter: none;
+}
+
+/* Default (inactive) sidebar icon */
+.dashboard-layout .desktop-sidebar .icon-wrapper {
+  color: var(--nav-inactive-icon);
+  filter: none;
+}
+
+/* Active sidebar item: blue accent with subtle glow */
+.dashboard-layout .desktop-sidebar .is-active .icon-wrapper,
+.dashboard-layout .desktop-sidebar .is-active .icon-wrapper svg {
+  color: var(--neu-accent);
+  filter: drop-shadow(2px 2px 4px var(--neu-shadow-dark))
+    drop-shadow(-2px -2px 4px var(--neu-shadow-light))
+    drop-shadow(0 0 10px rgba(var(--neu-accent-rgb), 0.3));
+}
+
 /* Welcome card eye: light blue in light mode, white in dark mode (override dashboard svg rule) */
 .dashboard-layout [data-welcome-eye] svg {
   color: var(--neu-accent) !important;

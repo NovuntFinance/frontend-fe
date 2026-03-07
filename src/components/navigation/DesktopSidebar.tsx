@@ -49,7 +49,7 @@ export function DesktopSidebar() {
 
   return (
     <aside
-      className="fixed top-0 bottom-0 left-0 z-40 hidden w-[72px] flex-col items-center py-4 lg:flex"
+      className="desktop-sidebar fixed top-0 bottom-0 left-0 z-40 hidden w-[72px] flex-col items-center py-4 lg:flex"
       style={{
         background: 'var(--neu-bg)',
         borderRight: '1px solid var(--neu-border)',
@@ -101,7 +101,7 @@ export function DesktopSidebar() {
 
       {/* Nav items */}
       <nav
-        className="flex flex-1 flex-col items-center gap-1"
+        className="flex flex-1 flex-col items-center gap-5"
         aria-label="Main navigation"
       >
         {NAV_ITEMS.slice(1).map((item) => {
@@ -110,7 +110,9 @@ export function DesktopSidebar() {
 
           const content = (
             <motion.div
-              className="group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                active ? 'is-active' : ''
+              }`}
               style={{
                 background: active
                   ? 'rgba(var(--neu-accent-rgb), 0.12)'
@@ -119,16 +121,8 @@ export function DesktopSidebar() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span
-                className="flex items-center justify-center"
-                style={{
-                  color: active
-                    ? 'var(--neu-accent)'
-                    : 'var(--nav-inactive-icon)',
-                  filter: active ? ICON_EXTRUDE_ACTIVE : ICON_EXTRUDE,
-                }}
-              >
-                <Icon className="h-5 w-5" />
+              <span className="icon-wrapper flex items-center justify-center">
+                <Icon className="h-7 w-7" />
               </span>
               {/* Tooltip */}
               <span
