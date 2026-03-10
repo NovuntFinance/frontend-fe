@@ -650,12 +650,12 @@ export function useStakingStreak() {
 }
 
 /**
- * useWeeklyROSSummary - Get weekly ROS summary
+ * useWeeklyROSSummary - Get daily ROS summary
  * GET /api/analytics/weekly-summary
  *
- * Returns weekly Return on Stake summary including:
- * - Weekly ROS percentage (admin-declared, shown at end of week)
- * - Total earnings for the week (stake returns only)
+ * Returns daily Return on Stake summary including:
+ * - Daily ROS percentage (admin-declared)
+ * - Total earnings for the period (stake returns only)
  * - Daily breakdown (Monday-Sunday)
  * - Week information (week number, year, dates)
  */

@@ -719,7 +719,7 @@ export function TransactionEmail({
       emoji: '🎯',
       title: 'Your Stake is Active',
       subtitle: 'Another step toward your goal',
-      message: 'You&apos;ve committed capital to a goal that matters. From this moment, your money starts working around the clock—earning weekly returns while you focus on what matters most in life.',
+      message: 'You&apos;ve committed capital to a goal that matters. From this moment, your money starts working around the clock—earning daily returns while you focus on what matters most in life.',
       gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
       bgColor: '#faf5ff',
       borderColor: '#d8b4fe',

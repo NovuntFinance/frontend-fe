@@ -10,7 +10,7 @@ export default function AdminROSPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">ROS Management</h1>
           <p className="text-muted-foreground">
-            Manage weekly Return on Staking (ROS) calendars and distribution.
+            Manage daily Return on Staking (ROS) calendars and distribution.
           </p>
         </div>
       </div>

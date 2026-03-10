@@ -116,7 +116,7 @@ export function QuickActions() {
     {
       icon: <TrendingUp className="h-6 w-6" />,
       label: 'Stake',
-      description: 'Earn weekly ROS',
+      description: 'Earn daily ROS',
       onClick: () => setModalOpen('stake'),
       variant: 'success' as const,
     },

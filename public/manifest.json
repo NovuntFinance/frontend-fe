@@ -47,13 +47,19 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Jump straight into your growth dashboard.",
-      "url": "/(dashboard)/dashboard"
+      "url": "/dashboard"
     },
     {
       "name": "Stake",
       "short_name": "Stake",
       "description": "Create a new stake and set a growth milestone.",
-      "url": "/(dashboard)/stakes"
+      "url": "/dashboard/stakes"
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Manage deposits, withdrawals, and transfers.",
+      "url": "/dashboard/wallets"
     }
   ]
 }

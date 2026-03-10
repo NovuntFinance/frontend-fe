@@ -2313,6 +2313,1204 @@ export const knowledgeBaseArticles: Article[] = [
       <p>For additional help, use the Novunt Assistant or contact our support team. We're here to help!</p>
     `,
   },
+
+  // ──────────── Getting Started (new) ────────────
+  {
+    id: 'onboarding-walkthrough',
+    title: 'Onboarding Walkthrough',
+    description:
+      'A complete walkthrough of the 6-step onboarding carousel and how to claim your 10% registration bonus.',
+    category: 'getting-started',
+    readTime: 6,
+    tags: ['Onboarding', 'Bonus', 'New User', 'Registration'],
+    content: `
+      <h2>Your First Minutes on Novunt</h2>
+      <p>When you log in for the first time, you will see the Onboarding Carousel — six short slides that introduce every core feature. Here is what each slide covers and what you should do next.</p>
+
+      <h3>Slide 1 — Welcome to Novunt</h3>
+      <p><em>"Stake. Earn. Grow — Together."</em></p>
+      <p>This is the mission statement. Novunt combines goal-based staking with a community-driven reward system so every user benefits as the network grows.</p>
+
+      <h3>Slide 2 — 200% Accumulated ROS</h3>
+      <p>Every stake you create targets a 200% return (your original amount + 100% profit). Returns are distributed daily until the target is reached.</p>
+
+      <h3>Slide 3 — 10% Welcome Bonus</h3>
+      <p>Complete five registration steps and receive a 10% bonus stake on your first qualifying deposit. The five steps are:</p>
+      <ol>
+        <li><strong>Email verification</strong> — confirm your email.</li>
+        <li><strong>2FA setup</strong> — enable Google Authenticator.</li>
+        <li><strong>Withdrawal address</strong> — whitelist a BEP20 wallet.</li>
+        <li><strong>Social media</strong> — verify all 5 platforms (Facebook, Instagram, YouTube, TikTok, Telegram).</li>
+        <li><strong>First stake</strong> — stake at least $20 USDT.</li>
+      </ol>
+
+      <h3>Slide 4 — Referral Earnings</h3>
+      <p>Share your referral link and earn commissions across 5 levels when your referrals stake. More details in the <strong>Referral Bonus System</strong> article.</p>
+
+      <h3>Slide 5 — Pool Rewards</h3>
+      <p>As you climb ranks, you become eligible for the Performance and Premium reward pools — additional earnings distributed among qualified members.</p>
+
+      <h3>Slide 6 — NXP → NLP</h3>
+      <p>Earn Novunt Experience Points (NXP) for platform activity. NXP can later convert to Novunt Loyalty Points (NLP), unlocking future platform perks.</p>
+
+      <h3>What To Do After Onboarding</h3>
+      <ol>
+        <li>Complete your profile (name, avatar).</li>
+        <li>Enable 2FA immediately.</li>
+        <li>Set your withdrawal address.</li>
+        <li>Make your first deposit (USDT via BEP20).</li>
+        <li>Create your first goal-based stake.</li>
+      </ol>
+      <p>Once all five registration bonus steps are complete, your 10% bonus stake activates automatically.</p>
+    `,
+  },
+  {
+    id: 'dashboard-guide',
+    title: 'Understanding Your Dashboard',
+    description:
+      'A detailed guide to every card, stat, and feature on the Novunt dashboard.',
+    category: 'getting-started',
+    readTime: 7,
+    tags: ['Dashboard', 'Navigation', 'Features', 'Overview'],
+    content: `
+      <h2>Your Dashboard at a Glance</h2>
+      <p>The dashboard is your mission control. Here is what every section does.</p>
+
+      <h3>Welcome Card</h3>
+      <p>Shows your total portfolio value and total earnings. Tap the eye icon to hide or reveal your balances for privacy.</p>
+
+      <h3>Quick Actions</h3>
+      <p>Four buttons for the most common tasks:</p>
+      <ul>
+        <li><strong>Deposit</strong> — fund your Deposit Wallet with USDT.</li>
+        <li><strong>Stake</strong> — create a new goal-based stake.</li>
+        <li><strong>Transfer</strong> — send funds to another Novunt user (P2P).</li>
+        <li><strong>Withdraw</strong> — move USDT from your Earnings Wallet to an external BEP20 address.</li>
+      </ul>
+
+      <h3>Stats Carousel</h3>
+      <p>Rotates every 5 seconds through four key numbers: Total Earned, Total Staked, Total Deposited, and Total Withdrawn.</p>
+
+      <h3>Feature Buttons</h3>
+      <p>Eight shortcut tiles:</p>
+      <ul>
+        <li><strong>Freebies</strong> — claim your 10% registration bonus.</li>
+        <li><strong>Refer & Earn</strong> — share your referral link (5% Level 1).</li>
+        <li><strong>Rank</strong> — view your current rank and progress.</li>
+        <li><strong>Wallet</strong> — manage both wallets and addresses.</li>
+        <li><strong>Community</strong> — join our social channels.</li>
+        <li><strong>Streak</strong> — view your staking streak milestones.</li>
+        <li><strong>Support</strong> — open the Novunt Assistant.</li>
+        <li><strong>Settings</strong> — profile, 2FA, notifications.</li>
+      </ul>
+
+      <h3>Activity Feed</h3>
+      <p>Your five most recent transactions (deposits, stakes, payouts, transfers, withdrawals). Tap any item to see details.</p>
+
+      <h3>Featured Stake Card</h3>
+      <p>A rotating highlight of your active and completed stakes (changes every 35 seconds).</p>
+
+      <h3>ROS Calendar</h3>
+      <p>A month-to-date calendar view showing your daily Return on Stake percentage. Green days mean payouts were credited.</p>
+
+      <h3>Live Platform Activities</h3>
+      <p>A real-time feed of activity across the entire Novunt platform — deposits, withdrawals, new stakes, referral bonuses, rank promotions, and more. This gives you confidence that the platform is active and thriving.</p>
+    `,
+  },
+
+  // ──────────── Staking & Goals (new) ────────────
+  {
+    id: 'staking-streak',
+    title: 'Staking Streak & Milestones',
+    description:
+      'How the staking streak works, why consistency matters, and the milestones you can unlock.',
+    category: 'staking-goals',
+    readTime: 4,
+    tags: ['Streak', 'Milestones', 'Consistency', 'Staking'],
+    content: `
+      <h2>What Is the Staking Streak?</h2>
+      <p>Your staking streak counts the number of consecutive days you have had at least one active stake. It is a measure of your commitment and consistency on the platform.</p>
+
+      <h3>How It Works</h3>
+      <ul>
+        <li>Every day you have one or more <strong>active</strong> stakes, your streak increments by 1.</li>
+        <li>If you go a full day with zero active stakes, your streak resets to 0.</li>
+        <li>Completed stakes that finished naturally do <strong>not</strong> break your streak — only having no active stakes at all does.</li>
+      </ul>
+
+      <h3>Milestones</h3>
+      <p>As your streak grows, you reach milestones that may unlock recognition, badges, and future rewards. Keep an eye on the Streak card on your dashboard for your current progress and next milestone.</p>
+
+      <h3>Tips for Maintaining Your Streak</h3>
+      <ol>
+        <li>Create a new stake before your current one completes if you want an unbroken streak.</li>
+        <li>Even the minimum stake amount ($20) counts — it is the consistency that matters.</li>
+        <li>Check the Streak modal regularly to see how close you are to the next milestone.</li>
+      </ol>
+    `,
+  },
+  {
+    id: 'stake-goals-explained',
+    title: 'Setting Smart Goals for Your Stakes',
+    description:
+      'How to use goal labels, choose the right amount, and track your progress toward financial targets.',
+    category: 'staking-goals',
+    readTime: 5,
+    tags: ['Goals', 'Planning', 'Staking', 'Strategy'],
+    content: `
+      <h2>Why Set a Goal?</h2>
+      <p>Every stake on Novunt can be tagged with an optional goal — a label that gives your stake a purpose. Goals help you stay motivated and organized, especially when managing multiple stakes.</p>
+
+      <h3>Available Goal Categories</h3>
+      <ul>
+        <li><strong>Emergency Fund</strong> — build a safety net.</li>
+        <li><strong>Housing</strong> — save toward a home.</li>
+        <li><strong>Vehicle</strong> — fund your next car.</li>
+        <li><strong>Travel</strong> — plan a vacation.</li>
+        <li><strong>Education</strong> — invest in learning.</li>
+        <li><strong>Wedding</strong> — prepare for the big day.</li>
+        <li><strong>Retirement</strong> — long-term wealth building.</li>
+        <li><strong>Business</strong> — seed capital for a venture.</li>
+        <li><strong>Other</strong> — anything you want.</li>
+      </ul>
+
+      <h3>Choosing the Right Amount</h3>
+      <ul>
+        <li>Minimum stake: <strong>$20 USDT</strong>.</li>
+        <li>Maximum stake: <strong>$10,000 USDT</strong>.</li>
+        <li>You can fund from your Deposit Wallet, Earnings Wallet, or a combination of both.</li>
+      </ul>
+
+      <h3>Tracking Progress</h3>
+      <p>Each stake card shows a progress bar from 0% to 200%. Daily payouts move the bar forward. Once it hits 200%, the stake completes and your principal plus earnings are available in your Earnings Wallet.</p>
+
+      <h3>Pro Tips</h3>
+      <ol>
+        <li>Start with a smaller stake to understand the rhythm of daily payouts.</li>
+        <li>Use different goals for different purposes so you can see at a glance what each stake is for.</li>
+        <li>Re-stake completed earnings to compound your growth.</li>
+      </ol>
+    `,
+  },
+
+  // ──────────── Wallets & Finance (new) ────────────
+  {
+    id: 'fees-and-limits',
+    title: 'Fees, Limits & Processing Times',
+    description:
+      'Everything you need to know about deposit fees, withdrawal fees, transfer limits, and how long operations take.',
+    category: 'wallets-finance',
+    readTime: 5,
+    tags: ['Fees', 'Limits', 'Withdrawals', 'Deposits', 'Processing'],
+    content: `
+      <h2>Fee & Limit Overview</h2>
+      <p>Novunt strives to keep fees low and transparent. Below is a summary of the key numbers.</p>
+
+      <h3>Deposits</h3>
+      <ul>
+        <li><strong>Minimum deposit:</strong> 20 USDT.</li>
+        <li><strong>Network:</strong> BEP20 (Binance Smart Chain) only.</li>
+        <li><strong>Fee:</strong> A small network fee is deducted automatically. The exact amount is shown before you confirm.</li>
+        <li><strong>Processing:</strong> Usually confirmed within a few minutes depending on network congestion.</li>
+      </ul>
+
+      <h3>Withdrawals</h3>
+      <ul>
+        <li><strong>Source:</strong> Earnings Wallet only (you cannot withdraw directly from the Deposit Wallet).</li>
+        <li><strong>Minimum withdrawal:</strong> Shown in the withdrawal screen.</li>
+        <li><strong>Fee:</strong> A percentage-based fee is disclosed before confirmation.</li>
+        <li><strong>Processing:</strong> Withdrawals require admin approval and are typically processed within 1–24 hours.</li>
+        <li><strong>Daily limit:</strong> There is a daily withdrawal limit to protect all users.</li>
+        <li><strong>Address moratorium:</strong> After changing your whitelisted withdrawal address, a 72-hour waiting period applies before you can withdraw.</li>
+      </ul>
+
+      <h3>P2P Transfers</h3>
+      <ul>
+        <li><strong>Fee:</strong> Free — no fees for transferring between Novunt users.</li>
+        <li><strong>Speed:</strong> Instant.</li>
+        <li><strong>Minimum:</strong> A minimum transfer amount applies (shown in the transfer screen).</li>
+        <li><strong>Verification:</strong> Requires email OTP and 2FA for security.</li>
+      </ul>
+
+      <h3>Staking</h3>
+      <ul>
+        <li><strong>Minimum stake:</strong> $20 USDT.</li>
+        <li><strong>Maximum stake:</strong> $10,000 USDT.</li>
+        <li><strong>No fee</strong> to create a stake — the full amount you enter is staked.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Earning Systems (new) ────────────
+  {
+    id: 'nxp-nlp-tokens',
+    title: 'NXP & NLP Tokens Explained',
+    description:
+      'What Novunt Experience Points (NXP) are, how you earn them, and what Novunt Loyalty Points (NLP) will unlock.',
+    category: 'earning-systems',
+    readTime: 4,
+    tags: ['NXP', 'NLP', 'Tokens', 'Rewards', 'Loyalty'],
+    content: `
+      <h2>Two Token Systems</h2>
+      <p>Novunt has two complementary point systems that reward your activity on the platform.</p>
+
+      <h3>NXP — Novunt Experience Points</h3>
+      <p>NXP is earned automatically as you use the platform. Activities that earn NXP include:</p>
+      <ul>
+        <li>Creating stakes</li>
+        <li>Completing stakes (reaching 200%)</li>
+        <li>Referring new users</li>
+        <li>Maintaining staking streaks</li>
+        <li>Climbing ranks</li>
+        <li>Completing profile and verification steps</li>
+      </ul>
+      <p>Your NXP total is visible in the Achievement System on your dashboard.</p>
+
+      <h3>NLP — Novunt Loyalty Points</h3>
+      <p>NLP is the next evolution of the reward system. NXP will convert to NLP, which will unlock exclusive benefits such as:</p>
+      <ul>
+        <li>Reduced fees</li>
+        <li>Priority support</li>
+        <li>Early access to new features</li>
+        <li>Exclusive promotions and campaigns</li>
+      </ul>
+      <p>Stay active and accumulate NXP now — the more you earn, the more NLP you will receive when the conversion launches.</p>
+    `,
+  },
+  {
+    id: 'maximizing-earnings',
+    title: 'Maximizing Your Earnings on Novunt',
+    description:
+      'Practical strategies to combine staking, referrals, pools, and bonuses for the highest possible returns.',
+    category: 'earning-systems',
+    readTime: 6,
+    tags: ['Strategy', 'Earnings', 'Tips', 'Compounding'],
+    content: `
+      <h2>Earning Channels on Novunt</h2>
+      <p>Novunt offers multiple earning streams. The key to maximizing returns is using them together.</p>
+
+      <h3>1. Stake Consistently</h3>
+      <ul>
+        <li>Every stake earns daily ROS payouts toward a 200% target.</li>
+        <li>When a stake completes, re-stake your earnings to compound your growth.</li>
+        <li>Keep at least one active stake at all times to maintain your staking streak.</li>
+      </ul>
+
+      <h3>2. Build Your Referral Network</h3>
+      <ul>
+        <li>Level 1 referrals earn you <strong>5%</strong> commission.</li>
+        <li>Level 2: <strong>2%</strong>, Level 3: <strong>1.5%</strong>, Level 4: <strong>1%</strong>, Level 5: <strong>0.5%</strong>.</li>
+        <li>Referral earnings go to your Earnings Wallet and can be re-staked.</li>
+        <li>Active referrals (those who stake) count toward your rank progression.</li>
+      </ul>
+
+      <h3>3. Climb the Ranks</h3>
+      <p>Higher ranks unlock access to the Performance and Premium pools. Pool distributions are additional earnings on top of your ROS. Requirements include personal stake amounts, team stake volumes, and active downline counts.</p>
+
+      <h3>4. Claim All Bonuses</h3>
+      <ul>
+        <li><strong>Registration bonus:</strong> 10% on your first stake (complete all 5 setup steps).</li>
+        <li><strong>Referral bonuses:</strong> Earn on 5 levels of referrals.</li>
+        <li><strong>Rank bonuses:</strong> Distributed when you reach new ranks.</li>
+      </ul>
+
+      <h3>5. Compound, Compound, Compound</h3>
+      <p>The most effective strategy is re-staking your earnings. When a stake completes at 200%, take the earnings and create a new, larger stake. Over time, this compounding effect significantly increases your returns.</p>
+    `,
+  },
+
+  // ──────────── Ranks & Teams (new) ────────────
+  {
+    id: 'building-your-team',
+    title: 'Building & Managing Your Team',
+    description:
+      'How to share your referral link, track team members, understand levels, and grow a strong downline.',
+    category: 'ranks-teams',
+    readTime: 5,
+    tags: ['Team', 'Referral', 'Downline', 'Leadership'],
+    content: `
+      <h2>Your Team Page</h2>
+      <p>Navigate to <strong>Team</strong> from the sidebar or bottom navigation to see your full referral network.</p>
+
+      <h3>Sharing Your Link</h3>
+      <ul>
+        <li>Your unique referral link and code are displayed at the top of the Team page.</li>
+        <li>Share via social media, messaging apps, or email.</li>
+        <li>When someone registers using your link, they become your Level 1 referral.</li>
+      </ul>
+
+      <h3>Understanding Levels</h3>
+      <ul>
+        <li><strong>Level 1:</strong> Users you directly referred — you earn 5% commission on their stakes.</li>
+        <li><strong>Level 2:</strong> Users your Level 1 referrals invited — 2% commission.</li>
+        <li><strong>Level 3:</strong> 1.5% commission.</li>
+        <li><strong>Level 4:</strong> 1% commission.</li>
+        <li><strong>Level 5:</strong> 0.5% commission.</li>
+      </ul>
+      <p>Commissions are earned whenever a referral at any of these levels creates or earns from a stake.</p>
+
+      <h3>Tracking Your Team</h3>
+      <p>The Team page shows:</p>
+      <ul>
+        <li>Total direct referrals and how many are active (have stakes).</li>
+        <li>Total team members across all levels.</li>
+        <li>Individual member details: username, level, team stake, and join date.</li>
+      </ul>
+
+      <h3>Why Team Size Matters</h3>
+      <p>Your team size and activity directly affect your rank. Higher ranks require more direct referrals with qualifying stakes and larger total team stake volumes. Growing an active team is the fastest path to the Performance and Premium pools.</p>
+    `,
+  },
+
+  // ──────────── Security & Account (new) ────────────
+  {
+    id: 'account-settings-guide',
+    title: 'Account Settings & Preferences',
+    description:
+      'How to manage your profile, notification preferences, display settings, and connected accounts.',
+    category: 'security-account',
+    readTime: 4,
+    tags: ['Settings', 'Profile', 'Notifications', 'Preferences'],
+    content: `
+      <h2>Managing Your Account</h2>
+      <p>Access your settings by tapping the gear icon on the dashboard or navigating to Settings from the menu.</p>
+
+      <h3>Profile</h3>
+      <ul>
+        <li><strong>Name & Username:</strong> Tap your avatar or name to open the profile editor. Update your first name, last name, and username.</li>
+        <li><strong>Avatar:</strong> Upload a custom profile picture or choose from the built-in badge avatars.</li>
+        <li><strong>Email:</strong> Your email is set during registration and is used for OTP verification and notifications.</li>
+      </ul>
+
+      <h3>Security</h3>
+      <ul>
+        <li><strong>Two-Factor Authentication (2FA):</strong> Enable or disable Google Authenticator. Required for withdrawals, transfers, and address changes.</li>
+        <li><strong>Password:</strong> Change your password from the security settings.</li>
+      </ul>
+
+      <h3>Notifications</h3>
+      <ul>
+        <li>View all notifications in the notification center (bell icon).</li>
+        <li>Filter by "All" or "System" notifications.</li>
+        <li>Important alerts (security, transactions, rank changes) are always delivered.</li>
+      </ul>
+
+      <h3>Withdrawal Address</h3>
+      <ul>
+        <li>Set your default BEP20 withdrawal address in the Wallet settings.</li>
+        <li>Changing this address triggers a 72-hour moratorium before you can withdraw.</li>
+        <li>2FA is required to set or change the address.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── New category: Platform Glossary ────────────
+  {
+    id: 'glossary',
+    title: 'Novunt Glossary',
+    description:
+      'A quick-reference dictionary of every term and abbreviation used on the Novunt platform.',
+    category: 'glossary',
+    readTime: 5,
+    tags: ['Glossary', 'Terms', 'Definitions', 'Reference'],
+    content: `
+      <h2>Platform Glossary</h2>
+      <p>Use this reference to quickly understand any term you encounter on Novunt.</p>
+
+      <table>
+        <tr><td><strong>ROS</strong></td><td>Return on Stake — the profit earned on a stake, distributed daily.</td></tr>
+        <tr><td><strong>200% Target</strong></td><td>The default return target for every stake: your original amount plus 100% profit (2x total).</td></tr>
+        <tr><td><strong>Funded Wallet</strong></td><td>Also called Deposit Wallet. Receives deposits and P2P transfers. Used to create stakes.</td></tr>
+        <tr><td><strong>Earnings Wallet</strong></td><td>Receives ROS payouts, referral commissions, and bonuses. Used for withdrawals and transfers.</td></tr>
+        <tr><td><strong>BEP20</strong></td><td>The Binance Smart Chain token standard. Novunt only accepts USDT on BEP20.</td></tr>
+        <tr><td><strong>USDT</strong></td><td>Tether — a stablecoin pegged to the US Dollar. The only currency used on Novunt.</td></tr>
+        <tr><td><strong>Smart Goal Staking</strong></td><td>The ability to tag each stake with a personal goal (housing, education, travel, etc.).</td></tr>
+        <tr><td><strong>P2P Transfer</strong></td><td>Peer-to-peer transfer between two Novunt users. Free and instant.</td></tr>
+        <tr><td><strong>NXP</strong></td><td>Novunt Experience Points — earned through platform activity.</td></tr>
+        <tr><td><strong>NLP</strong></td><td>Novunt Loyalty Points — future reward token converted from NXP.</td></tr>
+        <tr><td><strong>2FA</strong></td><td>Two-Factor Authentication via Google Authenticator.</td></tr>
+        <tr><td><strong>OTP</strong></td><td>One-Time Password — sent to your email for verifying sensitive actions.</td></tr>
+        <tr><td><strong>Moratorium</strong></td><td>A 72-hour waiting period after changing your withdrawal address.</td></tr>
+        <tr><td><strong>Staking Streak</strong></td><td>Consecutive days with at least one active stake.</td></tr>
+        <tr><td><strong>Performance Pool</strong></td><td>A reward pool for qualified higher-rank members.</td></tr>
+        <tr><td><strong>Premium Pool</strong></td><td>An exclusive reward pool for top-tier rank members.</td></tr>
+        <tr><td><strong>Downline</strong></td><td>Users in your referral network (Levels 1–5).</td></tr>
+        <tr><td><strong>Qualifying Stake</strong></td><td>A stake that meets the minimum requirement for referral and rank eligibility.</td></tr>
+      </table>
+    `,
+  },
+  {
+    id: 'platform-faq',
+    title: 'Frequently Asked Questions',
+    description:
+      'Quick answers to the most common questions new and existing users ask about Novunt.',
+    category: 'glossary',
+    readTime: 6,
+    tags: ['FAQ', 'Questions', 'Help', 'Answers'],
+    content: `
+      <h2>Frequently Asked Questions</h2>
+
+      <h3>General</h3>
+      <p><strong>Q: What is Novunt?</strong></p>
+      <p>A: Novunt is a goal-based staking platform where you deposit USDT, create stakes with personal financial goals, and earn daily returns (ROS) targeting 200% of your stake amount.</p>
+
+      <p><strong>Q: Is Novunt free to use?</strong></p>
+      <p>A: Creating an account is free. Fees apply to deposits (network fee) and withdrawals (percentage fee). P2P transfers between users are free. Creating stakes has no fee.</p>
+
+      <p><strong>Q: What currency does Novunt support?</strong></p>
+      <p>A: USDT (Tether) on the BEP20 network (Binance Smart Chain) only.</p>
+
+      <h3>Staking</h3>
+      <p><strong>Q: What is the minimum stake?</strong></p>
+      <p>A: $20 USDT.</p>
+
+      <p><strong>Q: How long does a stake take to complete?</strong></p>
+      <p>A: It depends on the daily ROS rate. Stakes earn daily returns and complete when total earnings reach 200% of the staked amount.</p>
+
+      <p><strong>Q: Can I cancel a stake early?</strong></p>
+      <p>A: Early withdrawal options depend on the stake status. Check the stake details card for available actions.</p>
+
+      <h3>Wallets</h3>
+      <p><strong>Q: Why are there two wallets?</strong></p>
+      <p>A: The Funded Wallet holds your deposits and is used for creating stakes. The Earnings Wallet receives all your returns and is used for withdrawals. This separation protects your capital and makes accounting clear.</p>
+
+      <p><strong>Q: How long do withdrawals take?</strong></p>
+      <p>A: Withdrawals require admin approval and are typically processed within 1–24 hours.</p>
+
+      <p><strong>Q: Why can't I withdraw after changing my address?</strong></p>
+      <p>A: A 72-hour security moratorium applies after any withdrawal address change. This protects you in case your account is compromised.</p>
+
+      <h3>Referrals & Teams</h3>
+      <p><strong>Q: How much do I earn from referrals?</strong></p>
+      <p>A: Level 1: 5%, Level 2: 2%, Level 3: 1.5%, Level 4: 1%, Level 5: 0.5%.</p>
+
+      <p><strong>Q: Do my referrals need to stake for me to earn?</strong></p>
+      <p>A: Yes. You earn commissions when your referrals create or earn from stakes. Inactive referrals (no stakes) do not generate commissions.</p>
+
+      <h3>Security</h3>
+      <p><strong>Q: Is 2FA required?</strong></p>
+      <p>A: 2FA is required for withdrawals, transfers, and changing your withdrawal address. We strongly recommend enabling it immediately after registration.</p>
+
+      <p><strong>Q: What if I lose my 2FA device?</strong></p>
+      <p>A: Contact support at <strong>support@novunt.com</strong> with your account details. You will need to verify your identity before 2FA can be reset.</p>
+    `,
+  },
+
+  // ──────────── Security & Account (new batch) ────────────
+  {
+    id: 'two-factor-authentication',
+    title: 'Two-Factor Authentication (2FA) Guide',
+    description:
+      'How to set up, use, and manage 2FA on Novunt — including which actions require it and what to do if you lose access.',
+    category: 'security-account',
+    readTime: 6,
+    tags: ['2FA', 'Security', 'Google Authenticator', 'TOTP'],
+    content: `
+      <h2>What Is 2FA?</h2>
+      <p>Two-Factor Authentication (2FA) adds an extra layer of security to your Novunt account. In addition to your password, you must enter a 6-digit code from an authenticator app every time you perform a sensitive action.</p>
+
+      <h3>Why 2FA Matters</h3>
+      <p>Even if someone obtains your password, they cannot withdraw funds, transfer USDT, or change your withdrawal address without access to the code from your authenticator app. Enabling 2FA is one of the most important steps you can take to protect your account.</p>
+
+      <h3>Setting Up 2FA</h3>
+      <ol>
+        <li>Open your <strong>Settings</strong> (gear icon on the dashboard).</li>
+        <li>Go to the <strong>Security</strong> tab.</li>
+        <li>Tap <strong>Enable 2FA</strong>.</li>
+        <li>A QR code will appear on screen.</li>
+        <li>Open <strong>Google Authenticator</strong>, <strong>Authy</strong>, or any TOTP-compatible app on your phone.</li>
+        <li>Scan the QR code (or manually enter the secret key shown below it).</li>
+        <li>Enter the 6-digit code displayed in the authenticator app into Novunt.</li>
+        <li>Tap <strong>Verify & Enable</strong>.</li>
+      </ol>
+      <p>Once enabled, your authenticator app will generate a new 6-digit code every 30 seconds.</p>
+
+      <h3>Actions That Require 2FA</h3>
+      <ul>
+        <li><strong>Withdrawals</strong> — every withdrawal requires your 2FA code plus an email OTP.</li>
+        <li><strong>P2P Transfers</strong> — sending USDT to another Novunt user requires 2FA plus email OTP.</li>
+        <li><strong>Setting or changing your withdrawal address</strong> — 2FA is required to whitelist or update your BEP20 address.</li>
+        <li><strong>Changing your password</strong> — requires 2FA for confirmation.</li>
+        <li><strong>Disabling 2FA</strong> — you must enter a valid 2FA code to turn it off.</li>
+      </ul>
+
+      <h3>What If I Lose My Phone?</h3>
+      <p>If you lose access to your authenticator app:</p>
+      <ol>
+        <li>Contact Novunt support at <strong>support@novunt.com</strong>.</li>
+        <li>Provide your account email and username.</li>
+        <li>Support will verify your identity before resetting 2FA.</li>
+        <li>Once reset, set up 2FA again immediately with your new device.</li>
+      </ol>
+
+      <h3>Best Practices</h3>
+      <ul>
+        <li>Enable 2FA <strong>immediately</strong> after creating your account — it is one of the five registration bonus steps.</li>
+        <li>Use a trusted authenticator app (Google Authenticator, Authy, Microsoft Authenticator).</li>
+        <li>Back up your authenticator app or save the secret key in a secure place when you first set up 2FA.</li>
+        <li>Never share your 2FA codes with anyone, including support staff.</li>
+      </ul>
+    `,
+  },
+  {
+    id: 'withdrawal-address-whitelist',
+    title: 'Withdrawal Address & Whitelist',
+    description:
+      'How to set your BEP20 withdrawal address, what the 72-hour moratorium is, and why it protects your funds.',
+    category: 'security-account',
+    readTime: 5,
+    tags: ['Whitelist', 'Withdrawal', 'BEP20', 'Moratorium', 'Address'],
+    content: `
+      <h2>Your Withdrawal Address</h2>
+      <p>Before you can withdraw USDT from Novunt, you must set a default withdrawal address. This is a BEP20 (Binance Smart Chain) wallet address where your funds will be sent.</p>
+
+      <h3>Setting Your Address</h3>
+      <ol>
+        <li>Open your <strong>Wallet</strong> from the dashboard.</li>
+        <li>Go to <strong>Withdrawal Whitelist</strong> (or start a withdrawal — you will be prompted if no address is set).</li>
+        <li>Enter your BEP20 wallet address (starts with <code>0x</code>).</li>
+        <li>Enter your <strong>2FA code</strong> to confirm.</li>
+        <li>Tap <strong>Save Address</strong>.</li>
+      </ol>
+      <p><strong>Important:</strong> Only Binance Smart Chain (BEP20) addresses are supported. Sending to the wrong network may result in permanent loss of funds.</p>
+
+      <h3>The 72-Hour Moratorium</h3>
+      <p>Whenever you change your withdrawal address, a <strong>72-hour security hold</strong> is automatically applied. During this period, you cannot make any withdrawals.</p>
+      <p><strong>Why?</strong> This protects you from unauthorized access. If a hacker gains access to your account and changes the withdrawal address, the 72-hour window gives you time to detect the breach and contact support before any funds can be moved.</p>
+      <p>During the moratorium, you will see a countdown timer showing when withdrawals will become available again.</p>
+
+      <h3>Key Rules</h3>
+      <ul>
+        <li>You can only have <strong>one</strong> whitelisted withdrawal address at a time.</li>
+        <li>2FA is <strong>always required</strong> to set or change the address.</li>
+        <li>The 72-hour moratorium starts fresh every time the address is changed.</li>
+        <li>Deposits, staking, and P2P transfers are <strong>not affected</strong> by the moratorium — only withdrawals.</li>
+      </ul>
+
+      <h3>Troubleshooting</h3>
+      <ul>
+        <li><strong>"Address Moratorium Active"</strong> — You recently changed your address. Wait for the countdown to reach zero.</li>
+        <li><strong>"Withdrawal Address Required"</strong> — You have not set an address yet. Go to Wallet → Withdrawal Whitelist to set one.</li>
+        <li><strong>"Duplicate Withdrawal Address"</strong> — The address you entered is already your current whitelisted address.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Getting Started (new batch) ────────────
+  {
+    id: 'freebies-registration-bonus',
+    title: 'Freebies: Your 10% Registration Bonus',
+    description:
+      'A complete guide to claiming your 10% welcome bonus — the five steps, progress tracking, and bonus activation.',
+    category: 'getting-started',
+    readTime: 6,
+    tags: ['Freebies', 'Bonus', 'Registration', 'Welcome', '10%'],
+    content: `
+      <h2>What Is the Registration Bonus?</h2>
+      <p>Every new Novunt user is eligible for a <strong>10% registration bonus</strong>. When you complete all five setup steps and make your first qualifying stake, Novunt creates an additional bonus stake worth 10% of your first stake amount.</p>
+
+      <h3>The Five Steps (20% Progress Each)</h3>
+      <p>Your bonus progress bar fills 20% with each step you complete:</p>
+      <ol>
+        <li><strong>Registration & Email Verification</strong> — This is automatic when you sign up and confirm your email. (20%)</li>
+        <li><strong>Enable 2FA</strong> — Set up Google Authenticator or any TOTP app from your Security settings. (40%)</li>
+        <li><strong>Set Withdrawal Address</strong> — Add your BEP20 wallet address in the Wallet section. (60%)</li>
+        <li><strong>Verify Social Media</strong> — Follow Novunt on all 5 platforms: <strong>Facebook</strong>, <strong>Instagram</strong>, <strong>YouTube</strong>, <strong>TikTok</strong>, and <strong>Telegram</strong>. (80%)</li>
+        <li><strong>First Stake</strong> — Create your first stake of at least <strong>$20 USDT</strong>. (100%)</li>
+      </ol>
+
+      <h3>How Social Media Verification Works</h3>
+      <ol>
+        <li>In the Freebies section, tap a social media platform icon.</li>
+        <li>Novunt opens the platform in a new tab and asks you to follow our official account.</li>
+        <li>After following, return to Novunt and confirm.</li>
+        <li>Repeat for all five platforms.</li>
+      </ol>
+
+      <h3>Bonus Activation</h3>
+      <p>Once all five steps are at 100%, your bonus activates automatically. The 10% bonus stake appears alongside your regular stakes and earns daily ROS just like any other stake.</p>
+
+      <h3>Bonus Statuses</h3>
+      <ul>
+        <li><strong>Pending</strong> — Steps still in progress.</li>
+        <li><strong>Requirements Met</strong> — All 5 steps complete; waiting for activation.</li>
+        <li><strong>Bonus Active</strong> — Your bonus stake is live and earning ROS.</li>
+        <li><strong>Completed</strong> — Bonus stake has reached its target.</li>
+        <li><strong>Expired</strong> — Deadline passed before completion (start early!).</li>
+      </ul>
+
+      <h3>Where to Find It</h3>
+      <p>Tap the <strong>Freebies</strong> button on your dashboard, or look for the "Your Registration Bonus Awaits!" banner that appears until all steps are done.</p>
+    `,
+  },
+  {
+    id: 'novunt-assistant-support',
+    title: 'Getting Help: Novunt Assistant & Support',
+    description:
+      'How to use the AI-powered Novunt Assistant, create support tickets, and track your ticket status.',
+    category: 'getting-started',
+    readTime: 4,
+    tags: ['Support', 'Help', 'Assistant', 'Tickets', 'Nova'],
+    content: `
+      <h2>The Novunt Assistant (Nova)</h2>
+      <p>Novunt includes an AI-powered assistant named <strong>Nova</strong> that can help you with most questions about the platform. You can access it by tapping the <strong>Support</strong> button on your dashboard or the chat icon in the bottom-right corner.</p>
+
+      <h3>What Nova Can Help With</h3>
+      <ul>
+        <li>Explaining platform features (staking, deposits, ROS, pools, etc.).</li>
+        <li>Guiding you through common tasks step by step.</li>
+        <li>Answering questions about your account, wallets, or stakes.</li>
+        <li>Troubleshooting common issues.</li>
+      </ul>
+
+      <h3>Escalating to Human Support</h3>
+      <p>If Nova cannot resolve your issue, you can escalate to the support team:</p>
+      <ol>
+        <li>Tap <strong>"Talk to Support"</strong> or <strong>"Create Ticket"</strong> in the assistant.</li>
+        <li>Fill in the form: <strong>subject</strong>, <strong>description</strong>, <strong>category</strong> (technical, account, billing, general, other), and <strong>priority</strong> (low, medium, high, urgent).</li>
+        <li>Submit. Your ticket is created and the team is notified.</li>
+      </ol>
+
+      <h3>Tracking Your Tickets</h3>
+      <p>Tap <strong>"My Tickets"</strong> in the assistant to see all your submitted tickets. Each ticket shows its current status:</p>
+      <ul>
+        <li><strong>Submitted</strong> — received and waiting for review.</li>
+        <li><strong>In Progress</strong> — the team is working on it.</li>
+        <li><strong>Resolved</strong> — a solution has been provided.</li>
+        <li><strong>Closed</strong> — the ticket is complete.</li>
+      </ul>
+
+      <h3>Telegram Support</h3>
+      <p>You can also reach our support bot on Telegram: <strong>@NovuntAssistantBot</strong>. This is especially useful if you are unable to access the platform.</p>
+    `,
+  },
+
+  // ──────────── Wallets & Finance (new batch) ────────────
+  {
+    id: 'deposit-step-by-step',
+    title: 'Making a Deposit: Step-by-Step',
+    description:
+      'A detailed walkthrough of the deposit process — from entering an amount to seeing funds in your wallet.',
+    category: 'wallets-finance',
+    readTime: 6,
+    tags: ['Deposit', 'USDT', 'BEP20', 'QR Code', 'Walkthrough'],
+    content: `
+      <h2>Deposit Walkthrough</h2>
+      <p>Depositing USDT into your Novunt Funded Wallet is straightforward. Follow these steps:</p>
+
+      <h3>Step 1: Open the Deposit Screen</h3>
+      <p>From your dashboard, tap <strong>Deposit</strong> in the Quick Actions, or go to <strong>Wallet → Deposit</strong>.</p>
+
+      <h3>Step 2: Enter Amount</h3>
+      <ul>
+        <li>Enter the amount you want to deposit (minimum <strong>20 USDT</strong>).</li>
+        <li>The screen shows a <strong>Fee Breakdown</strong>: network fee, service fee, the total amount you need to send, and the amount you will receive after fees.</li>
+        <li>Network: <strong>BEP20 (Binance Smart Chain)</strong> — this is the only supported network.</li>
+      </ul>
+
+      <h3>Step 3: Generate Payment Address</h3>
+      <p>Tap <strong>Generate Payment Address</strong>. Novunt creates a unique deposit address and QR code for your transaction.</p>
+
+      <h3>Step 4: Send USDT</h3>
+      <ul>
+        <li>Copy the deposit address or scan the QR code with your external wallet (Trust Wallet, MetaMask, Binance, etc.).</li>
+        <li>Send exactly the amount shown (the "you need to send" amount) as <strong>USDT on BEP20</strong>.</li>
+        <li>If a <strong>Payment URL</strong> link is available, you can tap "Open Payment Instructions" to be guided through the payment on the provider's site.</li>
+      </ul>
+
+      <h3>Step 5: Wait for Confirmation</h3>
+      <p>After sending, tap <strong>"I've Sent the Payment"</strong>. Novunt polls the blockchain approximately every 12 seconds to detect your transaction. You will see a spinner with the message: <em>"Confirming… This screen will switch to Deposit Confirmed when the payment is received."</em></p>
+
+      <h3>Step 6: Success</h3>
+      <p>When confirmed, you will see a success summary showing the deposited amount and your updated wallet balance. From here, you can immediately <strong>Create a Stake</strong> with your new funds.</p>
+
+      <h3>Sandbox / Test Mode</h3>
+      <p>If you see an orange <strong>"Sandbox Mode"</strong> or <strong>"Test Environment"</strong> badge, you are in a test environment. No real funds will be transferred. This is used for testing purposes only.</p>
+
+      <h3>Common Issues</h3>
+      <ul>
+        <li><strong>Wrong network:</strong> Only BEP20 is supported. Sending via ERC20, TRC20, or other networks may result in permanent loss.</li>
+        <li><strong>Below minimum:</strong> Deposits below 20 USDT will not be processed.</li>
+        <li><strong>Delayed confirmation:</strong> Network congestion can slow confirmations. If your deposit does not appear within 30 minutes, contact support.</li>
+      </ul>
+    `,
+  },
+  {
+    id: 'withdrawal-step-by-step',
+    title: 'Making a Withdrawal: Step-by-Step',
+    description:
+      'How to withdraw USDT from your Earnings Wallet — requirements, verification, processing times, and limits.',
+    category: 'wallets-finance',
+    readTime: 5,
+    tags: ['Withdrawal', 'USDT', 'BEP20', 'OTP', '2FA'],
+    content: `
+      <h2>Withdrawal Walkthrough</h2>
+      <p>Withdrawals send USDT from your <strong>Earnings Wallet</strong> to your whitelisted BEP20 address.</p>
+
+      <h3>Before You Start</h3>
+      <p>Make sure you have:</p>
+      <ul>
+        <li>A <strong>whitelisted withdrawal address</strong> (set in Wallet → Withdrawal Whitelist).</li>
+        <li><strong>2FA enabled</strong> on your account.</li>
+        <li>Sufficient balance in your <strong>Earnings Wallet</strong> (withdrawals cannot come from the Funded Wallet).</li>
+        <li>No active <strong>moratorium</strong> (72-hour hold after changing your address).</li>
+      </ul>
+
+      <h3>Step 1: Open Withdrawal</h3>
+      <p>Tap <strong>Withdraw</strong> from Quick Actions or go to Wallet → Withdraw.</p>
+
+      <h3>Step 2: Enter Amount</h3>
+      <ul>
+        <li>Minimum: <strong>10 USDT</strong>.</li>
+        <li>Maximum: <strong>10,000 USDT</strong> (subject to daily limits).</li>
+        <li>The fee and the net amount you will receive are shown before confirmation.</li>
+      </ul>
+
+      <h3>Step 3: Verify Your Identity</h3>
+      <p>You must provide:</p>
+      <ol>
+        <li><strong>Email OTP</strong> — a 6-digit code sent to your registered email.</li>
+        <li><strong>2FA Code</strong> — the 6-digit code from your authenticator app.</li>
+      </ol>
+
+      <h3>Step 4: Confirm & Submit</h3>
+      <p>Review the summary (amount, fee, destination address) and tap <strong>Confirm Withdrawal</strong>.</p>
+
+      <h3>Step 5: Processing</h3>
+      <p>Withdrawals require <strong>admin approval</strong> and are typically processed within <strong>1–24 hours</strong>. Small amounts below a certain threshold may be processed instantly.</p>
+
+      <h3>Daily Limits</h3>
+      <p>There is a daily withdrawal limit to protect all users. If you reach the limit, you will need to wait until the next day.</p>
+
+      <h3>Common Errors</h3>
+      <ul>
+        <li><strong>"Withdrawal Address Required"</strong> — Set your address first in Wallet → Withdrawal Whitelist.</li>
+        <li><strong>"Address Moratorium Active"</strong> — Wait for the 72-hour hold to expire.</li>
+        <li><strong>"Insufficient Funds"</strong> — Your Earnings Wallet balance is too low.</li>
+        <li><strong>"Daily Withdrawal Limit Reached"</strong> — Try again tomorrow.</li>
+        <li><strong>"Invalid Email OTP" / "2FA Code Invalid"</strong> — Re-check your email or authenticator app and try again.</li>
+      </ul>
+    `,
+  },
+  {
+    id: 'transfer-step-by-step',
+    title: 'P2P Transfers: Step-by-Step',
+    description:
+      'How to send USDT to another Novunt user — finding recipients, verification, and instant delivery.',
+    category: 'wallets-finance',
+    readTime: 5,
+    tags: ['Transfer', 'P2P', 'Send', 'Free', 'Instant'],
+    content: `
+      <h2>Transfer Walkthrough</h2>
+      <p>P2P (peer-to-peer) transfers let you send USDT from your <strong>Earnings Wallet</strong> to another Novunt user. Transfers are <strong>free</strong> and <strong>instant</strong>.</p>
+
+      <h3>Step 1: Open Transfer</h3>
+      <p>Tap <strong>Transfer</strong> from the dashboard Quick Actions or navigate to Wallet → Transfer.</p>
+
+      <h3>Step 2: Find the Recipient</h3>
+      <p>Search for the recipient using any of these:</p>
+      <ul>
+        <li><strong>Email address</strong> — their registered Novunt email.</li>
+        <li><strong>Username</strong> — their Novunt username.</li>
+        <li><strong>User ID</strong> — their unique account ID.</li>
+      </ul>
+      <p>You can also select from <strong>Past Recipients</strong> if you have previously sent to them.</p>
+
+      <h3>Step 3: Enter Amount & Memo</h3>
+      <ul>
+        <li>Enter the amount to send (minimum applies, shown on screen).</li>
+        <li>Optionally add a <strong>memo</strong> (up to 200 characters) — a note the recipient will see.</li>
+        <li>Fee: <strong>$0.00 (FREE)</strong>.</li>
+      </ul>
+
+      <h3>Step 4: Verify</h3>
+      <p>Both verification steps are required:</p>
+      <ol>
+        <li><strong>Email OTP</strong> — enter the 6-digit code sent to your email.</li>
+        <li><strong>2FA Code</strong> — enter the 6-digit code from your authenticator app.</li>
+      </ol>
+
+      <h3>Step 5: Confirm</h3>
+      <p>Review the transfer details and tap <strong>Confirm Transfer</strong>. The transfer is processed instantly. The recipient sees the funds in their Funded Wallet immediately.</p>
+
+      <h3>Key Facts</h3>
+      <ul>
+        <li>Source: <strong>Earnings Wallet only</strong> (you cannot transfer from the Funded Wallet).</li>
+        <li>Cost: <strong>Free</strong> — no fees.</li>
+        <li>Speed: <strong>Instant</strong>.</li>
+        <li>Recipients receive funds in their <strong>Funded Wallet</strong> (not Earnings Wallet).</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Earning Systems (new batch) ────────────
+  {
+    id: 'pools-explained',
+    title: 'Performance & Premium Pools Explained',
+    description:
+      'How the two reward pools work, qualification requirements by rank, and how distributions are calculated.',
+    category: 'earning-systems',
+    readTime: 7,
+    tags: ['Pools', 'Performance', 'Premium', 'Rank', 'Rewards'],
+    content: `
+      <h2>Two Reward Pools</h2>
+      <p>Novunt distributes additional earnings through two pools: the <strong>Performance Pool</strong> and the <strong>Premium Pool</strong>. These are on top of your regular ROS payouts.</p>
+
+      <h3>Performance Pool</h3>
+      <p>The Performance Pool rewards users based on their overall contribution to the platform. Qualification is determined by a weighted score:</p>
+      <ul>
+        <li><strong>Personal Stake</strong> — 1x weight.</li>
+        <li><strong>Team Stake</strong> — 7x weight.</li>
+        <li><strong>Direct Downlines</strong> — 2x weight.</li>
+      </ul>
+      <p>To be eligible, you must hold at least the rank of <strong>Associate Stakeholder</strong>. Stakeholders (the base rank) are not eligible for pool distributions.</p>
+
+      <h3>Premium Pool</h3>
+      <p>The Premium Pool is an exclusive pool for higher-ranked members who meet additional downline requirements. Each rank has specific requirements for the number and stake size of lower-ranked team members:</p>
+      <table>
+        <tr><td><strong>Rank</strong></td><td><strong>Required Lower-Rank</strong></td><td><strong>Stake Requirement</strong></td></tr>
+        <tr><td>Associate Stakeholder</td><td>Stakeholder</td><td>$50+ stake each</td></tr>
+        <tr><td>Principal Strategist</td><td>Associate Stakeholder</td><td>$50+ stake each</td></tr>
+        <tr><td>Elite Capitalist</td><td>Principal Strategist</td><td>$100+ stake each</td></tr>
+        <tr><td>Wealth Architect</td><td>Elite Capitalist</td><td>$250+ stake each</td></tr>
+        <tr><td>Finance Titan</td><td>Wealth Architect</td><td>$500+ stake each</td></tr>
+      </table>
+
+      <h3>Viewing Your Pool Status</h3>
+      <p>Navigate to <strong>Rank & Pools</strong> from the sidebar. The page has two tabs:</p>
+      <ul>
+        <li><strong>Rank & Qualification</strong> — your current rank, progress toward the next rank, and pool eligibility badges (green = qualified, grey = not eligible).</li>
+        <li><strong>Pool Distributions</strong> — history of all pool payouts, filterable by All, Performance, or Premium.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Ranks & Teams (new batch) ────────────
+  {
+    id: 'rank-system-detailed',
+    title: 'The Six Ranks: Requirements & Benefits',
+    description:
+      'A detailed breakdown of all six Novunt ranks, what is needed to reach each one, and the benefits they unlock.',
+    category: 'ranks-teams',
+    readTime: 6,
+    tags: ['Ranks', 'Progression', 'Requirements', 'Benefits'],
+    content: `
+      <h2>Novunt Rank System</h2>
+      <p>Novunt has six ranks. Every user starts as a <strong>Stakeholder</strong> and can climb by growing their personal stake, team stake, and active downlines.</p>
+
+      <h3>The Six Ranks</h3>
+      <ol>
+        <li><strong>Stakeholder</strong> — the starting rank for all users.</li>
+        <li><strong>Associate Stakeholder</strong> — unlocks Performance Pool eligibility.</li>
+        <li><strong>Principal Strategist</strong> — higher pool shares and team recognition.</li>
+        <li><strong>Elite Capitalist</strong> — access to the Premium Pool.</li>
+        <li><strong>Wealth Architect</strong> — elevated pool distributions.</li>
+        <li><strong>Finance Titan</strong> — the highest rank with maximum benefits.</li>
+      </ol>
+
+      <h3>Rank Requirements</h3>
+      <p>Each rank above Stakeholder requires meeting thresholds in four areas:</p>
+      <ul>
+        <li><strong>Personal Stake</strong> — the total amount you have personally staked.</li>
+        <li><strong>Team Stake</strong> — the combined stake volume of your entire team (all levels).</li>
+        <li><strong>Direct Downlines</strong> — the number of Level 1 referrals with qualifying stakes.</li>
+        <li><strong>Lower-Rank Downlines</strong> — for higher ranks, you need team members who have achieved specific ranks themselves.</li>
+      </ul>
+      <p>Your progress toward each requirement is displayed as a percentage on the <strong>Rank & Pools</strong> page. When all four reach 100%, you are promoted automatically.</p>
+
+      <h3>Benefits of Higher Ranks</h3>
+      <ul>
+        <li>Access to the <strong>Performance Pool</strong> (from Associate Stakeholder).</li>
+        <li>Access to the <strong>Premium Pool</strong> (higher ranks with qualifying downlines).</li>
+        <li>Higher <strong>pool share percentages</strong>.</li>
+        <li><strong>Rank bonuses</strong> distributed when you reach a new rank.</li>
+        <li><strong>NXP rewards</strong> for rank achievements.</li>
+        <li>Greater visibility and recognition within the Novunt community.</li>
+      </ul>
+
+      <h3>Viewing Your Rank</h3>
+      <p>Tap the <strong>Rank</strong> button on your dashboard or navigate to <strong>Rank & Pools</strong> from the sidebar. The page shows your current rank, progress toward the next rank, and pool qualification status.</p>
+    `,
+  },
+
+  // ──────────── Getting Started (new batch) ────────────
+  {
+    id: 'trading-signals-guide',
+    title: 'Trading Signals: What They Are & How to Read Them',
+    description:
+      'Understanding Novunt\'s live trading signals — market types, direction, profitability, and how to use the signals page.',
+    category: 'getting-started',
+    readTime: 5,
+    tags: ['Trading', 'Signals', 'Forex', 'Crypto', 'Markets'],
+    content: `
+      <h2>What Are Trading Signals?</h2>
+      <p>Novunt provides live trading signals — verified records of market positions across multiple asset classes. These signals give you transparency into market activity and can help you understand how returns are generated.</p>
+
+      <h3>Markets Covered</h3>
+      <ul>
+        <li><strong>Forex</strong> — currency pairs (EUR/USD, GBP/USD, etc.).</li>
+        <li><strong>Crypto</strong> — digital assets (BTC/USDT, ETH/USDT, etc.).</li>
+        <li><strong>Metals</strong> — gold, silver, and other precious metals.</li>
+        <li><strong>Commodities</strong> — oil, natural gas, and other resources.</li>
+      </ul>
+
+      <h3>Signal Information</h3>
+      <p>Each signal shows:</p>
+      <ul>
+        <li><strong>Symbol</strong> — the asset being traded.</li>
+        <li><strong>Direction</strong> — LONG (expecting price to go up) or SHORT (expecting price to go down).</li>
+        <li><strong>Entry / Exit Price</strong> — where the position was opened and closed.</li>
+        <li><strong>Profit/Loss</strong> — in USD and pips/points.</li>
+        <li><strong>Duration</strong> — how long the position was held.</li>
+        <li><strong>Status</strong> — profitable (green) or loss (red).</li>
+      </ul>
+
+      <h3>Using the Signals Page</h3>
+      <p>Navigate to <strong>Trading Signals</strong> from the sidebar. You can:</p>
+      <ul>
+        <li>View <strong>24-hour</strong> or <strong>7-day</strong> history.</li>
+        <li>Filter by <strong>market type</strong>, <strong>profitable only</strong>, or <strong>day trades only</strong>.</li>
+        <li>Search by symbol name.</li>
+        <li>See overall stats: total signals, profitable count, win rate, and total profit.</li>
+      </ul>
+      <p>The signals page displays up to <strong>100 days</strong> of verified trading history.</p>
+
+      <h3>Important Note</h3>
+      <p>Trading signals are provided for <strong>informational and transparency purposes only</strong>. They are not investment advice. Past performance does not guarantee future results.</p>
+    `,
+  },
+  {
+    id: 'social-media-verification',
+    title: 'Social Media Verification Guide',
+    description:
+      'Step-by-step instructions for verifying your social media accounts on all five platforms to complete your registration bonus.',
+    category: 'getting-started',
+    readTime: 4,
+    tags: ['Social Media', 'Verification', 'Facebook', 'Instagram', 'TikTok'],
+    content: `
+      <h2>Why Verify Social Media?</h2>
+      <p>Social media verification is Step 4 of the five registration bonus steps. Completing it earns you 20% progress toward your 10% welcome bonus. You must follow Novunt's official account on all five platforms.</p>
+
+      <h3>The Five Platforms</h3>
+      <ol>
+        <li><strong>Facebook</strong></li>
+        <li><strong>Instagram</strong></li>
+        <li><strong>YouTube</strong></li>
+        <li><strong>TikTok</strong></li>
+        <li><strong>Telegram</strong></li>
+      </ol>
+
+      <h3>How to Verify Each Platform</h3>
+      <ol>
+        <li>Open the <strong>Freebies</strong> section from your dashboard.</li>
+        <li>Find the <strong>Social Media</strong> step.</li>
+        <li>Tap the icon for the platform you want to verify.</li>
+        <li>Novunt opens the platform in a <strong>new browser tab</strong>.</li>
+        <li><strong>Follow</strong> or <strong>subscribe</strong> to Novunt's official account on that platform.</li>
+        <li>Return to Novunt and tap <strong>Confirm</strong>.</li>
+        <li>A green checkmark appears when verification is successful.</li>
+      </ol>
+      <p>Repeat for all five platforms. The step is complete only when all five are verified.</p>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>Make sure you are logged into the correct social media account before following.</li>
+        <li>If verification fails, try opening the link again and re-following.</li>
+        <li>You can verify the platforms in any order.</li>
+        <li>Once verified, a platform stays verified — you do not need to re-verify later.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Security & Account (new batch) ────────────
+  {
+    id: 'notifications-guide',
+    title: 'Understanding Notifications',
+    description:
+      'How the notification system works — types, filtering, and managing alerts on the Novunt platform.',
+    category: 'security-account',
+    readTime: 4,
+    tags: ['Notifications', 'Alerts', 'Updates', 'Bell Icon'],
+    content: `
+      <h2>Notification Center</h2>
+      <p>Novunt keeps you informed about everything happening with your account through the notification system. Access it by tapping the <strong>bell icon</strong> in the top navigation bar.</p>
+
+      <h3>Notification Types</h3>
+      <ul>
+        <li><strong>Deposit</strong> — your deposit has been confirmed.</li>
+        <li><strong>Withdrawal</strong> — your withdrawal has been processed or requires attention.</li>
+        <li><strong>Earning</strong> — ROS payouts have been credited to your Earnings Wallet.</li>
+        <li><strong>Bonus</strong> — registration bonus, rank bonus, or other bonuses activated or paid.</li>
+        <li><strong>Referral</strong> — a referral has signed up, staked, or earned a commission for you.</li>
+        <li><strong>Security</strong> — login alerts, 2FA changes, or account security events.</li>
+        <li><strong>Alert</strong> — important warnings that require your attention.</li>
+        <li><strong>System</strong> — platform updates, maintenance notices, or feature announcements.</li>
+        <li><strong>Info / Success</strong> — general informational messages and confirmations.</li>
+      </ul>
+
+      <h3>Filtering Notifications</h3>
+      <p>The notification panel has two tabs:</p>
+      <ul>
+        <li><strong>All Notifications</strong> — everything in chronological order.</li>
+        <li><strong>System & Alerts</strong> — filtered to show only system, security, alert, bonus, referral, and info notifications.</li>
+      </ul>
+
+      <h3>Managing Notifications</h3>
+      <ul>
+        <li>Unread notifications are highlighted and counted in the badge on the bell icon.</li>
+        <li>Tap a notification to mark it as read.</li>
+        <li>Use <strong>Mark All as Read</strong> to clear all unread badges at once.</li>
+        <li>Delete individual notifications you no longer need.</li>
+      </ul>
+
+      <h3>Notification Preferences</h3>
+      <p>In <strong>Settings → Notifications</strong>, you can toggle:</p>
+      <ul>
+        <li>Email Notifications</li>
+        <li>SMS Notifications</li>
+        <li>Referral Notifications</li>
+        <li>Deposit Alerts</li>
+      </ul>
+    `,
+  },
+  {
+    id: 'theme-customization',
+    title: 'Theme & Display Settings',
+    description:
+      'How to switch between Light, Dark, and System themes on Novunt.',
+    category: 'security-account',
+    readTime: 2,
+    tags: ['Theme', 'Dark Mode', 'Light Mode', 'Display'],
+    content: `
+      <h2>Choosing Your Theme</h2>
+      <p>Novunt supports three display modes to match your preference and environment.</p>
+
+      <h3>Available Themes</h3>
+      <ul>
+        <li><strong>Light</strong> — a bright, clean interface for daytime use.</li>
+        <li><strong>Dark</strong> — a darker palette that reduces eye strain in low-light conditions.</li>
+        <li><strong>System</strong> — automatically follows your device's theme setting (the default).</li>
+      </ul>
+
+      <h3>How to Change Your Theme</h3>
+      <ol>
+        <li>Tap the <strong>theme toggle</strong> icon in the top navigation bar (sun/moon icon).</li>
+        <li>Select <strong>Light</strong>, <strong>Dark</strong>, or <strong>System</strong> from the dropdown.</li>
+        <li>The change applies instantly across the entire platform.</li>
+      </ol>
+      <p>You can also change the theme from <strong>Settings → Personal → Theme</strong>.</p>
+    `,
+  },
+
+  // ──────────── Staking & Goals (new batch) ────────────
+  {
+    id: 'ros-calendar-explained',
+    title: 'The ROS Calendar: Tracking Daily Returns',
+    description:
+      'How to read the ROS Calendar card on your dashboard and understand your daily profit distribution.',
+    category: 'staking-goals',
+    readTime: 4,
+    tags: ['ROS', 'Calendar', 'Daily Profit', 'Returns'],
+    content: `
+      <h2>What Is the ROS Calendar?</h2>
+      <p>The ROS (Return on Stake) Calendar is a visual card on your dashboard that shows your daily profit distribution for the current month.</p>
+
+      <h3>Reading the Calendar</h3>
+      <ul>
+        <li>Each day of the month is shown in a grid layout (Sunday through Saturday).</li>
+        <li><strong>Past days</strong> show a blue bar whose height represents the ROS percentage earned that day.</li>
+        <li><strong>Today</strong> is highlighted in orange so you can quickly find it.</li>
+        <li><strong>Future days</strong> are empty/greyed out.</li>
+        <li>The <strong>month header</strong> shows "Month to Date" and the total accumulated ROS percentage for the current month.</li>
+      </ul>
+
+      <h3>How ROS Works</h3>
+      <p>Your active stakes generate returns that are distributed to your Earnings Wallet. The ROS Calendar visualizes this activity day by day, so you can see patterns and track consistency.</p>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>A consistent calendar with daily entries means your stakes are actively earning.</li>
+        <li>Gaps may appear if you had no active stakes on certain days.</li>
+        <li>The daily ROS rate is configured by the platform and distributed across your active stakes each day.</li>
+      </ul>
+    `,
+  },
+
+  // ──────────── Earning Systems (new batch) ────────────
+  {
+    id: 'achievements-badges',
+    title: 'Achievements & Badge System',
+    description:
+      'How the badge and achievement system works — earning NXP, badge rarities, the leaderboard, and tracking your progress.',
+    category: 'earning-systems',
+    readTime: 5,
+    tags: ['Achievements', 'Badges', 'NXP', 'Leaderboard', 'Rewards'],
+    content: `
+      <h2>Achievements Page</h2>
+      <p>Navigate to <strong>Achievements</strong> from the sidebar to see your badges, NXP balance, and leaderboard position.</p>
+
+      <h3>What Are Badges?</h3>
+      <p>Badges are visual achievements you unlock by reaching specific milestones on the platform. Each badge comes with an NXP reward. Badges have four rarity levels:</p>
+      <ul>
+        <li><strong>Common</strong> — easy to earn; basic milestones.</li>
+        <li><strong>Rare</strong> — requires more effort; intermediate goals.</li>
+        <li><strong>Epic</strong> — significant achievements; advanced milestones.</li>
+        <li><strong>Legendary</strong> — the most prestigious; only top users earn these.</li>
+      </ul>
+
+      <h3>NXP Sources</h3>
+      <p>NXP (Novunt Experience Points) can come from multiple sources:</p>
+      <ul>
+        <li><strong>Badges</strong> — earned when you unlock a badge.</li>
+        <li><strong>Ranks</strong> — awarded when you reach a new rank.</li>
+        <li><strong>Milestones</strong> — special milestone achievements (streaks, total staked, etc.).</li>
+        <li><strong>Activities</strong> — regular platform activity (deposits, stakes, referrals).</li>
+        <li><strong>Bonuses</strong> — special promotions or campaigns.</li>
+      </ul>
+      <p>Your NXP breakdown (from badges, ranks, milestones, and activities) is shown in the NXP Overview section.</p>
+
+      <h3>The Leaderboard</h3>
+      <p>The NXP Leaderboard ranks all Novunt users by total NXP earned. Check it to see where you stand in the community. Climbing the leaderboard is a great motivator and demonstrates your commitment to the platform.</p>
+
+      <h3>NXP History</h3>
+      <p>Every NXP transaction is recorded. View your full NXP History to see when and how you earned each point.</p>
+    `,
+  },
+
+  // ──────────── Glossary (new batch) ────────────
+  {
+    id: 'community-channels',
+    title: 'Novunt Community & Social Channels',
+    description:
+      'All the official Novunt social media channels, community groups, and how to stay connected.',
+    category: 'glossary',
+    readTime: 3,
+    tags: ['Community', 'Social', 'Telegram', 'Facebook', 'Instagram'],
+    content: `
+      <h2>Stay Connected</h2>
+      <p>Novunt has an active community across multiple platforms. Follow us to stay updated on announcements, tips, and events.</p>
+
+      <h3>Official Channels</h3>
+      <ul>
+        <li><strong>Telegram</strong> — Join the main community group for discussions, updates, and peer support. Also home to the <strong>@NovuntAssistantBot</strong> for quick support.</li>
+        <li><strong>Facebook</strong> — Follow for announcements, educational content, and community highlights.</li>
+        <li><strong>Instagram</strong> — Visual updates, tips, and behind-the-scenes content.</li>
+        <li><strong>YouTube</strong> — Tutorials, guides, and platform walkthroughs.</li>
+        <li><strong>TikTok</strong> — Short-form content, tips, and community challenges.</li>
+      </ul>
+
+      <h3>Why Join?</h3>
+      <ul>
+        <li>Be the first to know about new features and updates.</li>
+        <li>Get tips from experienced community members.</li>
+        <li>Participate in promotional campaigns and events.</li>
+        <li>Following all 5 platforms is part of the registration bonus steps.</li>
+      </ul>
+
+      <h3>Community Button</h3>
+      <p>Tap the <strong>Community</strong> button on your dashboard to quickly access the Team page and your referral network.</p>
+    `,
+  },
 ];
 
 /**

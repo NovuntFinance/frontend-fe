@@ -129,10 +129,10 @@ export function PortfolioChart() {
             </div>
             <div>
               <CardTitle className="text-xl font-bold">
-                Weekly ROS Performance
+                Daily ROS Performance
               </CardTitle>
               <CardDescription>
-                Track your weekly Return on Stake percentages
+                Track your daily Return on Stake percentages
               </CardDescription>
             </div>
           </div>

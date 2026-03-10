@@ -476,7 +476,7 @@ export default function LandingPageContent() {
                   <p className="text-sm leading-relaxed text-white/80 sm:text-base">
                     Set clear financial goals with progress tracking toward{' '}
                     {stakingConfig.goalTargetPercentage}% returns. Stake
-                    multiple times and collect weekly ROS directly to your
+                    multiple times and collect daily ROS directly to your
                     Earnings Wallet.
                   </p>
                 </div>

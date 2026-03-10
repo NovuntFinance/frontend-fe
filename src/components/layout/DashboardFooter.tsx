@@ -31,20 +31,18 @@ const socialLinks = [
 const footerLinks = [
   { label: 'Terms', href: '/terms' },
   { label: 'Privacy', href: '/privacy' },
-  { label: 'Support', href: '/support' },
 ];
 
 export function DashboardFooter() {
   return (
     <footer
-      className="dashboard-footer fixed right-0 left-0 z-40 lg:left-[72px]"
+      className="dashboard-footer fixed right-0 left-0 z-40 hidden sm:block lg:left-[72px]"
       style={{
         background: 'var(--neu-bg)',
         borderTop: '1px solid var(--neu-border)',
       }}
     >
       <div className="flex items-center justify-between px-4 py-2 sm:px-6">
-        {/* Left: Brand + copyright */}
         <div className="flex items-center gap-2">
           <div
             role="img"
@@ -77,7 +75,6 @@ export function DashboardFooter() {
           </span>
         </div>
 
-        {/* Center-right: Nav links */}
         <div className="flex items-center gap-3 sm:gap-4">
           {footerLinks.map((link, i) => (
             <React.Fragment key={link.label}>
@@ -100,7 +97,6 @@ export function DashboardFooter() {
           ))}
         </div>
 
-        {/* Right: Social icons */}
         <div className="flex items-center gap-2.5">
           {socialLinks.map((social) => {
             const Icon = social.icon;
@@ -123,5 +119,88 @@ export function DashboardFooter() {
         </div>
       </div>
     </footer>
+  );
+}
+
+export function DashboardFooterInline() {
+  return (
+    <div
+      className="mt-6 mb-6 block rounded-xl p-4 sm:hidden"
+      style={{
+        background: 'var(--neu-card-bg, var(--neu-bg))',
+        border: '1px solid var(--neu-border)',
+      }}
+    >
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div
+            role="img"
+            aria-label="Novunt logo"
+            className="h-4 w-4"
+            style={{
+              backgroundColor: 'var(--neu-accent)',
+              maskImage: 'url(/icons/novunt_short.png)',
+              WebkitMaskImage: 'url(/icons/novunt_short.png)',
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskPosition: 'center',
+              opacity: 0.9,
+            }}
+          />
+          <span
+            className="text-[11px] leading-none"
+            style={{ color: 'var(--neu-text-secondary)' }}
+          >
+            © {new Date().getFullYear()} Novunt
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {footerLinks.map((link, i) => (
+            <React.Fragment key={link.label}>
+              {i > 0 && (
+                <span
+                  className="text-[8px]"
+                  style={{ color: 'var(--neu-border)' }}
+                >
+                  |
+                </span>
+              )}
+              <a
+                href={link.href}
+                className="text-[11px] transition-colors hover:underline"
+                style={{ color: 'var(--neu-text-secondary)' }}
+              >
+                {link.label}
+              </a>
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {socialLinks.map((social) => {
+            const Icon = social.icon;
+            return (
+              <a
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-all hover:scale-110 active:scale-95"
+                aria-label={social.name}
+              >
+                <Icon
+                  className="h-3.5 w-3.5"
+                  style={{ color: 'var(--neu-accent)' }}
+                />
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }

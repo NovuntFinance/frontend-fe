@@ -18,10 +18,10 @@ export default function PublicLayout({
         <PageContainer>
           <div className="flex flex-shrink-0 items-center border-b border-white/10 bg-black/20 py-3">
             <Link
-              href="/"
+              href="/dashboard"
               className="text-primary text-sm font-medium hover:underline"
             >
-              ← Back to home
+              ← Back to dashboard
             </Link>
           </div>
         </PageContainer>

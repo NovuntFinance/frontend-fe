@@ -45,7 +45,7 @@ export const messages = {
     welcome: 'Welcome back',
     totalBalance: 'Total Balance',
     activeStakes: 'Active Stakes',
-    weeklyReturns: 'Weekly Returns',
+    weeklyReturns: 'Daily Returns',
     totalEarnings: 'Total Earnings',
     quickActions: 'Quick Actions',
     recentActivity: 'Recent Activity',

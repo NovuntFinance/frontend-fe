@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText,
@@ -12,6 +12,8 @@ import {
   Shield,
   Search,
   X,
+  BookOpen,
+  ChevronLeft,
 } from 'lucide-react';
 import { prefersReducedMotion } from '@/lib/accessibility';
 import {
@@ -45,63 +47,105 @@ const knowledgeCategories: KnowledgeCategory[] = [
     title: 'Getting Started',
     description: 'New to Novunt? Start here to learn the basics',
     icon: Star,
-    articleCount: 1,
-    articles: ['Platform Overview', 'Getting Started Guide'],
+    articleCount: 8,
+    articles: [
+      'Platform Overview',
+      'Getting Started Guide',
+      'Onboarding Walkthrough',
+      'Understanding Your Dashboard',
+      'Freebies: Your 10% Registration Bonus',
+      'Social Media Verification Guide',
+      'Getting Help: Novunt Assistant & Support',
+      'Trading Signals Guide',
+    ],
   },
   {
     id: 'wallets-finance',
     title: 'Wallets & Finance',
-    description: 'Understanding wallets, deposits, and withdrawals',
+    description: 'Wallets, deposits, withdrawals, transfers, fees, and limits',
     icon: Wallet,
-    articleCount: 4,
+    articleCount: 8,
     articles: [
-      'Two-Wallet System',
+      'Two-Wallet System Explained',
+      'Making a Deposit: Step-by-Step',
+      'Making a Withdrawal: Step-by-Step',
+      'P2P Transfers: Step-by-Step',
       'Deposits & Funding',
       'Withdrawals',
       'P2P Transfers',
+      'Fees, Limits & Processing Times',
     ],
   },
   {
     id: 'staking-goals',
     title: 'Staking & Goals',
-    description: 'Learn how to create goals and stake effectively',
+    description: 'Goal-based staking, ROS, streaks, and the ROS calendar',
     icon: TrendingUp,
-    articleCount: 2,
-    articles: ['Goal-Based Staking System', 'Daily Profit Distribution (ROS)'],
+    articleCount: 5,
+    articles: [
+      'Goal-Based Staking System',
+      'Daily Profit Distribution (ROS)',
+      'The ROS Calendar',
+      'Staking Streak & Milestones',
+      'Setting Smart Goals for Your Stakes',
+    ],
   },
   {
     id: 'earning-systems',
     title: 'Earning Systems',
-    description: 'Pools, referrals, bonuses, and how to maximize earnings',
+    description: 'Pools, referrals, bonuses, badges, tokens, and strategies',
     icon: Award,
-    articleCount: 4,
+    articleCount: 8,
     articles: [
       'Three-Tier Pool System',
+      'Performance & Premium Pools',
       'Referral Bonus System',
       'Registration Bonus',
+      'Achievements & Badge System',
+      'NXP & NLP Tokens Explained',
       'Achievement System & NXP',
+      'Maximizing Your Earnings',
     ],
   },
   {
     id: 'ranks-teams',
     title: 'Ranks & Teams',
-    description: 'Rank progression, team building, and leadership',
+    description: 'All six ranks, team building, referral networks, and pool qualification',
     icon: Users,
-    articleCount: 2,
+    articleCount: 4,
     articles: [
       'Rank System & Progression',
+      'The Six Ranks: Requirements & Benefits',
+      'Building & Managing Your Team',
       'Profile Completion & Social Media',
     ],
   },
   {
     id: 'security-account',
     title: 'Security & Account',
-    description: 'Account security, authentication, and best practices',
+    description: '2FA, wallet whitelist, notifications, themes, and account settings',
     icon: Shield,
-    articleCount: 2,
+    articleCount: 7,
     articles: [
+      '2FA Guide',
+      'Withdrawal Address & Whitelist',
+      'Understanding Notifications',
       'Security & Authentication',
+      'Account Settings & Preferences',
+      'Theme & Display Settings',
       'Common Questions & Troubleshooting',
+    ],
+  },
+  {
+    id: 'glossary',
+    title: 'Glossary & FAQ',
+    description: 'Definitions, frequently asked questions, and community channels',
+    icon: BookOpen,
+    articleCount: 3,
+    articles: [
+      'Novunt Glossary',
+      'Frequently Asked Questions',
+      'Community & Social Channels',
     ],
   },
 ];
@@ -119,24 +163,31 @@ export default function KnowledgeBasePage() {
     return [];
   }, [searchQuery, selectedCategory]);
 
-  const handleArticleClick = (article: Article) => {
+  const handleArticleClick = useCallback((article: Article) => {
     setSelectedArticle(article);
     setIsModalOpen(true);
-  };
-  const handleCloseModal = () => {
+  }, []);
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedArticle(null);
-  };
+  }, []);
   const clearSearch = () => setSearchQuery('');
-  const handleCategoryClick = (categoryId: string) => {
+  const handleCategoryClick = useCallback((categoryId: string) => {
     setSelectedCategory(categoryId);
     setSearchQuery('');
-  };
-  const clearCategoryFilter = () => setSelectedCategory(null);
+    requestAnimationFrame(() => {
+      const scrollParent = document.querySelector('.dashboard-main-scroll');
+      if (scrollParent) scrollParent.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }, []);
+  const clearCategoryFilter = useCallback(() => setSelectedCategory(null), []);
 
   const selectedCategoryData = knowledgeCategories.find(
     (cat) => cat.id === selectedCategory
   );
+
+  const showingArticles = !!(searchQuery.trim() || selectedCategory);
+  const showingCategories = !searchQuery.trim() && !selectedCategory;
 
   return (
     <div
@@ -259,6 +310,26 @@ export default function KnowledgeBasePage() {
                   flex: 1,
                 }}
               >
+                <button
+                  type="button"
+                  onClick={clearCategoryFilter}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--neu-card-bg, var(--neu-bg))',
+                    border: '1px solid var(--neu-border)',
+                    color: 'var(--neu-accent)',
+                    cursor: 'pointer',
+                  }}
+                  aria-label="Back to all categories"
+                >
+                  <ChevronLeft size={18} strokeWidth={2.5} />
+                </button>
                 <div
                   style={{
                     width: 36,
@@ -319,39 +390,39 @@ export default function KnowledgeBasePage() {
                 }}
               >
                 <X size={14} />
-                Clear
+                All Categories
               </button>
             </div>
           </motion.div>
         )}
 
         {/* Search results / category articles */}
-        {(searchQuery.trim() || selectedCategory) && (
+        {showingArticles && (
           <motion.section
             initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={reducedMotion ? false : { opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
           >
-            <p
-              style={{
-                color: 'var(--neu-text-primary)',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                margin: 0,
-                paddingLeft: 2,
-              }}
-            >
-              {searchQuery.trim()
-                ? `Results for "${searchQuery}"`
-                : (selectedCategoryData?.title ?? 'Articles')}
-              {filteredArticles.length > 0 && (
-                <span style={{ color: 'var(--neu-text-muted)', fontWeight: 400 }}>
-                  {' '}
-                  ({filteredArticles.length})
-                </span>
-              )}
-            </p>
+            {searchQuery.trim() && (
+              <p
+                style={{
+                  color: 'var(--neu-text-primary)',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  margin: 0,
+                  paddingLeft: 2,
+                }}
+              >
+                Results for &ldquo;{searchQuery}&rdquo;
+                {filteredArticles.length > 0 && (
+                  <span style={{ color: 'var(--neu-text-muted)', fontWeight: 400 }}>
+                    {' '}
+                    ({filteredArticles.length})
+                  </span>
+                )}
+              </p>
+            )}
 
             {filteredArticles.length > 0 ? (
               <div className={badgeStyles.kbCategoryGrid}>
@@ -403,8 +474,8 @@ export default function KnowledgeBasePage() {
           </motion.section>
         )}
 
-        {/* Categories */}
-        {!searchQuery.trim() && (
+        {/* Categories – only when browsing (no search, no category selected) */}
+        {showingCategories && (
           <section
             style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
           >

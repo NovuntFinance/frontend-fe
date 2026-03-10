@@ -89,8 +89,8 @@ export function sanitizeDescriptionByType(
     case 'stake':
       // For stake transactions, remove specific stake amount details
       sanitized = sanitized.replace(
-        /Your stake will earn weekly returns until reaching \d+% \(\$?[\d,]+\.?\d*\s*USDT\s*total\)/gi,
-        'Your stake will earn weekly returns'
+        /Your stake will earn (weekly|daily) returns until reaching \d+% \(\$?[\d,]+\.?\d*\s*USDT\s*total\)/gi,
+        'Your stake will earn daily returns'
       );
       break;
 

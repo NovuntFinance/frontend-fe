@@ -145,7 +145,7 @@ export default function CreateStakePage() {
         </h1>
         <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
           Choose the amount you would like to stake from your deposit wallet.
-          You&apos;ll earn weekly ROS credited to your Earnings Wallet until you
+          You&apos;ll earn daily ROS credited to your Earnings Wallet until you
           reach {stakingConfig.goalTargetPercentage}% return.
         </p>
       </div>
@@ -384,7 +384,7 @@ export default function CreateStakePage() {
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center justify-between">
                 <span style={{ color: NEU_TOKENS.white60 }}>
-                  Weekly ROS (approx)
+                  Daily ROS (approx)
                 </span>
                 <span
                   className="font-medium"

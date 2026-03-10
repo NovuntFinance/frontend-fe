@@ -626,7 +626,7 @@ export function CalendarManagement() {
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="rounded-lg border p-4">
                       <div className="text-muted-foreground text-sm font-medium">
-                        Total Weekly Target
+                        Total Daily Target
                       </div>
                       <div className="text-2xl font-bold text-emerald-500">
                         {currentCalendar.totalWeeklyPercentage}%
@@ -692,7 +692,7 @@ export function CalendarManagement() {
         <TabsContent value="create" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Create Weekly Calendar</CardTitle>
+              <CardTitle>Create Daily Calendar</CardTitle>
               <CardDescription>
                 Set up the ROS distribution for an upcoming week.
               </CardDescription>
@@ -729,7 +729,7 @@ export function CalendarManagement() {
 
                 {mode === 'random' ? (
                   <div className="space-y-2">
-                    <Label>Weekly Target Percentage (%)</Label>
+                    <Label>Daily Target Percentage (%)</Label>
                     <Input
                       type="number"
                       step="0.01"

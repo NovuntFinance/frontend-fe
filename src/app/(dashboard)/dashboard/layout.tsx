@@ -39,7 +39,10 @@ import { HorizontalNav } from '@/components/navigation/HorizontalNav';
 import { DesktopSidebar } from '@/components/navigation/DesktopSidebar';
 import { NovuntAssistant } from '@/components/assistant/NovuntAssistant';
 import { InfoMarquee } from '@/components/ui/info-marquee';
-import { DashboardFooter } from '@/components/layout/DashboardFooter';
+import {
+  DashboardFooter,
+  DashboardFooterInline,
+} from '@/components/layout/DashboardFooter';
 
 /**
  * Dashboard Layout
@@ -440,7 +443,10 @@ export default function DashboardLayout({
             paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 16px))',
           }}
         >
-          <div className="dashboard-page-container">{children}</div>
+          <div className="dashboard-page-container">
+            {children}
+            <DashboardFooterInline />
+          </div>
         </main>
 
         <DashboardFooter />

@@ -100,7 +100,7 @@ export interface CreateStakeResponse {
  * Rules:
  * - Minimum stake: $20 USDT
  * - Can stake from Deposit Wallet, Earnings Wallet, or both
- * - Receives weekly ROI payouts until 200% return achieved
+ * - Receives daily ROI payouts until 200% return achieved
  * - Stakes are permanent (cannot withdraw principal)
  * - 2FA is not required for stake creation. 2FA is only required for withdrawal, transfer, and change of password.
  */

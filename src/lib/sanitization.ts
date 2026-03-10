@@ -25,6 +25,12 @@ const ALLOWED_DISPLAY_TAGS = [
   'pre',
   'blockquote',
   'hr',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
 ];
 
 /**

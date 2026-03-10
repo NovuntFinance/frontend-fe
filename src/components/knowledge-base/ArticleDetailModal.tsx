@@ -117,7 +117,7 @@ export function ArticleDetailModal({
             <div
               className={cn(
                 badgeStyles.kbModalBody,
-                'mt-6 [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:mt-4 [&_h3]:mb-2 [&_ol]:ml-6 [&_p]:mb-3 [&_ul]:ml-6'
+                'mt-6 [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:mt-4 [&_h3]:mb-2 [&_ol]:ml-6 [&_p]:mb-3 [&_ul]:ml-6 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_td]:border [&_td]:border-[var(--neu-border)] [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm [&_th]:border [&_th]:border-[var(--neu-border)] [&_th]:px-3 [&_th]:py-2 [&_th]:text-sm [&_th]:font-semibold'
               )}
             >
               {article.content ? (

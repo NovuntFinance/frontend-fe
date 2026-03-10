@@ -52,7 +52,7 @@ const useRecentActivity = () => {
         amount: 15.5,
         status: 'confirmed',
         timestamp: new Date(Date.now() - 86400000).toISOString(),
-        description: 'Weekly ROS earnings',
+        description: 'Daily ROS earnings',
       },
       {
         id: '3',

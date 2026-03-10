@@ -61,7 +61,7 @@ export function WeeklyROSCard() {
             </motion.div>
             <div>
               <CardTitle className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-lg font-bold text-transparent">
-                Weekly ROS
+                Daily ROS
               </CardTitle>
               <CardDescription className="text-xs">
                 {data ? `Week ${data.weekNumber}, ${data.year}` : 'Loading...'}

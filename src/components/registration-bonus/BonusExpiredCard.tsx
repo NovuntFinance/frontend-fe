@@ -62,7 +62,7 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
             <ul className="text-muted-foreground list-inside list-disc space-y-1 text-left text-sm">
               <li>Our referral program</li>
               <li>Regular staking rewards</li>
-              <li>Weekly profit distributions</li>
+              <li>Daily profit distributions</li>
             </ul>
           </motion.div>
 

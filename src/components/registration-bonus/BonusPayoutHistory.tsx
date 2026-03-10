@@ -1,6 +1,6 @@
 /**
  * Bonus Payout History Component
- * Displays paginated history of weekly bonus payouts
+ * Displays paginated history of daily bonus payouts
  * Shows transparency in how registration bonus is distributed
  */
 
@@ -33,7 +33,7 @@ interface BonusPayoutHistoryProps {
 
 /**
  * Bonus Payout History Component
- * Shows weekly bonus payouts with pagination
+ * Shows daily bonus payouts with pagination
  */
 export function BonusPayoutHistory({
   initialPage = 1,
@@ -134,7 +134,7 @@ export function BonusPayoutHistory({
             Payout History
           </CardTitle>
           <p className="mt-1 text-sm text-gray-600">
-            Track how your registration bonus is paid out weekly with ROS
+            Track how your registration bonus is paid out daily with ROS
             earnings
           </p>
         </CardHeader>
