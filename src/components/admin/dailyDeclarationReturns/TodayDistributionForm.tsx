@@ -40,7 +40,13 @@ interface FormValues {
   description: string;
 }
 
-export function TodayDistributionForm() {
+interface TodayDistributionFormProps {
+  onNavigateToSchedule?: () => void;
+}
+
+export function TodayDistributionForm({
+  onNavigateToSchedule,
+}: TodayDistributionFormProps) {
   const { promptFor2FA } = use2FA();
   const [formValues, setFormValues] = useState<FormValues>({
     premiumPoolAmount: '',
@@ -493,12 +499,13 @@ export function TodayDistributionForm() {
                   occurs at platform_day_start_utc.
                 </span>
                 <br />
-                <a
-                  href="/admin/settings/distribution-schedule"
+                <button
+                  type="button"
+                  onClick={onNavigateToSchedule}
                   className="mt-1 inline-block text-blue-600 underline hover:text-blue-800"
                 >
                   Configure Schedule →
-                </a>
+                </button>
               </AlertDescription>
             </Alert>
           )}
@@ -545,12 +552,13 @@ export function TodayDistributionForm() {
                   Failed to load cron settings. Please configure the
                   Distribution Schedule first:
                   <br />
-                  <a
-                    href="/admin/settings/distribution-schedule"
-                    className="mt-1 inline-block text-blue-600 underline"
+                  <button
+                    type="button"
+                    onClick={onNavigateToSchedule}
+                    className="mt-1 inline-block text-blue-600 underline hover:text-blue-800"
                   >
                     Configure Distribution Schedule →
-                  </a>
+                  </button>
                 </AlertDescription>
               </Alert>
             )}

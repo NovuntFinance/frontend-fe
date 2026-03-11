@@ -30,7 +30,11 @@ import { toast } from 'sonner';
 // Maximum number of distribution slots allowed per day
 const MAX_SLOTS = 100;
 
-export function CronSettingsPage() {
+interface CronSettingsPageProps {
+  embedded?: boolean;
+}
+
+export function CronSettingsPage({ embedded = false }: CronSettingsPageProps) {
   const router = useRouter();
   const { promptFor2FA } = use2FA();
   const {
@@ -170,16 +174,22 @@ export function CronSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="mb-2"
+          {!embedded && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="mb-2"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          )}
+          <h1
+            className={embedded ? 'text-2xl font-bold' : 'text-3xl font-bold'}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-3xl font-bold">Distribution Schedule</h1>
+            Distribution Schedule
+          </h1>
           <p className="text-muted-foreground mt-1">
             Configure when daily distributions execute (all times in UTC)
           </p>

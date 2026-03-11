@@ -24,7 +24,6 @@ import { SettingTooltip } from './SettingTooltip';
 import { LoadingStates } from '@/components/ui/loading-states';
 import { UserFriendlyError } from '@/components/errors/UserFriendlyError';
 import { EmptyStates } from '@/components/EmptyStates';
-import { CronSettingsPage } from '@/components/admin/cronSettings';
 
 /** Setting keys to hide from admin UI; daily distribution is done via Daily Declaration Returns page. */
 const HIDDEN_SETTING_KEYS = new Set<string>(['weekly_return_percentage']);
@@ -409,9 +408,6 @@ export function SettingsManager({ category }: SettingsManagerProps) {
               {cat.title}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="distribution-schedule">
-            Distribution Schedule
-          </TabsTrigger>
         </TabsList>
         {list.map((cat) => (
           <TabsContent key={cat.key} value={cat.key} className="mt-4">
@@ -436,9 +432,6 @@ export function SettingsManager({ category }: SettingsManagerProps) {
             </Card>
           </TabsContent>
         ))}
-        <TabsContent value="distribution-schedule" className="mt-4">
-          <CronSettingsPage />
-        </TabsContent>
       </Tabs>
     </div>
   );
