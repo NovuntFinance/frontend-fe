@@ -79,7 +79,7 @@ export function ProfileEditModal({
 }: ProfileEditModalProps) {
   const { user } = useAuth();
   const { updateUser } = useAuthStore();
-  const { data: profileData, refetch: refetchProfile } = useProfile();
+  const { data: profileData } = useProfile();
   const changePasswordMutation = useChangePassword();
   const requestOtpMutation = useRequestChangePasswordOtp();
   const [activeTab, setActiveTab] = useState('personal');
@@ -327,6 +327,38 @@ export function ProfileEditModal({
           {/* Security Tab */}
           <TabsContent value="security" className="mt-6">
             <div className="rounded-xl p-4 sm:p-5" style={neuSectionInset}>
+              {/* 2FA Reset Pending Notice & Setup CTA */}
+              {((profileData as any)?.twoFactorResetPending ||
+                (user as any)?.twoFactorResetPending) && (
+                <div className="mb-6 space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                  <div className="flex items-start gap-3">
+                    <Smartphone className="mt-0.5 h-5 w-5 text-amber-500" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                        Your 2FA was reset by an administrator
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        For your security, please set up a new two-factor
+                        authentication method using an authenticator app. Until
+                        you complete setup, your account is protected only by
+                        your password.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent('openTwoFactorModal')
+                          )
+                        }
+                        className="mt-2 inline-flex items-center rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-amber-600"
+                      >
+                        Set up 2FA now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <form
                 onSubmit={handlePasswordSubmit(onSubmitPassword)}
                 className="space-y-6"

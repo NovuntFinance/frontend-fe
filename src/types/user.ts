@@ -38,6 +38,7 @@ export interface User {
   phoneVerified?: boolean;
   twoFAEnabled?: boolean; // API uses twoFAEnabled
   twoFactorEnabled?: boolean; // Computed property for compatibility
+  twoFactorResetPending?: boolean; // Set when admin resets 2FA
   referralCode: string;
   referredBy?: string;
   totalInvested?: number;

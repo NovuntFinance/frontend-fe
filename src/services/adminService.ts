@@ -484,6 +484,18 @@ class AdminService {
   }
 
   /**
+   * Reset a user's 2FA (disable current secret/backup codes and mark reset pending)
+   * POST /api/v1/admin/users/:userId/disable-2fa
+   */
+  async resetUserTwoFA(userId: string, reason: string) {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post(`/admin/users/${userId}/disable-2fa`, {
+      reason,
+    });
+    return response.data;
+  }
+
+  /**
    * Change a user's role
    * PATCH /api/v1/admin/users/:userId/role
    */

@@ -288,7 +288,7 @@ export function TwoFactorModal({
       }
 
       // Update the user in auth store to reflect 2FA is now enabled
-      updateUser({ twoFAEnabled: true });
+      updateUser({ twoFAEnabled: true, twoFactorResetPending: false as any });
 
       setVerificationCode('');
       setIsEnabled(true);

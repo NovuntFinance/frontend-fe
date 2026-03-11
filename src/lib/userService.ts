@@ -1,10 +1,10 @@
 /**
  * User Service - Phase 1 Implementation
  * Handles user profile, KYC, and search operations
- * 
+ *
  * Backend API: http://localhost:5000/api/v1/users
  * Based on: PHASE_1_AUTHENTICATION_USER_MANAGEMENT.md
- * 
+ *
  * Phase 1 User Endpoints:
  * 1. GET /users/profile - Get authenticated user's complete profile
  * 2. PUT/PATCH /users/profile - Update user profile
@@ -35,6 +35,7 @@ export interface UserProfile {
   referralCode?: string;
   referralBonusBalance?: number;
   twoFAEnabled?: boolean;
+  twoFactorResetPending?: boolean;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -75,7 +76,7 @@ export interface UpdateProfilePayload {
   lname?: string;
   phoneNumber?: string;
   countryCode?: string;
-  
+
   // UserProfile fields
   firstName?: string;
   lastName?: string;
@@ -122,7 +123,7 @@ export interface KYCStatus {
 export interface UserSearchResult {
   _id: string;
   username: string;
-  email?: string;  // May be masked
+  email?: string; // May be masked
   fullName?: string;
   memberSince?: string;
 }
@@ -147,8 +148,12 @@ export interface UploadKYCResponse {
 
 type InternalUserProfileResponse = ApiResponse<UserProfile>;
 type InternalKYCStatusResponse = ApiResponse<KYCStatus>;
-type InternalUserSearchResponse = UserSearchResponse | ApiResponse<UserSearchResponse>;
-type InternalUploadKYCResponse = UploadKYCResponse | ApiResponse<UploadKYCResponse>;
+type InternalUserSearchResponse =
+  | UserSearchResponse
+  | ApiResponse<UserSearchResponse>;
+type InternalUploadKYCResponse =
+  | UploadKYCResponse
+  | ApiResponse<UploadKYCResponse>;
 type InternalGenericResponse = ApiResponse<{ message?: string }>;
 
 // ============================================
@@ -170,13 +175,13 @@ export const userService = {
    * PUT /api/v1/users/profile (updated endpoint)
    * @param payload - Profile update data (partial updates supported)
    * @returns Updated user profile
-   * 
+   *
    * Registration Bonus Required Fields:
    * - dateOfBirth: "YYYY-MM-DD" format
    * - gender: "male", "female", "other", or "prefer_not_to_say"
    * - profilePhoto: Profile photo URL
    * - address: Address object with street, city, state, country, postalCode
-   * 
+   *
    * Auto-Geocoding:
    * - Backend automatically geocodes address using city + country
    * - Populates coordinates.latitude and coordinates.longitude
@@ -184,44 +189,76 @@ export const userService = {
    * - Supports 30+ cities and 15+ countries (offline, instant)
    * - Handles abbreviations: USA/US, UK/GB, NG/Nigeria, etc.
    */
-  updateProfile: async (payload: UpdateProfilePayload & { userId?: string }): Promise<InternalUserProfileResponse> => {
-    console.log('[userService.updateProfile] Sending PATCH request to /users/profile');
-    console.log('[userService.updateProfile] Payload:', JSON.stringify(payload, null, 2));
-    console.log('[userService.updateProfile] User ID from payload:', (payload as any).userId);
-    
+  updateProfile: async (
+    payload: UpdateProfilePayload & { userId?: string }
+  ): Promise<InternalUserProfileResponse> => {
+    console.log(
+      '[userService.updateProfile] Sending PATCH request to /users/profile'
+    );
+    console.log(
+      '[userService.updateProfile] Payload:',
+      JSON.stringify(payload, null, 2)
+    );
+    console.log(
+      '[userService.updateProfile] User ID from payload:',
+      (payload as any).userId
+    );
+
     // Extract userId if provided (for fallback endpoint)
     const userId = (payload as any).userId;
     delete (payload as any).userId; // Remove userId from payload before sending
-    
+
     // Try PATCH /users/profile first (standard endpoint for updating own profile)
     try {
-      const response = await api.patch<InternalUserProfileResponse>('/users/profile', payload);
+      const response = await api.patch<InternalUserProfileResponse>(
+        '/users/profile',
+        payload
+      );
       console.log('[userService.updateProfile] Success response:', response);
       return response;
     } catch (error: any) {
       // If PATCH returns 404 and we have userId, try user-specific endpoint
       if (error?.response?.status === 404 && userId) {
-        console.warn('[userService.updateProfile] PATCH /users/profile returned 404, trying /users/user/:id endpoint...');
+        console.warn(
+          '[userService.updateProfile] PATCH /users/profile returned 404, trying /users/user/:id endpoint...'
+        );
         try {
-          const response = await api.patch<InternalUserProfileResponse>(`/users/user/${userId}`, payload);
-          console.log('[userService.updateProfile] User ID endpoint success:', response);
+          const response = await api.patch<InternalUserProfileResponse>(
+            `/users/user/${userId}`,
+            payload
+          );
+          console.log(
+            '[userService.updateProfile] User ID endpoint success:',
+            response
+          );
           return response;
         } catch (userIdError: any) {
-          console.error('[userService.updateProfile] User ID endpoint also failed:', {
-            message: userIdError?.message,
-            statusCode: userIdError?.response?.status,
-            responseData: userIdError?.response?.data,
-          });
+          console.error(
+            '[userService.updateProfile] User ID endpoint also failed:',
+            {
+              message: userIdError?.message,
+              statusCode: userIdError?.response?.status,
+              responseData: userIdError?.response?.data,
+            }
+          );
           // Fall through to try PUT
         }
       }
-      
+
       // If PATCH failed, try PUT as fallback
       if (error?.response?.status === 404) {
-        console.warn('[userService.updateProfile] PATCH returned 404, trying PUT instead...');
+        console.warn(
+          '[userService.updateProfile] PATCH returned 404, trying PUT instead...'
+        );
         try {
-          const response = await api.put<InternalUserProfileResponse>('/users/profile', payload);
-          console.log('[userService.updateProfile] PUT success response:', response);
+          const response = await api.put<InternalUserProfileResponse>(
+            '/users/profile',
+            payload
+          );
+          console.log(
+            '[userService.updateProfile] PUT success response:',
+            response
+          );
           return response;
         } catch (putError: any) {
           console.error('[userService.updateProfile] PUT also failed:', {
@@ -258,7 +295,9 @@ export const userService = {
    * @param payload - Document type and image URLs
    * @returns Upload confirmation
    */
-  uploadKYC: async (payload: UploadKYCPayload): Promise<InternalUploadKYCResponse> => {
+  uploadKYC: async (
+    payload: UploadKYCPayload
+  ): Promise<InternalUploadKYCResponse> => {
     return api.post<InternalUploadKYCResponse>('/users/kyc/upload', payload);
   },
 
@@ -300,10 +339,16 @@ export const userService = {
    * @param profilePicture - Image URL (should be uploaded to Cloudinary/S3 first)
    * @returns Success message with updated profile picture URL
    */
-  updateProfilePicture: async (id: string, profilePicture: string): Promise<InternalGenericResponse & { profilePicture?: string }> => {
-    return api.patch<InternalGenericResponse & { profilePicture?: string }>(`/users/user/${id}/profile-picture`, {
-      profilePicture,
-    });
+  updateProfilePicture: async (
+    id: string,
+    profilePicture: string
+  ): Promise<InternalGenericResponse & { profilePicture?: string }> => {
+    return api.patch<InternalGenericResponse & { profilePicture?: string }>(
+      `/users/user/${id}/profile-picture`,
+      {
+        profilePicture,
+      }
+    );
   },
 
   /**
@@ -312,10 +357,14 @@ export const userService = {
    * @param referralCode - Referral code to validate
    * @returns Validation result with referrer name if valid
    */
-  validateReferralCode: async (referralCode: string): Promise<ApiResponse<{ isValid: boolean; referrerName?: string }>> => {
-    return api.get<ApiResponse<{ isValid: boolean; referrerName?: string }>>('/referral/validate', {
-      params: { referralCode },
-    });
+  validateReferralCode: async (
+    referralCode: string
+  ): Promise<ApiResponse<{ isValid: boolean; referrerName?: string }>> => {
+    return api.get<ApiResponse<{ isValid: boolean; referrerName?: string }>>(
+      '/referral/validate',
+      {
+        params: { referralCode },
+      }
+    );
   },
 };
-

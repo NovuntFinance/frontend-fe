@@ -236,6 +236,7 @@ export function useProfile(
           rank: 'Stakeholder' as const,
           emailVerified: true,
           twoFAEnabled: backendProfile.twoFAEnabled,
+          twoFactorResetPending: backendProfile.twoFactorResetPending ?? false,
           referralCode: backendProfile.referralCode || '',
           isActive: backendProfile.isActive ?? true,
           createdAt: backendProfile.createdAt || new Date().toISOString(),
@@ -309,6 +310,7 @@ export function useProfile(
               totalReferralEarnings: 0,
               totalBonuses: 0,
             },
+            twoFactorResetPending: false,
           } as FrontendUserProfile;
         }
 
@@ -787,8 +789,12 @@ export function useRosCalendarData(year: number, month: number) {
     staleTime: 30 * 1000, // Consider stale after 30s
     gcTime: 5 * 60 * 1000,
     retry: (failureCount, error: unknown) => {
-      const err = error as { statusCode?: number; response?: { status?: number } };
-      if (err?.statusCode === 404 || err?.response?.status === 404) return false;
+      const err = error as {
+        statusCode?: number;
+        response?: { status?: number };
+      };
+      if (err?.statusCode === 404 || err?.response?.status === 404)
+        return false;
       return failureCount < 2;
     },
   });

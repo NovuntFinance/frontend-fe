@@ -11,6 +11,7 @@ import {
   useDeleteUser,
   useForceLogoutUser,
   useUpdateUserStatus,
+  useResetUserTwoFA,
 } from '@/lib/mutations';
 import { AddUserModal } from '@/components/admin/AddUserModal';
 import { AddAdminModal } from '@/components/admin/AddAdminModal';
@@ -19,6 +20,7 @@ import { adminAuthService } from '@/services/adminAuthService';
 import { usePermissions } from '@/hooks/usePermissions';
 import { CriticalActionDialog } from '@/components/dialogs/CriticalActionDialog';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,8 +106,14 @@ export default function UsersPage() {
   const forceLogoutUser = useForceLogoutUser();
   const changeUserRole = useChangeUserRole();
   const deleteUser = useDeleteUser();
+  const resetUserTwoFA = useResetUserTwoFA();
 
-  type UserActionType = 'status' | 'forceLogout' | 'role' | 'delete';
+  type UserActionType =
+    | 'status'
+    | 'forceLogout'
+    | 'role'
+    | 'delete'
+    | 'reset2FA';
   const [actionOpen, setActionOpen] = useState(false);
   const [actionType, setActionType] = useState<UserActionType>('status');
   const [actionUser, setActionUser] = useState<AdminUser | null>(null);
@@ -149,13 +157,21 @@ export default function UsersPage() {
 
   const confirmAction = async () => {
     if (!actionUser) return;
-    if (!actionReason.trim()) return;
+    const trimmedReason = actionReason.trim();
+    if (!trimmedReason) {
+      toast.error('Reason is required');
+      return;
+    }
+    if (actionType === 'reset2FA' && trimmedReason.length < 10) {
+      toast.error('Reason must be at least 10 characters long');
+      return;
+    }
 
     if (actionType === 'status') {
       updateUserStatus.mutate({
         userId: actionUser.id,
         status: actionStatus,
-        reason: actionReason.trim(),
+        reason: trimmedReason,
       });
       return;
     }
@@ -163,7 +179,7 @@ export default function UsersPage() {
     if (actionType === 'forceLogout') {
       forceLogoutUser.mutate({
         userId: actionUser.id,
-        reason: actionReason.trim(),
+        reason: trimmedReason,
       });
       return;
     }
@@ -172,7 +188,7 @@ export default function UsersPage() {
       changeUserRole.mutate({
         userId: actionUser.id,
         role: actionRole,
-        reason: actionReason.trim(),
+        reason: trimmedReason,
       });
       return;
     }
@@ -180,8 +196,16 @@ export default function UsersPage() {
     if (actionType === 'delete') {
       deleteUser.mutate({
         userId: actionUser.id,
-        reason: actionReason.trim(),
+        reason: trimmedReason,
         mode: deleteMode,
+      });
+      return;
+    }
+
+    if (actionType === 'reset2FA') {
+      resetUserTwoFA.mutate({
+        userId: actionUser.id,
+        reason: trimmedReason,
       });
     }
   };
@@ -867,6 +891,15 @@ export default function UsersPage() {
                             </DropdownMenuItem>
                           )}
 
+                          {isSuperAdmin && (
+                            <DropdownMenuItem
+                              onClick={() => openAction('reset2FA', user)}
+                              variant="default"
+                            >
+                              Reset 2FA
+                            </DropdownMenuItem>
+                          )}
+
                           {canRoleChange && (
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
@@ -1104,7 +1137,11 @@ export default function UsersPage() {
       <CriticalActionDialog
         open={actionOpen}
         onOpenChange={setActionOpen}
-        type={actionType === 'delete' ? 'warning' : 'confirm'}
+        type={
+          actionType === 'delete' || actionType === 'reset2FA'
+            ? 'warning'
+            : 'confirm'
+        }
         title={
           actionType === 'status'
             ? `Confirm status change`
@@ -1112,7 +1149,9 @@ export default function UsersPage() {
               ? `Force logout user`
               : actionType === 'role'
                 ? `Change user role`
-                : `Delete user`
+                : actionType === 'reset2FA'
+                  ? `Reset 2FA for user`
+                  : `Delete user`
         }
         description={
           actionType === 'status'
@@ -1121,7 +1160,9 @@ export default function UsersPage() {
               ? `You're about to revoke this user's sessions. This action is audited and requires a reason.`
               : actionType === 'role'
                 ? `You're about to change this user's role to "${actionRole}". This action is audited and requires a reason.`
-                : `You're about to delete this user (${deleteMode}). This action is audited, requires a reason, and requires 2FA.`
+                : actionType === 'reset2FA'
+                  ? `Resetting 2FA will disable this user's existing authenticator and backup codes, and mark their account to require a fresh 2FA setup from Settings. Only perform this if the user has lost access to their device or exhausted all backup codes. This action is audited and requires a clear reason.`
+                  : `You're about to delete this user (${deleteMode}). This action is audited, requires a reason, and requires 2FA.`
         }
         confirmText={
           actionType === 'delete'
@@ -1130,7 +1171,9 @@ export default function UsersPage() {
               ? 'Force logout'
               : actionType === 'role'
                 ? 'Change role'
-                : 'Confirm'
+                : actionType === 'reset2FA'
+                  ? 'Confirm reset'
+                  : 'Confirm'
         }
         onConfirm={confirmAction}
         details={

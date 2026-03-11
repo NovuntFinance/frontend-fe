@@ -1372,6 +1372,56 @@ export function useForceLogoutUser() {
 }
 
 /**
+ * Reset user 2FA (Super Admin only)
+ * POST /api/v1/admin/users/:userId/disable-2fa
+ */
+export function useResetUserTwoFA() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
+      const { adminService } = await import('@/services/adminService');
+      return adminService.resetUserTwoFA(userId, reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      toast.success('2FA reset successfully');
+    },
+    onError: (error: any) => {
+      const status = error?.response?.status;
+      const backendMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message;
+
+      let message: string;
+      switch (status) {
+        case 400:
+          message =
+            backendMessage || 'Reason must be at least 10 characters long';
+          break;
+        case 403:
+          message = 'You do not have permission to reset 2FA for this user';
+          break;
+        case 404:
+          message = 'User not found';
+          break;
+        default:
+          message = backendMessage || 'Failed to reset 2FA';
+      }
+
+      toast.error(message);
+    },
+  });
+}
+
+/**
  * Change user role
  * PATCH /api/v1/admin/users/:userId/role
  */
