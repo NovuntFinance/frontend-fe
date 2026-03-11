@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { tradingSignalsAPI, TradingSignal } from '@/services/tradingSignalsAPI';
 import { formatErrorForLog } from '@/lib/error-utils';
@@ -243,11 +244,22 @@ export function LiveTradingSignals() {
   }, [trades.length]);
 
   const currentTrade = trades.length > 0 ? trades[currentIndex] : null;
+  const router = useRouter();
 
   return (
     <div
-      className="overflow-hidden rounded-2xl transition-shadow duration-300"
+      className="cursor-pointer overflow-hidden rounded-2xl transition-shadow duration-300"
       style={CARD_STYLE}
+      onClick={() => router.push('/dashboard/trading-signals')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          router.push('/dashboard/trading-signals');
+        }
+      }}
+      role="link"
+      tabIndex={0}
+      aria-label="View all trading signals"
     >
       <div className="px-7 py-3 sm:px-8 sm:py-4">
         <div className="relative min-h-[56px]">

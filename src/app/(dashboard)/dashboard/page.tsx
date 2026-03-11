@@ -685,13 +685,13 @@ export default function DashboardPage() {
     walletStats.totalStaked ??
     0;
 
-  // Total Earnings - prioritize overview, then wallet balance, then walletStats
-  const totalEarningsFromOverview = overview?.staking?.totalEarnings;
-  const totalEarningsFromBalance = walletBalance?.earnings?.balance ?? 0;
+  // Total Earnings - walletStats.totalEarned is the most accurate source
+  // (aggregated from all completed earnings transactions in the DB).
+  // Fallback to overview or wallet balance if unavailable.
   const totalEarnings =
-    totalEarningsFromOverview ??
-    totalEarningsFromBalance ??
     walletStats.totalEarned ??
+    overview?.staking?.totalEarnings ??
+    walletBalance?.earnings?.balance ??
     0;
 
   // Total Deposited - prioritize walletStats (most accurate source)
@@ -844,8 +844,8 @@ export default function DashboardPage() {
                                 ? `$${(totalEarned ?? 0).toLocaleString(
                                     'en-US',
                                     {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
+                                      minimumFractionDigits: 4,
+                                      maximumFractionDigits: 4,
                                     }
                                   )}`
                                 : '••••••'}
@@ -926,8 +926,8 @@ export default function DashboardPage() {
                                 ? `$${(totalStaked ?? 0).toLocaleString(
                                     'en-US',
                                     {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
+                                      minimumFractionDigits: 4,
+                                      maximumFractionDigits: 4,
                                     }
                                   )}`
                                 : '••••••'}
@@ -1008,8 +1008,8 @@ export default function DashboardPage() {
                                 ? `$${(totalDeposited ?? 0).toLocaleString(
                                     'en-US',
                                     {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
+                                      minimumFractionDigits: 4,
+                                      maximumFractionDigits: 4,
                                     }
                                   )}`
                                 : '••••••'}
@@ -1090,8 +1090,8 @@ export default function DashboardPage() {
                                 ? `$${(totalWithdrawn ?? 0).toLocaleString(
                                     'en-US',
                                     {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
+                                      minimumFractionDigits: 4,
+                                      maximumFractionDigits: 4,
                                     }
                                   )}`
                                 : '••••••'}

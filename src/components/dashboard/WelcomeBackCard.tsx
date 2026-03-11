@@ -120,8 +120,8 @@ export function WelcomeBackCard({
             >
               $
               {totalAssets.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: 4,
+                maximumFractionDigits: 4,
               })}
             </motion.div>
           ) : (
@@ -165,7 +165,7 @@ export function WelcomeBackCard({
                 : btcError
                   ? 'BTC error'
                   : totalAssetsBTC
-                    ? `${totalAssetsBTC.toFixed(6)} BTC`
+                    ? `${totalAssetsBTC.toFixed(8)} BTC`
                     : ''}
           </div>
         </div>
