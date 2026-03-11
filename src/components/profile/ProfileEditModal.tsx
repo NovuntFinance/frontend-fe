@@ -328,8 +328,7 @@ export function ProfileEditModal({
           <TabsContent value="security" className="mt-6">
             <div className="rounded-xl p-4 sm:p-5" style={neuSectionInset}>
               {/* 2FA Reset Pending Notice & Setup CTA */}
-              {((profileData as any)?.twoFactorResetPending ||
-                (user as any)?.twoFactorResetPending) && (
+              {(user as any)?.twoFactorResetPending && (
                 <div className="mb-6 space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
                   <div className="flex items-start gap-3">
                     <Smartphone className="mt-0.5 h-5 w-5 text-amber-500" />
