@@ -1032,7 +1032,8 @@ export function TodayDistributionForm({
               <p className="text-sm text-amber-600 dark:text-amber-300">
                 This will clear today&apos;s distribution and reset the status
                 to EMPTY so you can queue a fresh distribution. Already
-                completed slot payouts (wallet credits) will NOT be reversed.
+                completed slot payouts will be fully reversed (wallet credits
+                deducted, transactions removed, stake history cleaned).
               </p>
             </div>
           </CardContent>
