@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Transaction as EnhancedTransaction } from '@/types/enhanced-transaction';
 import type { Transaction as LegacyTransaction } from '@/types/transaction';
+import { useRouter } from 'next/navigation';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { isStakeTransactionType } from '@/lib/utils/wallet';
 import { useUIStore } from '@/store/uiStore';
@@ -198,6 +199,11 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
   const currentTransaction =
     safeTransactions.length > 0 ? safeTransactions[currentIndex] : null;
   const openModal = useUIStore((s) => s.openModal);
+  const router = useRouter();
+
+  const navigateToTransactionHistory = () => {
+    router.push('/dashboard/stakes#transaction-history');
+  };
 
   return (
     <div className="lg:w-full">
@@ -207,29 +213,27 @@ export function ActivityFeed({ transactions, isLoading }: ActivityFeedProps) {
         transition={{ delay: 0.5 }}
       >
         <div
-          className="rounded-2xl px-7 py-3 transition-all duration-300 sm:px-8 sm:py-4"
+          className="cursor-pointer rounded-2xl px-7 py-3 transition-all duration-300 sm:px-8 sm:py-4"
           style={{
             background: 'var(--neu-bg)',
             boxShadow: 'var(--neu-shadow-raised)',
             border: '1px solid var(--neu-border)',
           }}
+          onClick={navigateToTransactionHistory}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToTransactionHistory();
+            }
+          }}
+          role="link"
+          tabIndex={0}
+          aria-label="View transaction history"
         >
           {/* Content Section - stat-card layout: label + value row + status badge */}
           <div className="relative min-h-[64px]">
             {isLoading || safeTransactions.length === 0 ? (
-              <div
-                className="w-full cursor-pointer"
-                onClick={() => openModal('deposit')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openModal('deposit');
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-label="No activity yet, make a deposit to get started"
-              >
+              <div className="w-full">
                 <div className="mb-1">
                   <p
                     className="text-left text-xs font-semibold sm:text-sm"

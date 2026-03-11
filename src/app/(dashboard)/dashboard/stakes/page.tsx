@@ -28,6 +28,17 @@ export default function StakesPage() {
   const [showAllActive, setShowAllActive] = React.useState(false);
   const [showAllCompleted, setShowAllCompleted] = React.useState(false);
 
+  React.useEffect(() => {
+    if (window.location.hash === '#transaction-history') {
+      const timeout = setTimeout(() => {
+        document
+          .getElementById('transaction-history')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, []);
+
   // ✅ Auto-refresh logic: Re-fetch dashboard data at 00:00:00 BIT (1 PM Nigeria Time)
   // This ensures the UI updates the moment masked "Today's Profit" becomes available
   React.useEffect(() => {
@@ -281,6 +292,7 @@ export default function StakesPage() {
 
         {/* Transaction History – full platform history with search and filters */}
         <motion.div
+          id="transaction-history"
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
           animate={reducedMotion ? false : { opacity: 1, y: 0 }}
           transition={{ delay: 0.85 }}
