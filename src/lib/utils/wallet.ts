@@ -20,8 +20,8 @@ export function formatCurrency(
 ): string {
   const {
     currency = 'USDT',
-    minimumFractionDigits = 2,
-    maximumFractionDigits = 2,
+    minimumFractionDigits = 4,
+    maximumFractionDigits = 4,
     showCurrency = true,
   } = options;
 
@@ -285,10 +285,7 @@ export function formatAmountWithDirection(
 export function isStakeTransactionType(type: string): boolean {
   const t = type?.toLowerCase() ?? '';
   return (
-    t === 'stake' ||
-    t === 'stake_created' ||
-    t === 'staked' ||
-    t === 'unstake'
+    t === 'stake' || t === 'stake_created' || t === 'staked' || t === 'unstake'
   );
 }
 

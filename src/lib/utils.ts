@@ -15,8 +15,8 @@ export function formatCurrency(
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency === 'USDT' ? 'USD' : currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
   }).format(amount);
 }
 

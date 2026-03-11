@@ -41,7 +41,9 @@ import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 
 export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<TransactionStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<TransactionStatus | 'all'>(
+    'all'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -90,10 +92,12 @@ export default function TransactionsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <NovuntSpinner size="lg" className="mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading transactions...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading transactions...
+          </p>
         </div>
       </div>
     );
@@ -101,10 +105,10 @@ export default function TransactionsPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="max-w-md text-center">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
             Failed to Load Transactions
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
@@ -123,7 +127,7 @@ export default function TransactionsPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Transaction History
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="mt-1 text-gray-600 dark:text-gray-400">
             View all your transactions and activities
           </p>
         </div>
@@ -132,21 +136,21 @@ export default function TransactionsPage() {
           variant="outline"
           className="hidden md:flex"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {/* Search */}
           <div className="md:col-span-2">
-            <Label htmlFor="search" className="text-sm mb-2 block">
+            <Label htmlFor="search" className="mb-2 block text-sm">
               Search
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="search"
                 placeholder="Search transactions..."
@@ -162,7 +166,7 @@ export default function TransactionsPage() {
 
           {/* Type Filter */}
           <div>
-            <Label htmlFor="type-filter" className="text-sm mb-2 block">
+            <Label htmlFor="type-filter" className="mb-2 block text-sm">
               Type
             </Label>
             <Select
@@ -190,7 +194,7 @@ export default function TransactionsPage() {
 
           {/* Status Filter */}
           <div>
-            <Label htmlFor="status-filter" className="text-sm mb-2 block">
+            <Label htmlFor="status-filter" className="mb-2 block text-sm">
               Status
             </Label>
             <Select
@@ -230,55 +234,70 @@ export default function TransactionsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 * index }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                className="rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-gray-300 md:p-6 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
               >
                 <div className="flex items-center gap-4">
                   {/* Icon */}
-                  <div className={`p-3 rounded-xl ${typeColor.bg}`}>
-                    <TypeIcon className={`w-6 h-6 ${typeColor.icon}`} />
+                  <div className={`rounded-xl p-3 ${typeColor.bg}`}>
+                    <TypeIcon className={`h-6 w-6 ${typeColor.icon}`} />
                   </div>
 
                   {/* Info */}
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
                           {getTransactionTypeLabel(transaction.type)}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        <p className="truncate text-sm text-gray-600 dark:text-gray-400">
                           {transaction.description}
                         </p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                        <div className="mt-2 flex items-center gap-4">
+                          <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
+                            <Calendar className="h-3 w-3" />
                             {formatDate(transaction.createdAt)}
                           </span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${statusColor.bg} ${statusColor.text}`}>
-                            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs ${statusColor.bg} ${statusColor.text}`}
+                          >
+                            {transaction.status.charAt(0).toUpperCase() +
+                              transaction.status.slice(1)}
                           </span>
                         </div>
                       </div>
 
                       {/* Amount */}
                       <div className="text-right">
-                        <p className={`text-xl font-bold ${
-                          transaction.type === 'deposit' || transaction.type === 'roi' || transaction.type === 'bonus' || transaction.type === 'referral'
-                            ? 'text-emerald-600 dark:text-emerald-400'
+                        <p
+                          className={`text-xl font-bold ${
+                            transaction.type === 'deposit' ||
+                            transaction.type === 'roi' ||
+                            transaction.type === 'bonus' ||
+                            transaction.type === 'referral'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : transaction.type === 'withdrawal'
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-gray-900 dark:text-white'
+                          }`}
+                        >
+                          {transaction.type === 'deposit' ||
+                          transaction.type === 'roi' ||
+                          transaction.type === 'bonus' ||
+                          transaction.type === 'referral'
+                            ? '+'
                             : transaction.type === 'withdrawal'
-                            ? 'text-red-600 dark:text-red-400'
-                            : 'text-gray-900 dark:text-white'
-                        }`}>
-                          {transaction.type === 'deposit' || transaction.type === 'roi' || transaction.type === 'bonus' || transaction.type === 'referral' ? '+' : transaction.type === 'withdrawal' ? '-' : ''}
-                          ${transaction.amount.toFixed(2)}
+                              ? '-'
+                              : ''}
+                          ${transaction.amount.toFixed(4)}
                         </p>
                         {transaction.fee && transaction.fee > 0 && (
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Fee: ${transaction.fee.toFixed(2)}
+                            Fee: ${transaction.fee.toFixed(4)}
                           </p>
                         )}
                         {transaction.netAmount && (
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Net: ${transaction.netAmount.toFixed(2)}
+                            Net: ${transaction.netAmount.toFixed(4)}
                           </p>
                         )}
                       </div>
@@ -286,11 +305,13 @@ export default function TransactionsPage() {
 
                     {/* Metadata */}
                     {transaction.metadata && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                        <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
                           {transaction.metadata.recipientUsername && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">To:</span>{' '}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                To:
+                              </span>{' '}
                               <span className="font-medium text-gray-900 dark:text-white">
                                 @{transaction.metadata.recipientUsername}
                               </span>
@@ -298,7 +319,9 @@ export default function TransactionsPage() {
                           )}
                           {transaction.metadata.senderUsername && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">From:</span>{' '}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                From:
+                              </span>{' '}
                               <span className="font-medium text-gray-900 dark:text-white">
                                 @{transaction.metadata.senderUsername}
                               </span>
@@ -306,7 +329,9 @@ export default function TransactionsPage() {
                           )}
                           {transaction.metadata.network && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Network:</span>{' '}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                Network:
+                              </span>{' '}
                               <span className="font-medium text-gray-900 dark:text-white">
                                 {transaction.metadata.network}
                               </span>
@@ -314,15 +339,20 @@ export default function TransactionsPage() {
                           )}
                           {transaction.metadata.txHash && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">TX Hash:</span>{' '}
-                              <span className="font-medium text-gray-900 dark:text-white font-mono">
-                                {transaction.metadata.txHash.substring(0, 10)}...
+                              <span className="text-gray-500 dark:text-gray-400">
+                                TX Hash:
+                              </span>{' '}
+                              <span className="font-mono font-medium text-gray-900 dark:text-white">
+                                {transaction.metadata.txHash.substring(0, 10)}
+                                ...
                               </span>
                             </div>
                           )}
                           {transaction.metadata.week && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Week:</span>{' '}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                Week:
+                              </span>{' '}
                               <span className="font-medium text-gray-900 dark:text-white">
                                 {transaction.metadata.week}
                               </span>
@@ -330,8 +360,10 @@ export default function TransactionsPage() {
                           )}
                           {transaction.metadata.bonusType && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Bonus Type:</span>{' '}
-                              <span className="font-medium text-gray-900 dark:text-white capitalize">
+                              <span className="text-gray-500 dark:text-gray-400">
+                                Bonus Type:
+                              </span>{' '}
+                              <span className="font-medium text-gray-900 capitalize dark:text-white">
                                 {transaction.metadata.bonusType}
                               </span>
                             </div>
@@ -349,21 +381,23 @@ export default function TransactionsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center border-2 border-dashed border-gray-300 dark:border-gray-700"
+          className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800"
         >
-          <div className="max-w-md mx-auto">
-            <div className="p-4 bg-gray-100 dark:bg-gray-900/30 rounded-full inline-block mb-4">
-              <FileText className="w-12 h-12 text-gray-400" />
+          <div className="mx-auto max-w-md">
+            <div className="mb-4 inline-block rounded-full bg-gray-100 p-4 dark:bg-gray-900/30">
+              <FileText className="h-12 w-12 text-gray-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">
               No Transactions Found
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="mb-4 text-gray-600 dark:text-gray-400">
               {typeFilter !== 'all' || statusFilter !== 'all' || searchQuery
                 ? 'Try adjusting your filters or search query'
                 : "You haven't made any transactions yet. Start by making a deposit!"}
             </p>
-            {(typeFilter !== 'all' || statusFilter !== 'all' || searchQuery) && (
+            {(typeFilter !== 'all' ||
+              statusFilter !== 'all' ||
+              searchQuery) && (
               <Button
                 onClick={() => {
                   setTypeFilter('all');
@@ -372,7 +406,7 @@ export default function TransactionsPage() {
                 }}
                 variant="outline"
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="mr-2 h-4 w-4" />
                 Clear Filters
               </Button>
             )}
@@ -382,11 +416,15 @@ export default function TransactionsPage() {
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to{' '}
-            {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of{' '}
-            {pagination.totalItems} transactions
+            Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}{' '}
+            to{' '}
+            {Math.min(
+              pagination.currentPage * pagination.itemsPerPage,
+              pagination.totalItems
+            )}{' '}
+            of {pagination.totalItems} transactions
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -395,7 +433,7 @@ export default function TransactionsPage() {
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={!pagination.hasPrevPage}
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              <ChevronLeft className="mr-1 h-4 w-4" />
               Previous
             </Button>
             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -408,7 +446,7 @@ export default function TransactionsPage() {
               disabled={!pagination.hasNextPage}
             >
               Next
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>
