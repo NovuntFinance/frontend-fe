@@ -663,15 +663,13 @@ export default function DashboardPage() {
     (walletBalance?.funded?.balance || 0) +
       (walletBalance?.earnings?.balance || 0);
 
-  // Total Staked - prioritize overview, then calculate from activeStakes, then walletStats
-  // Handle different response formats from useActiveStakes
+  // Total Staked - walletStats.totalStaked is the most accurate (cumulative from wallet, incremented on each stake).
+  // overview/activeStakes can undercount (e.g. active-only sum excludes completed stakes).
   const activeStakesArray = Array.isArray(activeStakes)
     ? activeStakes
     : (activeStakes as any)?.data?.activeStakes ||
       (activeStakes as any)?.activeStakes ||
       [];
-
-  const totalStakedFromOverview = overview?.staking?.totalStaked;
   const totalStakedFromActiveStakes =
     activeStakesArray.length > 0
       ? activeStakesArray.reduce((sum: number, stake: any) => {
@@ -680,9 +678,9 @@ export default function DashboardPage() {
         }, 0)
       : 0;
   const totalStaked =
-    totalStakedFromOverview ??
-    totalStakedFromActiveStakes ??
     walletStats.totalStaked ??
+    overview?.staking?.totalStaked ??
+    totalStakedFromActiveStakes ??
     0;
 
   // Total Earnings - walletStats.totalEarned is the most accurate source

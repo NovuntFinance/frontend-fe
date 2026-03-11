@@ -142,7 +142,6 @@ export function WalletDashboard() {
     : (activeStakes as any)?.data?.activeStakes ||
       (activeStakes as any)?.activeStakes ||
       [];
-  const totalStakedFromOverview = overview?.staking?.totalStaked;
   const totalStakedFromActiveStakes =
     activeStakesArray.length > 0
       ? activeStakesArray.reduce((sum: number, stake: any) => {
@@ -151,9 +150,9 @@ export function WalletDashboard() {
         }, 0)
       : 0;
   const calculatedTotalStaked =
-    totalStakedFromOverview ??
-    totalStakedFromActiveStakes ??
     baseStatistics.totalStaked ??
+    overview?.staking?.totalStaked ??
+    totalStakedFromActiveStakes ??
     0;
   const statistics = { ...baseStatistics, totalStaked: calculatedTotalStaked };
 
