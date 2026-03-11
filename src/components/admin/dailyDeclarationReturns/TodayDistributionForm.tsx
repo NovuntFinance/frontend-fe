@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QualifierCounts } from '@/components/admin/pool/QualifierCounts';
 import { MultiSlotRosInput } from './MultiSlotRosInput';
+import { QuickRosDistributor } from './QuickRosDistributor';
 import { SlotStatusCard } from './SlotStatusCard';
 import { ShimmerCard } from '@/components/ui/shimmer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -311,6 +312,41 @@ export function TodayDistributionForm({
     },
   });
 
+  // Force reset distribution mutation
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      return await dailyDeclarationReturnsService.forceResetDistribution();
+    },
+    onSuccess: () => {
+      toast.success(
+        'Distribution force-reset successfully. You can now queue a fresh distribution.'
+      );
+      refetch();
+      setShowResetConfirm(false);
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to force-reset distribution';
+      toast.error(errorMessage);
+      setShowResetConfirm(false);
+    },
+  });
+
+  const handleForceReset = () => {
+    if (showResetConfirm) {
+      resetMutation.mutate();
+    } else {
+      setShowResetConfirm(true);
+    }
+  };
+
+  const isResetting = resetMutation.isPending;
+
   // Handle trigger/save
   const handleTrigger = async () => {
     const validationError = validateForm();
@@ -533,18 +569,26 @@ export function TodayDistributionForm({
                 </AlertDescription>
               </Alert>
             ) : cronSettings ? (
-              <MultiSlotRosInput
-                slots={cronSettings.slots}
-                rosValues={multiSlotRosValues}
-                onChange={(slotNumber, value) => {
-                  setMultiSlotRosValues((prev) => ({
-                    ...prev,
-                    [slotNumber]: value,
-                  }));
-                }}
-                disabled={isFormDisabled && !isEditing}
-                slotStatuses={statusData?.distributionSlots}
-              />
+              <div className="space-y-4">
+                <QuickRosDistributor
+                  slotCount={cronSettings.slots.length}
+                  slotNumbers={cronSettings.slots.map((_, i) => i + 1)}
+                  onDistribute={(values) => setMultiSlotRosValues(values)}
+                  disabled={isFormDisabled && !isEditing}
+                />
+                <MultiSlotRosInput
+                  slots={cronSettings.slots}
+                  rosValues={multiSlotRosValues}
+                  onChange={(slotNumber, value) => {
+                    setMultiSlotRosValues((prev) => ({
+                      ...prev,
+                      [slotNumber]: value,
+                    }));
+                  }}
+                  disabled={isFormDisabled && !isEditing}
+                  slotStatuses={statusData?.distributionSlots}
+                />
+              </div>
             ) : (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -934,6 +978,30 @@ export function TodayDistributionForm({
             )}
           </>
         )}
+
+        {status !== 'EMPTY' && !isEditing && (
+          <>
+            <Button
+              onClick={handleForceReset}
+              variant="destructive"
+              disabled={isResetting}
+              size="lg"
+              className="gap-2"
+            >
+              {isResetting && <Loader2 className="h-4 w-4 animate-spin" />}
+              🔄 {showResetConfirm ? 'Confirm Reset' : 'Force Reset'}
+            </Button>
+            {showResetConfirm && (
+              <Button
+                onClick={() => setShowResetConfirm(false)}
+                variant="outline"
+                size="lg"
+              >
+                No, Keep It
+              </Button>
+            )}
+          </>
+        )}
       </div>
 
       {showCancelConfirm && status === 'PENDING' && (
@@ -947,6 +1015,24 @@ export function TodayDistributionForm({
               <p className="text-sm text-red-600 dark:text-red-300">
                 This will cancel the scheduled distribution. This action cannot
                 be undone.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showResetConfirm && (
+        <Card className="border-2 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
+          <CardContent className="flex items-start gap-3 pt-6">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div>
+              <p className="font-semibold text-amber-600 dark:text-amber-400">
+                Force Reset — Are you sure?
+              </p>
+              <p className="text-sm text-amber-600 dark:text-amber-300">
+                This will clear today&apos;s distribution and reset the status
+                to EMPTY so you can queue a fresh distribution. Already
+                completed slot payouts (wallet credits) will NOT be reversed.
               </p>
             </div>
           </CardContent>

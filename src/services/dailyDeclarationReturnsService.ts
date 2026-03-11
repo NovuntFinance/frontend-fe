@@ -232,6 +232,20 @@ class DailyDeclarationReturnsService {
   }
 
   /**
+   * Force-reset today's distribution
+   * POST /api/v1/admin/daily-declaration-returns/today/force-reset
+   * Clears stuck EXECUTING/FAILED slots and releases locks.
+   * Does NOT reverse completed distributions (wallet credits stay).
+   */
+  async forceResetDistribution(): Promise<any> {
+    const api = createAdminApi(this.get2FACode);
+    const response = await api.post<any>(
+      '/admin/daily-declaration-returns/today/force-reset'
+    );
+    return response.data;
+  }
+
+  /**
    * Get distribution history
    * GET /api/v1/admin/daily-declaration-returns/history
    * Note: GET requests do NOT require 2FA

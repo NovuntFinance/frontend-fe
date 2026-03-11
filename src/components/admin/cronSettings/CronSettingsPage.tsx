@@ -8,6 +8,7 @@ import { useCronSettings } from '@/hooks/useCronSettings';
 // TimezoneSelector removed - platform time system uses UTC exclusively
 import { SlotTimeInput } from './SlotTimeInput';
 import { SchedulePreview } from './SchedulePreview';
+import { QuickScheduleGenerator } from './QuickScheduleGenerator';
 import { cronSettingsService } from '@/services/cronSettingsService';
 import type {
   DistributionSlot,
@@ -105,6 +106,15 @@ export function CronSettingsPage({ embedded = false }: CronSettingsPageProps) {
       ...prev,
       slots: prev.slots.filter((_, idx) => idx !== index),
     }));
+  };
+
+  // Handle bulk generation from QuickScheduleGenerator (appends to existing)
+  const handleQuickGenerate = (newSlots: DistributionSlot[]) => {
+    setFormData((prev) => {
+      const combined = [...prev.slots, ...newSlots];
+      combined.sort((a, b) => a.time.localeCompare(b.time));
+      return { ...prev, slots: combined };
+    });
   };
 
   // Validation
@@ -318,6 +328,15 @@ export function CronSettingsPage({ embedded = false }: CronSettingsPageProps) {
                   UTC).
                 </AlertDescription>
               </Alert>
+
+              {/* Quick Schedule Generator */}
+              <QuickScheduleGenerator
+                maxSlots={MAX_SLOTS}
+                currentSlotCount={formData.slots.length}
+                existingTimes={formData.slots.map((s) => s.time)}
+                onGenerate={handleQuickGenerate}
+                disabled={isUpdating}
+              />
 
               {/* Slot Time Inputs */}
               <div className="space-y-4">
