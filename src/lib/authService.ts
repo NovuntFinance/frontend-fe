@@ -35,6 +35,8 @@ import type {
   Generate2FASecretRequest,
   Enable2FARequest,
   RequestPasswordResetRequest,
+  VerifyResetOtpRequest,
+  VerifyResetOtpResponse,
   ResetPasswordRequest,
   RefreshTokenRequest,
   ChangePasswordRequest,
@@ -64,6 +66,7 @@ export type Verify2FAPayload = Verify2FARequest;
 export type Generate2FASecretPayload = Generate2FASecretRequest;
 export type Enable2FAPayload = Enable2FARequest;
 export type RequestPasswordResetPayload = RequestPasswordResetRequest;
+export type VerifyResetOtpPayload = VerifyResetOtpRequest;
 export type ResetPasswordPayload = ResetPasswordRequest;
 export type RefreshTokenPayload = RefreshTokenRequest;
 export type ChangePasswordPayload = ChangePasswordRequest;
@@ -92,6 +95,9 @@ type InternalGenerate2FASecretResponse =
 type InternalEnable2FAResponse =
   | Enable2FAResponse
   | ApiResponse<Enable2FAResponse>;
+type InternalVerifyResetOtpResponse =
+  | VerifyResetOtpResponse
+  | ApiResponse<VerifyResetOtpResponse>;
 type InternalReferralInfoResponse =
   | ReferralInfoResponse
   | ApiResponse<ReferralInfoResponse>;
@@ -367,9 +373,22 @@ export const authService = {
   },
 
   /**
+   * Verify reset OTP and receive short-lived reset token
+   * POST /better-auth/verify-reset-otp
+   */
+  verifyResetOtp: async (
+    payload: VerifyResetOtpRequest
+  ): Promise<InternalVerifyResetOtpResponse> => {
+    return api.post<InternalVerifyResetOtpResponse>(
+      '/better-auth/verify-reset-otp',
+      payload
+    );
+  },
+
+  /**
    * 11. Reset password with reset token
    * POST /better-auth/reset-password
-   * @param payload - Email, reset token, new password, confirm password
+   * @param payload - Preferred: resetToken + newPassword; fallback: email + otp + newPassword
    * @returns Success message
    */
   resetPassword: async (

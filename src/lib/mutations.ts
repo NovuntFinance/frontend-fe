@@ -15,6 +15,7 @@ import type {
   Verify2FAPayload,
   Enable2FAPayload,
   RequestPasswordResetPayload,
+  VerifyResetOtpPayload,
   ResetPasswordPayload,
   ChangePasswordPayload,
 } from './authService';
@@ -641,6 +642,31 @@ export function useRequestPasswordReset() {
       console.error('[useRequestPasswordReset] Request failed:', error);
       toast.error('Request failed', {
         description: extractErrorMessage(error, 'Could not send reset code'),
+      });
+    },
+  });
+}
+
+/**
+ * Verify reset OTP and retrieve reset token
+ * BetterAuth: POST /better-auth/verify-reset-otp
+ */
+export function useVerifyResetOtp() {
+  return useMutation({
+    mutationFn: async (payload: VerifyResetOtpPayload) => {
+      console.log('[useVerifyResetOtp] Verifying reset OTP');
+      return authService.verifyResetOtp(payload);
+    },
+    onSuccess: () => {
+      console.log('[useVerifyResetOtp] OTP verified successfully');
+      toast.success('Code verified', {
+        description: 'You can now set a new password',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('[useVerifyResetOtp] Verification failed:', error);
+      toast.error('Verification failed', {
+        description: extractErrorMessage(error, 'Invalid or expired code'),
       });
     },
   });

@@ -17,24 +17,6 @@ import type {
 
 export const transferApi = {
   /**
-   * Request email OTP for transfer
-   * POST /api/v1/transfers/request-otp
-   * Turnstile token is required.
-   */
-  async requestTransferOtp(
-    turnstileToken?: string
-  ): Promise<{ success: boolean; message: string; expiresIn: number }> {
-    const body: Record<string, string> = {};
-    if (turnstileToken) body.turnstileToken = turnstileToken;
-    const response = await apiRequest<{
-      success: boolean;
-      message: string;
-      expiresIn: number;
-    }>('post', '/transfers/request-otp', body);
-    return response;
-  },
-
-  /**
    * Detect identifier type from user input
    * Returns the appropriate identifier fields based on input
    */
@@ -81,7 +63,6 @@ export const transferApi = {
         amount: data.amount,
         memo: data.memo,
         twoFACode: data.twoFACode,
-        ...(data.emailOtp ? { emailOtp: data.emailOtp } : {}),
         ...(data.turnstileToken ? { turnstileToken: data.turnstileToken } : {}),
       }
     );

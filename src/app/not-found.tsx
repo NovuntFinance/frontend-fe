@@ -35,7 +35,7 @@ export default function NotFound() {
       <div className="relative z-10 flex min-h-screen flex-col">
         {/* Header */}
         <header className="p-6">
-          {typeof window !== 'undefined' && <Logo size="lg" />}
+          <Logo size="lg" />
         </header>
 
         {/* Main Content */}
