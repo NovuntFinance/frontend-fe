@@ -12,7 +12,7 @@ import {
   Shield,
   Search,
   X,
-  BookOpen,
+  HelpCircle as BookOpen,
   ChevronLeft,
 } from 'lucide-react';
 import { prefersReducedMotion } from '@/lib/accessibility';
@@ -110,7 +110,8 @@ const knowledgeCategories: KnowledgeCategory[] = [
   {
     id: 'ranks-teams',
     title: 'Ranks & Teams',
-    description: 'All six ranks, team building, referral networks, and pool qualification',
+    description:
+      'All six ranks, team building, referral networks, and pool qualification',
     icon: Users,
     articleCount: 4,
     articles: [
@@ -123,7 +124,8 @@ const knowledgeCategories: KnowledgeCategory[] = [
   {
     id: 'security-account',
     title: 'Security & Account',
-    description: '2FA, wallet whitelist, notifications, themes, and account settings',
+    description:
+      '2FA, wallet whitelist, notifications, themes, and account settings',
     icon: Shield,
     articleCount: 7,
     articles: [
@@ -139,7 +141,8 @@ const knowledgeCategories: KnowledgeCategory[] = [
   {
     id: 'glossary',
     title: 'Glossary & FAQ',
-    description: 'Definitions, frequently asked questions, and community channels',
+    description:
+      'Definitions, frequently asked questions, and community channels',
     icon: BookOpen,
     articleCount: 3,
     articles: [
@@ -416,7 +419,9 @@ export default function KnowledgeBasePage() {
               >
                 Results for &ldquo;{searchQuery}&rdquo;
                 {filteredArticles.length > 0 && (
-                  <span style={{ color: 'var(--neu-text-muted)', fontWeight: 400 }}>
+                  <span
+                    style={{ color: 'var(--neu-text-muted)', fontWeight: 400 }}
+                  >
                     {' '}
                     ({filteredArticles.length})
                   </span>
@@ -466,7 +471,13 @@ export default function KnowledgeBasePage() {
                     ? `No articles found for "${searchQuery}"`
                     : 'No articles in this category'}
                 </p>
-                <p style={{ color: 'var(--neu-text-muted)', fontSize: '0.75rem', margin: 0 }}>
+                <p
+                  style={{
+                    color: 'var(--neu-text-muted)',
+                    fontSize: '0.75rem',
+                    margin: 0,
+                  }}
+                >
                   Try different keywords or browse categories
                 </p>
               </div>

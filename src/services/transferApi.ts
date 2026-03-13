@@ -43,37 +43,58 @@ export const transferApi = {
 
   /**
    * Transfer Funds
-   * POST /api/v1/enhanced-transactions/transfer
+   * POST /api/v1/transfer
+   * Backend accepts: recipientId, recipientUsername, recipientEmail, amount, memo,
+   * twoFACode, turnstileToken, cf-turnstile-response, idempotencyKey
    */
   async transferFunds(data: TransferRequest): Promise<TransferResponse> {
-    console.log('[transferApi] Initiating transfer:', {
-      recipient:
-        data.recipientEmail || data.recipientUsername || data.recipientId,
+    const payload: Record<string, unknown> = {
       amount: data.amount,
-      hasMemo: !!data.memo,
-    });
+      twoFACode: data.twoFACode,
+    };
+    if (data.recipientId) payload.recipientId = data.recipientId;
+    if (data.recipientUsername)
+      payload.recipientUsername = data.recipientUsername.toLowerCase();
+    if (data.recipientEmail)
+      payload.recipientEmail = data.recipientEmail.toLowerCase().trim();
+    if (data.memo) payload.memo = data.memo;
+    // Backend accepts turnstileToken or cf-turnstile-response when Turnstile is configured
+    if (data.turnstileToken) {
+      payload.turnstileToken = data.turnstileToken;
+      payload['cf-turnstile-response'] = data.turnstileToken;
+    }
 
-    const response = await apiRequest<TransferResponse>(
-      'post',
-      '/enhanced-transactions/transfer',
-      {
-        recipientId: data.recipientId,
-        recipientUsername: data.recipientUsername?.toLowerCase(),
-        recipientEmail: data.recipientEmail?.toLowerCase().trim(),
-        amount: data.amount,
-        memo: data.memo,
-        twoFACode: data.twoFACode,
-        ...(data.turnstileToken ? { turnstileToken: data.turnstileToken } : {}),
+    const response = await apiRequest<
+      | TransferResponse
+      | { success: boolean; message: string; data?: Record<string, unknown> }
+    >('post', '/transfer', payload);
+
+    // Normalize backend response: backend returns data.transactionId, frontend expects txId + details
+    if (response && typeof response === 'object') {
+      const r = response as Record<string, unknown>;
+      if (r.data && typeof r.data === 'object') {
+        const d = r.data as Record<string, unknown>;
+        return {
+          success: true,
+          message: (r.message as string) || 'Transfer successful',
+          txId: (d.transactionId as string) || (r.txId as string) || '',
+          details: {
+            amount: (d.amount as number) ?? 0,
+            recipient: (d.recipient as string) || '',
+            fee: 0,
+            feePercentage: 0,
+            totalDeducted: (d.amount as number) ?? 0,
+            transferredToWallet:
+              (d.transferredToWallet as string) || 'transfer',
+            note: (d.note as string) || 'P2P transfers are FREE',
+          },
+        };
       }
-    );
-
-    console.log('[transferApi] Transfer successful:', {
-      txId: response.txId,
-      recipient: response.details.recipient,
-      amount: response.details.amount,
-    });
-
-    return response;
+      if (r.txId) {
+        return response as TransferResponse;
+      }
+    }
+    return response as TransferResponse;
   },
 
   /**
@@ -337,77 +358,90 @@ export const transferApi = {
 
   /**
    * Format Transfer Error Message
-   * Converts backend error to user-friendly message
+   * Uses actual backend error message — never shows "under development"
    */
   formatErrorMessage(error: any): string {
-    // Handle specific error codes
-    if (error?.code) {
-      switch (error.code) {
+    // Extract backend message/code from response (api interceptor puts it in response.data)
+    const backendCode =
+      error?.response?.data?.code || error?.code || error?.error?.code;
+    const backendMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      error?.error?.message ||
+      '';
+
+    // Never show "under development" — backend returns specific errors
+    if (
+      typeof backendMessage === 'string' &&
+      backendMessage.toLowerCase().includes('under development')
+    ) {
+      return 'Transfer failed. Please try again.';
+    }
+
+    // Handle backend error codes (per FRONTEND_TRANSFER_FIX doc)
+    if (backendCode) {
+      switch (backendCode) {
+        case 'INSUFFICIENT_FUNDS':
         case 'INSUFFICIENT_BALANCE':
           return 'Insufficient balance for this transfer';
+        case 'INVALID_2FA_CODE':
         case '2FA_CODE_INVALID':
-          return 'Invalid 2FA code. Please enter the 6-digit code from your authenticator app.';
-        case 'DUPLICATE_TRANSFER_REQUEST':
-          return 'Duplicate transfer detected. Please wait a moment before trying again.';
+          return 'Invalid 2FA code. Please try again.';
+        case '2FA_REQUIRED':
+          return 'Two-factor authentication is required. Please enter your 2FA code.';
+        case '2FA_NOT_CONFIGURED':
+          return 'Please complete 2FA setup before transferring.';
+        case 'TURNSTILE_FAILED':
+          return 'Verification failed. Please complete the security check and try again.';
+        case 'RATE_LIMIT_EXCEEDED':
+          return backendMessage || 'Too many attempts. Please try again later.';
         case 'SUSPICIOUS_ACTIVITY_DETECTED':
-          return 'Transfer blocked due to suspicious activity. Please contact support.';
+          return 'Transfer temporarily blocked. Please contact support.';
+        case 'TRANSFER_OPERATION_IN_PROGRESS':
+        case 'DUPLICATE_TRANSFER_IN_PROGRESS':
+          return 'Please wait — another transfer is in progress.';
         case 'RECIPIENT_NOT_FOUND':
-          return 'Recipient not found. Please check the username.';
+          return 'Recipient not found. Please check the email, username, or user ID.';
         case 'SELF_TRANSFER_NOT_ALLOWED':
-          return 'You cannot transfer funds to your own account';
+          return 'You cannot transfer to yourself.';
+        case 'LOCK_FAILED':
+          return 'Please try again.';
       }
     }
 
-    // Handle specific error messages
-    const message = error?.message || error?.error?.message || '';
+    // Use backend message if it's actionable
+    if (backendMessage && typeof backendMessage === 'string') {
+      const msg = backendMessage.trim();
+      if (msg.length > 0) return msg;
+    }
 
-    if (message.includes('Minimum transfer')) {
-      return 'Transfer amount is below the minimum (1 USDT)';
+    // Fallback patterns for common backend messages
+    const message = String(backendMessage || '');
+    if (message.includes('Minimum transfer') || message.includes('minimum')) {
+      return 'Transfer amount is below the minimum.';
     }
-    if (message.includes('Maximum transfer')) {
-      return 'Transfer amount exceeds the maximum';
+    if (message.includes('Maximum transfer') || message.includes('maximum')) {
+      return 'Transfer amount exceeds the maximum.';
     }
-    if (message.includes('Insufficient balance')) {
+    if (message.includes('Insufficient') || message.includes('balance')) {
       return 'Insufficient balance for this transfer';
     }
-    if (message.includes('Invalid 2FA')) {
+    if (message.includes('Invalid 2FA') || message.includes('2FA')) {
       return 'Invalid 2FA code. Please try again.';
     }
-    // Handle email-specific errors
-    if (
-      (message.includes('email') && message.includes('not found')) ||
-      message.includes('No user found with that email')
-    ) {
-      return 'No user found with that email address';
-    }
-    // Handle username-specific errors
-    if (
-      (message.includes('username') && message.includes('not found')) ||
-      message.includes('User with username')
-    ) {
-      return 'No user found with that username';
-    }
-    // Handle generic "not found" errors
-    if (
-      message.includes('not found') ||
-      message.includes('Recipient not found')
-    ) {
+    if (message.includes('not found') || message.includes('User with')) {
       return 'Recipient not found. Please check the email, username, or user ID.';
     }
-    // Handle invalid identifier errors
-    if (message.includes('Invalid recipient identifier')) {
-      return 'Please enter a valid email, username, or user ID';
+    if (
+      message.includes('cannot transfer to yourself') ||
+      message.includes('yourself')
+    ) {
+      return 'You cannot transfer to yourself.';
     }
-    if (message.includes('Duplicate transfer')) {
-      return 'A similar transfer is already being processed. Please wait.';
-    }
-    if (message.includes('cannot transfer to yourself')) {
-      return 'You cannot transfer funds to your own account';
+    if (message.includes('P2P transfers are temporarily disabled')) {
+      return message;
     }
 
-    // Default error message
-    return (
-      message || 'An error occurred during the transfer. Please try again.'
-    );
+    return 'Transfer failed. Please try again.';
   },
 };

@@ -510,6 +510,25 @@ export const extractErrorMessage = (
       : typeof errAny?.statusCode === 'number'
         ? errAny.statusCode
         : null;
+  // Prefer backend message over status-based fallback (transfer/API errors)
+  const errResponse = errAny?.response as
+    | { data?: { message?: string; code?: string } }
+    | undefined;
+  const backendMsg = errResponse?.data?.message;
+  if (
+    backendMsg &&
+    typeof backendMsg === 'string' &&
+    backendMsg.trim().length > 0
+  ) {
+    const lower = backendMsg.toLowerCase();
+    if (
+      !lower.includes('under development') &&
+      !lower.includes('novunt api is running')
+    ) {
+      return backendMsg.trim();
+    }
+  }
+
   if (status !== null) {
     const statusMessages: Record<number, string> = {
       400: 'Invalid request. Please check your input',
@@ -631,8 +650,19 @@ export const extractErrorMessage = (
       return err.message;
     }
 
-    // Status code based messages
+    // Status code based messages (only when no backend message available)
     if (typeof err.statusCode === 'number') {
+      const response = err.response as
+        | { data?: { message?: string } }
+        | undefined;
+      const backendMsg = response?.data?.message;
+      if (
+        backendMsg &&
+        typeof backendMsg === 'string' &&
+        !backendMsg.toLowerCase().includes('under development')
+      ) {
+        return backendMsg.trim();
+      }
       const statusMessages: Record<number, string> = {
         400: 'Invalid request. Please check your input',
         401: 'Invalid email or password. Please check your credentials and try again.',

@@ -907,7 +907,11 @@ apiClient.interceptors.response.use(
 
     // Check if backend returned placeholder message (endpoint not implemented)
     const backendMessage = error.response?.data?.message || '';
+    const requestUrl = originalRequest?.url || '';
+    // Never show "under development" for transfer — backend returns specific errors (2FA, insufficient funds, etc.)
+    const isTransferRequest = requestUrl.includes('/transfer');
     const isPlaceholderResponse =
+      !isTransferRequest &&
       typeof backendMessage === 'string' &&
       backendMessage.includes('Novunt API is running');
 

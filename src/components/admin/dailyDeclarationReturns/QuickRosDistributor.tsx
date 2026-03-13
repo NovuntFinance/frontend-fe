@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shuffle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface QuickRosDistributorProps {
@@ -99,7 +99,7 @@ export function QuickRosDistributor({
     <Card className="border-primary/20 bg-primary/5 border-2 border-dashed">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Shuffle className="h-5 w-5" />
+          <RefreshCw className="h-5 w-5" />
           Quick ROS Distributor
         </CardTitle>
         <CardDescription>
@@ -140,7 +140,7 @@ export function QuickRosDistributor({
             disabled={disabled || !totalRos || slotCount < 1}
             variant="outline"
           >
-            <Shuffle className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Distribute Across {slotCount} Slots
           </Button>
         </div>

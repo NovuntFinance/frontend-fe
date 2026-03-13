@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Send,
@@ -11,6 +11,10 @@ import {
   Shield,
   Loader2,
 } from 'lucide-react';
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,6 +81,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [transferResponse, setTransferResponse] =
     useState<TransferResponse | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
   // Transfers should only use Earnings Wallet, not total balance
@@ -197,6 +202,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
         transferRequest.recipientUsername = selectedUser.username.toLowerCase();
       }
 
+      // Turnstile token when backend has TURNSTILE_SECRET_KEY set
+      const turnstileToken = turnstileRef.current?.getToken() ?? undefined;
+      if (turnstileToken) transferRequest.turnstileToken = turnstileToken;
+
       const response = await transferApi.transferFunds(transferRequest);
 
       setTransferResponse(response);
@@ -224,6 +233,12 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
         description: errorMessage,
         duration: 5000,
       });
+
+      // Reset Turnstile on TURNSTILE_FAILED so user can retry
+      const code = err?.response?.data?.code || err?.code;
+      if (code === 'TURNSTILE_FAILED') {
+        turnstileRef.current?.reset();
+      }
 
       // Clear 2FA code on error to allow retry
       setTwoFACode('');
@@ -744,6 +759,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   Enter the 6-digit code from your authenticator app
                 </p>
               </div>
+
+              <TurnstileWidget widgetRef={turnstileRef} size="normal" />
 
               {error && (
                 <p className="neu-error text-xs font-medium">{error}</p>

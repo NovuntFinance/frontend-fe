@@ -23,12 +23,6 @@ export const registrationBonusApi = {
     try {
       const response = await api.get<any>('/registration-bonus/status');
 
-      // Debug: log the raw response from backend to diagnose stale data issues
-      console.log(
-        '[registrationBonusApi] 📥 Raw status response:',
-        JSON.stringify(response, null, 2).slice(0, 1000)
-      );
-
       let normalizedResponse: RegistrationBonusStatusResponse;
 
       if (response && typeof response === 'object') {
@@ -56,7 +50,6 @@ export const registrationBonusApi = {
         const data = normalizedResponse.data;
 
         // Normalize status to uppercase — backend V2 may return lowercase
-        // (e.g. "pending") but the frontend enum uses uppercase ("PENDING")
         if (data.status && typeof data.status === 'string') {
           data.status = data.status.toUpperCase() as any;
         }
@@ -75,16 +68,42 @@ export const registrationBonusApi = {
     } catch (error: any) {
       const status =
         error?.statusCode || error?.response?.status || error?.status;
-      const msg = getErrorMessage(error, 'Request failed');
+
+      // 404 = no bonus record — treat as "no bonus", do not block transfer UI
       if (status === 404) {
-        console.warn('⚠️ [registrationBonusApi] No bonus record found (404)');
-      } else if (isNetworkError(error)) {
+        return {
+          success: true,
+          data: {
+            status: 'PENDING',
+            progressPercentage: 0,
+            timeRemaining: 0,
+            allRequirementsMet: false,
+            bonusPercentage: 0,
+            daysRemaining: 0,
+            requirements: {
+              twoFASetup: { isCompleted: false, completedAt: null },
+              withdrawalAddressWhitelist: {
+                isCompleted: false,
+                address: null,
+                network: null,
+              },
+              socialMediaVerifications: [],
+              firstStakeCompleted: false,
+            },
+          } as RegistrationBonusStatusResponse['data'],
+        };
+      }
+
+      if (isNetworkError(error)) {
         console.warn(
           '[registrationBonusApi] Registration bonus status unavailable:',
-          msg
+          getErrorMessage(error, 'Request failed')
         );
       } else {
-        console.warn('[registrationBonusApi] Failed to fetch status:', msg);
+        console.warn(
+          '[registrationBonusApi] Failed to fetch status:',
+          getErrorMessage(error, 'Request failed')
+        );
       }
       throw error;
     }
