@@ -216,6 +216,11 @@ function ResetPasswordContent() {
     }
   };
 
+  const handleClearCode = () => {
+    setOtp('');
+    setErrorMessage(null);
+  };
+
   const handleResetPassword = async () => {
     setErrorMessage(null);
 
@@ -363,50 +368,49 @@ function ResetPasswordContent() {
             />
 
             <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => handleVerifyCode()}
-                disabled={
-                  supportLocked ||
-                  verifyResetOtpMutation.isPending ||
-                  otp.length !== 6
-                }
-                className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 ${supportLocked || verifyResetOtpMutation.isPending || otp.length !== 6 ? styles.neuBtnDisabled : ''}`}
-              >
-                {verifyResetOtpMutation.isPending && (
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                )}
-                <span className="text-sm font-bold tracking-wider text-white uppercase">
-                  Verify Code
-                </span>
-                <ArrowRight className="h-4 w-4 text-white" />
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleClearCode}
+                  disabled={supportLocked || verifyResetOtpMutation.isPending}
+                  className={`${styles.neuBtnBack} flex w-full items-center justify-center gap-2 rounded-xl py-3 sm:w-1/2 ${
+                    supportLocked || verifyResetOtpMutation.isPending
+                      ? styles.neuBtnDisabled
+                      : ''
+                  }`}
+                >
+                  <span className="text-sm font-semibold">Clear code</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={handleResendCode}
-                disabled={
-                  supportLocked ||
-                  resendTimer > 0 ||
-                  requestPasswordResetMutation.isPending
-                }
-                className={`${styles.neuBtnBack} flex w-full items-center justify-center gap-2 rounded-xl py-3 ${
-                  supportLocked ||
-                  resendTimer > 0 ||
-                  requestPasswordResetMutation.isPending
-                    ? styles.neuBtnDisabled
-                    : ''
-                }`}
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="text-sm font-semibold">
-                  {requestPasswordResetMutation.isPending
-                    ? 'Sending...'
-                    : resendTimer > 0
-                      ? `Resend code (${resendTimer}s)`
-                      : 'Resend code'}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={
+                    supportLocked ||
+                    resendTimer > 0 ||
+                    requestPasswordResetMutation.isPending
+                  }
+                  className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 sm:w-1/2 ${
+                    supportLocked ||
+                    resendTimer > 0 ||
+                    requestPasswordResetMutation.isPending
+                      ? styles.neuBtnDisabled
+                      : ''
+                  }`}
+                >
+                  {requestPasswordResetMutation.isPending && (
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  )}
+                  <RefreshCw className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold tracking-wider text-white uppercase">
+                    {requestPasswordResetMutation.isPending
+                      ? 'Sending...'
+                      : resendTimer > 0
+                        ? `Resend (${resendTimer}s)`
+                        : 'Resend code'}
+                  </span>
+                </button>
+              </div>
             </div>
           </>
         )}
