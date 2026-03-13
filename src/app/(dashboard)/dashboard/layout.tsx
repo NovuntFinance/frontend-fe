@@ -405,36 +405,6 @@ export default function DashboardLayout({
           }}
         />
 
-        {/* Wallet Setup Banner (40% <= Progress < 60%) - only when not on onboarding */}
-        {!isOnboardingPage && progress >= 40 && progress < 60 && (
-          <div className="dashboard-page-container py-4">
-            <div className="group relative flex flex-col items-center justify-between gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-xl transition-all hover:bg-amber-500/15 sm:flex-row">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
-                  <Wallet className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-amber-500">
-                    WALLET SETUP REQUIRED
-                  </h4>
-                  <p className="text-xs text-amber-400/80">
-                    Whitelist your BEP20 withdrawal address to unlock transfers
-                    & withdrawals.
-                  </p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => router.push('/dashboard/onboarding')}
-                className="w-full rounded-xl bg-amber-500 font-bold text-slate-900 hover:bg-amber-600 sm:w-auto"
-              >
-                Whitelist
-                <ArrowUpRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Page content - scrolls here so bottom nav does not block; generous bottom padding so last item is never under nav on real devices */}
         <main
           id="main-content"

@@ -16,6 +16,8 @@ import {
   Smartphone,
   Sun,
   Moon,
+  Wallet,
+  ArrowUpRight,
 } from 'lucide-react';
 import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +45,8 @@ import {
 } from '@/components/auth/TurnstileWidget';
 import { passwordSchema } from '@/lib/validation';
 import { useTheme } from 'next-themes';
+import { useDefaultWithdrawalAddress } from '@/hooks/useWallet';
+import { useUIStore } from '@/store/uiStore';
 
 // Change password schema – 2FA is required for all users (default ON at registration, cannot be turned off)
 const changePasswordSchema = z
@@ -89,6 +93,10 @@ export function ProfileEditModal({
   const [themeMounted, setThemeMounted] = useState(false);
   const { theme, resolvedTheme, setTheme } = useTheme();
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const { data: defaultWithdrawalAddress } = useDefaultWithdrawalAddress();
+  const hasWhitelistedWallet =
+    defaultWithdrawalAddress?.hasDefaultAddress ?? false;
+  const { openModal } = useUIStore();
 
   // Change password form
   const {
@@ -327,6 +335,35 @@ export function ProfileEditModal({
           {/* Security Tab */}
           <TabsContent value="security" className="mt-6">
             <div className="rounded-xl p-4 sm:p-5" style={neuSectionInset}>
+              {/* Wallet whitelist setup CTA */}
+              {!hasWhitelistedWallet && (
+                <div className="mb-6 space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                  <div className="flex items-start gap-3">
+                    <Wallet className="mt-0.5 h-5 w-5 text-amber-500" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                        Wallet setup required
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Whitelist your BEP20 withdrawal address to unlock
+                        transfers and withdrawals.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenChange(false);
+                          openModal('wallet');
+                        }}
+                        className="mt-2 inline-flex items-center rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-amber-600"
+                      >
+                        Open wallet security
+                        <ArrowUpRight className="ml-1 h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* 2FA Reset Pending Notice & Setup CTA */}
               {(user as any)?.twoFactorResetPending && (
                 <div className="mb-6 space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
