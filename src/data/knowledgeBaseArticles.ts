@@ -2259,9 +2259,9 @@ export const knowledgeBaseArticles: Article[] = [
       <h3>General Questions</h3>
       <h4>How do I contact support?</h4>
       <ul>
-        <li>Use the Novunt Assistant (floating chat icon)</li>
-        <li>Send an email to support (check platform for address)</li>
-        <li>Check if there's a support ticket system</li>
+        <li>All support is in-app only. Use the Nova Assistant (Support icon on your dashboard)</li>
+        <li>Create a ticket from the My Tickets tab in Nova Assistant</li>
+        <li>Chat with our team directly in the ticket thread</li>
         <li>Include relevant details: account info, issue description, screenshots</li>
       </ul>
       
@@ -2792,7 +2792,7 @@ export const knowledgeBaseArticles: Article[] = [
       <p>A: 2FA is required for withdrawals, transfers, and changing your withdrawal address. We strongly recommend enabling it immediately after registration.</p>
 
       <p><strong>Q: What if I lose my 2FA device?</strong></p>
-      <p>A: Contact support at <strong>support@novunt.com</strong> with your account details. You will need to verify your identity before 2FA can be reset.</p>
+      <p>A: Create a support ticket in the app with your account details. You will need to verify your identity before 2FA can be reset.</p>
     `,
   },
 
@@ -2837,7 +2837,7 @@ export const knowledgeBaseArticles: Article[] = [
       <h3>What If I Lose My Phone?</h3>
       <p>If you lose access to your authenticator app:</p>
       <ol>
-        <li>Contact Novunt support at <strong>support@novunt.com</strong>.</li>
+        <li>Contact Novunt support via the Support section in the app.</li>
         <li>Provide your account email and username.</li>
         <li>Support will verify your identity before resetting 2FA.</li>
         <li>Once reset, set up 2FA again immediately with your new device.</li>
@@ -2980,8 +2980,8 @@ export const knowledgeBaseArticles: Article[] = [
         <li><strong>Closed</strong> — the ticket is complete.</li>
       </ul>
 
-      <h3>Telegram Support</h3>
-      <p>You can also reach our support bot on Telegram: <strong>@NovuntAssistantBot</strong>. This is especially useful if you are unable to access the platform.</p>
+      <h3>In-App Support Only</h3>
+      <p>All support is handled in the app. Use the Support section to create tickets and chat with our team. You&apos;ll get notifications when we reply.</p>
     `,
   },
 
@@ -3238,7 +3238,7 @@ export const knowledgeBaseArticles: Article[] = [
     id: 'trading-signals-guide',
     title: 'Trading Signals: What They Are & How to Read Them',
     description:
-      'Understanding Novunt\'s live trading signals — market types, direction, profitability, and how to use the signals page.',
+      "Understanding Novunt's live trading signals — market types, direction, profitability, and how to use the signals page.",
     category: 'getting-started',
     readTime: 5,
     tags: ['Trading', 'Signals', 'Forex', 'Crypto', 'Markets'],
@@ -3492,7 +3492,7 @@ export const knowledgeBaseArticles: Article[] = [
 
       <h3>Official Channels</h3>
       <ul>
-        <li><strong>Telegram</strong> — Join the main community group for discussions, updates, and peer support. Also home to the <strong>@NovuntAssistantBot</strong> for quick support.</li>
+        <li><strong>Telegram</strong> — Join the main community group for discussions and updates.</li>
         <li><strong>Facebook</strong> — Follow for announcements, educational content, and community highlights.</li>
         <li><strong>Instagram</strong> — Visual updates, tips, and behind-the-scenes content.</li>
         <li><strong>YouTube</strong> — Tutorials, guides, and platform walkthroughs.</li>

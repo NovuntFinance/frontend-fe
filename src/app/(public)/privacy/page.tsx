@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <div className="prose prose-invert max-w-3xl space-y-6">
       <h1>Novunt Privacy Policy</h1>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Last updated: {new Date().toLocaleDateString('en-US')}
       </p>
 
@@ -146,10 +146,10 @@ export default function PrivacyPage() {
           attribution data from third-party analytics tools.
         </li>
         <li>
-          <strong>Public blockchain data</strong> &ndash; we may analyze on-chain
-          data (for example, transaction hashes or wallet balances associated
-          with your linked addresses) for reconciliation or product analytics
-          purposes.
+          <strong>Public blockchain data</strong> &ndash; we may analyze
+          on-chain data (for example, transaction hashes or wallet balances
+          associated with your linked addresses) for reconciliation or product
+          analytics purposes.
         </li>
       </ul>
 
@@ -181,8 +181,8 @@ export default function PrivacyPage() {
         <li>
           <strong>For legal and regulatory purposes</strong> &ndash; including
           handling disputes, responding to lawful requests from regulators or
-          authorities, enforcing our agreements, and protecting our rights or the
-          rights of others.
+          authorities, enforcing our agreements, and protecting our rights or
+          the rights of others.
         </li>
       </ul>
 
@@ -224,10 +224,10 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Service providers</strong> &ndash; with third-party vendors who
-          help us deliver the Services (for example, cloud hosting, analytics
-          platforms, customer support tools), subject to appropriate contractual
-          safeguards.
+          <strong>Service providers</strong> &ndash; with third-party vendors
+          who help us deliver the Services (for example, cloud hosting,
+          analytics platforms, customer support tools), subject to appropriate
+          contractual safeguards.
         </li>
         <li>
           <strong>Professional advisers</strong> &ndash; with lawyers, auditors,
@@ -297,10 +297,9 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        To exercise any of these rights, please contact us at{' '}
-        <a href="mailto:support@novunt.com">support@novunt.com</a>. We will
-        respond to your request within a reasonable timeframe and in accordance
-        with applicable law.
+        To exercise any of these rights, please contact us at the Support
+        section in the app. We will respond to your request within a reasonable
+        timeframe and in accordance with applicable law.
       </p>
 
       <h2 id="children">10. Children&apos;s Privacy</h2>
@@ -324,14 +323,15 @@ export default function PrivacyPage() {
         We may update this Privacy Policy from time to time. When we do, we will
         post the updated version on this page and update the &quot;Last
         updated&quot; date above. Your continued use of the Services after any
-        changes to this Policy constitutes your acceptance of the updated Policy.
+        changes to this Policy constitutes your acceptance of the updated
+        Policy.
       </p>
 
       <h2 id="contact">13. Contact Us</h2>
       <p>
         If you have any questions about this Privacy Policy or how we handle
-        your personal data, you can contact us at:{' '}
-        <a href="mailto:support@novunt.com">support@novunt.com</a>.
+        your personal data, you can contact us at: the Support section in the
+        app.
       </p>
     </div>
   );

@@ -179,22 +179,24 @@ export default function DashboardPage() {
     return incomplete;
   }, [user?.emailVerified, user?.twoFAEnabled, hasWalletAddress]);
 
-  // Open support tickets count (submitted or in-progress) for Support badge
-  const { data: openTicketsData } = useQuery({
-    queryKey: ['support-open-tickets'],
+  // Unread support messages count (tickets where last message is from admin) for Support badge
+  const { data: unreadSupportCountData } = useQuery({
+    queryKey: ['support-unread-messages'],
     queryFn: async () => {
       const res = await getMyTickets({ limit: 50 });
       if (res?.success && res.data?.tickets) {
         return res.data.tickets.filter(
-          (t) => t.status === 'submitted' || t.status === 'in_progress'
+          (t) =>
+            (t.status === 'submitted' || t.status === 'in_progress') &&
+            t.lastMessage?.from === 'support'
         ).length;
       }
       return 0;
     },
-    staleTime: 60_000, // refresh every 60s
-    refetchInterval: 60_000,
+    staleTime: 30_000, // refresh every 30s so badge updates when admin replies
+    refetchInterval: 30_000,
   });
-  const openTicketCount = openTicketsData ?? 0;
+  const unreadSupportCount = unreadSupportCountData ?? 0;
 
   // Handle hash navigation (e.g., #daily-ros)
   useEffect(() => {
@@ -1440,27 +1442,34 @@ export default function DashboardPage() {
                               </motion.span>
                             )}
 
-                            {/* Support open tickets badge */}
+                            {/* Support unread messages badge — increases when admin replies */}
                             {isSupport && (
                               <motion.span
                                 className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold sm:h-6 sm:w-6 sm:text-[9px]"
                                 style={{
                                   background:
-                                    openTicketCount > 0 ? '#ef4444' : '#22c55e',
+                                    unreadSupportCount > 0
+                                      ? '#ef4444'
+                                      : '#22c55e',
                                   color: '#ffffff',
                                   boxShadow: '0 0 0 2px var(--neu-bg)',
                                 }}
                                 animate={{
-                                  scale: openTicketCount > 0 ? [1, 1.15, 1] : 1,
+                                  scale:
+                                    unreadSupportCount > 0 ? [1, 1.15, 1] : 1,
                                 }}
                                 transition={{
                                   duration: 1.5,
-                                  repeat: openTicketCount > 0 ? Infinity : 0,
+                                  repeat: unreadSupportCount > 0 ? Infinity : 0,
                                   ease: 'easeInOut',
                                 }}
-                                aria-hidden
+                                aria-label={
+                                  unreadSupportCount > 0
+                                    ? `${unreadSupportCount} new message${unreadSupportCount !== 1 ? 's' : ''} from support`
+                                    : 'Support'
+                                }
                               >
-                                {openTicketCount}
+                                {unreadSupportCount}
                               </motion.span>
                             )}
                           </motion.div>

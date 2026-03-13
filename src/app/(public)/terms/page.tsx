@@ -11,7 +11,7 @@ export default function TermsPage() {
   return (
     <div className="prose prose-invert max-w-3xl space-y-6">
       <h1>Novunt Terms of Service</h1>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Last updated: {new Date().toLocaleDateString('en-US')}
       </p>
 
@@ -22,8 +22,7 @@ export default function TermsPage() {
         <strong>&quot;Novunt&quot;</strong>, <strong>&quot;we&quot;</strong>, or{' '}
         <strong>&quot;us&quot;</strong>) governing your access to and use of the
         Novunt website, mobile and web applications, APIs, and related products
-        and services (collectively, the{' '}
-        <strong>&quot;Services&quot;</strong>).
+        and services (collectively, the <strong>&quot;Services&quot;</strong>).
       </p>
 
       <p>
@@ -142,7 +141,8 @@ export default function TermsPage() {
         Novunt <strong>does not provide</strong> investment, financial, tax,
         legal, accounting, or other professional advice and{' '}
         <strong>
-          does not act as a broker, dealer, exchange, investment adviser, or bank
+          does not act as a broker, dealer, exchange, investment adviser, or
+          bank
         </strong>
         . Any information provided through the Services (including returns
         illustrations, APY/APR figures, marketing copy, blog posts,
@@ -151,9 +151,9 @@ export default function TermsPage() {
       </p>
       <p>
         You are solely responsible for your own decisions to deposit, stake,
-        withdraw, or otherwise deal in digital assets and should consult your own
-        independent professional advisors before making any financial, legal,
-        tax, or other decisions.
+        withdraw, or otherwise deal in digital assets and should consult your
+        own independent professional advisors before making any financial,
+        legal, tax, or other decisions.
       </p>
 
       <h2 id="risk">4. Risk Disclosure</h2>
@@ -183,15 +183,16 @@ export default function TermsPage() {
           adversely affect your assets, rewards, or ability to withdraw.
         </li>
         <li>
-          Novunt may rely on third-party service providers (including custodians,
-          data providers, and smart contract platforms). Failures or breaches at
-          these providers may impact your use of the Services.
+          Novunt may rely on third-party service providers (including
+          custodians, data providers, and smart contract platforms). Failures or
+          breaches at these providers may impact your use of the Services.
         </li>
         <li>
           Digital assets held through Novunt are{' '}
           <strong>
-            not deposits, not legal tender, not backed by any government, and are
-            not covered by any deposit insurance or investor protection scheme
+            not deposits, not legal tender, not backed by any government, and
+            are not covered by any deposit insurance or investor protection
+            scheme
           </strong>{' '}
           (such as FDIC or similar).
         </li>
@@ -209,23 +210,22 @@ export default function TermsPage() {
       </p>
       <ul>
         <li>
-          You agree to provide accurate, current, and complete information and to
-          promptly update it when it changes.
+          You agree to provide accurate, current, and complete information and
+          to promptly update it when it changes.
         </li>
         <li>
           You are responsible for maintaining the confidentiality of your login
           credentials and for all activity that occurs under your account.
         </li>
         <li>
-          You must promptly notify us at{' '}
-          <a href="mailto:support@novunt.com">support@novunt.com</a> if you
+          You must promptly notify us at the Support section in the app if you
           suspect unauthorized use of your account or a security breach.
         </li>
         <li>
-          Novunt may, at its discretion and without liability, suspend, restrict,
-          or terminate your access to some or all Services if we suspect fraud,
-          abuse, violation of these Terms, or to comply with applicable law or
-          requests from competent authorities.
+          Novunt may, at its discretion and without liability, suspend,
+          restrict, or terminate your access to some or all Services if we
+          suspect fraud, abuse, violation of these Terms, or to comply with
+          applicable law or requests from competent authorities.
         </li>
       </ul>
 
@@ -237,10 +237,10 @@ export default function TermsPage() {
       </p>
       <ul>
         <li>
-          <strong>Supported assets and networks.</strong> Only assets and networks
-          explicitly supported in the app may be deposited or staked. Deposits
-          sent via unsupported networks or to incorrect addresses may be
-          permanently lost.
+          <strong>Supported assets and networks.</strong> Only assets and
+          networks explicitly supported in the app may be deposited or staked.
+          Deposits sent via unsupported networks or to incorrect addresses may
+          be permanently lost.
         </li>
         <li>
           <strong>Staking and ROS model.</strong> Smart Goal Staking and
@@ -250,14 +250,14 @@ export default function TermsPage() {
         </li>
         <li>
           <strong>Performance &amp; Premium pools.</strong> Any pools or bonus
-          programs are discretionary and may be modified, paused, or discontinued
-          at any time without notice.
+          programs are discretionary and may be modified, paused, or
+          discontinued at any time without notice.
         </li>
         <li>
-          <strong>Fees.</strong> Novunt may charge fees (including but not limited
-          to deposit, withdrawal, staking, or performance fees). Fees, if any,
-          will be disclosed in the app or in related documentation and may be
-          updated from time to time.
+          <strong>Fees.</strong> Novunt may charge fees (including but not
+          limited to deposit, withdrawal, staking, or performance fees). Fees,
+          if any, will be disclosed in the app or in related documentation and
+          may be updated from time to time.
         </li>
         <li>
           <strong>Withdrawals and lockups.</strong> Certain positions may be
@@ -267,8 +267,8 @@ export default function TermsPage() {
         </li>
         <li>
           <strong>Errors and adjustments.</strong> If a reward, bonus, or credit
-          is displayed or paid in error, Novunt may correct the error and reverse
-          or adjust the relevant transaction to the correct amount.
+          is displayed or paid in error, Novunt may correct the error and
+          reverse or adjust the relevant transaction to the correct amount.
         </li>
       </ul>
 
@@ -283,8 +283,8 @@ export default function TermsPage() {
           controls, or anti-money laundering laws;
         </li>
         <li>
-          engage in fraud, market manipulation, wash trading, or other abusive or
-          deceptive conduct;
+          engage in fraud, market manipulation, wash trading, or other abusive
+          or deceptive conduct;
         </li>
         <li>
           interfere with or disrupt the integrity, performance, or security of
@@ -297,8 +297,8 @@ export default function TermsPage() {
         </li>
         <li>
           decompile, reverse engineer, or attempt to derive the source code of
-          any component of the Services, except to the extent such restriction is
-          prohibited by applicable law;
+          any component of the Services, except to the extent such restriction
+          is prohibited by applicable law;
         </li>
         <li>
           use the Services to transmit or store malicious code, spam, or content
@@ -317,8 +317,8 @@ export default function TermsPage() {
       <p>
         Novunt grants you a limited, non-exclusive, non-transferable, revocable
         licence to access and use the Services for your personal, non-commercial
-        use in accordance with these Terms. You obtain no ownership rights in the
-        Services or any related intellectual property.
+        use in accordance with these Terms. You obtain no ownership rights in
+        the Services or any related intellectual property.
       </p>
 
       <h2 id="third-parties">9. Third-Party Services</h2>
@@ -330,8 +330,8 @@ export default function TermsPage() {
       </p>
       <p>
         Your use of third-party services is at your own risk and may be subject
-        to separate terms and privacy policies between you and the relevant third
-        party.
+        to separate terms and privacy policies between you and the relevant
+        third party.
       </p>
 
       <h2 id="disclaimer">10. Disclaimer of Warranties</h2>
@@ -341,14 +341,15 @@ export default function TermsPage() {
         without any warranties of any kind, whether express, implied, or
         statutory, including but not limited to warranties of merchantability,
         fitness for a particular purpose, non-infringement, or that the Services
-        will be uninterrupted, error-free, secure, or free of harmful components.
+        will be uninterrupted, error-free, secure, or free of harmful
+        components.
       </p>
 
       <h2 id="liability">11. Limitation of Liability</h2>
       <p>
         To the fullest extent permitted by law, in no event will Novunt, its
-        affiliates, or their respective directors, officers, employees, or agents
-        be liable for:
+        affiliates, or their respective directors, officers, employees, or
+        agents be liable for:
       </p>
       <ul>
         <li>
@@ -368,8 +369,8 @@ export default function TermsPage() {
       </p>
       <p>
         To the extent Novunt is found liable, our aggregate liability to you for
-        all claims arising out of or relating to the Services or these Terms will
-        not exceed the total fees, if any, paid by you to Novunt for the
+        all claims arising out of or relating to the Services or these Terms
+        will not exceed the total fees, if any, paid by you to Novunt for the
         Services giving rise to the claim during the six (6) months immediately
         preceding the event giving rise to the claim.
       </p>
@@ -378,25 +379,25 @@ export default function TermsPage() {
       <p>
         You agree to indemnify, defend, and hold harmless Novunt, its
         affiliates, and their respective directors, officers, employees, and
-        agents from and against any and all claims, losses, damages, liabilities,
-        costs, and expenses (including reasonable legal fees) arising out of or
-        in connection with:
+        agents from and against any and all claims, losses, damages,
+        liabilities, costs, and expenses (including reasonable legal fees)
+        arising out of or in connection with:
       </p>
       <ul>
         <li>your use of or access to the Services;</li>
         <li>your violation of these Terms or any applicable law; or</li>
         <li>
-          any claim that your content or conduct infringes or misappropriates the
-          rights of any third party.
+          any claim that your content or conduct infringes or misappropriates
+          the rights of any third party.
         </li>
       </ul>
 
       <h2 id="changes">13. Changes to the Services and Terms</h2>
       <p>
         Novunt may modify or discontinue any part of the Services at any time,
-        with or without notice. We may also update these Terms from time to time.
-        When we do, we will post the updated version on this page and update the
-        &quot;Last updated&quot; date above.
+        with or without notice. We may also update these Terms from time to
+        time. When we do, we will post the updated version on this page and
+        update the &quot;Last updated&quot; date above.
       </p>
       <p>
         Your continued use of the Services after any changes to the Terms
@@ -406,11 +407,12 @@ export default function TermsPage() {
 
       <h2 id="governing-law">14. Governing Law and Dispute Resolution</h2>
       <p>
-        These Terms and any dispute or claim arising out of or in connection with
-        them or their subject matter or formation (including non-contractual
-        disputes or claims) will be governed by and construed in accordance with
-        the laws of the jurisdiction in which Novunt is incorporated, without
-        giving effect to any choice or conflict of law rules.
+        These Terms and any dispute or claim arising out of or in connection
+        with them or their subject matter or formation (including
+        non-contractual disputes or claims) will be governed by and construed in
+        accordance with the laws of the jurisdiction in which Novunt is
+        incorporated, without giving effect to any choice or conflict of law
+        rules.
       </p>
       <p>
         Any dispute arising out of or relating to these Terms or the Services
@@ -429,15 +431,14 @@ export default function TermsPage() {
       <p>
         Our failure to enforce any right or provision of these Terms will not be
         considered a waiver of those rights. These Terms constitute the entire
-        agreement between you and Novunt regarding the Services and supersede and
-        replace any prior agreements or understandings.
+        agreement between you and Novunt regarding the Services and supersede
+        and replace any prior agreements or understandings.
       </p>
 
       <h2 id="contact">16. Contact Us</h2>
       <p>
         If you have any questions about these Terms or the Services, you can
-        contact us at:{' '}
-        <a href="mailto:support@novunt.com">support@novunt.com</a>.
+        contact us at: the Support section in the app.
       </p>
     </div>
   );

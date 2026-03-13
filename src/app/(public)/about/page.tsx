@@ -31,9 +31,9 @@ export default function AboutPage() {
       <p>
         We believe everyone should have access to tools that help them build
         wealth. Novunt combines cutting-edge technology with user-friendly
-        design to create a platform where your money works for you — whether
-        you are saving for a home, building an emergency fund, planning a
-        vacation, or growing long-term wealth.
+        design to create a platform where your money works for you — whether you
+        are saving for a home, building an emergency fund, planning a vacation,
+        or growing long-term wealth.
       </p>
 
       <h2>How Novunt Works</h2>
@@ -49,12 +49,12 @@ export default function AboutPage() {
         </li>
         <li>
           <strong>Earn Daily Returns</strong> — Your stakes earn daily Return on
-          Stake (ROS), distributed to your Earnings Wallet until the 200%
-          target is reached.
+          Stake (ROS), distributed to your Earnings Wallet until the 200% target
+          is reached.
         </li>
         <li>
-          <strong>Withdraw or Re-stake</strong> — Withdraw your earnings to
-          your external BEP20 wallet, or compound your growth by re-staking.
+          <strong>Withdraw or Re-stake</strong> — Withdraw your earnings to your
+          external BEP20 wallet, or compound your growth by re-staking.
         </li>
       </ul>
 
@@ -93,9 +93,9 @@ export default function AboutPage() {
           instantly with zero fees.
         </li>
         <li>
-          <strong>Achievement &amp; NXP System</strong> — Earn Novunt
-          Experience Points and badges for platform activity. NXP will convert
-          to Novunt Loyalty Points (NLP) with exclusive future benefits.
+          <strong>Achievement &amp; NXP System</strong> — Earn Novunt Experience
+          Points and badges for platform activity. NXP will convert to Novunt
+          Loyalty Points (NLP) with exclusive future benefits.
         </li>
       </ul>
 
@@ -110,11 +110,11 @@ export default function AboutPage() {
 
       <h2>Built for Everyone</h2>
       <p>
-        Whether you are new to digital assets or an experienced investor,
-        Novunt is designed to be intuitive and accessible. Our platform
-        supports light and dark themes, works on any device, and includes a
-        comprehensive Knowledge Base and AI-powered assistant (Nova) to help
-        you every step of the way.
+        Whether you are new to digital assets or an experienced investor, Novunt
+        is designed to be intuitive and accessible. Our platform supports light
+        and dark themes, works on any device, and includes a comprehensive
+        Knowledge Base and AI-powered assistant (Nova) to help you every step of
+        the way.
       </p>
 
       <h2>Get Started</h2>
@@ -123,19 +123,7 @@ export default function AboutPage() {
         takes just a few minutes. Make your first deposit, create your first
         goal-based stake, and start earning daily returns today.
       </p>
-      <p>
-        Questions? Reach us at{' '}
-        <a href="mailto:support@novunt.com">support@novunt.com</a> or through
-        our Telegram support bot{' '}
-        <a
-          href="https://t.me/NovuntAssistantBot"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          @NovuntAssistantBot
-        </a>
-        .
-      </p>
+      <p>Questions? Reach us via the Support section in the app.</p>
     </div>
   );
 }

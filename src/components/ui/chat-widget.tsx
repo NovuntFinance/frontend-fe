@@ -7,8 +7,7 @@ import { sendChatbotMessage } from '@/services/chatbotApi';
 type Message = { id: string; from: 'user' | 'bot'; text: string };
 
 const FALLBACK_MESSAGE =
-  'Chat service unavailable — open Telegram @NovuntAssistantBot';
-const TELEGRAM_LINK = 'https://t.me/NovuntAssistantBot';
+  'Chat service unavailable — use the Support section in the app.';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -76,11 +75,9 @@ export default function ChatWidget() {
               </div>
               <a
                 className="text-xs text-indigo-200 transition-colors hover:text-indigo-100 hover:underline sm:text-sm"
-                href={TELEGRAM_LINK}
-                target="_blank"
-                rel="noreferrer"
+                href="/dashboard"
               >
-                Open in Telegram
+                Open app
               </a>
             </div>
 

@@ -33,7 +33,7 @@ export function OrganizationJsonLd() {
         ],
         contactPoint: {
           '@type': 'ContactPoint',
-          email: 'support@novunt.com',
+          email: '', // Support is in-app only
           contactType: 'customer support',
           availableLanguage: 'English',
         },

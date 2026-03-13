@@ -47,7 +47,7 @@ export function AccountLockedDialog({
   onOpenChange,
   reason = 'other',
   lockDuration,
-  supportEmail = 'support@novunt.com',
+  supportEmail = '', // Support is in-app only
   supportPhone,
 }: AccountLockedDialogProps) {
   const details = lockDuration

@@ -567,14 +567,12 @@ export default function LandingPageContent() {
               >
                 Create Free Account
               </Link>
-              <a
-                href="https://t.me/NovuntAssistantBot"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/dashboard"
                 className="text-sm font-medium text-white/90 transition-colors hover:text-white sm:text-base"
               >
-                Contact Support
-              </a>
+                Support
+              </Link>
             </div>
           </div>
 

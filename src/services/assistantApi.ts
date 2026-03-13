@@ -41,9 +41,13 @@ import type {
 // The shared API client's baseURL includes /api/v1, so user-side assistant
 // calls need an explicit baseURL override to hit /api/assistant/... instead.
 // ─────────────────────────────────────────────────────────────────────
-const ASSISTANT_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || 'https://api.novunt.com/api/v1'
-).replace('/api/v1', '/api');
+const ASSISTANT_BASE_URL = (() => {
+  const base =
+    process.env.NEXT_PUBLIC_API_URL || 'https://api.novunt.com/api/v1';
+  if (base.includes('/api/v1')) return base.replace('/api/v1', '/api');
+  if (!base.endsWith('/api')) return base.replace(/\/?$/, '/api');
+  return base;
+})();
 
 // ─────────────────────────────────────────────────────────────────────
 // Helper: normalise API responses regardless of auto-unwrap behaviour
@@ -149,8 +153,27 @@ export async function getFAQCategories(): Promise<
 // ─────────────────────────────────────────────────────────────────────
 
 /**
+ * Get support form options (categories & priorities)
+ * GET /api/assistant/support/options
+ */
+export async function getSupportOptions(): Promise<
+  AssistantApiResponse<{
+    categories: Array<{ value: string; label: string }>;
+    priorities: Array<{ value: string; label: string }>;
+  }>
+> {
+  const raw = await api.get<unknown>('/assistant/support/options', {
+    baseURL: ASSISTANT_BASE_URL,
+  });
+  return wrapResponse(raw);
+}
+
+/**
  * Create a support ticket (escalate)
  * POST /api/assistant/support/escalate
+ * Request body: { subject, description, priority, category, conversationId? }
+ * Success (201): { success: true, data: { ticketId, status, estimatedResponseTime, message } }
+ * Error (400/500): throws; extract message from error.response.data.message or error.response.data.error?.message
  */
 export async function createSupportTicket(
   data: SupportEscalationRequest
@@ -338,6 +361,27 @@ export async function getAdminSupportStats(): Promise<
 > {
   const raw = await api.get<unknown>('/admin/support/stats');
   return wrapResponse<TicketStats>(raw);
+}
+
+/**
+ * List support agents for assign dropdown
+ * GET /api/v1/admin/support/agents
+ */
+export async function getAdminSupportAgents(): Promise<
+  AssistantApiResponse<{
+    agents: Array<{
+      _id: string;
+      fname: string;
+      lname: string;
+      email: string;
+      username: string;
+      role: string;
+      displayName: string;
+    }>;
+  }>
+> {
+  const raw = await api.get<unknown>('/admin/support/agents');
+  return wrapResponse(raw);
 }
 
 /**

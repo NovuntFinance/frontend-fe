@@ -30,6 +30,8 @@ import {
   adminReplyToTicket,
   updateTicketStatus,
   updateTicketPriority,
+  assignTicket,
+  getAdminSupportAgents,
 } from '@/services/assistantApi';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import { useAuthStore } from '@/store/authStore';
@@ -96,6 +98,10 @@ export default function AdminTicketDetailPage() {
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPriority, setUpdatingPriority] = useState(false);
+  const [updatingAssign, setUpdatingAssign] = useState(false);
+  const [agents, setAgents] = useState<
+    Array<{ _id: string; displayName: string }>
+  >([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -113,9 +119,23 @@ export default function AdminTicketDetailPage() {
           );
         }
       },
+      onTicketUserReply: (data) => {
+        if (data.ticketId === ticketId && ticket) {
+          setTicket((prev) =>
+            prev
+              ? { ...prev, messages: [...prev.messages, data.message] }
+              : prev
+          );
+        }
+      },
       onTicketStatusChanged: (data) => {
         if (data.ticketId === ticketId) {
           setTicket((prev) => (prev ? { ...prev, status: data.status } : prev));
+        }
+      },
+      onTicketAssigned: (data) => {
+        if (data.ticketId === ticketId) {
+          loadTicket();
         }
       },
     }
@@ -146,6 +166,25 @@ export default function AdminTicketDetailPage() {
   useEffect(() => {
     loadTicket();
   }, [loadTicket]);
+
+  useEffect(() => {
+    getAdminSupportAgents()
+      .then((res) => {
+        if (res?.success && res.data?.agents) {
+          setAgents(
+            res.data.agents.map((a) => ({
+              _id: a._id,
+              displayName:
+                a.displayName ||
+                `${a.fname || ''} ${a.lname || ''}`.trim() ||
+                a.username ||
+                a.email,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Join socket room
   useEffect(() => {
@@ -218,6 +257,27 @@ export default function AdminTicketDetailPage() {
       toast.error('Failed to update priority');
     } finally {
       setUpdatingPriority(false);
+    }
+  };
+
+  const handleAssignChange = async (agentId: string) => {
+    if (!ticketId) return;
+    setUpdatingAssign(true);
+    try {
+      const res = await assignTicket(ticketId, agentId);
+      if (res?.success && res.data) {
+        const updated = (res.data as { ticket?: AdminTicket }).ticket;
+        if (updated) {
+          setTicket((prev) =>
+            prev ? { ...prev, assignedTo: updated.assignedTo } : prev
+          );
+        }
+        toast.success(agentId ? 'Ticket assigned' : 'Assignment cleared');
+      }
+    } catch {
+      toast.error('Failed to assign ticket');
+    } finally {
+      setUpdatingAssign(false);
     }
   };
 
@@ -491,15 +551,29 @@ export default function AdminTicketDetailPage() {
                 <p className="text-muted-foreground mb-1 text-xs font-medium">
                   Assigned To
                 </p>
-                {ticket.assignedTo ? (
-                  <p className="text-sm">
-                    {ticket.assignedTo.fname} {ticket.assignedTo.lname}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground text-xs italic">
-                    Unassigned
-                  </p>
-                )}
+                <Select
+                  value={
+                    ticket.assignedTo?._id || ticket.assignedTo || 'unassigned'
+                  }
+                  onValueChange={(v) =>
+                    v === 'unassigned'
+                      ? handleAssignChange('')
+                      : handleAssignChange(v)
+                  }
+                  disabled={updatingAssign}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {agents.map((a) => (
+                      <SelectItem key={a._id} value={a._id}>
+                        {a.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Dates */}

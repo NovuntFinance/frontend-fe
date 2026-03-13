@@ -94,7 +94,7 @@ export function DailyLimitDialog({
       <div className="text-muted-foreground pt-2 text-center text-sm">
         Need a higher limit?{' '}
         <Link
-          href="/support"
+          href="/dashboard"
           className="text-primary font-medium hover:underline"
         >
           Contact Support
