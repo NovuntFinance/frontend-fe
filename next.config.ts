@@ -35,6 +35,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Strip console.log/debug/info in production; keep error and warn for diagnostics
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
+  },
   // Note: Next.js 16+ eslint config moved to next lint - run `npm run lint` locally
   experimental: {
     serverActions: {

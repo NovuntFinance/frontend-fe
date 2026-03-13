@@ -317,8 +317,22 @@ export default function DashboardPage() {
     sortOrder: 'desc',
   });
 
-  // Extract transactions from the response
-  const transactions = transactionHistoryData?.transactions || [];
+  // Extract transactions and filter: sender sees transfer_out only, recipient sees transfer_in only
+  const rawTransactions = transactionHistoryData?.transactions || [];
+  const transactions = React.useMemo(() => {
+    if (!user?.username) return rawTransactions;
+    return rawTransactions.filter((tx: any) => {
+      const typeLower = (tx.type || '').toLowerCase();
+      if (
+        typeLower === 'transfer_in' &&
+        tx.fromUser?.username === user.username
+      )
+        return false;
+      if (typeLower === 'transfer_out' && tx.toUser?.username === user.username)
+        return false;
+      return true;
+    });
+  }, [rawTransactions, user?.username]);
   const {
     data: overview,
     isLoading: overviewLoading,

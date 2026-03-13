@@ -11,6 +11,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useTransactionHistory } from '@/hooks/useWallet';
+import { useUser } from '@/hooks/useUser';
 import {
   formatCurrency,
   formatTransactionType,
@@ -137,6 +138,7 @@ function RecentTransactionItem({ transaction }: { transaction: Transaction }) {
  * Recent Transactions - compact list (3 items) with View All link
  */
 export function RecentTransactions() {
+  const { user } = useUser();
   const { data, isLoading } = useTransactionHistory({
     limit: 3,
     page: 1,
@@ -144,7 +146,24 @@ export function RecentTransactions() {
     sortOrder: 'desc',
   });
 
-  const transactions = data?.transactions ?? [];
+  // Filter so sender sees only transfer_out, recipient sees only transfer_in
+  const rawTransactions = data?.transactions ?? [];
+  const transactions = user?.username
+    ? rawTransactions.filter((tx: Transaction) => {
+        const typeLower = (tx.type || '').toLowerCase();
+        if (
+          typeLower === 'transfer_in' &&
+          tx.fromUser?.username === user.username
+        )
+          return false;
+        if (
+          typeLower === 'transfer_out' &&
+          tx.toUser?.username === user.username
+        )
+          return false;
+        return true;
+      })
+    : rawTransactions;
 
   return (
     <div className="space-y-3">

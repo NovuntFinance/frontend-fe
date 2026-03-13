@@ -142,23 +142,6 @@ export function TransactionHistory({
     if (variant === 'compact') setCompactPage(1);
   }, [debouncedSearch, variant]);
 
-  // Debug logging
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[TransactionHistory] 📊 Component Data Debug:', {
-        hasData: !!data,
-        dataKeys: data ? Object.keys(data) : [],
-        transactionsCount: data?.transactions?.length || 0,
-        firstTransaction: data?.transactions?.[0],
-        pagination: data?.pagination,
-        summary: data?.summary,
-        categoryBreakdown: data?.categoryBreakdown,
-        availableFilters: data?.availableFilters,
-        currentFilters: filters,
-      });
-    }
-  }, [data, filters]);
-
   // Shared categorization function - used by both breakdown computation and filtering
   // This ensures consistency between the breakdown counts and filtered results
   // Based on backend API documentation: transactions have proper category field
@@ -192,30 +175,7 @@ export function TransactionHistory({
       // CRITICAL FIX: referral_bonus should ALWAYS be "earnings", not "bonus"
       // Override backend category if it's incorrectly set
       if (typeLower === 'referral_bonus' && backendCategory === 'bonus') {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            '[TransactionHistory] ⚠️ Overriding backend category for referral_bonus:',
-            {
-              id: tx._id,
-              type: tx.type,
-              backendCategory: 'bonus',
-              correctedCategory: 'earnings',
-            }
-          );
-        }
         backendCategory = 'earnings';
-      }
-
-      if (
-        process.env.NODE_ENV === 'development' &&
-        (typeLower.includes('stake') || backendCategory === 'staking')
-      ) {
-        console.log('[TransactionHistory] 🎯 Using backend category:', {
-          id: tx._id,
-          type: tx.type,
-          backendCategory,
-          txCategory: tx.category,
-        });
       }
       return backendCategory;
     }
@@ -245,15 +205,6 @@ export function TransactionHistory({
         !typeLower.includes('earned') &&
         typeLower !== 'ros_payout')
     ) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[TransactionHistory] 🎯 Identified as STAKING by type:', {
-          id: tx._id,
-          type: tx.type,
-          typeLower,
-          hasFromUser: !!tx.fromUser,
-          hasToUser: !!tx.toUser,
-        });
-      }
       return 'staking';
     }
 
@@ -321,17 +272,6 @@ export function TransactionHistory({
       !descLower.includes('roi') &&
       !descLower.includes('earned')
     ) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[TransactionHistory] 🎯 Identified as STAKING by description:',
-          {
-            id: tx._id,
-            type: tx.type,
-            description: tx.description,
-            descLower,
-          }
-        );
-      }
       return 'staking';
     }
     // Then check for transfers, deposits, withdrawals
@@ -348,14 +288,6 @@ export function TransactionHistory({
 
     // PRIORITY 6: Check transaction ID for stake indicators
     if (txIdUpper.includes('STAKE')) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[TransactionHistory] 🎯 Identified as STAKING by TX ID:', {
-          id: tx._id,
-          type: tx.type,
-          txId: tx.txId,
-          txIdUpper,
-        });
-      }
       return 'staking';
     }
 
@@ -376,22 +308,6 @@ export function TransactionHistory({
     // ALWAYS recompute from transactions if available - this is the source of truth
     // The API's categoryBreakdown might have incorrect categorizations
     if (data?.transactions && data.transactions.length > 0) {
-      console.log(
-        '[TransactionHistory] 🔄 ALWAYS recomputing breakdown from',
-        data.transactions.length,
-        'transactions (ignoring API categoryBreakdown)'
-      );
-
-      if (
-        data?.categoryBreakdown &&
-        Object.keys(data.categoryBreakdown).length > 0
-      ) {
-        console.log(
-          '[TransactionHistory] API categoryBreakdown (will be ignored):',
-          data.categoryBreakdown
-        );
-      }
-
       // Reset breakdown and recompute from transactions
       const recomputedBreakdown: CategoryBreakdown = {
         deposit: { count: 0, totalAmount: 0 },
@@ -422,22 +338,6 @@ export function TransactionHistory({
         // Use the shared categorization function for consistency
         const cat = categorizeTransaction(tx);
 
-        // Debug logging for all transactions during breakdown computation
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '[TransactionHistory] 🔍 Breakdown: Computing category for transaction:',
-            {
-              id: tx._id,
-              type: tx.type,
-              category: tx.category,
-              description: tx.description,
-              txId: tx.txId,
-              amount: tx.amount,
-              computedCategory: cat,
-            }
-          );
-        }
-
         // Initialize category if it doesn't exist
         if (!recomputedBreakdown[cat]) {
           recomputedBreakdown[cat] = { count: 0, totalAmount: 0 };
@@ -445,14 +345,6 @@ export function TransactionHistory({
         recomputedBreakdown[cat].count += 1;
         recomputedBreakdown[cat].totalAmount += Math.abs(tx.amount);
       });
-
-      // Debug logging for final breakdown
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[TransactionHistory] 📊 Final recomputed breakdown:',
-          recomputedBreakdown
-        );
-      }
 
       // Use recomputed breakdown as the source of truth - it has the correct categorization
       // Merge with initialized breakdown to ensure main categories always show
@@ -467,10 +359,6 @@ export function TransactionHistory({
         breakdown[cat] = catData; // Always use recomputed data, don't check if exists
       });
 
-      console.log(
-        '[TransactionHistory] ✅ Final merged breakdown after recomputation:',
-        breakdown
-      );
       return breakdown;
     }
 
@@ -479,10 +367,6 @@ export function TransactionHistory({
       data?.categoryBreakdown &&
       Object.keys(data.categoryBreakdown).length > 0
     ) {
-      console.log(
-        '[TransactionHistory] ⚠️ No transactions available, using API categoryBreakdown:',
-        data.categoryBreakdown
-      );
       Object.entries(data.categoryBreakdown).forEach(([cat, catData]) => {
         const normalizedCat = cat.toLowerCase();
         if (normalizedCat !== 'other' && normalizedCat !== 'system') {
@@ -556,10 +440,6 @@ export function TransactionHistory({
         };
       }
 
-      console.log(
-        '[TransactionHistory] Computed breakdown from summary:',
-        breakdown
-      );
       return breakdown;
     }
 
@@ -577,7 +457,6 @@ export function TransactionHistory({
     key: keyof TransactionHistoryParams,
     value: any
   ) => {
-    console.log('[TransactionHistory] 🔍 Filter change:', { key, value });
     setFilters((prev) => ({
       ...prev,
       [key]: value === 'all' || value === '' ? undefined : value,
@@ -587,7 +466,6 @@ export function TransactionHistory({
   };
 
   const handlePageChange = (newPage: number) => {
-    console.log('[TransactionHistory] 📄 Page change:', newPage);
     setFilters((prev) => ({
       ...prev,
       page: newPage,
@@ -604,7 +482,6 @@ export function TransactionHistory({
   };
 
   const clearFilters = () => {
-    console.log('[TransactionHistory] 🗑️ Clearing all filters');
     setFilters({
       page: 1,
       limit: 20,
@@ -617,7 +494,6 @@ export function TransactionHistory({
   };
 
   const handleRefresh = () => {
-    console.log('[TransactionHistory] 🔄 Refreshing data');
     refetch();
   };
 
@@ -641,63 +517,40 @@ export function TransactionHistory({
   // Backend handles search and date filtering, but we also apply them client-side for consistency
   const filteredTransactions = useMemo(() => {
     if (!data?.transactions) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[TransactionHistory] 🔍 Filter: No transactions data available'
-        );
-      }
       return [];
     }
 
     if (!Array.isArray(data.transactions) || data.transactions.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[TransactionHistory] 🔍 Filter: Transactions array is empty or not an array'
-        );
-      }
       return [];
     }
 
     let filtered = [...data.transactions];
 
-    // Filter out transfer_in transactions where current user is the sender
-    // When a user sends money, they should only see the transfer_out transaction, not the transfer_in
-    // The transfer_in transaction is for the receiver, not the sender
+    // Filter transfer transactions so each user only sees their own perspective:
+    // - Sender: sees transfer_out only (not transfer_in)
+    // - Recipient: sees transfer_in only (not transfer_out)
     if (user?.username) {
-      const beforeTransferFilter = filtered.length;
       filtered = filtered.filter((tx) => {
-        // If it's a transfer_in transaction and the current user is the sender (fromUser),
-        // filter it out because this is the receiver's transaction, not the sender's
+        const typeLower = (tx.type || '').toLowerCase();
+
+        // 1. transfer_in + current user is sender → filter out (sender should only see transfer_out)
         if (
-          (tx.type === 'transfer_in' ||
-            tx.type?.toLowerCase() === 'transfer_in') &&
+          typeLower === 'transfer_in' &&
           tx.fromUser?.username === user.username
         ) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              '[TransactionHistory] 🚫 Filtering out transfer_in transaction where user is sender:',
-              {
-                id: tx._id,
-                type: tx.type,
-                fromUser: tx.fromUser?.username,
-                toUser: tx.toUser?.username,
-                currentUser: user.username,
-              }
-            );
-          }
           return false;
         }
+
+        // 2. transfer_out + current user is recipient → filter out (recipient should only see transfer_in)
+        if (
+          typeLower === 'transfer_out' &&
+          tx.toUser?.username === user.username
+        ) {
+          return false;
+        }
+
         return true;
       });
-
-      if (
-        process.env.NODE_ENV === 'development' &&
-        beforeTransferFilter !== filtered.length
-      ) {
-        console.log(
-          `[TransactionHistory] 🚫 Filtered out ${beforeTransferFilter - filtered.length} transfer_in transactions where user is sender`
-        );
-      }
     }
 
     // TEMPORARY WORKAROUND: Filter out referral_bonus transactions incorrectly created for downlines
@@ -707,7 +560,6 @@ export function TransactionHistory({
     // This filter removes referral_bonus transactions where the current user is the relatedUserId
     // (meaning they're the downline who staked, not the referrer who earned the bonus)
     if (user?._id) {
-      const beforeReferralFilter = filtered.length;
       filtered = filtered.filter((tx) => {
         // If it's a referral_bonus transaction and the current user's ID matches the relatedUserId,
         // filter it out because this transaction was incorrectly created for the downline
@@ -719,152 +571,20 @@ export function TransactionHistory({
           (tx.metadata.relatedUserId === user._id ||
             String(tx.metadata.relatedUserId) === String(user._id))
         ) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(
-              '[TransactionHistory] 🚫 Filtering out incorrectly created referral_bonus transaction for downline:',
-              {
-                id: tx._id,
-                type: tx.type,
-                relatedUserId: tx.metadata.relatedUserId,
-                currentUserId: user._id,
-                description: tx.description,
-              }
-            );
-          }
           return false;
         }
         return true;
       });
-
-      if (
-        process.env.NODE_ENV === 'development' &&
-        beforeReferralFilter !== filtered.length
-      ) {
-        console.warn(
-          `[TransactionHistory] 🚫 Filtered out ${beforeReferralFilter - filtered.length} incorrectly created referral_bonus transactions for downlines. Backend fix required - see BACKEND_REFERRAL_BONUS_DUPLICATION_FIX.md`
-        );
-      }
-    }
-
-    if (process.env.NODE_ENV === 'development' && filters.category) {
-      console.log(
-        '[TransactionHistory] 🔍 Filter: Starting with',
-        filtered.length,
-        'transactions, filtering by category:',
-        filters.category
-      );
-      console.log(
-        '[TransactionHistory] 🔍 Filter: Transaction IDs:',
-        filtered.map((tx) => tx._id)
-      );
     }
 
     // ALWAYS filter by category client-side (using our categorization logic)
     // This ensures transfers, deposits, etc. are correctly identified
     if (filters.category) {
       const categoryFilter = filters.category.toLowerCase();
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[TransactionHistory] 🔍 Filter: Category filter active:',
-          categoryFilter
-        );
-        console.log(
-          '[TransactionHistory] 🔍 Filter: getTransactionCategory function:',
-          typeof getTransactionCategory
-        );
-      }
-
-      const beforeFilterCount = filtered.length;
       filtered = filtered.filter((tx) => {
         const txCategory = getTransactionCategory(tx);
-        const matches = txCategory === categoryFilter;
-
-        // Debug logging for category filtering - log ALL transactions when filtering by staking
-        if (
-          process.env.NODE_ENV === 'development' &&
-          categoryFilter === 'staking'
-        ) {
-          console.log(
-            `[TransactionHistory] 🔍 Filter: Checking transaction for staking filter:`,
-            {
-              id: tx._id,
-              type: tx.type,
-              category: tx.category,
-              computedCategory: txCategory,
-              filterCategory: categoryFilter,
-              matches,
-              description: tx.description,
-              txId: tx.txId,
-              direction: tx.direction,
-              fromUser: tx.fromUser,
-              toUser: tx.toUser,
-              typeIncludesStake: tx.type?.toLowerCase().includes('stake'),
-              descriptionIncludesStake: (tx.description || '')
-                .toLowerCase()
-                .includes('stake'),
-              txIdIncludesStake: (tx.txId || '')
-                .toUpperCase()
-                .includes('STAKE'),
-              // Also check what categorizeTransaction returns directly
-              directCategorize: categorizeTransaction(tx),
-            }
-          );
-        } else if (
-          process.env.NODE_ENV === 'development' &&
-          !matches &&
-          categoryFilter === 'transfer'
-        ) {
-          console.log(
-            `[TransactionHistory] Filter: Transaction not matching transfer filter:`,
-            {
-              id: tx._id,
-              type: tx.type,
-              category: tx.category,
-              computedCategory: txCategory,
-              filterCategory: categoryFilter,
-              fromUser: tx.fromUser,
-              toUser: tx.toUser,
-              description: tx.description,
-              direction: tx.direction,
-            }
-          );
-        }
-
-        return matches;
+        return txCategory === categoryFilter;
       });
-
-      // Debug: Log filtering results
-      if (
-        process.env.NODE_ENV === 'development' &&
-        categoryFilter === 'staking'
-      ) {
-        console.log(
-          `[TransactionHistory] 🔍 Filter: After staking filter, ${filtered.length} transactions remain out of ${beforeFilterCount} total`
-        );
-        if (filtered.length === 0 && beforeFilterCount > 0) {
-          console.warn(
-            `[TransactionHistory] ⚠️ WARNING: Filter returned 0 results but started with ${beforeFilterCount} transactions!`
-          );
-          // Show what categories were actually computed
-          const categoryMap = data.transactions.reduce(
-            (acc: Record<string, any[]>, tx: Transaction) => {
-              const cat = getTransactionCategory(tx);
-              if (!acc[cat]) acc[cat] = [];
-              acc[cat].push({
-                id: tx._id,
-                type: tx.type,
-                description: tx.description,
-              });
-              return acc;
-            },
-            {} as Record<string, any[]>
-          );
-          console.log(
-            '[TransactionHistory] 🔍 Filter: Actual categories found:',
-            categoryMap
-          );
-        }
-      }
     }
 
     // Also apply search filter client-side (backend might have already filtered, but we ensure consistency)
@@ -946,68 +666,6 @@ export function TransactionHistory({
     categorizeTransaction,
     user?._id,
     user?.username,
-  ]);
-
-  // Debug logging for filters
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && data?.transactions) {
-      // When filtering by staking, show detailed breakdown of all transactions
-      if (filters.category === 'staking' && data.transactions.length > 0) {
-        const categoryBreakdown = data.transactions.reduce(
-          (acc: Record<string, any[]>, tx: Transaction) => {
-            const cat = getTransactionCategory(tx);
-            if (!acc[cat]) acc[cat] = [];
-            acc[cat].push({
-              id: tx._id,
-              type: tx.type,
-              category: tx.category,
-              description: tx.description,
-              amount: tx.amount,
-            });
-            return acc;
-          },
-          {} as Record<string, any[]>
-        );
-
-        console.log(
-          '[TransactionHistory] 📊 STAKING FILTER - All Transactions by Category:',
-          categoryBreakdown
-        );
-        console.log(
-          '[TransactionHistory] 📊 STAKING FILTER - Staking transactions found:',
-          categoryBreakdown['staking'] || []
-        );
-      }
-
-      console.log('[TransactionHistory] 🔍 Filter Debug:', {
-        totalTransactions: data.transactions.length,
-        filteredCount: filteredTransactions.length,
-        filters,
-        backendFilters,
-        categoryFilter: filters.category,
-        searchFilter: filters.search,
-        dateFrom: filters.dateFrom,
-        dateTo: filters.dateTo,
-        isCategoryFiltering: !!filters.category,
-        note: filters.category
-          ? 'Category filtering is done CLIENT-SIDE (backend category might be wrong)'
-          : 'No category filter - using backend filtering',
-        sampleTransaction: data.transactions[0]
-          ? {
-              id: data.transactions[0]._id,
-              type: data.transactions[0].type,
-              category: data.transactions[0].category,
-              computedCategory: getTransactionCategory(data.transactions[0]),
-            }
-          : null,
-      });
-    }
-  }, [
-    data?.transactions,
-    filteredTransactions.length,
-    filters,
-    backendFilters,
-    getTransactionCategory,
   ]);
 
   if (error) {
@@ -1672,35 +1330,6 @@ function TransactionItem({
   const isNeutral = transaction.direction === 'neutral';
   const [showReceipt, setShowReceipt] = useState(false);
 
-  // 🔍 DEBUG: Log referral bonus transactions for verification
-  useEffect(() => {
-    if (
-      process.env.NODE_ENV === 'development' &&
-      transaction.type === 'referral_bonus'
-    ) {
-      console.group(`🎁 Referral Bonus Transaction #${index + 1}`);
-      console.log('Description:', transaction.description);
-      console.log('Expected: Contains "stake"');
-      console.log(
-        'Actual:',
-        transaction.description.includes('stake')
-          ? '✅ CORRECT'
-          : '❌ INCORRECT'
-      );
-      console.log('Metadata:', {
-        stakeId: transaction.metadata?.stakeId || '❌ MISSING',
-        // stakeAmount removed - sanitized by backend
-        origin: transaction.metadata?.origin || '❌ MISSING',
-        trigger: transaction.metadata?.trigger,
-        level: transaction.metadata?.level,
-        // Old incorrect fields (should NOT be present)
-        earningsAmount:
-          transaction.metadata?.earningsAmount || '✅ Not present',
-      });
-      console.groupEnd();
-    }
-  }, [transaction, index]);
-
   return (
     <motion.div
       {...listItemAnimation(index)}
@@ -1751,15 +1380,6 @@ function TransactionItem({
                 transaction.description,
                 transaction.type
               )}
-              {/* 🔍 DEBUG: Highlight incorrect referral bonus descriptions (remove after verification) */}
-              {process.env.NODE_ENV === 'development' &&
-                transaction.type === 'referral_bonus' &&
-                transaction.description.toLowerCase().includes('earnings') && (
-                  <Badge variant="destructive" className="ml-2 text-[10px]">
-                    ⚠️ INCORRECT: Should say &quot;stake&quot; not
-                    &quot;earnings&quot;
-                  </Badge>
-                )}
             </p>
             <div
               className="flex flex-wrap items-center gap-2 text-[10px] sm:gap-3 sm:text-xs"
