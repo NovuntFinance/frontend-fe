@@ -7,6 +7,11 @@ interface UsePermissionsResult {
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
+  /**
+   * Convenience helper for UI checks.
+   * Accepts a single key or array (treated as OR).
+   */
+  can: (required?: string | string[]) => boolean;
   loading: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
@@ -85,11 +90,18 @@ export function usePermissions(): UsePermissionsResult {
     return perms.every((p) => permissions.includes(p));
   };
 
+  const can = (required?: string | string[]): boolean => {
+    if (!required) return true;
+    const list = Array.isArray(required) ? required : [required];
+    return hasAnyPermission(list);
+  };
+
   return {
     permissions,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
+    can,
     loading,
     error,
     refresh: fetchPermissions,

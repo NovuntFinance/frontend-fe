@@ -209,26 +209,16 @@ export function TwoFactorInput({
         </Alert>
       )}
 
-      {/* Actions */}
+      {/* Minimal action: clear only (auto-verify handles submission) */}
       {onComplete && (
-        <div className="flex flex-col gap-3">
-          <Button
-            onClick={() => onComplete(code.join(''))}
-            disabled={code.some((digit) => !digit) || isLoading || disabled}
-            className="w-full"
-            size="lg"
-          >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Verify Code
-          </Button>
-
+        <div className="flex justify-center">
           <Button
             onClick={handleClear}
-            variant="outline"
+            variant="ghost"
+            size="sm"
             disabled={isLoading || disabled}
-            className="w-full"
           >
-            Clear
+            Clear code
           </Button>
         </div>
       )}
