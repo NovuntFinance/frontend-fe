@@ -24,6 +24,8 @@ interface TwoFactorInputProps {
   disabled?: boolean;
   /** When false, hides "Can't find your code? Need help?" (e.g. on verify-email page). Default true. */
   showHelpLink?: boolean;
+  /** When true, shows an inline "Clear code" control under the inputs. Default true. */
+  showClearButton?: boolean;
 }
 
 /**
@@ -45,6 +47,7 @@ export function TwoFactorInput({
   length = 6,
   disabled = false,
   showHelpLink = true,
+  showClearButton = true,
 }: TwoFactorInputProps) {
   const [internalCode, setInternalCode] = useState<string[]>(() => {
     // Initialize from value prop if provided
@@ -209,8 +212,8 @@ export function TwoFactorInput({
         </Alert>
       )}
 
-      {/* Minimal action: clear only (auto-verify handles submission) */}
-      {onComplete && (
+      {/* Optional inline clear control (auto-verify handles submission) */}
+      {onComplete && showClearButton && (
         <div className="flex justify-center">
           <Button
             onClick={handleClear}
