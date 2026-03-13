@@ -553,7 +553,9 @@ export default function AdminTicketDetailPage() {
                 </p>
                 <Select
                   value={
-                    ticket.assignedTo?._id || ticket.assignedTo || 'unassigned'
+                    (typeof ticket.assignedTo === 'object'
+                      ? ticket.assignedTo?._id
+                      : ticket.assignedTo) || 'unassigned'
                   }
                   onValueChange={(v) =>
                     v === 'unassigned'

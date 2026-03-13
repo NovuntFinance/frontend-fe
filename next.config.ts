@@ -57,7 +57,10 @@ const nextConfig: NextConfig = {
   // Re-enable for production deployments if needed
   output: process.platform === 'win32' ? undefined : 'standalone',
   // Turbopack configuration (Next.js 16 default)
-  turbopack: {},
+  // Set root to project dir to fix workspace root detection with multiple lockfiles
+  turbopack: {
+    root: process.cwd(),
+  },
   // Keep webpack config for compatibility, but Turbopack will be used
   webpack: (config: Configuration, { dev }: { dev: boolean }) => {
     if (dev) {

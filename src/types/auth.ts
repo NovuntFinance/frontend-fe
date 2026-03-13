@@ -70,12 +70,24 @@ export interface RequestPasswordResetRequest {
   email: string;
 }
 
-// Phase 1 password reset uses OTP code, not token
-export interface ResetPasswordRequest {
+export interface VerifyResetOtpRequest {
   email: string;
-  otpCode: string;
+  otp: string;
+}
+
+export interface VerifyResetOtpResponse {
+  resetToken: string;
+}
+
+// Two-step reset flow: prefer resetToken + newPassword.
+// Backward compatibility: email + otp (or otpCode) + newPassword.
+export interface ResetPasswordRequest {
+  resetToken?: string;
+  email?: string;
+  otp?: string;
+  otpCode?: string;
   newPassword: string;
-  confirmPassword: string;
+  confirmPassword?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -439,6 +451,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
   PASSWORD_CHANGE_FAILED:
     'Failed to change password. Please verify your current password.',
   CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect',
+  INVALID_OTP: 'Invalid or expired code',
+  INVALID_RESET_TOKEN:
+    'Your reset session expired. Please verify the code again.',
+  SUPPORT_REQUIRED:
+    'Too many failed attempts. Please contact support for assistance.',
 
   // Server
   SERVER_ERROR: 'Server error. Please try again later.',

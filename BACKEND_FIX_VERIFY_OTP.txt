@@ -1,0 +1,32 @@
+## BUG FIX: POST /api/v1/better-auth/verify-reset-otp returns 401 "Authentication required"
+
+### Problem
+The verify-reset-otp endpoint is returning { success: false, message: 'Authentication required' } with HTTP 401. This endpoint is used by unauthenticated users during the password reset flow - they don't have a token yet. The auth middleware is blocking the request before the route handler runs.
+
+### Evidence
+- POST /better-auth/request-password-reset works fine (200 OK, no auth required)
+- POST /better-auth/verify-reset-otp with body { email, otp } returns 401
+- Request has NO Authorization header and NO cookies (cross-origin frontend)
+- Response body: { success: false, message: "Authentication required", error: {...} }
+
+### Required Fix
+The verify-reset-otp and reset-password endpoints must be EXCLUDED from the auth middleware, just like request-password-reset already is. These are public endpoints used by unauthenticated users.
+
+Find where the auth middleware is applied and ensure these paths skip it:
+- /better-auth/verify-reset-otp
+- /better-auth/reset-password
+
+Common locations to check:
+1. Global middleware in app.js / server.js - look for app.use(authMiddleware) or app.use(authenticate)
+2. Router-level middleware - look for router.use(authMiddleware) before these routes
+3. The auth middleware itself - look for a whitelist/skip array of public paths
+4. Per-route middleware - check if these routes have authMiddleware as a parameter
+
+### Expected Behavior After Fix
+- POST /better-auth/verify-reset-otp with { email, otp } should:
+  - Return 200 with { resetToken } if OTP is valid
+  - Return 400/403 with error message if OTP is invalid/expired
+  - NOT require any Authorization header or session cookie
+
+### Security Note
+The OTP itself IS the authentication for these endpoints - the user proves identity by knowing the code sent to their email. Do NOT add any other auth requirement.

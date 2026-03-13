@@ -37,6 +37,7 @@ export default function StakesPage() {
       }, 500);
       return () => clearTimeout(timeout);
     }
+    return undefined;
   }, []);
 
   // ✅ Auto-refresh logic: Re-fetch dashboard data at 00:00:00 BIT (1 PM Nigeria Time)

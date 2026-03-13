@@ -206,8 +206,27 @@ apiClient.interceptors.request.use(
       (config as any).headers = {};
     }
 
-    // Attach Authorization header when token is available
-    if (token) {
+    // These endpoints don't use Bearer token auth
+    const isUnauthenticatedEndpoint =
+      config.url?.includes('/better-auth/request-password-reset') ||
+      config.url?.includes('/better-auth/verify-reset-otp') ||
+      config.url?.includes('/better-auth/reset-password') ||
+      config.url?.includes('/better-auth/verify-email') ||
+      config.url?.includes('/better-auth/resend-verification') ||
+      config.url?.includes('/better-auth/complete-registration') ||
+      config.url?.includes('/better-auth/register');
+
+    if (isUnauthenticatedEndpoint) {
+      // Strip Bearer token only - credentials (cookies) are excluded for cross-origin reset endpoints
+      config.withCredentials = false;
+      if (config.headers) {
+        delete (config.headers as Record<string, string>).Authorization;
+        delete (config.headers as Record<string, string>).authorization;
+      }
+    }
+
+    // Attach Authorization header when token is available (skip for public endpoints)
+    if (token && !isUnauthenticatedEndpoint) {
       try {
         (config.headers as Record<string, string>).Authorization =
           `Bearer ${token}`;
@@ -237,7 +256,14 @@ apiClient.interceptors.request.use(
         config.url?.includes('/settings/public') ||
         config.url?.includes('/health') ||
         config.url?.includes('/better-auth/login') ||
-        config.url?.includes('/auth/register');
+        config.url?.includes('/auth/register') ||
+        config.url?.includes('/better-auth/register') ||
+        config.url?.includes('/better-auth/request-password-reset') ||
+        config.url?.includes('/better-auth/verify-reset-otp') ||
+        config.url?.includes('/better-auth/reset-password') ||
+        config.url?.includes('/better-auth/verify-email') ||
+        config.url?.includes('/better-auth/resend-verification') ||
+        config.url?.includes('/better-auth/complete-registration');
       if (isPublicEndpoint) {
         // Expected - no warning needed
       } else if (
@@ -257,12 +283,17 @@ apiClient.interceptors.request.use(
 
     // Log request in development
     if (process.env.NODE_ENV === 'development') {
+      const hasAuthHeader = !!(
+        (config.headers as Record<string, string> | undefined)?.Authorization ||
+        (config.headers as Record<string, string> | undefined)?.authorization
+      );
       console.log(
         `📤 [API Request] ${config.method?.toUpperCase()} ${config.url}`,
         {
           params: config.params,
           data: config.data,
-          hasAuth: !!token,
+          hasAuthHeader,
+          withCredentials: config.withCredentials,
         }
       );
     }
@@ -323,6 +354,20 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - Invalid/expired token
     if (error.response?.status === 401 && !originalRequest._retry) {
       console.log('[API] 401 Unauthorized - Token invalid or expired');
+
+      // Don't try to refresh for public/unauthenticated endpoints
+      const isPublicAuthEndpoint =
+        originalRequest.url?.includes('/better-auth/request-password-reset') ||
+        originalRequest.url?.includes('/better-auth/verify-reset-otp') ||
+        originalRequest.url?.includes('/better-auth/reset-password') ||
+        originalRequest.url?.includes('/better-auth/verify-email') ||
+        originalRequest.url?.includes('/better-auth/resend-verification') ||
+        originalRequest.url?.includes('/better-auth/complete-registration') ||
+        originalRequest.url?.includes('/better-auth/register');
+
+      if (isPublicAuthEndpoint) {
+        return Promise.reject(error);
+      }
 
       // Don't try to refresh if this IS the refresh endpoint
       if (originalRequest.url?.includes('/refresh-token')) {

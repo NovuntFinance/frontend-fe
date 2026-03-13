@@ -1,26 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
-import {
-  Mail,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  ArrowLeft,
-  Send,
-} from 'lucide-react';
+import { Mail, Loader2, AlertCircle, Send } from 'lucide-react';
 import { z } from 'zod';
 import { useRequestPasswordReset } from '@/lib/mutations';
 import { NeuField } from '@/components/auth/NeuField';
-import { PASSWORD_RESET_EXPIRY_SECONDS } from '@/constants/emailTiming';
 import styles from '@/styles/auth.module.css';
-
-const PASSWORD_RESET_EXPIRY_MINUTES = PASSWORD_RESET_EXPIRY_SECONDS / 60;
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -33,9 +22,9 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
  * Request password reset email - BetterAuth Aligned
  */
 function ForgotPasswordContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const forgotPasswordMutation = useRequestPasswordReset();
-  const [submittedEmail, setSubmittedEmail] = useState('');
 
   const {
     register,
@@ -58,11 +47,11 @@ function ForgotPasswordContent() {
     }
   }, [searchParams, setValue]);
 
-  // Handle form submission
+  // Handle form submission — go straight to code entry, skip intermediate screen
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       await forgotPasswordMutation.mutateAsync(data);
-      setSubmittedEmail(data.email);
+      router.push(`/reset-password?email=${encodeURIComponent(data.email)}`);
     } catch (error: unknown) {
       const message =
         error &&
@@ -71,95 +60,10 @@ function ForgotPasswordContent() {
         typeof (error as { message?: string }).message === 'string'
           ? (error as { message: string }).message
           : 'Failed to send reset email';
-      setError('root', {
-        message,
-      });
+      setError('root', { message });
     }
   };
 
-  // Success state
-  if (forgotPasswordMutation.isSuccess && submittedEmail) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-4 text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', duration: 0.5 }}
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
-          >
-            <CheckCircle2 className="h-8 w-8 text-green-400" />
-          </motion.div>
-          <div className="space-y-2">
-            <h1
-              className="text-2xl font-bold tracking-tight"
-              style={{ color: 'var(--neu-text)' }}
-            >
-              Check your email
-            </h1>
-            <p className={styles.neuTextSecondary}>
-              If an account exists, we&apos;ve sent a link to
-              <br />
-              <span
-                className="font-medium"
-                style={{ color: 'var(--neu-text)' }}
-              >
-                {submittedEmail}
-              </span>
-              . The link expires in {PASSWORD_RESET_EXPIRY_MINUTES} minutes.
-            </p>
-          </div>
-        </div>
-
-        <div className={`${styles.neuAuthCard} p-6`}>
-          <p className={`mb-3 text-sm font-medium ${styles.neuLabel}`}>
-            What&apos;s next?
-          </p>
-          <div className="space-y-3">
-            <p className={`text-sm ${styles.neuTextSecondary}`}>
-              1. Check your email inbox for a message from Novunt
-            </p>
-            <p className={`text-sm ${styles.neuTextSecondary}`}>
-              2. Click the reset link in the email (valid for{' '}
-              {PASSWORD_RESET_EXPIRY_MINUTES} minutes)
-            </p>
-            <p className={`text-sm ${styles.neuTextSecondary}`}>
-              3. Create a new strong password for your account
-            </p>
-          </div>
-          <div className="mt-6 flex flex-col gap-3">
-            <Link
-              href="/login"
-              className={`${styles.neuBtnPrimary} flex w-full items-center justify-center gap-2 rounded-xl py-3 no-underline`}
-            >
-              <ArrowLeft className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Back to Log In
-              </span>
-            </Link>
-            <p className={`text-center text-xs ${styles.neuTextMuted}`}>
-              Didn&apos;t receive the email? Check your spam folder or try again
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setSubmittedEmail('');
-              forgotPasswordMutation.reset();
-            }}
-            className={`${styles.neuBtnBack} flex w-full items-center justify-center rounded-xl py-3`}
-          >
-            Try a different email
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Form state
   return (
     <div className="space-y-5">
       <h1
@@ -173,7 +77,7 @@ function ForgotPasswordContent() {
       </h1>
       {errors.root && (
         <div className={styles.neuErrorAlert}>
-          <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
           <span>{errors.root.message}</span>
         </div>
       )}
@@ -199,7 +103,7 @@ function ForgotPasswordContent() {
               disabled={isSubmitting || forgotPasswordMutation.isPending}
             >
               <span className="text-sm font-bold tracking-wider text-white uppercase">
-                Send Reset Link
+                Send Reset Code
               </span>
               <Send className="h-4 w-4 text-white" />
             </button>

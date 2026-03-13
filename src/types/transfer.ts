@@ -10,7 +10,6 @@ export interface TransferRequest {
   amount: number; // Required: Positive number, minimum 1 USDT
   memo?: string; // Optional: Note for the transfer
   twoFACode: string; // Required: 6-digit 2FA code from authenticator app
-  emailOtp?: string; // Email OTP from POST /transfers/request-otp
   turnstileToken?: string; // Cloudflare Turnstile token
 }
 
