@@ -31,9 +31,13 @@ export const cspDirectives = {
     "'self'",
     // Novunt API and frontend domains
     'https://api.novunt.com',
+    'wss://api.novunt.com', // WebSocket for support real-time updates
     'https://www.novunt.com',
     'https://novunt.com',
     process.env.NEXT_PUBLIC_API_URL || '',
+    // Local dev: WebSocket to local backend (when API is localhost:5000)
+    'ws://localhost:5000',
+    'ws://127.0.0.1:5000',
     'https://*.vercel.com',
     'wss://*.vercel.com',
     'https://challenges.cloudflare.com',
