@@ -76,6 +76,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [hasTurnstileToken, setHasTurnstileToken] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -103,6 +104,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       setAmount('');
       setMemo('');
       setTwoFACode('');
+      setHasTurnstileToken(false);
       setError('');
       refetch();
     }
@@ -237,6 +239,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       // Reset Turnstile on TURNSTILE_FAILED so user can retry
       const code = err?.response?.data?.code || err?.code;
       if (code === 'TURNSTILE_FAILED') {
+        setHasTurnstileToken(false);
         turnstileRef.current?.reset();
       }
 
@@ -728,6 +731,30 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 </div>
               </div>
 
+              {/* Turnstile first - security check before 2FA */}
+              <div className="space-y-1.5">
+                <Label
+                  className="flex items-center gap-1.5 text-sm font-medium"
+                  style={{ color: NEU_TOKENS.white80 }}
+                >
+                  <Shield
+                    className="size-4"
+                    style={{ color: NEU_TOKENS.accent }}
+                  />
+                  Security verification
+                </Label>
+                <TurnstileWidget
+                  widgetRef={turnstileRef}
+                  size="normal"
+                  onToken={() => setHasTurnstileToken(true)}
+                  onError={() => setHasTurnstileToken(false)}
+                />
+                <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                  Complete the security check above. It may take a moment on
+                  slow connections.
+                </p>
+              </div>
+
               <div className="space-y-1.5">
                 <Label
                   htmlFor="twoFACode"
@@ -753,14 +780,12 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     setError('');
                   }}
                   className="neu-input h-12 border-0 text-center font-mono text-2xl tracking-[0.4em] focus-visible:ring-0"
-                  autoFocus
+                  autoFocus={false}
                 />
                 <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
                   Enter the 6-digit code from your authenticator app
                 </p>
               </div>
-
-              <TurnstileWidget widgetRef={turnstileRef} size="normal" />
 
               {error && (
                 <p className="neu-error text-xs font-medium">{error}</p>
@@ -768,7 +793,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
               <div className="flex gap-3 pt-1">
                 <Button
-                  onClick={() => setStep('amount')}
+                  onClick={() => {
+                    setHasTurnstileToken(false);
+                    setStep('amount');
+                  }}
                   variant="outline"
                   className="h-10 flex-1 border-0"
                   style={raisedStyle}
@@ -777,7 +805,12 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 </Button>
                 <PrimaryButton
                   onClick={handleSubmitTransfer}
-                  disabled={loading || twoFACode.length !== 6}
+                  disabled={
+                    loading ||
+                    twoFACode.length !== 6 ||
+                    (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+                      !hasTurnstileToken)
+                  }
                   loading={loading}
                   className="h-10 flex-1"
                 >

@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const TURNSTILE_SCRIPT_URL =
@@ -88,7 +89,11 @@ export function TurnstileWidget({
 
   // Capture theme at mount time - don't remount if it changes during verification
   const initialThemeRef = useRef<'light' | 'dark' | 'auto'>(
-    resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'
+    resolvedTheme === 'dark'
+      ? 'dark'
+      : resolvedTheme === 'light'
+        ? 'light'
+        : 'auto'
   );
 
   const theme = initialThemeRef.current;
@@ -194,16 +199,38 @@ export function TurnstileWidget({
         className={`rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-200 ${className}`}
         role="status"
       >
-        Security verification is not configured for this site. Please contact support or try again later.
+        Security verification is not configured for this site. Please contact
+        support or try again later.
       </div>
     );
   }
 
+  const isLoading = !scriptLoaded || !widgetId;
+
   return (
     <div
-      ref={containerRef}
-      className={`flex justify-center [&_.cf-turnstile]:[margin:0] ${className}`}
+      className={`relative flex min-h-[78px] flex-col items-center justify-center ${className}`}
       aria-label="Security verification"
-    />
+    >
+      {isLoading && (
+        <div
+          className="border-muted-foreground/30 bg-muted/30 absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="text-muted-foreground size-5 animate-spin" />
+          <p className="text-foreground text-center text-sm">
+            Security verification loading...
+          </p>
+          <p className="text-muted-foreground text-center text-xs">
+            This may take a moment on slow connections
+          </p>
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        className="flex min-h-[65px] w-full justify-center [&_.cf-turnstile]:[margin:0]"
+      />
+    </div>
   );
 }
