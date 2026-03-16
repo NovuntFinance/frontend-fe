@@ -272,6 +272,7 @@ apiClient.interceptors.response.use(
             },
             {
               withCredentials: true,
+              timeout: 15000, // 15s to prevent indefinite hang
             }
           );
 
@@ -288,6 +289,7 @@ apiClient.interceptors.response.use(
               },
               {
                 withCredentials: true,
+                timeout: 15000, // 15s to prevent indefinite hang
               }
             );
 

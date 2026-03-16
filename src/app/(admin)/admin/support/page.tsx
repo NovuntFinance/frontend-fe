@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { AlertCircle } from 'lucide-react';
 import { getAdminSupportStats, getAdminTickets } from '@/services/assistantApi';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import { useAuthStore } from '@/store/authStore';
@@ -90,6 +91,7 @@ export default function AdminSupportPage() {
   // Stats
   const [stats, setStats] = useState<TicketStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Tickets
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
@@ -100,6 +102,7 @@ export default function AdminSupportPage() {
     totalPages: 0,
   });
   const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState<string | null>(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -130,11 +133,21 @@ export default function AdminSupportPage() {
   // ─── Data loaders ──────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
+    setStatsError(null);
     try {
       const res = await getAdminSupportStats();
-      if (res?.success && res.data) setStats(res.data);
-    } catch {
-      /* silent */
+      if (res?.success && res.data) {
+        setStats(res.data);
+      } else {
+        setStatsError('Failed to load stats');
+      }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Failed to load stats';
+      setStatsError(msg);
+      console.error('[AdminSupport] loadStats error:', err);
     } finally {
       setStatsLoading(false);
     }
@@ -143,6 +156,7 @@ export default function AdminSupportPage() {
   const loadTickets = useCallback(
     async (page = 1) => {
       setTicketsLoading(true);
+      setTicketsError(null);
       try {
         const params: Record<string, unknown> = {
           page,
@@ -162,9 +176,16 @@ export default function AdminSupportPage() {
           setPagination(
             res.data.pagination || { page, limit: 15, total: 0, totalPages: 0 }
           );
+        } else {
+          setTicketsError('Failed to load tickets');
         }
-      } catch {
-        /* silent */
+      } catch (err: unknown) {
+        const msg =
+          err && typeof err === 'object' && 'message' in err
+            ? String((err as { message: unknown }).message)
+            : 'Failed to load tickets';
+        setTicketsError(msg);
+        console.error('[AdminSupport] loadTickets error:', err);
       } finally {
         setTicketsLoading(false);
       }
@@ -216,6 +237,12 @@ export default function AdminSupportPage() {
       </div>
 
       {/* ── Stats Cards ── */}
+      {statsError && (
+        <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-md px-4 py-3 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>Stats error: {statsError}</span>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Tickets"
@@ -329,6 +356,25 @@ export default function AdminSupportPage() {
           {ticketsLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            </div>
+          ) : ticketsError ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <AlertCircle className="text-destructive mb-3 h-10 w-10" />
+              <p className="text-destructive text-sm font-medium">
+                Failed to load tickets
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {ticketsError}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => loadTickets(pagination.page)}
+              >
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                Retry
+              </Button>
             </div>
           ) : tickets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
