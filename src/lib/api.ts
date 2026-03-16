@@ -379,23 +379,10 @@ apiClient.interceptors.response.use(
           error.message.includes('Failed to fetch'));
 
       if (isCorsError) {
-        const requestURL = originalRequest.url
-          ? `${API_BASE_URL}${originalRequest.url}`
-          : 'Unknown URL';
-
-        // Diagnose the issue
-        let diagnosticMessage = `Unable to connect to the server at ${requestURL}.`;
-        diagnosticMessage += '\n\nPlease check:\n';
-        diagnosticMessage +=
-          '1. Backend server is running at ' + API_BASE_URL + '\n';
-        diagnosticMessage += '2. CORS is configured correctly on backend\n';
-        diagnosticMessage += '3. Network connectivity\n';
-        diagnosticMessage +=
-          '4. NEXT_PUBLIC_API_URL environment variable is set correctly';
-
         const corsError: ApiError = {
           success: false,
-          message: diagnosticMessage,
+          message:
+            'Connection failed. Please check your internet connection and try again.',
           statusCode: 0, // Network error
           code: 'CORS_ERROR',
         };
