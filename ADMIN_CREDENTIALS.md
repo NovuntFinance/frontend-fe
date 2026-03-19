@@ -2,9 +2,9 @@
 
 ## Production Admin Accounts
 
-| Email | Role | Access |
-|-------|------|--------|
-| admin@novunt.com | superAdmin | Full admin dashboard |
+| Email              | Role          | Access               |
+| ------------------ | ------------- | -------------------- |
+| admin@novunt.com   | superAdmin    | Full admin dashboard |
 | support@novunt.com | support_agent | Support tickets only |
 
 ## Login Steps
