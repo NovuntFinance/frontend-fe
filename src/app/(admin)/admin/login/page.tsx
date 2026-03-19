@@ -251,7 +251,8 @@ function AdminLoginForm() {
     } catch (err: any) {
       // Handle 2FA required - show 2FA field, do not treat as error
       const status = err?.response?.status;
-      const code = err?.response?.data?.code;
+      const errorData = err?.response?.data;
+      const code = errorData?.error?.code || errorData?.code;
       if (status === 403 && code === '2FA_CODE_REQUIRED') {
         setShow2FAField(true);
         setError('Please enter your 6-digit 2FA code to continue.');
