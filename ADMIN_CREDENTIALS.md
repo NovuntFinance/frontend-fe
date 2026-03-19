@@ -1,54 +1,36 @@
 # Admin Login Credentials
 
-## ✅ Correct Super Admin Credentials
+## Production Admin Accounts
 
-These credentials were created by the backend setup script:
+| Email | Role | Access |
+|-------|------|--------|
+| admin@novunt.com | superAdmin | Full admin dashboard |
+| support@novunt.com | support_agent | Support tickets only |
 
-```
-Email: superadmin@novunt.com
-Password: NovuntTeam@2025
-Username: superadmin
-Role: superAdmin
-ID: 692c234531c96b685fce21bb
-```
-
-## 🔐 Login Steps
+## Login Steps
 
 1. Navigate to: `http://localhost:3000/admin/login`
 2. Enter:
-   - **Email or Username**: `superadmin@novunt.com` (or `superadmin`)
-   - **Password**: `NovuntTeam@2025`
-3. Click "Login"
+   - **Email or Username**: `admin@novunt.com` or `support@novunt.com`
+   - **Password**: Your assigned password
+3. If 2FA is enabled, you will be prompted for your 6-digit code after the first login attempt
+4. Click "Login"
 
-## 🎯 What Happens After Login
+## 2FA Flow
 
-Based on the setup, the super admin account likely doesn't have 2FA enabled yet, so after successful login:
+- **Initial form**: Only Email/Username and Password are shown
+- **First attempt**: Submit with credentials only
+- **If 2FA required**: The 2FA code field appears after the backend returns `2FA_CODE_REQUIRED`
+- **Second attempt**: Enter your 6-digit code and submit again
 
-1. **If 2FA is not enabled**: You'll be redirected to `/admin/setup-2fa` to set up two-factor authentication
-2. **If 2FA is already enabled**: You'll be redirected to `/admin/overview` (admin dashboard)
+## What Happens After Login
 
-## ⚠️ Important Notes
+- **superAdmin / admin**: Redirected to full dashboard (Overview, Users, Transactions, Analytics, etc.)
+- **support_agent**: Redirected to Support tickets only
+- **If 2FA not enabled**: Redirected to `/admin/setup-2fa` to set up two-factor authentication
+
+## Important Notes
 
 - Keep these credentials secure
 - The password cannot be recovered if lost
-- This is a super admin account with full permissions
-- Consider setting up 2FA immediately after first login
-
-## 🐛 If Login Still Fails
-
-1. **Clear browser storage**:
-   - Open DevTools (F12)
-   - Go to Application tab → Storage → Clear site data
-2. **Check backend**:
-   - Verify backend is running
-   - Check backend logs for any errors
-3. **Verify credentials**:
-   - Double-check you're using: `NovuntTeam@2025` (not `NovuntTest@2025`)
-   - Make sure there are no extra spaces
-
-## 📝 Previous Issue
-
-You were using: `NovuntTest@2025` ❌
-Correct password is: `NovuntTeam@2025` ✅
-
-The difference: `Test` vs `Team` in the middle of the password!
+- Contact your administrator if you need access

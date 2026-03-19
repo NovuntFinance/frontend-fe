@@ -6,7 +6,7 @@ const API_BASE_URL = getApiV1BaseUrl();
 export interface AdminLoginRequest {
   identifier: string; // email or username
   password: string;
-  twoFACode: string; // 6-digit code from authenticator app
+  twoFACode?: string; // 6-digit code - only required when backend returns 2FA_CODE_REQUIRED
 }
 
 export interface AdminUser {
@@ -50,8 +50,17 @@ class AdminAuthService {
   async login(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
     const url = `${API_BASE_URL}/admin/login`;
 
+    // Only include twoFACode when provided (backend expects it only when 2FA is required)
+    const body: Record<string, string> = {
+      identifier: credentials.identifier,
+      password: credentials.password,
+    };
+    if (credentials.twoFACode?.trim()) {
+      body.twoFACode = credentials.twoFACode.trim();
+    }
+
     try {
-      const response = await axios.post<any>(url, credentials, {
+      const response = await axios.post<any>(url, body, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',

@@ -36,19 +36,18 @@ export function usePermissions(): UsePermissionsResult {
         return;
       }
 
-      // Super admins have all permissions
-      if (admin.role === 'superAdmin') {
+      // Super admins and admins have full dashboard access
+      if (admin.role === 'superAdmin' || admin.role === 'admin') {
         // Fetch all permissions to get the list
         try {
           const allPermsResponse = await rbacService.getAllPermissions();
           const allKeys = allPermsResponse.data.map((p) => p.key);
           setPermissions(allKeys);
-          setRole('superAdmin');
+          setRole(admin.role);
         } catch {
-          // If we can't fetch all permissions, just mark as super admin
-          // Super admin bypasses permission checks anyway
+          // If we can't fetch all permissions, use full-access marker
           setPermissions(['*']); // Special marker for "all permissions"
-          setRole('superAdmin');
+          setRole(admin.role);
         }
       } else {
         const response = await rbacService.getUserPermissions();
@@ -71,21 +70,21 @@ export function usePermissions(): UsePermissionsResult {
 
   const hasPermission = (permission: string): boolean => {
     const admin = adminAuthService.getCurrentAdmin();
-    if (admin?.role === 'superAdmin') return true;
+    if (admin?.role === 'superAdmin' || admin?.role === 'admin') return true;
     if (permissions.includes('*')) return true; // Super admin marker
     return permissions.includes(permission);
   };
 
   const hasAnyPermission = (perms: string[]): boolean => {
     const admin = adminAuthService.getCurrentAdmin();
-    if (admin?.role === 'superAdmin') return true;
+    if (admin?.role === 'superAdmin' || admin?.role === 'admin') return true;
     if (permissions.includes('*')) return true;
     return perms.some((p) => permissions.includes(p));
   };
 
   const hasAllPermissions = (perms: string[]): boolean => {
     const admin = adminAuthService.getCurrentAdmin();
-    if (admin?.role === 'superAdmin') return true;
+    if (admin?.role === 'superAdmin' || admin?.role === 'admin') return true;
     if (permissions.includes('*')) return true;
     return perms.every((p) => permissions.includes(p));
   };

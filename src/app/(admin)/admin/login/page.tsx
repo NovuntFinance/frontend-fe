@@ -18,7 +18,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { adminAuthService } from '@/services/adminAuthService';
+import {
+  adminAuthService,
+  type AdminLoginRequest,
+} from '@/services/adminAuthService';
 import { toast } from 'sonner';
 import Loading from '@/components/ui/loading';
 
@@ -31,7 +34,11 @@ const adminLoginSchema = z.object({
     .regex(/^[0-9]+$/, '2FA code must contain only numbers'),
 });
 
-type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
+/** Schema for initial login (identifier + password only) */
+const initialLoginSchema = adminLoginSchema.pick({
+  identifier: true,
+  password: true,
+});
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -40,13 +47,21 @@ function AdminLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false);
+  /** Only show 2FA field after backend returns 403 with 2FA_CODE_REQUIRED */
+  const [show2FAField, setShow2FAField] = useState(false);
+
+  const schema = show2FAField
+    ? adminLoginSchema
+    : initialLoginSchema.extend({ twoFACode: z.string().optional() });
+  type FormData = z.infer<typeof schema>;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<AdminLoginFormData>({
-    resolver: zodResolver(adminLoginSchema),
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { identifier: '', password: '', twoFACode: '' },
   });
 
   // Clear any stale error state on mount
@@ -90,7 +105,7 @@ function AdminLoginForm() {
     toast.success('Logged out successfully');
   };
 
-  const onSubmit = async (data: AdminLoginFormData) => {
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     setError(null); // Clear any previous errors
 
@@ -109,12 +124,17 @@ function AdminLoginForm() {
       window.history.replaceState({}, '', newUrl);
     }
 
+    // Only include twoFACode when 2FA field is shown (backend requested it)
+    const credentials: AdminLoginRequest = {
+      identifier: data.identifier.trim(),
+      password: data.password,
+    };
+    if (show2FAField && data.twoFACode?.trim()) {
+      credentials.twoFACode = data.twoFACode.trim();
+    }
+
     try {
-      const response = await adminAuthService.login({
-        identifier: data.identifier.trim(),
-        password: data.password,
-        twoFACode: data.twoFACode.trim(),
-      });
+      const response = await adminAuthService.login(credentials);
 
       // Validate response structure - must have success, data, and token
       if (!response) {
@@ -161,15 +181,18 @@ function AdminLoginForm() {
         const admin = adminAuthService.getCurrentAdmin();
         const redirectParam = searchParams.get('redirect');
 
-        // If we have admin data, check 2FA status
+        // If we have admin data, check role and 2FA status
         if (admin) {
+          // support_agent: redirect to support tickets only
+          if (admin.role === 'support_agent') {
+            return redirectParam || '/admin/support';
+          }
           if (admin.twoFAEnabled === true) {
             // 2FA enabled - go to dashboard
             return redirectParam || '/admin/overview';
-          } else {
-            // 2FA not enabled - go to setup
-            return '/admin/setup-2fa';
           }
+          // 2FA not enabled - go to setup
+          return '/admin/setup-2fa';
         }
 
         // No admin data yet - default to dashboard (AdminGuard will handle)
@@ -226,6 +249,16 @@ function AdminLoginForm() {
       // Start verification immediately (token should be stored synchronously)
       verifyAndRedirect();
     } catch (err: any) {
+      // Handle 2FA required - show 2FA field, do not treat as error
+      const status = err?.response?.status;
+      const code = err?.response?.data?.code;
+      if (status === 403 && code === '2FA_CODE_REQUIRED') {
+        setShow2FAField(true);
+        setError('Please enter your 6-digit 2FA code to continue.');
+        toast.info('2FA code required');
+        return;
+      }
+
       // Extract error message from backend response (no sensitive data logged)
       let errorMessage = 'Login failed. Please check your credentials.';
 
@@ -359,30 +392,32 @@ function AdminLoginForm() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="twoFACode">2FA Code</Label>
-              <div className="relative">
-                <Lock className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="twoFACode"
-                  type="text"
-                  placeholder="123456"
-                  className="pl-10"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                  {...register('twoFACode')}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.twoFACode && (
-                <p className="text-sm text-red-500">
-                  {errors.twoFACode.message}
+            {show2FAField && (
+              <div className="space-y-2">
+                <Label htmlFor="twoFACode">2FA Code</Label>
+                <div className="relative">
+                  <Lock className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="twoFACode"
+                    type="text"
+                    placeholder="123456"
+                    className="pl-10"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    {...register('twoFACode')}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.twoFACode && (
+                  <p className="text-sm text-red-500">
+                    {errors.twoFACode.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter the 6-digit code from your authenticator app
                 </p>
-              )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Enter the 6-digit code from your authenticator app
-              </p>
-            </div>
+              </div>
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
