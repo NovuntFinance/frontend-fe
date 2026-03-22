@@ -31,6 +31,7 @@
     "check": "node scripts/security-scan.js && tsc --noEmit",
     "test:api": "bash scripts/test-api-endpoints.sh",
     "test:auth": "node scripts/test-auth-flow.js",
+    "verify:referral": "node scripts/verify-referral-logic.js",
     "prepare": "husky install || true"
   },
   "dependencies": {

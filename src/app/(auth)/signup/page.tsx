@@ -81,9 +81,12 @@ function SignupPageContent() {
     },
   });
 
-  // Auto-populate referral code from URL
+  // Auto-populate referral code from URL (supports ref, referralCode, referral params)
   useEffect(() => {
-    const refCode = searchParams.get('ref')?.trim();
+    const refCode =
+      searchParams.get('ref')?.trim() ||
+      searchParams.get('referralCode')?.trim() ||
+      searchParams.get('referral')?.trim();
     if (!refCode) return;
 
     const currentValue = watch('referralCode');
@@ -458,8 +461,10 @@ function SignupPageContent() {
                     registerName="referralCode"
                     delay={0}
                     hint={
-                      searchParams.get('ref')
-                        ? `Code "${searchParams.get('ref')}" applied — your referrer earns bonus rewards!`
+                      searchParams.get('ref') ||
+                      searchParams.get('referralCode') ||
+                      searchParams.get('referral')
+                        ? `Code "${searchParams.get('ref') || searchParams.get('referralCode') || searchParams.get('referral')}" applied — your referrer earns bonus rewards!`
                         : 'Have a code? Enter it to support your referrer.'
                     }
                   />
