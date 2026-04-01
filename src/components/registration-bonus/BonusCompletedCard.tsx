@@ -14,7 +14,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 
-export function BonusCompletedCard({ bonusData }: BonusActivatedCardProps) {
+export function BonusCompletedCard({
+  bonusData,
+  onClose,
+}: BonusActivatedCardProps) {
   const router = useRouter();
 
   const totalEarned =
@@ -70,7 +73,12 @@ export function BonusCompletedCard({ bonusData }: BonusActivatedCardProps) {
             transition={{ delay: 0.3 }}
             className="flex flex-col justify-center gap-3 sm:flex-row"
           >
-            <Button onClick={() => router.push('/dashboard/stakes')}>
+            <Button
+              onClick={() => {
+                onClose?.();
+                router.push('/dashboard/stakes');
+              }}
+            >
               <TrendingUp className="mr-2 h-4 w-4" />
               View Stakes
             </Button>

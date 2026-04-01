@@ -18,8 +18,16 @@ import { Button } from '@/components/ui/button';
  * Bonus Expired Card Component
  * Shows expired message with alternative options
  */
-export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
+export function BonusExpiredCard({
+  bonusData,
+  onClose,
+}: BonusExpiredCardProps) {
   const router = useRouter();
+
+  const go = (path: string) => {
+    onClose?.();
+    router.push(path);
+  };
 
   return (
     <Card className="border-muted bg-muted/30">
@@ -73,14 +81,11 @@ export function BonusExpiredCard({ bonusData }: BonusExpiredCardProps) {
             transition={{ delay: 0.3 }}
             className="flex flex-col justify-center gap-3 sm:flex-row"
           >
-            <Button
-              variant="outline"
-              onClick={() => router.push('/dashboard/team')}
-            >
+            <Button variant="outline" onClick={() => go('/dashboard/team')}>
               <Gift className="mr-2 h-4 w-4" />
               Referral Program
             </Button>
-            <Button onClick={() => router.push('/dashboard/stakes')}>
+            <Button onClick={() => go('/dashboard/stakes')}>
               View Stakes
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

@@ -301,7 +301,7 @@ export function RegistrationBonusBanner({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <BonusActivatedCard bonusData={bonusData} />
+            <BonusActivatedCard bonusData={bonusData} onClose={onClose} />
           </motion.div>
         </AnimatePresence>
       );
@@ -315,7 +315,7 @@ export function RegistrationBonusBanner({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <BonusExpiredCard bonusData={bonusData} />
+            <BonusExpiredCard bonusData={bonusData} onClose={onClose} />
           </motion.div>
         </AnimatePresence>
       );
@@ -329,7 +329,7 @@ export function RegistrationBonusBanner({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <BonusCompletedCard bonusData={bonusData} />
+            <BonusCompletedCard bonusData={bonusData} onClose={onClose} />
           </motion.div>
         </AnimatePresence>
       );

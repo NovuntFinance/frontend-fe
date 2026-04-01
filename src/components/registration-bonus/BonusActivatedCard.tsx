@@ -16,7 +16,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 
-export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
+export function BonusActivatedCard({
+  bonusData,
+  onClose,
+}: BonusActivatedCardProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -228,7 +231,10 @@ export function BonusActivatedCard({ bonusData }: BonusActivatedCardProps) {
             transition={{ delay: 0.5 }}
           >
             <Button
-              onClick={() => router.push('/dashboard/stakes')}
+              onClick={() => {
+                onClose?.();
+                router.push('/dashboard/stakes');
+              }}
               size="lg"
               className="w-full md:w-auto"
             >

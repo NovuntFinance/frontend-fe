@@ -316,10 +316,14 @@ export interface WithdrawalAddressRequirementProps {
 
 export interface BonusActivatedCardProps {
   bonusData: RegistrationBonusData;
+  /** When inside RegistrationBonusModal, closes the dialog before navigating */
+  onClose?: () => void;
 }
 
 export interface BonusExpiredCardProps {
   bonusData: RegistrationBonusData;
+  /** When inside RegistrationBonusModal, closes the dialog before navigating */
+  onClose?: () => void;
 }
 
 export interface ErrorStateProps {
