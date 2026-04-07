@@ -3,6 +3,10 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRosCalendarData } from '@/lib/queries';
+import {
+  formatRosPercentCompact,
+  roundRosPercentStable,
+} from '@/utils/formatters';
 
 /* Platform colors – theme tokens (--neu-*) for dashboard light/dark */
 const ACCENT = 'var(--neu-accent)';
@@ -115,13 +119,25 @@ export function RosCalendarCard() {
     () => (date: Date) => {
       const key = toDateKey(date);
       const calendar = backendData?.calendar;
-      const backendVal =
-        calendar && typeof calendar[key] === 'number' ? calendar[key] : null;
-      if (key >= todayKey) {
-        return backendVal !== null ? backendVal : null;
+      // API may return numeric strings; calendar type is Record<string, number> but runtime can vary
+      const rawCell = calendar?.[key] as number | string | undefined;
+      let backendParsed: number | null = null;
+      if (typeof rawCell === 'number' && Number.isFinite(rawCell)) {
+        backendParsed = rawCell;
+      } else if (typeof rawCell === 'string') {
+        const n = Number(rawCell.trim());
+        backendParsed = Number.isFinite(n) ? n : null;
       }
-      if (backendVal != null && backendVal > 0) return backendVal;
-      return mockRos[key] ?? null;
+      const stable = (v: number | null): number | null =>
+        v == null ? null : roundRosPercentStable(v);
+
+      if (key >= todayKey) {
+        return stable(backendParsed);
+      }
+      if (backendParsed != null && backendParsed > 0)
+        return stable(backendParsed);
+      const mockVal = mockRos[key];
+      return mockVal != null ? stable(mockVal) : null;
     },
     [backendData?.calendar, mockRos, todayKey]
   );
@@ -180,7 +196,7 @@ export function RosCalendarCard() {
             className="rounded-lg px-2 py-0.5 text-sm font-black sm:text-base"
             style={{ color: ACCENT }}
           >
-            {monthlyAccumulated.toFixed(1)}%
+            {formatRosPercentCompact(monthlyAccumulated, 1)}%
           </span>
           {isLoading && (
             <span
@@ -305,7 +321,7 @@ export function RosCalendarCard() {
                           : 'var(--neu-text-muted)',
                     }}
                   >
-                    {ros}%
+                    {formatRosPercentCompact(ros)}%
                   </span>
                   <div
                     className="mt-0.5 h-1 w-full overflow-hidden rounded-full"

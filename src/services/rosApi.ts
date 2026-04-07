@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { roundRosPercentStable } from '@/utils/formatters';
 import { adminAuthService } from './adminAuthService';
 
 // TEMPORARY FIX: Backend routes don't include /v1 prefix
@@ -386,13 +387,23 @@ export const rosApi = {
         const calendar = data.calendar as Record<string, number>;
         const out: Record<string, number> = {};
         for (const [k, v] of Object.entries(calendar)) {
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number') {
-            out[k] = v;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+          const num =
+            typeof v === 'number'
+              ? v
+              : typeof v === 'string' && String(v).trim() !== ''
+                ? Number(v)
+                : NaN;
+          if (Number.isFinite(num)) {
+            out[k] = roundRosPercentStable(num);
           }
         }
         return {
           calendar: out,
-          today: typeof data.today === 'string' ? data.today.slice(0, 10) : undefined,
+          today:
+            typeof data.today === 'string'
+              ? data.today.slice(0, 10)
+              : undefined,
         };
       }
     } catch (e) {
@@ -422,11 +433,12 @@ export const rosApi = {
             for (const item of data.dailyRos) {
               const d = item.date?.slice?.(0, 10) ?? item.date;
               const p = item.percentage ?? item.ros ?? 0;
-              if (d) out[d] = Number(p);
+              if (d) out[d] = roundRosPercentStable(Number(p));
             }
           } else {
             for (const [k, v] of Object.entries(data)) {
-              if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number') out[k] = v;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number')
+                out[k] = roundRosPercentStable(v);
             }
           }
           if (Object.keys(out).length > 0) {
@@ -448,7 +460,7 @@ export const rosApi = {
       for (const item of dailyData) {
         const d = item.date?.slice?.(0, 10) ?? item.date;
         if (d?.startsWith(prefix) && typeof item.ros === 'number') {
-          out[d] = item.ros;
+          out[d] = roundRosPercentStable(item.ros);
         }
       }
       return { calendar: out };

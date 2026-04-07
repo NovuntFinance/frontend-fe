@@ -115,6 +115,31 @@ export const formatROS = (ros: number | null | undefined): string => {
 };
 
 /**
+ * Stabilize ROS % values from the API (e.g. sums of slot percentages) so binary
+ * floats like 0.7499999999999999 become 0.75 for math and bar widths.
+ */
+export function roundRosPercentStable(n: number | null | undefined): number {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  return Math.round(x * 10000) / 10000;
+}
+
+/**
+ * Format ROS % for compact surfaces (dashboard calendar cells, small badges).
+ * Integer-scaled rounding so display never shows IEEE-754 noise (e.g. 0.749999…).
+ */
+export function formatRosPercentCompact(
+  n: number | null | undefined,
+  fractionDigits = 2
+): string {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return (0).toFixed(fractionDigits);
+  const mult = 10 ** fractionDigits;
+  const rounded = Math.round(x * mult) / mult;
+  return rounded.toFixed(fractionDigits);
+}
+
+/**
  * Format progress percentage (0-100 range)
  * @param progress - Progress value (0-100)
  * @returns Formatted progress string
@@ -214,6 +239,8 @@ export const Formatters = {
   usd4,
   parseBackendNumber,
   formatROS,
+  roundRosPercentStable,
+  formatRosPercentCompact,
   formatProgress,
   formatStakeAmount,
   formatEarnings,

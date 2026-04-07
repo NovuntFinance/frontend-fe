@@ -271,6 +271,39 @@ export interface DistributeDeclarationResponse {
 
 // ==================== TODAY'S DISTRIBUTION (NEW) ====================
 
+/** Daily payout summary from GET /today/status (stake ROS vs pool qualifiers). */
+export interface DistributionTotals {
+  currency: string;
+  scheduled: {
+    poolBudgetTotalUSDT: number;
+    premiumPoolScheduledUSDT: number;
+    performancePoolScheduledUSDT: number;
+    stakeRosNote: string;
+  };
+  projected?: {
+    stakeRosFullDayUSDT: number;
+    stakeRosRemainingSlotsUSDT: number;
+    stakeRosCompletedSlotsUSDT: number;
+    activeStakesConsidered: number;
+    poolQualifiersEstimatedUSDT: number;
+    grandTotalEstimatedUSDT: number;
+    disclaimer: string;
+  };
+  actual: {
+    stakeRosTotalUSDT: number;
+    stakeRosProcessedStakesReported: number;
+    poolPaidToQualifiersTotalUSDT: number;
+    premiumPoolPaidUSDT: number;
+    performancePoolPaidUSDT: number;
+    poolsDistributed: boolean;
+  };
+  multiSlot?: {
+    completedSlots: number;
+    totalSlots: number;
+    pendingSlots: number;
+  };
+}
+
 /**
  * Today's Distribution Status Response
  * GET /api/v1/admin/daily-declaration-returns/today/status
@@ -278,24 +311,35 @@ export interface DistributeDeclarationResponse {
 export interface TodayStatusResponse {
   success: boolean;
   data: {
-    today: string; // YYYY-MM-DD (current date)
+    date?: string;
+    today?: string;
     status:
       | 'EMPTY'
       | 'PENDING'
       | 'SCHEDULED'
       | 'EXECUTING'
       | 'COMPLETED'
-      | 'FAILED';
-    scheduledFor: string | null; // ISO 8601 timestamp (e.g., "2026-02-10T14:59:59Z")
-    values: {
+      | 'FAILED'
+      | 'LEGACY'
+      | string;
+    message?: string;
+    hasQueued?: boolean;
+    scheduledFor?: string | null;
+    scheduledForFormatted?: string;
+    values?: {
       rosPercentage: number;
       premiumPoolAmount: number;
       performancePoolAmount: number;
       description: string;
     };
-    multiSlotEnabled?: boolean; // NEW - Whether multi-slot is enabled
-    distributionSlots?: IDistributionSlot[]; // NEW - Individual slot details
-    lastExecution: {
+    rosPercentage?: number;
+    premiumPoolAmount?: number;
+    performancePoolAmount?: number;
+    description?: string;
+    multiSlotEnabled?: boolean;
+    distributionSlots?: IDistributionSlot[];
+    distributionTotals?: DistributionTotals;
+    lastExecution?: {
       status: 'COMPLETED' | 'FAILED' | null;
       rosStats?: {
         processedStakes: number;
@@ -313,6 +357,11 @@ export interface TodayStatusResponse {
       executedAt?: string;
       error?: string;
     } | null;
+    queuedAt?: string;
+    queuedBy?: { _id: string; email: string } | null;
+    executionDetails?: Record<string, unknown>;
+    errorDetails?: Record<string, unknown>;
+    executionTimeMs?: number;
   };
 }
 
@@ -351,8 +400,6 @@ export interface IDistributionSlot {
  */
 export interface QueueSingleSlotRequest {
   rosPercentage: number; // 0-100
-  premiumPoolAmount: number; // >= 0
-  performancePoolAmount: number; // >= 0
   description?: string;
   twoFACode?: string; // Required if admin has 2FA enabled
 }
@@ -368,8 +415,6 @@ export interface QueueMultiSlotRequest {
     rosPercentage: number;
   }[];
   rosPercentage: number; // Total ROS (sum of all slots)
-  premiumPoolAmount: number; // Applied to all slots
-  performancePoolAmount: number; // Applied to all slots
   description?: string;
   twoFACode?: string;
 }
@@ -397,8 +442,6 @@ export interface QueueDistributionResponse {
  */
 export interface ModifyDistributionRequest {
   rosPercentage?: number;
-  premiumPoolAmount?: number;
-  performancePoolAmount?: number;
   description?: string;
   distributionSlots?: {
     // NEW - For multi-slot modifications
@@ -439,14 +482,24 @@ export interface CancelDistributionResponse {
  * History Entry (from history list)
  */
 export interface HistoryEntry {
+  id?: string;
   date: string; // YYYY-MM-DD
-  status: 'COMPLETED' | 'FAILED';
+  status: 'COMPLETED' | 'FAILED' | string;
   rosPercentage: number;
   totalPoolAmount: number; // Changed from poolsAmount - matches backend field
   poolsAmount?: number; // Deprecated - kept for backwards compatibility
-  usersCount: number;
-  executedAt: string; // Display format (e.g., "3:59:59 PM")
-  executedAtISO: string; // ISO 8601 timestamp
+  /** Sum of premium + performance pool recipients (when execution details exist). */
+  usersCount?: number;
+  poolRecipientsCount?: number;
+  stakeRosDistributedUSDT?: number;
+  poolsPaidToQualifiersUSDT?: number;
+  premiumPoolAmount?: number;
+  performancePoolAmount?: number;
+  executedAt?: string;
+  executionTimeMs?: number;
+  executionDetails?: Record<string, unknown>;
+  errorDetails?: Record<string, unknown>;
+  executedAtISO?: string; // ISO 8601 timestamp
   error?: string; // If failed
 }
 
@@ -471,9 +524,23 @@ export interface GetHistoryResponse {
   success: boolean;
   data: {
     records: HistoryEntry[];
-    totalRecords: number;
-    currentPage: number;
-    pageLimit: number;
+    summary?: {
+      totalRecords: number;
+      completedCount: number;
+      failedCount: number;
+      totalROSDistributed: number;
+      totalPoolsDistributed: number;
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+    /** @deprecated use pagination.total */
+    totalRecords?: number;
+    currentPage?: number;
+    pageLimit?: number;
   };
 }
 
@@ -485,35 +552,37 @@ export interface DistributionDetailsResponse {
   success: boolean;
   data: {
     date: string;
-    status: 'COMPLETED' | 'FAILED';
-    queuedBy: {
-      _id: string;
-      email: string;
-      username: string;
-    };
-    queuedAt: string;
-    executedAt: string;
-    values: {
+    status: string;
+    declaration: {
       rosPercentage: number;
       premiumPoolAmount: number;
       performancePoolAmount: number;
+      totalPoolAmount: number;
       description?: string;
     };
-    rosDistribution?: {
-      processedStakes: number;
-      totalDistributed: number;
+    queue: {
+      queuedAt?: string;
+      queuedBy: {
+        _id: string;
+        email: string;
+        username: string;
+      } | null;
+      scheduledFor?: string;
     };
-    poolDistribution?: {
-      premium: {
-        usersCount: number;
-        totalAmount: number;
+    execution: {
+      executedAt?: string;
+      executionTimeMs?: number;
+      statistics: {
+        ros: { processedStakes: number; totalDistributed: number };
+        premiumPool: { usersReceived: number; totalDistributed: number };
+        performancePool: { usersReceived: number; totalDistributed: number };
+        totalDistributed: number;
       };
-      performance: {
-        usersCount: number;
-        totalAmount: number;
-      };
-    };
-    executionTimeMs: number;
-    error?: string;
+    } | null;
+    error: {
+      message?: string;
+      reason?: string;
+      timestamp?: string;
+    } | null;
   };
 }

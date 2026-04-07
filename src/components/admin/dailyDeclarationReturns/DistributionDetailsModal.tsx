@@ -11,34 +11,41 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
-import { fmt4, pct4 } from '@/utils/formatters';
+import { pct4 } from '@/utils/formatters';
 
 interface DistributionDetailsModalProps {
   date: string;
   onClose: () => void;
 }
 
+function usd(n: number) {
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export function DistributionDetailsModal({
   date,
   onClose,
 }: DistributionDetailsModalProps) {
-  // Fetch details
-  const { data: detailsData, isLoading } = useQuery({
+  const { data: detailsRes, isLoading } = useQuery({
     queryKey: ['distribution-details', date],
     queryFn: async () => {
       return await dailyDeclarationReturnsService.getDistributionDetails(date);
     },
   });
 
-  const details = detailsData?.data;
+  const d = detailsRes?.data;
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>📋 Distribution Details - {date}</DialogTitle>
+          <DialogTitle>Distribution details — {date}</DialogTitle>
           <DialogDescription>
-            Detailed information about this distribution execution
+            Declared configuration and execution totals (stake ROS + qualifier
+            pools)
           </DialogDescription>
         </DialogHeader>
 
@@ -46,144 +53,131 @@ export function DistributionDetailsModal({
           <div className="flex h-32 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
           </div>
-        ) : details ? (
+        ) : d ? (
           <div className="space-y-6">
-            {/* Status and Queue Info */}
             <div className="grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Status
                 </p>
                 <p className="mt-1 text-lg">
-                  {details.status === 'COMPLETED' ? '✅' : '❌'}{' '}
-                  {details.status}
+                  {d.status === 'COMPLETED' ? '✅' : '❌'} {d.status}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Date
                 </p>
-                <p className="mt-1 font-mono text-sm">{details.date}</p>
+                <p className="mt-1 font-mono text-sm">{d.date}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Queued By
-                </p>
-                <p className="mt-1 text-sm">
-                  {details.queuedBy.username} ({details.queuedBy.email})
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Queued At
-                </p>
-                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                  {new Date(details.queuedAt).toLocaleString()}
-                </p>
-              </div>
+              {d.queue?.queuedBy ? (
+                <>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      Queued by
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {d.queue.queuedBy.username} ({d.queue.queuedBy.email})
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      Queued at
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                      {d.queue.queuedAt
+                        ? new Date(d.queue.queuedAt).toLocaleString()
+                        : '—'}
+                    </p>
+                  </div>
+                </>
+              ) : null}
             </div>
 
-            {/* Configuration */}
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <h3 className="mb-3 font-semibold">Configuration</h3>
+              <h3 className="mb-3 font-semibold">Declared configuration</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    ROS Percentage
+                    Total ROS % (document)
                   </p>
                   <p className="mt-1 font-mono text-lg">
-                    {pct4(details.values.rosPercentage)}
+                    {pct4(d.declaration.rosPercentage)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Execution Time
-                  </p>
-                  <p className="mt-1 font-mono text-lg">
-                    {(details.executionTimeMs / 1000).toFixed(1)}s
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Premium Pool Amount
+                    Pool budget (premium + performance)
                   </p>
                   <p className="mt-1 font-mono">
-                    $
-                    {details.values.premiumPoolAmount.toLocaleString(
-                      undefined,
-                      { maximumFractionDigits: 2 }
-                    )}
+                    ${usd(d.declaration.totalPoolAmount)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Performance Pool Amount
+                    Premium pool (declared)
                   </p>
                   <p className="mt-1 font-mono">
-                    $
-                    {details.values.performancePoolAmount.toLocaleString(
-                      undefined,
-                      { maximumFractionDigits: 2 }
-                    )}
+                    ${usd(d.declaration.premiumPoolAmount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Performance pool (declared)
+                  </p>
+                  <p className="mt-1 font-mono">
+                    ${usd(d.declaration.performancePoolAmount)}
                   </p>
                 </div>
               </div>
-              {details.values.description && (
+              {d.declaration.description ? (
                 <div className="mt-4">
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                     Description
                   </p>
-                  <p className="mt-1 text-sm">{details.values.description}</p>
+                  <p className="mt-1 text-sm">{d.declaration.description}</p>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {/* ROS Distribution */}
-            {details.rosDistribution && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-                <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-100">
-                  💰 ROS Distribution
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                      Processed Stakes
-                    </p>
-                    <p className="mt-1 font-mono text-lg">
-                      {details.rosDistribution.processedStakes.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                      Total Distributed
-                    </p>
-                    <p className="mt-1 font-mono">
-                      $
-                      {details.rosDistribution.totalDistributed.toLocaleString(
-                        undefined,
-                        { maximumFractionDigits: 2 }
-                      )}
-                    </p>
+            {d.execution?.statistics ? (
+              <>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+                  <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-100">
+                    Stake ROS (actual)
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        Processed stakes (reported)
+                      </p>
+                      <p className="mt-1 font-mono text-lg">
+                        {d.execution.statistics.ros.processedStakes.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        Total distributed (USDT)
+                      </p>
+                      <p className="mt-1 font-mono">
+                        ${usd(d.execution.statistics.ros.totalDistributed)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Pool Distribution */}
-            {details.poolDistribution && (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
-                <h3 className="mb-3 font-semibold text-green-900 dark:text-green-100">
-                  🎁 Pool Distribution
-                </h3>
-                <div className="space-y-4">
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
+                  <h3 className="mb-3 font-semibold text-green-900 dark:text-green-100">
+                    Pools — paid to qualifiers (actual)
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="rounded bg-white p-3 dark:bg-gray-900">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Premium Pool
+                        Premium
                       </p>
                       <p className="mt-1">
                         <span className="font-mono text-lg">
-                          {details.poolDistribution.premium.usersCount}
+                          {d.execution.statistics.premiumPool.usersReceived}
                         </span>{' '}
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           users
@@ -191,19 +185,18 @@ export function DistributionDetailsModal({
                       </p>
                       <p className="mt-1 font-mono">
                         $
-                        {details.poolDistribution.premium.totalAmount.toLocaleString(
-                          undefined,
-                          { maximumFractionDigits: 2 }
+                        {usd(
+                          d.execution.statistics.premiumPool.totalDistributed
                         )}
                       </p>
                     </div>
                     <div className="rounded bg-white p-3 dark:bg-gray-900">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Performance Pool
+                        Performance
                       </p>
                       <p className="mt-1">
                         <span className="font-mono text-lg">
-                          {details.poolDistribution.performance.usersCount}
+                          {d.execution.statistics.performancePool.usersReceived}
                         </span>{' '}
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           users
@@ -211,49 +204,61 @@ export function DistributionDetailsModal({
                       </p>
                       <p className="mt-1 font-mono">
                         $
-                        {details.poolDistribution.performance.totalAmount.toLocaleString(
-                          undefined,
-                          { maximumFractionDigits: 2 }
+                        {usd(
+                          d.execution.statistics.performancePool
+                            .totalDistributed
                         )}
                       </p>
                     </div>
                   </div>
+                  <div className="mt-3 border-t border-green-200 pt-3 dark:border-green-800">
+                    <p className="text-xs font-medium text-green-800 dark:text-green-200">
+                      Combined platform outflow (ROS + both pools)
+                    </p>
+                    <p className="mt-1 font-mono text-xl font-semibold">
+                      ${usd(d.execution.statistics.totalDistributed)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Execution Time */}
-            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <h3 className="mb-3 font-semibold">⏱️ Execution Details</h3>
-              <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Duration
-                </p>
-                <p className="mt-1 font-mono text-lg">
-                  {fmt4(details.executionTimeMs / 1000)}s
-                </p>
-              </div>
-              <div className="mt-3">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Executed At
-                </p>
-                <p className="mt-1 font-mono text-sm">
-                  {new Date(details.executedAt).toLocaleString()}
-                </p>
-              </div>
-            </div>
+                <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <h3 className="mb-3 font-semibold">Execution timing</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Duration
+                      </p>
+                      <p className="mt-1 font-mono text-lg">
+                        {((d.execution.executionTimeMs ?? 0) / 1000).toFixed(1)}
+                        s
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Completed at
+                      </p>
+                      <p className="mt-1 font-mono text-sm">
+                        {d.execution.executedAt
+                          ? new Date(d.execution.executedAt).toLocaleString()
+                          : '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
 
-            {/* Error (if any) */}
-            {details.error && (
+            {d.error ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
                 <h3 className="mb-2 font-semibold text-red-900 dark:text-red-100">
-                  ❌ Error
+                  Error
                 </h3>
                 <p className="text-sm text-red-800 dark:text-red-200">
-                  {details.error}
+                  {d.error.message}
+                  {d.error.reason ? ` — ${d.error.reason}` : ''}
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         ) : (
           <div className="flex h-32 items-center justify-center text-gray-600">

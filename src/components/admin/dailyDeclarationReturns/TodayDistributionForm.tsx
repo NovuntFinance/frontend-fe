@@ -36,8 +36,6 @@ import type {
 const POLLING_INTERVAL = 30000; // 30 seconds
 
 interface FormValues {
-  premiumPoolAmount: number | '';
-  performancePoolAmount: number | '';
   description: string;
 }
 
@@ -50,8 +48,6 @@ export function TodayDistributionForm({
 }: TodayDistributionFormProps) {
   const { promptFor2FA } = use2FA();
   const [formValues, setFormValues] = useState<FormValues>({
-    premiumPoolAmount: '',
-    performancePoolAmount: '',
     description: '',
   });
   const [multiSlotRosValues, setMultiSlotRosValues] = useState<
@@ -157,8 +153,6 @@ export function TodayDistributionForm({
   useEffect(() => {
     if (statusData?.values) {
       setFormValues({
-        premiumPoolAmount: statusData.values.premiumPoolAmount || '',
-        performancePoolAmount: statusData.values.performancePoolAmount || '',
         description: statusData.values.description || '',
       });
 
@@ -202,10 +196,7 @@ export function TodayDistributionForm({
   }, [formValues]);
 
   // Handle form input changes
-  const handleInputChange = (
-    field: keyof FormValues,
-    value: string | number
-  ) => {
+  const handleInputChange = (field: keyof FormValues, value: string) => {
     setFormValues((prev) => ({
       ...prev,
       [field]: value,
@@ -214,17 +205,6 @@ export function TodayDistributionForm({
 
   // Validate form
   const validateForm = (): string | null => {
-    const premium = Number(formValues.premiumPoolAmount);
-    const performance = Number(formValues.performancePoolAmount);
-
-    if (isNaN(premium) || premium < 0) {
-      return 'Premium pool amount must be 0 or greater';
-    }
-
-    if (isNaN(performance) || performance < 0) {
-      return 'Performance pool amount must be 0 or greater';
-    }
-
     // Multi-slot validation
     if (!cronSettings) {
       return 'Cron settings not loaded. Please configure Distribution Schedule first.';
@@ -246,8 +226,8 @@ export function TodayDistributionForm({
       (sum, val) => sum + val,
       0
     );
-    if (totalRos === 0 && premium === 0 && performance === 0) {
-      return 'At least one value must be greater than 0';
+    if (totalRos === 0) {
+      return 'At least one slot must have ROS greater than 0';
     }
 
     return null;
@@ -355,9 +335,6 @@ export function TodayDistributionForm({
       return;
     }
 
-    const premium = Number(formValues.premiumPoolAmount) || 0;
-    const performance = Number(formValues.performancePoolAmount) || 0;
-
     // Calculate multi-slot values
     const totalRos = Object.values(multiSlotRosValues).reduce(
       (sum, val) => sum + val,
@@ -376,8 +353,6 @@ export function TodayDistributionForm({
         multiSlotEnabled: true,
         distributionSlots,
         rosPercentage: totalRos,
-        premiumPoolAmount: premium,
-        performancePoolAmount: performance,
         description: formValues.description,
       } as QueueMultiSlotRequest);
     } else if (statusData?.status === 'PENDING' && isEditing) {
@@ -385,8 +360,6 @@ export function TodayDistributionForm({
       modifyMutation.mutate({
         distributionSlots,
         rosPercentage: totalRos,
-        premiumPoolAmount: premium,
-        performancePoolAmount: performance,
         description: formValues.description,
       });
     } else if (statusData?.status === 'COMPLETED' && isEditing) {
@@ -395,8 +368,6 @@ export function TodayDistributionForm({
         multiSlotEnabled: true,
         distributionSlots,
         rosPercentage: totalRos,
-        premiumPoolAmount: premium,
-        performancePoolAmount: performance,
         description: formValues.description,
       } as QueueMultiSlotRequest);
     }
@@ -489,6 +460,136 @@ export function TodayDistributionForm({
           </div>
         </CardHeader>
       </Card>
+
+      {statusData?.distributionTotals && status !== 'EMPTY' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily payout summary (USDT)</CardTitle>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Actuals update as slots run. Forecast uses current active stakes
+              and the same 200% cap rules as production ROS.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 rounded-lg border p-4">
+                <h4 className="font-medium">Stake ROS — paid so far</h4>
+                <p className="text-2xl font-bold tabular-nums">
+                  {statusData.distributionTotals.actual.stakeRosTotalUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                  )}
+                </p>
+                {statusData.distributionTotals.projected ? (
+                  <>
+                    <p className="text-muted-foreground text-xs">
+                      Forecast (full day, all slots):{' '}
+                      <span className="text-foreground font-semibold">
+                        {statusData.distributionTotals.projected.stakeRosFullDayUSDT.toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Still expected from pending slots:{' '}
+                      {statusData.distributionTotals.projected.stakeRosRemainingSlotsUSDT.toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}{' '}
+                      · Stakes scanned:{' '}
+                      {statusData.distributionTotals.projected.activeStakesConsidered.toLocaleString()}
+                    </p>
+                  </>
+                ) : null}
+                <p className="text-muted-foreground text-xs">
+                  {statusData.distributionTotals.scheduled.stakeRosNote}
+                </p>
+                {statusData.distributionTotals.multiSlot ? (
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    ROS slots completed:{' '}
+                    {statusData.distributionTotals.multiSlot.completedSlots} /{' '}
+                    {statusData.distributionTotals.multiSlot.totalSlots}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2 rounded-lg border p-4">
+                <h4 className="font-medium">Pools (qualified users only)</h4>
+                <p className="text-muted-foreground text-xs">
+                  Scheduled pool budget (from ROS formula)
+                </p>
+                <p className="text-lg font-semibold tabular-nums">
+                  {statusData.distributionTotals.scheduled.poolBudgetTotalUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 4 }
+                  )}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Actually paid after pool run
+                </p>
+                <p className="text-2xl font-bold tabular-nums">
+                  {statusData.distributionTotals.actual.poolPaidToQualifiersTotalUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                  )}
+                </p>
+                {statusData.distributionTotals.projected ? (
+                  <p className="text-muted-foreground text-xs">
+                    Pool estimate in combined total:{' '}
+                    <span className="text-foreground font-medium">
+                      {statusData.distributionTotals.projected.poolQualifiersEstimatedUSDT.toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 4,
+                        }
+                      )}
+                    </span>{' '}
+                    (scheduled until paid; then actual)
+                  </p>
+                ) : null}
+                <p className="text-muted-foreground text-xs">
+                  Premium:{' '}
+                  {statusData.distributionTotals.scheduled.premiumPoolScheduledUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 4 }
+                  )}{' '}
+                  · Performance:{' '}
+                  {statusData.distributionTotals.scheduled.performancePoolScheduledUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 4 }
+                  )}
+                </p>
+              </div>
+            </div>
+            {statusData.distributionTotals.projected ? (
+              <div className="rounded-lg border border-dashed border-amber-500/40 bg-amber-50/50 p-4 dark:bg-amber-950/20">
+                <h4 className="font-medium text-amber-900 dark:text-amber-100">
+                  Estimated combined outflow (ROS forecast + pool estimate)
+                </h4>
+                <p className="mt-1 text-3xl font-bold text-amber-950 tabular-nums dark:text-amber-50">
+                  {statusData.distributionTotals.projected.grandTotalEstimatedUSDT.toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                  )}{' '}
+                  <span className="text-lg font-normal">
+                    {statusData.distributionTotals.currency}
+                  </span>
+                </p>
+                <p className="text-muted-foreground mt-2 text-xs">
+                  {statusData.distributionTotals.projected.disclaimer}
+                </p>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Form */}
       <Card>
@@ -608,50 +709,48 @@ export function TodayDistributionForm({
             )}
           </div>
 
-          {/* Premium Pool Amount */}
-          <div>
-            <Label htmlFor="premium" className="flex items-center gap-2">
-              Premium Pool Amount ($)
-              {isFormDisabled && !isEditing && (
+          {/* Auto-calculated pool amounts */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label className="flex items-center gap-2">
+                Premium Pool Amount ($)
                 <Lock className="h-4 w-4 text-gray-500" />
-              )}
-            </Label>
-            <Input
-              id="premium"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formValues.premiumPoolAmount}
-              onChange={(e) =>
-                handleInputChange('premiumPoolAmount', e.target.value)
-              }
-              disabled={isFormDisabled && !isEditing}
-              placeholder="0.00"
-              className="mt-1"
-            />
-          </div>
-
-          {/* Performance Pool Amount */}
-          <div>
-            <Label htmlFor="performance" className="flex items-center gap-2">
-              Performance Pool Amount ($)
-              {isFormDisabled && !isEditing && (
+              </Label>
+              <Input
+                value={(
+                  (Object.values(multiSlotRosValues).reduce(
+                    (sum, val) => sum + val,
+                    0
+                  ) *
+                    0.1) /
+                  2
+                ).toFixed(4)}
+                disabled
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                Performance Pool Amount ($)
                 <Lock className="h-4 w-4 text-gray-500" />
-              )}
-            </Label>
-            <Input
-              id="performance"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formValues.performancePoolAmount}
-              onChange={(e) =>
-                handleInputChange('performancePoolAmount', e.target.value)
-              }
-              disabled={isFormDisabled && !isEditing}
-              placeholder="0.00"
-              className="mt-1"
-            />
+              </Label>
+              <Input
+                value={(
+                  (Object.values(multiSlotRosValues).reduce(
+                    (sum, val) => sum + val,
+                    0
+                  ) *
+                    0.1) /
+                  2
+                ).toFixed(4)}
+                disabled
+                className="mt-1"
+              />
+            </div>
+            <p className="text-muted-foreground text-xs md:col-span-2">
+              Auto formula: (Total ROS × 10%) split 50/50 between Premium and
+              Performance pools.
+            </p>
           </div>
 
           {/* Description */}

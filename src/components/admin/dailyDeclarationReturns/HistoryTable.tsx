@@ -100,8 +100,13 @@ export function HistoryTable() {
   };
 
   const records = historyData?.data?.records || [];
-  const totalRecords = historyData?.data?.totalRecords || 0;
-  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_LIMIT));
+  const pagination = historyData?.data?.pagination;
+  const totalRecords =
+    pagination?.total ?? historyData?.data?.totalRecords ?? records.length;
+  const totalPages = pagination?.pages
+    ? Math.max(1, pagination.pages)
+    : Math.max(1, Math.ceil(totalRecords / PAGE_LIMIT));
+  const summary = historyData?.data?.summary;
 
   return (
     <div className="space-y-6">
@@ -133,6 +138,57 @@ export function HistoryTable() {
           </div>
         </CardHeader>
       </Card>
+
+      {summary ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-xs">
+                Page ROS paid (USDT)
+              </p>
+              <p className="text-xl font-bold tabular-nums">
+                $
+                {(summary.totalROSDistributed ?? 0).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-muted-foreground mt-1 text-[10px]">
+                Sum for loaded page only; open a row for full-day detail.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-xs">
+                Page pools paid (USDT)
+              </p>
+              <p className="text-xl font-bold tabular-nums">
+                $
+                {(summary.totalPoolsDistributed ?? 0).toLocaleString(
+                  undefined,
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-xs">Completed (page)</p>
+              <p className="text-xl font-bold">{summary.completedCount ?? 0}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-xs">Failed (page)</p>
+              <p className="text-xl font-bold">{summary.failedCount ?? 0}</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       {/* Filters */}
       <Card>
@@ -268,10 +324,16 @@ export function HistoryTable() {
                       ROS %
                     </th>
                     <th className="px-4 py-2 text-right font-semibold">
-                      Pools $
+                      Pool budget $
                     </th>
                     <th className="px-4 py-2 text-right font-semibold">
-                      Users
+                      Stake ROS $
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold">
+                      Pools paid $
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold">
+                      Qualifiers
                     </th>
                     <th className="px-4 py-2 text-left font-semibold">
                       Executed At
@@ -288,7 +350,10 @@ export function HistoryTable() {
                     // Use totalPoolAmount (backend field) with fallback to poolsAmount (deprecated)
                     const poolsAmount =
                       record?.totalPoolAmount ?? record?.poolsAmount ?? 0;
-                    const usersCount = record?.usersCount ?? 0;
+                    const stakeRos = record?.stakeRosDistributedUSDT ?? 0;
+                    const poolsPaid = record?.poolsPaidToQualifiersUSDT ?? 0;
+                    const qualifiers =
+                      record?.poolRecipientsCount ?? record?.usersCount ?? 0;
 
                     return (
                       <tr
@@ -318,7 +383,21 @@ export function HistoryTable() {
                             maximumFractionDigits: 2,
                           })}
                         </td>
-                        <td className="px-4 py-3 text-right">{usersCount}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          $
+                          {stakeRos.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          $
+                          {poolsPaid.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-right">{qualifiers}</td>
                         <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                           {record?.executedAt || 'N/A'}
                         </td>

@@ -16,12 +16,14 @@ import {
 export default function DailyDeclarationReturnsPage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  // Default to "today" so local/dev visits show the main workflow first.
+  // Use ?tab=schedule (e.g. from Settings → distribution schedule) for cron UI.
   const initialTab =
-    tabParam === 'today'
-      ? 'today'
+    tabParam === 'schedule'
+      ? 'schedule'
       : tabParam === 'history'
         ? 'history'
-        : 'schedule';
+        : 'today';
   const [activeTab, setActiveTab] = useState(initialTab);
   const platformDayStart = usePlatformDayStart();
   const { formatted } = useTimeUntilReset();
