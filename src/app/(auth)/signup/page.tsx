@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  Suspense,
+  useCallback,
+} from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -22,6 +28,7 @@ import {
   calculatePasswordStrength,
 } from '@/lib/validation';
 import { useSignup } from '@/lib/mutations';
+import { authService } from '@/lib/authService';
 import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
@@ -66,6 +73,7 @@ function SignupPageContent() {
     setValue,
     formState: { errors, isSubmitting },
     setError,
+    clearErrors,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
@@ -107,6 +115,47 @@ function SignupPageContent() {
   const passwordStrength = password
     ? calculatePasswordStrength(password)
     : null;
+
+  // ── Real-time email domain validation ─────────────────────────────────────
+  const emailValue = watch('email');
+  const emailDomainTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (emailDomainTimer.current) clearTimeout(emailDomainTimer.current);
+
+    const email = (emailValue ?? '').trim();
+    const atIdx = email.lastIndexOf('@');
+    // Need at least one char before '@' and a domain with a dot
+    if (atIdx < 1) return;
+    const domain = email.slice(atIdx + 1);
+    if (!domain || !domain.includes('.') || domain.length < 4) return;
+
+    emailDomainTimer.current = setTimeout(async () => {
+      try {
+        const result = await authService.checkEmailDomain(domain);
+        if (!result.valid) {
+          setError('email', {
+            type: 'manual',
+            message:
+              'This email domain cannot receive mail. Please use a valid email address.',
+          });
+        } else {
+          // Only clear a domain-related manual error — leave Zod errors intact
+          if (errors.email?.type === 'manual') {
+            clearErrors('email');
+          }
+        }
+      } catch {
+        // Silent fail — never block the user due to a network error
+      }
+    }, 600);
+
+    return () => {
+      if (emailDomainTimer.current) clearTimeout(emailDomainTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailValue]);
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleNext = useCallback(async () => {
     const valid = await trigger(getFieldsForStep(currentStep));
@@ -235,6 +284,19 @@ function SignupPageContent() {
           message: 'This username is already taken.',
         });
         toast.error('Username already taken');
+        return;
+      }
+
+      if (
+        msgLower.includes('email domain') ||
+        msgLower.includes('cannot receive mail') ||
+        errorResponse.field === 'email'
+      ) {
+        setError('email', {
+          type: 'manual',
+          message: message,
+        });
+        toast.error('Invalid email address', { description: message });
         return;
       }
 

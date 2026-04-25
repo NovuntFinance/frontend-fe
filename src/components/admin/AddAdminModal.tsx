@@ -33,12 +33,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ShimmerCard } from '@/components/ui/shimmer';
 
+const NAME_REGEX = /^[a-zA-Z\s''-]+$/;
+
 const createAdminSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  fname: z.string().min(1, 'First name is required'),
-  lname: z.string().min(1, 'Last name is required'),
+  fname: z
+    .string()
+    .min(1, 'First name is required')
+    .max(50, 'First name must not exceed 50 characters')
+    .regex(
+      NAME_REGEX,
+      'First name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
+  lname: z
+    .string()
+    .min(1, 'Last name is required')
+    .max(50, 'Last name must not exceed 50 characters')
+    .regex(
+      NAME_REGEX,
+      'Last name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
   role: z.enum(['admin', 'superAdmin'] as const, {
     message: 'Please select a role',
   }),

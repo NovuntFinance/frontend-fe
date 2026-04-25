@@ -459,6 +459,18 @@ export const authService = {
   getReferralInfo: async (): Promise<InternalReferralInfoResponse> => {
     return api.get<InternalReferralInfoResponse>('/better-auth/referral-info');
   },
+
+  /**
+   * 17. Check whether an email domain has valid MX records (can receive mail).
+   * GET /better-auth/check-email-domain?domain=gmail.com [Public]
+   */
+  checkEmailDomain: async (domain: string): Promise<{ valid: boolean }> => {
+    const response = await api.get<{
+      success: boolean;
+      data: { valid: boolean };
+    }>(`/better-auth/check-email-domain?domain=${encodeURIComponent(domain)}`);
+    return response.data ?? { valid: true }; // fail-open on unexpected shape
+  },
 };
 
 // ============================================

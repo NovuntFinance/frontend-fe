@@ -5,10 +5,12 @@ interface JsonLdProps {
 }
 
 export function JsonLd({ data }: JsonLdProps) {
+  // Serialize and escape </script> sequences to prevent script injection
+  const safeJson = JSON.stringify(data).replace(/<\/script>/gi, '<\\/script>');
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: safeJson }}
     />
   );
 }
