@@ -7,7 +7,6 @@ import { NovuntSpinner } from '@/components/ui/novunt-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { useWalletBalance } from '@/lib/queries';
 import { useUIStore } from '@/store/uiStore';
 import {
@@ -124,7 +123,8 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     } catch (err) {
       const handled = otpCooldown.triggerCooldown(err);
       if (!handled) {
-        setError(err instanceof Error ? err.message : 'Failed to send OTP');
+        const apiErr = err as { message?: string };
+        setError(apiErr?.message || 'Failed to send OTP');
       }
     }
   };
@@ -162,29 +162,42 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setStep('success');
       refetch();
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to submit withdrawal';
+      const apiErr = err as {
+        message?: string;
+        response?: { data?: { code?: string; error?: { code?: string } } };
+      };
+      const code =
+        apiErr?.response?.data?.code || apiErr?.response?.data?.error?.code;
+      const errorMessage = apiErr?.message || 'Failed to submit withdrawal';
 
       if (
+        code === 'DAILY_WITHDRAWAL_LIMIT_REACHED' ||
+        code === 'DAILY_LIMIT_EXCEEDED' ||
         errorMessage.toLowerCase().includes('daily limit') ||
         errorMessage.toLowerCase().includes('limit exceeded')
       ) {
         setShowDailyLimitDialog(true);
+        setStep('form');
         return;
       }
       if (
-        errorMessage.toLowerCase().includes('2fa') ||
-        (err as { response?: { data?: { code?: string } } })?.response?.data
-          ?.code === '2FA_CODE_INVALID'
+        code === '2FA_CODE_INVALID' ||
+        code === '2FA_REQUIRED' ||
+        code === 'INVALID_2FA_CODE' ||
+        errorMessage.toLowerCase().includes('2fa')
       ) {
         setError('Invalid 2FA code. Please try again.');
         setTwoFACode('');
         setStep('2fa');
         return;
       }
+      if (code === 'INVALID_EMAIL_OTP' || code === 'SUPPORT_REQUIRED') {
+        setError(errorMessage);
+        setStep('2fa');
+        return;
+      }
 
       setError(errorMessage);
-      toast.error('Withdrawal failed', { description: errorMessage });
       setStep('2fa');
     }
   };
