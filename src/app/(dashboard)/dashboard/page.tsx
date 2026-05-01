@@ -1643,7 +1643,7 @@ export default function DashboardPage() {
                               onClick={() =>
                                 openShareModal('profit', {
                                   title: 'Share Your Success!',
-                                  message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                                  message: `I'm earning on Novunt — and it's been working better than I expected.`,
                                   amount: totalEarnings,
                                 })
                               }
@@ -1652,7 +1652,7 @@ export default function DashboardPage() {
                                   e.preventDefault();
                                   openShareModal('profit', {
                                     title: 'Share Your Success!',
-                                    message: `🎉 I'm earning on Novunt!\nJoin me and start earning too.`,
+                                    message: `I'm earning on Novunt — and it's been working better than I expected.`,
                                     amount: totalEarnings,
                                   });
                                 }
