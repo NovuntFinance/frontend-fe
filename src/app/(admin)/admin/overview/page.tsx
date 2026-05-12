@@ -103,17 +103,23 @@ export default function AdminOverviewPage() {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [showCustomPicker, setShowCustomPicker] = useState(false);
-  // Applied custom range (only set after clicking Apply)
-  const [appliedFrom, setAppliedFrom] = useState<string | undefined>();
-  const [appliedTo, setAppliedTo] = useState<string | undefined>();
+  // pickerFrom/To: draft values the admin types in the inputs
+  const [pickerFrom, setPickerFrom] = useState('');
+  const [pickerTo, setPickerTo] = useState('');
+  // appliedFrom/To: committed values that actually drive the query (set on Apply only)
+  const [appliedFrom, setAppliedFrom] = useState('');
+  const [appliedTo, setAppliedTo] = useState('');
 
-  const activFrom = timeframe === 'custom' ? appliedFrom : undefined;
-  const activTo = timeframe === 'custom' ? appliedTo : undefined;
+  // Only pass dates to the query AFTER the user has clicked Apply.
+  // While the picker is open the old timeframe stays active.
+  const queryFrom =
+    timeframe === 'custom' && appliedFrom ? appliedFrom : undefined;
+  const queryTo = timeframe === 'custom' && appliedTo ? appliedTo : undefined;
 
   const { data, isLoading, isFetching, error } = useAdminDashboard(
     timeframe,
-    activFrom,
-    activTo
+    queryFrom,
+    queryTo
   );
 
   const metrics = data?.metrics;
@@ -544,7 +550,7 @@ export default function AdminOverviewPage() {
 
   const customRangeLabel =
     timeframe === 'custom' && appliedFrom
-      ? `${appliedFrom}${appliedTo ? ` → ${appliedTo}` : ''}`
+      ? `${appliedFrom}${appliedTo ? ` → ${appliedTo}` : ` → today`}`
       : null;
 
   return (
@@ -611,8 +617,9 @@ export default function AdminOverviewPage() {
                   type="button"
                   onClick={() => {
                     if (value === 'custom') {
+                      // Only open the picker — don't switch timeframe yet.
+                      // Timeframe switches to 'custom' only when Apply is clicked.
                       setShowCustomPicker((p) => !p);
-                      setTimeframe('custom');
                     } else {
                       setShowCustomPicker(false);
                       setTimeframe(value);
@@ -620,7 +627,8 @@ export default function AdminOverviewPage() {
                   }}
                   className={[
                     'rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-150',
-                    timeframe === value
+                    timeframe === value ||
+                    (value === 'custom' && showCustomPicker)
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
                   ].join(' ')}
@@ -660,74 +668,90 @@ export default function AdminOverviewPage() {
 
         {/* ── Custom date-range picker ─────────────────────────────── */}
         {showCustomPicker && (
-          <div className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-700 dark:bg-indigo-900/20">
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="custom-from"
-                className="text-xs font-medium text-gray-600 dark:text-gray-400"
-              >
-                From
-              </label>
-              <input
-                id="custom-from"
-                type="date"
-                title="Start date"
-                value={customFrom}
-                max={customTo || new Date().toISOString().split('T')[0]}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-              />
+          <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-700 dark:bg-indigo-900/20">
+            <p className="mb-3 text-xs font-semibold tracking-wide text-indigo-600 uppercase dark:text-indigo-400">
+              Select Date Range
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="custom-from"
+                  className="text-xs font-medium text-gray-600 dark:text-gray-400"
+                >
+                  From
+                </label>
+                <input
+                  id="custom-from"
+                  type="date"
+                  title="Start date"
+                  value={pickerFrom}
+                  max={pickerTo || new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPickerFrom(e.target.value)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                />
+              </div>
+              <div className="flex items-end pb-2 text-sm text-gray-400">→</div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="custom-to"
+                  className="text-xs font-medium text-gray-600 dark:text-gray-400"
+                >
+                  To
+                </label>
+                <input
+                  id="custom-to"
+                  type="date"
+                  title="End date"
+                  value={pickerTo}
+                  min={pickerFrom}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPickerTo(e.target.value)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                />
+              </div>
+              <div className="flex items-end gap-2 pb-0.5">
+                <button
+                  type="button"
+                  disabled={!pickerFrom}
+                  onClick={() => {
+                    const toDate =
+                      pickerTo || new Date().toISOString().split('T')[0];
+                    setAppliedFrom(pickerFrom);
+                    setAppliedTo(toDate);
+                    setTimeframe('custom'); // activate only now
+                    setShowCustomPicker(false);
+                  }}
+                  className="rounded-md bg-indigo-600 px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCustomPicker(false);
+                    // If custom was already active, keep showing it;
+                    // otherwise just close the picker.
+                    if (timeframe !== 'custom') {
+                      // nothing to reset — previous timeframe is still active
+                    } else {
+                      setTimeframe(DEFAULT_TIMEFRAME);
+                      setAppliedFrom('');
+                      setAppliedTo('');
+                    }
+                    setPickerFrom('');
+                    setPickerTo('');
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="custom-to"
-                className="text-xs font-medium text-gray-600 dark:text-gray-400"
-              >
-                To
-              </label>
-              <input
-                id="custom-to"
-                type="date"
-                title="End date"
-                value={customTo}
-                min={customFrom}
-                max={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-              />
-            </div>
-            <button
-              type="button"
-              disabled={!customFrom}
-              onClick={() => {
-                setAppliedFrom(customFrom);
-                setAppliedTo(
-                  customTo || new Date().toISOString().split('T')[0]
-                );
-                setShowCustomPicker(false);
-              }}
-              className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Apply
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowCustomPicker(false);
-                setTimeframe(DEFAULT_TIMEFRAME);
-                setCustomFrom('');
-                setCustomTo('');
-                setAppliedFrom(undefined);
-                setAppliedTo(undefined);
-              }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-            >
-              Cancel
-            </button>
             {customRangeLabel && (
-              <span className="self-end text-xs text-indigo-600 dark:text-indigo-400">
-                Active: {customRangeLabel}
-              </span>
+              <p className="mt-2 text-xs text-indigo-500">
+                Currently active:{' '}
+                <span className="font-semibold">{customRangeLabel}</span>
+              </p>
             )}
           </div>
         )}
