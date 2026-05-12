@@ -179,8 +179,14 @@ export default function AdminOverviewPage() {
     const platformBalance = metrics.platform.totalBalance ?? 0;
     const fundedWallet = metrics.platform.fundedWalletTotal ?? 0;
     const earningWallet = metrics.platform.earningWalletTotal ?? 0;
-    const roiPaid = metrics.platform.totalPaidROI ?? 0;
-    const bonusesPaid = metrics.platform.totalBonusesPaid ?? 0;
+    const roiPaid =
+      (metrics.platform as any).totalPaidROIAllTime ??
+      metrics.platform.totalPaidROI ??
+      0;
+    const bonusesPaid =
+      (metrics.platform as any).totalBonusesPaidAllTime ??
+      metrics.platform.totalBonusesPaid ??
+      0;
 
     return [
       {
@@ -354,10 +360,10 @@ export default function AdminOverviewPage() {
           <AdminMetricCard
             title="ROI Paid Out"
             value={formatUSDT(roiPaid)}
-            secondaryValue={`Period: ${timeframeLabel}`}
-            tooltip="Total ROS payouts and pool distributions (premium, performance, rank, redistribution) paid out in the selected timeframe."
+            secondaryValue="All-time ROS + pool distributions"
+            tooltip="All-time total ROS payouts and pool distributions (premium, performance, rank, redistribution) paid out to users."
             icon="money"
-            trend={getTrend(roiPaid)}
+            trend="neutral"
           />
         ),
       },
@@ -367,10 +373,10 @@ export default function AdminOverviewPage() {
           <AdminMetricCard
             title="Bonuses Paid"
             value={formatUSDT(bonusesPaid)}
-            secondaryValue={`Period: ${timeframeLabel} · Reg + Referral`}
-            tooltip="Total registration bonuses and referral bonuses paid out in the selected timeframe."
+            secondaryValue="All-time · Registration + Referral"
+            tooltip="All-time total registration bonuses and referral bonuses paid out to users."
             icon="shield"
-            trend={getTrend(bonusesPaid)}
+            trend="neutral"
           />
         ),
       },
