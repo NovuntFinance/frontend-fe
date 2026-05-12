@@ -98,7 +98,23 @@ function TitleWithTooltip({
 export default function AdminOverviewPage() {
   const [timeframe, setTimeframe] =
     useState<AdminDashboardTimeframe>(DEFAULT_TIMEFRAME);
-  const { data, isLoading, isFetching, error } = useAdminDashboard(timeframe);
+
+  // Custom date range state
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
+  // Applied custom range (only set after clicking Apply)
+  const [appliedFrom, setAppliedFrom] = useState<string | undefined>();
+  const [appliedTo, setAppliedTo] = useState<string | undefined>();
+
+  const activFrom = timeframe === 'custom' ? appliedFrom : undefined;
+  const activTo = timeframe === 'custom' ? appliedTo : undefined;
+
+  const { data, isLoading, isFetching, error } = useAdminDashboard(
+    timeframe,
+    activFrom,
+    activTo
+  );
 
   const metrics = data?.metrics;
   const charts = data?.charts;
@@ -522,51 +538,65 @@ export default function AdminOverviewPage() {
     { value: '7d', label: '7D' },
     { value: '30d', label: '30D' },
     { value: '90d', label: '90D' },
+    { value: 'all', label: 'All Time' },
+    { value: 'custom', label: 'Custom' },
   ];
+
+  const customRangeLabel =
+    timeframe === 'custom' && appliedFrom
+      ? `${appliedFrom}${appliedTo ? ` → ${appliedTo}` : ''}`
+      : null;
 
   return (
     <div className="space-y-6">
       {/* ── Sticky Top Control Bar ──────────────────────────────────── */}
-      <div className="sticky top-0 z-20 -mx-4 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-gray-700 dark:bg-gray-900/90">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-gray-700 dark:bg-gray-900/95">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Left: title + last-updated */}
+          {/* Left: title + active period label + last-updated */}
           <div className="min-w-0">
             <h2 className="truncate text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Admin Dashboard
             </h2>
-            {lastUpdatedLabel && (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                Updated {lastUpdatedLabel}
-                {isFetching && !isLoading && (
-                  <span className="ml-2 inline-flex items-center gap-1 text-indigo-500">
-                    <svg
-                      className="h-3 w-3 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-                      />
-                    </svg>
-                    Refreshing…
-                  </span>
-                )}
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {customRangeLabel ? (
+                <span className="font-medium text-indigo-500">
+                  {customRangeLabel}
+                </span>
+              ) : timeframe === 'all' ? (
+                <span className="font-medium text-indigo-500">All Time</span>
+              ) : (
+                <span>Last {timeframeLabel}</span>
+              )}
+              {lastUpdatedLabel && <span> · Updated {lastUpdatedLabel}</span>}
+              {isFetching && !isLoading && (
+                <span className="ml-2 inline-flex items-center gap-1 text-indigo-500">
+                  <svg
+                    className="h-3 w-3 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                    />
+                  </svg>
+                  Refreshing…
+                </span>
+              )}
+            </p>
           </div>
 
           {/* Right: timeframe pills + export */}
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
             {error && (
               <span className="text-xs text-red-500 dark:text-red-400">
                 Failed to load. Please retry.
@@ -574,14 +604,22 @@ export default function AdminOverviewPage() {
             )}
 
             {/* Timeframe pill group */}
-            <div className="flex items-center rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex flex-wrap items-center rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800">
               {TIMEFRAMES.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setTimeframe(value)}
+                  onClick={() => {
+                    if (value === 'custom') {
+                      setShowCustomPicker((p) => !p);
+                      setTimeframe('custom');
+                    } else {
+                      setShowCustomPicker(false);
+                      setTimeframe(value);
+                    }
+                  }}
                   className={[
-                    'min-w-[42px] rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-150',
+                    'rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-150',
                     timeframe === value
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
@@ -619,6 +657,80 @@ export default function AdminOverviewPage() {
             </button>
           </div>
         </div>
+
+        {/* ── Custom date-range picker ─────────────────────────────── */}
+        {showCustomPicker && (
+          <div className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-700 dark:bg-indigo-900/20">
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="custom-from"
+                className="text-xs font-medium text-gray-600 dark:text-gray-400"
+              >
+                From
+              </label>
+              <input
+                id="custom-from"
+                type="date"
+                title="Start date"
+                value={customFrom}
+                max={customTo || new Date().toISOString().split('T')[0]}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="custom-to"
+                className="text-xs font-medium text-gray-600 dark:text-gray-400"
+              >
+                To
+              </label>
+              <input
+                id="custom-to"
+                type="date"
+                title="End date"
+                value={customTo}
+                min={customFrom}
+                max={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!customFrom}
+              onClick={() => {
+                setAppliedFrom(customFrom);
+                setAppliedTo(
+                  customTo || new Date().toISOString().split('T')[0]
+                );
+                setShowCustomPicker(false);
+              }}
+              className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCustomPicker(false);
+                setTimeframe(DEFAULT_TIMEFRAME);
+                setCustomFrom('');
+                setCustomTo('');
+                setAppliedFrom(undefined);
+                setAppliedTo(undefined);
+              }}
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              Cancel
+            </button>
+            {customRangeLabel && (
+              <span className="self-end text-xs text-indigo-600 dark:text-indigo-400">
+                Active: {customRangeLabel}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Live Metrics Grid (top 8 cards) */}

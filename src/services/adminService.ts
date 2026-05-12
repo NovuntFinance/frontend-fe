@@ -658,15 +658,17 @@ class AdminService {
    * Backend Fix: Endpoint is now implemented and returns correct structure
    * Response includes: metrics, charts, recentActivity, timeframe, lastUpdated
    */
-  async getDashboardMetrics(timeframe: string = '30d') {
-    // For GET requests, don't prompt for 2FA - let backend handle it
+  async getDashboardMetrics(
+    timeframe: string = '30d',
+    from?: string,
+    to?: string
+  ) {
     const get2FACode = async () => null;
     const api = createAdminApi(get2FACode);
-
-    // Backend has fixed the endpoint - use /admin/ui/dashboard directly
-    const response = await api.get('/admin/ui/dashboard', {
-      params: { timeframe },
-    });
+    const params: Record<string, string> = { timeframe };
+    if (from) params.from = from;
+    if (to) params.to = to;
+    const response = await api.get('/admin/ui/dashboard', { params });
     return response.data;
   }
 

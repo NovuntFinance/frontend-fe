@@ -110,7 +110,13 @@ export interface ChartDataPoint {
   label?: string;
 }
 
-export type AdminDashboardTimeframe = '24h' | '7d' | '30d' | '90d';
+export type AdminDashboardTimeframe =
+  | '24h'
+  | '7d'
+  | '30d'
+  | '90d'
+  | 'all'
+  | 'custom';
 
 export type AdminActivityType =
   | 'new_user'

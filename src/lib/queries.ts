@@ -1837,12 +1837,14 @@ export function useKYCStatus() {
 // ADMIN QUERIES
 // ============================================
 
-export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
-  // Check if user is authenticated as admin (client-side check)
+export function useAdminDashboard(
+  timeframe: AdminDashboardTimeframe = '30d',
+  from?: string,
+  to?: string
+) {
   const checkAdminAuth = (): boolean => {
     if (typeof window === 'undefined') return false;
     try {
-      // Dynamic import to avoid SSR issues
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { adminAuthService } = require('@/services/adminAuthService');
       return adminAuthService.isAuthenticated();
@@ -1852,11 +1854,15 @@ export function useAdminDashboard(timeframe: AdminDashboardTimeframe = '30d') {
   };
 
   return useQuery({
-    queryKey: queryKeys.adminDashboard(timeframe),
+    queryKey: [...queryKeys.adminDashboard(timeframe), from ?? '', to ?? ''],
     queryFn: async () => {
       const { adminService } = await import('@/services/adminService');
       try {
-        const response = await adminService.getDashboardMetrics(timeframe);
+        const response = await adminService.getDashboardMetrics(
+          timeframe,
+          from,
+          to
+        );
         // Normalize dashboard response:
         // Backend may return a wrapper `{ status/success, data: {...}, dailyProfit, pools, ... }`.
         // If we naïvely return `response.data`, we can accidentally DROP sibling fields like
