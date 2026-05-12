@@ -178,7 +178,9 @@ export default function AdminOverviewPage() {
     const totalDepositCount = p.totalDepositCountAllTime ?? 0;
     const totalWithdrawn = p.totalWithdrawnAllTime ?? 0;
     const netCapital = totalDeposited - totalWithdrawn;
-    const totalStaked = p.totalStakedAllTime ?? 0;
+    const totalStaked = p.totalStakedAllTime ?? 0; // user capital only
+    const bonusStakes = p.bonusStakesTotal ?? 0; // platform-funded bonus stakes
+    const bonusStakesCount = p.bonusStakesCount ?? 0;
     const totalReturnsEarned = p.totalReturnsEarned ?? 0;
     const platformBalance = p.totalBalance ?? 0;
     const fundedWallet = p.fundedWalletTotal ?? 0;
@@ -355,11 +357,24 @@ export default function AdminOverviewPage() {
         id: 'total-staked-alltime',
         content: (
           <AdminMetricCard
-            title="Total Staked (All Time)"
+            title="User Capital Staked"
             value={formatUSDT(totalStaked)}
-            secondaryValue={`${metrics.stakes.total} positions · TVL ${formatUSDT(tvl)}`}
-            tooltip="All-time total stake principal deposited across all positions (from Stake records — authoritative). TVL shows currently active amount."
+            secondaryValue={`${metrics.stakes.total - bonusStakesCount} user positions · TVL ${formatUSDT(tvl)}`}
+            tooltip="All-time total user-deposited capital put into staking positions. Excludes platform-funded registration bonus stakes. Matches total deposited."
             icon="chart"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'bonus-stakes',
+        content: (
+          <AdminMetricCard
+            title="Bonus Stakes (Platform)"
+            value={formatUSDT(bonusStakes)}
+            secondaryValue={`${bonusStakesCount} registration bonus positions`}
+            tooltip="Total platform-funded registration bonus stake positions (10% of qualifying stake). These are NOT user deposits — they are funded by the platform as a bonus reward."
+            icon="shield"
             trend="neutral"
           />
         ),
@@ -370,8 +385,8 @@ export default function AdminOverviewPage() {
           <AdminMetricCard
             title="Total Returns Earned"
             value={formatUSDT(totalReturnsEarned)}
-            secondaryValue="Cumulative ROS earned by stakers"
-            tooltip="Total returns (ROS earnings) accumulated across all stake positions, as recorded in the Stake documents."
+            secondaryValue="Cumulative ROS across all positions"
+            tooltip="Total returns (ROS earnings) accumulated across all stake positions — both user capital and bonus stakes."
             icon="money"
             trend="neutral"
           />
@@ -590,7 +605,7 @@ export default function AdminOverviewPage() {
             </div>
           </div>
 
-          {/* Staking */}
+          {/* Staking — 4 cards: User Capital, Platform Bonus Stakes, Returns Earned, Platform Balance */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -598,8 +613,8 @@ export default function AdminOverviewPage() {
               </h3>
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {metricCards.slice(11, 14).map((card) => (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {metricCards.slice(11, 15).map((card) => (
                 <div key={card.id}>{card.content}</div>
               ))}
             </div>
@@ -614,7 +629,7 @@ export default function AdminOverviewPage() {
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {metricCards.slice(14, 17).map((card) => (
+              {metricCards.slice(15, 18).map((card) => (
                 <div key={card.id}>{card.content}</div>
               ))}
             </div>
@@ -629,7 +644,7 @@ export default function AdminOverviewPage() {
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {metricCards.slice(17).map((card) => (
+              {metricCards.slice(18).map((card) => (
                 <div key={card.id}>{card.content}</div>
               ))}
             </div>
