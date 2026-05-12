@@ -28,7 +28,6 @@ export enum SocialMediaPlatform {
   INSTAGRAM = 'instagram',
   YOUTUBE = 'youtube',
   TIKTOK = 'tiktok',
-  TELEGRAM = 'telegram',
 }
 
 export type ProfileFieldName =

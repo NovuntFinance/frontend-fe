@@ -299,7 +299,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
   const isInstantWithdrawal = React.useMemo(() => {
     if (!amount || !limits) return false;
     return (
-      amount <= limits.limits.instantWithdrawalThreshold &&
+      amount < limits.limits.instantWithdrawalThreshold &&
       limits.limits.enableInstantWithdrawals
     );
   }, [amount, limits]);

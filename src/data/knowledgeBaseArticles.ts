@@ -2335,12 +2335,12 @@ export const knowledgeBaseArticles: Article[] = [
       <p>Every stake you create targets a 200% return (your original amount + 100% profit). Returns are distributed daily until the target is reached.</p>
 
       <h3>Slide 3 — 10% Welcome Bonus</h3>
-      <p>Complete five registration steps and receive a 10% bonus stake on your first qualifying deposit. The five steps are:</p>
+      <p>Complete the registration steps and receive a 10% bonus stake on your first qualifying deposit. The steps are:</p>
       <ol>
         <li><strong>Email verification</strong> — confirm your email.</li>
         <li><strong>2FA setup</strong> — enable Google Authenticator.</li>
         <li><strong>Withdrawal address</strong> — whitelist a BEP20 wallet.</li>
-        <li><strong>Social media</strong> — verify all 5 platforms (Facebook, Instagram, YouTube, TikTok, Telegram).</li>
+        <li><strong>Social media</strong> — verify all 4 platforms (Facebook, Instagram, YouTube, TikTok).</li>
         <li><strong>First stake</strong> — stake at least $20 USDT.</li>
       </ol>
 
@@ -2915,7 +2915,7 @@ export const knowledgeBaseArticles: Article[] = [
         <li><strong>Registration & Email Verification</strong> — This is automatic when you sign up and confirm your email. (20%)</li>
         <li><strong>Enable 2FA</strong> — Set up Google Authenticator or any TOTP app from your Security settings. (40%)</li>
         <li><strong>Set Withdrawal Address</strong> — Add your BEP20 wallet address in the Wallet section. (60%)</li>
-        <li><strong>Verify Social Media</strong> — Follow Novunt on all 5 platforms: <strong>Facebook</strong>, <strong>Instagram</strong>, <strong>YouTube</strong>, <strong>TikTok</strong>, and <strong>Telegram</strong>. (80%)</li>
+        <li><strong>Verify Social Media</strong> — Follow Novunt on all 4 platforms: <strong>Facebook</strong>, <strong>Instagram</strong>, <strong>YouTube</strong>, and <strong>TikTok</strong>. (80%)</li>
         <li><strong>First Stake</strong> — Create your first stake of at least <strong>$20 USDT</strong>. (100%)</li>
       </ol>
 
@@ -3289,15 +3289,14 @@ export const knowledgeBaseArticles: Article[] = [
     tags: ['Social Media', 'Verification', 'Facebook', 'Instagram', 'TikTok'],
     content: `
       <h2>Why Verify Social Media?</h2>
-      <p>Social media verification is Step 4 of the five registration bonus steps. Completing it earns you 20% progress toward your 10% welcome bonus. You must follow Novunt's official account on all five platforms.</p>
+      <p>Social media verification is Step 4 of the registration bonus steps. Completing it earns you 20% progress toward your 10% welcome bonus. You must follow Novunt's official account on all four platforms.</p>
 
-      <h3>The Five Platforms</h3>
+      <h3>The Four Platforms</h3>
       <ol>
         <li><strong>Facebook</strong></li>
         <li><strong>Instagram</strong></li>
         <li><strong>YouTube</strong></li>
         <li><strong>TikTok</strong></li>
-        <li><strong>Telegram</strong></li>
       </ol>
 
       <h3>How to Verify Each Platform</h3>
@@ -3485,14 +3484,13 @@ export const knowledgeBaseArticles: Article[] = [
       'All the official Novunt social media channels, community groups, and how to stay connected.',
     category: 'glossary',
     readTime: 3,
-    tags: ['Community', 'Social', 'Telegram', 'Facebook', 'Instagram'],
+    tags: ['Community', 'Social', 'Facebook', 'Instagram'],
     content: `
       <h2>Stay Connected</h2>
       <p>Novunt has an active community across multiple platforms. Follow us to stay updated on announcements, tips, and events.</p>
 
       <h3>Official Channels</h3>
       <ul>
-        <li><strong>Telegram</strong> — Join the main community group for discussions and updates.</li>
         <li><strong>Facebook</strong> — Follow for announcements, educational content, and community highlights.</li>
         <li><strong>Instagram</strong> — Visual updates, tips, and behind-the-scenes content.</li>
         <li><strong>YouTube</strong> — Tutorials, guides, and platform walkthroughs.</li>

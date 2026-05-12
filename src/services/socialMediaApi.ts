@@ -43,43 +43,49 @@ export const socialMediaApi = {
   /**
    * Visit a social media platform
    * GET /api/v1/social-media/visit/:platform
-   * @param platform - Platform name (facebook, instagram, youtube, tiktok, telegram)
+   * @param platform - Platform name (facebook, instagram, youtube, tiktok)
    * @returns Platform URL (redirects to platform) or JSON response if json=1
    */
-  async visitPlatform(platform: string, jsonResponse = false): Promise<VisitPlatformResponse> {
+  async visitPlatform(
+    platform: string,
+    jsonResponse = false
+  ): Promise<VisitPlatformResponse> {
     try {
       // Ensure platform name is lowercase (backend expects lowercase)
       const platformName = platform.toLowerCase();
-      
-      const url = jsonResponse 
+
+      const url = jsonResponse
         ? `/social-media/visit/${platformName}?json=1`
         : `/social-media/visit/${platformName}`;
-      
+
       console.log('[socialMediaApi] Visiting platform:', {
         original: platform,
         normalized: platformName,
         url,
         jsonResponse,
       });
-      
+
       // Set Accept header for JSON response (backend needs this to return JSON instead of redirect)
-      const config = jsonResponse 
-        ? { headers: { 'Accept': 'application/json' } }
+      const config = jsonResponse
+        ? { headers: { Accept: 'application/json' } }
         : undefined;
-      
-      const response = await api.get<VisitPlatformResponse | VisitPlatformResponse['data']>(
-        url,
-        config
-      );
-      
+
+      const response = await api.get<
+        VisitPlatformResponse | VisitPlatformResponse['data']
+      >(url, config);
+
       console.log('[socialMediaApi] Visit platform response:', response);
       console.log('[socialMediaApi] Response type check:', {
-        isWrapped: response && typeof response === 'object' && 'success' in response,
+        isWrapped:
+          response && typeof response === 'object' && 'success' in response,
         hasData: response && typeof response === 'object' && 'data' in response,
-        hasToken: response && typeof response === 'object' && ('token' in response || (response as any).data?.token),
+        hasToken:
+          response &&
+          typeof response === 'object' &&
+          ('token' in response || (response as any).data?.token),
         fullResponse: JSON.stringify(response, null, 2),
       });
-      
+
       // Handle unwrapped response (api.get might unwrap it)
       if (response && typeof response === 'object') {
         // If response has success/data structure, return as-is
@@ -95,7 +101,7 @@ export const socialMediaApi = {
           };
         }
       }
-      
+
       // Fallback: wrap the response
       return {
         success: true,
@@ -104,13 +110,13 @@ export const socialMediaApi = {
       };
     } catch (error: any) {
       // Better error logging
-      const err = error as { 
-        code?: string; 
-        message?: string; 
-        response?: { status?: number; data?: any }; 
+      const err = error as {
+        code?: string;
+        message?: string;
+        response?: { status?: number; data?: any };
         statusCode?: number;
       };
-      
+
       console.error('[socialMediaApi] Failed to visit platform:', {
         code: err?.code,
         message: err?.message,
@@ -119,17 +125,20 @@ export const socialMediaApi = {
         platform,
         jsonResponse,
       });
-      
+
       // Check for network errors
-      const isNetworkError = err?.code === 'ERR_NETWORK' || 
-                            err?.message?.includes('Network Error') ||
-                            err?.message?.includes('Failed to fetch') ||
-                            (!err?.response && !err?.statusCode);
-      
+      const isNetworkError =
+        err?.code === 'ERR_NETWORK' ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch') ||
+        (!err?.response && !err?.statusCode);
+
       if (isNetworkError) {
-        console.warn('[socialMediaApi] ⚠️ Network error - backend might be unavailable');
+        console.warn(
+          '[socialMediaApi] ⚠️ Network error - backend might be unavailable'
+        );
       }
-      
+
       throw error;
     }
   },
@@ -141,34 +150,37 @@ export const socialMediaApi = {
    * @param token - Verification token from visit response (optional)
    * @returns Confirmation response
    */
-  async confirmPlatform(platform: string, token?: string): Promise<ConfirmPlatformResponse> {
+  async confirmPlatform(
+    platform: string,
+    token?: string
+  ): Promise<ConfirmPlatformResponse> {
     try {
       // Ensure platform name is lowercase (backend expects lowercase)
       const platformName = platform.toLowerCase();
-      
+
       // Always include token field in request body (even if undefined)
       // Backend might require the field to be present
       const requestBody = { token: token || null };
-      
+
       console.log('[socialMediaApi] Confirming platform:', {
         original: platform,
         normalized: platformName,
         token: token ? 'provided' : 'none',
         requestBody,
       });
-      
-      const response = await api.post<ConfirmPlatformResponse | ConfirmPlatformResponse['data']>(
-        `/social-media/confirm/${platformName}`,
-        requestBody
-      );
-      
+
+      const response = await api.post<
+        ConfirmPlatformResponse | ConfirmPlatformResponse['data']
+      >(`/social-media/confirm/${platformName}`, requestBody);
+
       console.log('[socialMediaApi] Confirm platform response:', response);
       console.log('[socialMediaApi] Response type check:', {
-        isWrapped: response && typeof response === 'object' && 'success' in response,
+        isWrapped:
+          response && typeof response === 'object' && 'success' in response,
         hasData: response && typeof response === 'object' && 'data' in response,
         fullResponse: JSON.stringify(response, null, 2),
       });
-      
+
       // Handle unwrapped response (api.post might unwrap it)
       if (response && typeof response === 'object') {
         // If response has success/data structure, return as-is
@@ -184,7 +196,7 @@ export const socialMediaApi = {
           };
         }
       }
-      
+
       // Fallback: wrap the response
       return {
         success: true,
@@ -211,14 +223,18 @@ export const socialMediaApi = {
    */
   async getVerifiedPlatforms(): Promise<VerifiedPlatformsResponse> {
     try {
-      const response = await api.get<VerifiedPlatformsResponse>('/social-media/verified');
-      
+      const response = await api.get<VerifiedPlatformsResponse>(
+        '/social-media/verified'
+      );
+
       console.log('[socialMediaApi] Verified platforms response:', response);
       return response;
     } catch (error: any) {
-      console.error('[socialMediaApi] Failed to get verified platforms:', error);
+      console.error(
+        '[socialMediaApi] Failed to get verified platforms:',
+        error
+      );
       throw error;
     }
   },
 };
-

@@ -548,12 +548,14 @@ class AdminService {
   async approveWithdrawal(
     transactionId: string,
     status: 'approved' | 'rejected',
-    reason?: string
+    reason?: string,
+    confirmHighValue?: boolean
   ) {
     const api = createAdminApi(this.get2FACode);
     const response = await api.patch(`/admin/withdrawal/${transactionId}`, {
       status,
       reason,
+      ...(confirmHighValue ? { confirmHighValue: true } : {}),
     });
     return response.data;
   }

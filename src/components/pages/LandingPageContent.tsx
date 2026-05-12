@@ -105,7 +105,6 @@ export default function LandingPageContent() {
     FaFacebook: React.ElementType;
     FaInstagram: React.ElementType;
     FaYoutube: React.ElementType;
-    FaTelegram: React.ElementType;
     SiTiktok: React.ElementType;
   } | null>(null);
   const imgRef = useRef<HTMLDivElement | null>(null);
@@ -130,7 +129,6 @@ export default function LandingPageContent() {
             FaFacebook: fa.FaFacebook,
             FaInstagram: fa.FaInstagram,
             FaYoutube: fa.FaYoutube,
-            FaTelegram: fa.FaTelegram,
             SiTiktok: si.SiTiktok,
           });
         });
@@ -602,11 +600,6 @@ export default function LandingPageContent() {
                   icon={Icons.FaYoutube}
                   href="https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4"
                   label="YouTube"
-                />
-                <SocialButton
-                  icon={Icons.FaTelegram}
-                  href="https://t.me/novunt"
-                  label="Telegram"
                 />
               </div>
             </div>

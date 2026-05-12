@@ -450,7 +450,9 @@ export function SocialMediaRequirement({
             }}
           >
             {displayedPlatforms.map((platform) => {
-              const config = PLATFORM_CONFIG[platform.platform];
+              const config =
+                PLATFORM_CONFIG[platform.platform as SocialMediaPlatform];
+              if (!config) return null;
               const isVerified = platform.isVerified;
               const isVerifying = verifyingPlatform === platform.platform;
               const IconComponent = config.icon;

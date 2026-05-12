@@ -2,12 +2,31 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Star, Circle, Mail, Share, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
+import {
+  Users,
+  Star,
+  Circle,
+  Mail,
+  Share,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { useVisitSocialMedia, useConfirmSocialMedia, type SocialMediaPlatform } from '@/lib/mutations/profileMutations';
+import {
+  useVisitSocialMedia,
+  useConfirmSocialMedia,
+  type SocialMediaPlatform,
+} from '@/lib/mutations/profileMutations';
 
 interface SocialMediaPlatformData {
   id: SocialMediaPlatform;
@@ -22,8 +41,12 @@ interface SocialMediaVerificationProps {
   onVerificationComplete?: () => void;
 }
 
-export function SocialMediaVerification({ verifiedPlatforms = [], onVerificationComplete }: SocialMediaVerificationProps) {
-  const [verifyingPlatform, setVerifyingPlatform] = useState<SocialMediaPlatform | null>(null);
+export function SocialMediaVerification({
+  verifiedPlatforms = [],
+  onVerificationComplete,
+}: SocialMediaVerificationProps) {
+  const [verifyingPlatform, setVerifyingPlatform] =
+    useState<SocialMediaPlatform | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
 
@@ -53,11 +76,11 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
       verified: verifiedPlatforms.includes('YOUTUBE'),
     },
     {
-      id: 'TELEGRAM' as SocialMediaPlatform,
-      name: 'Telegram',
-      icon: Mail,
-      color: 'from-cyan-400 to-blue-500',
-      verified: verifiedPlatforms.includes('TELEGRAM'),
+      id: 'TIKTOK' as SocialMediaPlatform,
+      name: 'TikTok',
+      icon: Share,
+      color: 'from-gray-800 to-gray-900',
+      verified: verifiedPlatforms.includes('TIKTOK'),
     },
   ];
 
@@ -103,7 +126,8 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
           onVerificationComplete?.();
         } catch (error) {
           toast.error('Verification failed', {
-            description: error instanceof Error ? error.message : 'Please try again',
+            description:
+              error instanceof Error ? error.message : 'Please try again',
           });
           setVerifyingPlatform(null);
           setPendingToken(null);
@@ -111,7 +135,8 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
       }, 30000);
     } catch (error) {
       toast.error('Failed to start verification', {
-        description: error instanceof Error ? error.message : 'Please try again',
+        description:
+          error instanceof Error ? error.message : 'Please try again',
       });
       setVerifyingPlatform(null);
       setPendingToken(null);
@@ -122,7 +147,10 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
     if (!verifyingPlatform || !pendingToken) return;
 
     try {
-      await confirmMutation.mutateAsync({ platform: verifyingPlatform, token: pendingToken });
+      await confirmMutation.mutateAsync({
+        platform: verifyingPlatform,
+        token: pendingToken,
+      });
       toast.success(`${verifyingPlatform} verified!`, {
         description: 'Your registration bonus progress has been updated',
       });
@@ -132,16 +160,19 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
       onVerificationComplete?.();
     } catch (error) {
       toast.error('Verification failed', {
-        description: error instanceof Error ? error.message : 'Please wait a bit longer or try again',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Please wait a bit longer or try again',
       });
     }
   };
 
   const verifiedCount = platforms.filter((p) => p.verified).length;
-  const totalRequired = 5;
+  const totalRequired = platforms.length;
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
+    <Card className="border-primary/20 from-background via-background to-primary/5 bg-gradient-to-br">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -153,16 +184,19 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
               Follow Novunt on 5 platforms to qualify for the registration bonus
             </CardDescription>
           </div>
-          <Badge variant={verifiedCount === totalRequired ? 'default' : 'secondary'} className="text-lg px-4 py-2">
+          <Badge
+            variant={verifiedCount === totalRequired ? 'default' : 'secondary'}
+            className="px-4 py-2 text-lg"
+          >
             {verifiedCount}/{totalRequired}
           </Badge>
         </div>
 
         {/* Progress Bar */}
         <div className="mt-4">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="bg-muted h-2 overflow-hidden rounded-full">
             <motion.div
-              className="h-full bg-gradient-to-r from-novunt.blue to-novunt.gold"
+              className="from-novunt.blue to-novunt.gold h-full bg-gradient-to-r"
               initial={{ width: 0 }}
               animate={{ width: `${(verifiedCount / totalRequired) * 100}%` }}
               transition={{ duration: 0.5 }}
@@ -175,7 +209,10 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
         {platforms.map((platform, index) => {
           const Icon = platform.icon;
           const isVerifying = verifyingPlatform === platform.id;
-          const isDisabled = platform.verified || isVerifying || (verifyingPlatform !== null && verifyingPlatform !== platform.id);
+          const isDisabled =
+            platform.verified ||
+            isVerifying ||
+            (verifyingPlatform !== null && verifyingPlatform !== platform.id);
 
           return (
             <motion.div
@@ -185,16 +222,14 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
               transition={{ delay: index * 0.1 }}
             >
               <div
-                className={`
-                  relative overflow-hidden rounded-lg border p-4
-                  ${platform.verified ? 'bg-green-500/10 border-green-500/30' : 'bg-card border-border'}
-                  ${isVerifying ? 'ring-2 ring-primary/50' : ''}
-                `}
+                className={`relative overflow-hidden rounded-lg border p-4 ${platform.verified ? 'border-green-500/30 bg-green-500/10' : 'bg-card border-border'} ${isVerifying ? 'ring-primary/50 ring-2' : ''} `}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {/* Icon */}
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${platform.color}`}>
+                    <div
+                      className={`rounded-lg bg-gradient-to-br p-2 ${platform.color}`}
+                    >
                       <Icon className="h-5 w-5 text-white" />
                     </div>
 
@@ -202,13 +237,13 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
                     <div>
                       <p className="font-semibold">{platform.name}</p>
                       {platform.verified && (
-                        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                           <CheckCircle2 className="h-3 w-3" />
                           Verified
                         </p>
                       )}
                       {isVerifying && countdown > 0 && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
                           <Clock className="h-3 w-3" />
                           Auto-confirm in {countdown}s
                         </p>
@@ -226,7 +261,9 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
                         onClick={handleManualConfirm}
                         disabled={confirmMutation.isPending}
                       >
-                        {confirmMutation.isPending ? 'Confirming...' : 'Confirm Now'}
+                        {confirmMutation.isPending
+                          ? 'Confirming...'
+                          : 'Confirm Now'}
                       </Button>
                     ) : (
                       <Button
@@ -236,12 +273,13 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
                         disabled={isDisabled || visitMutation.isPending}
                         className="group"
                       >
-                        {visitMutation.isPending && verifyingPlatform === platform.id ? (
+                        {visitMutation.isPending &&
+                        verifyingPlatform === platform.id ? (
                           'Opening...'
                         ) : (
                           <>
                             Follow
-                            <ExternalLink className="ml-2 h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                            <ExternalLink className="ml-2 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                           </>
                         )}
                       </Button>
@@ -254,12 +292,13 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-3 pt-3 border-t border-primary/20"
+                    className="border-primary/20 mt-3 border-t pt-3"
                   >
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       ✅ Follow Novunt on {platform.name}
                       <br />
-                      ⏱️ Wait for {countdown} seconds (or click &quot;Confirm Now&quot; after following)
+                      ⏱️ Wait for {countdown} seconds (or click &quot;Confirm
+                      Now&quot; after following)
                       <br />
                       🎉 Verification will complete automatically
                     </p>
@@ -275,14 +314,17 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30"
+            className="mt-4 rounded-lg border border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10 p-4"
           >
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
               <div>
-                <p className="font-semibold text-green-700 dark:text-green-300">Social Media Verified!</p>
+                <p className="font-semibold text-green-700 dark:text-green-300">
+                  Social Media Verified!
+                </p>
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  You&apos;ve completed the social media requirement for the registration bonus
+                  You&apos;ve completed the social media requirement for the
+                  registration bonus
                 </p>
               </div>
             </div>
@@ -292,4 +334,3 @@ export function SocialMediaVerification({ verifiedPlatforms = [], onVerification
     </Card>
   );
 }
-

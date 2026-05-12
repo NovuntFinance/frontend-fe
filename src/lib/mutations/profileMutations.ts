@@ -3,9 +3,13 @@ import { apiRequest } from '@/lib/api';
 
 /**
  * Social Media Platform Types
- * Updated to match backend enum: FACEBOOK, INSTAGRAM, YOUTUBE, TIKTOK, TELEGRAM
+ * Updated to match backend enum: FACEBOOK, INSTAGRAM, YOUTUBE, TIKTOK
  */
-export type SocialMediaPlatform = 'FACEBOOK' | 'INSTAGRAM' | 'YOUTUBE' | 'TIKTOK' | 'TELEGRAM';
+export type SocialMediaPlatform =
+  | 'FACEBOOK'
+  | 'INSTAGRAM'
+  | 'YOUTUBE'
+  | 'TIKTOK';
 
 /**
  * Social Media Verification Request
@@ -44,13 +48,17 @@ export interface UpdateProfilePictureResponse {
 /**
  * Verify Social Media Follow (New API)
  * POST /api/v1/social-media/verify
- * 
+ *
  * This replaces the old visit/confirm flow with a single endpoint that requires dwellTime
  */
 export function useVerifySocialMedia() {
   const queryClient = useQueryClient();
 
-  return useMutation<SocialMediaVerifyResponse, Error, SocialMediaVerifyRequest>({
+  return useMutation<
+    SocialMediaVerifyResponse,
+    Error,
+    SocialMediaVerifyRequest
+  >({
     mutationFn: async (data) => {
       const response = await apiRequest<SocialMediaVerifyResponse>(
         'post',
@@ -65,7 +73,7 @@ export function useVerifySocialMedia() {
         progress: data.data.registrationBonusProgress,
         verifiedCount: data.data.verifiedPlatforms,
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ['verified-social-media'] });
     },
   });
@@ -76,10 +84,14 @@ export function useVerifySocialMedia() {
  * Kept for backward compatibility during migration
  */
 export function useVisitSocialMedia() {
-  console.warn('[useVisitSocialMedia] This endpoint is deprecated. Use useVerifySocialMedia with dwellTime instead.');
+  console.warn(
+    '[useVisitSocialMedia] This endpoint is deprecated. Use useVerifySocialMedia with dwellTime instead.'
+  );
   return useMutation<any, Error, SocialMediaPlatform>({
     mutationFn: async () => {
-      throw new Error('This endpoint is deprecated. Use useVerifySocialMedia instead.');
+      throw new Error(
+        'This endpoint is deprecated. Use useVerifySocialMedia instead.'
+      );
     },
   });
 }
@@ -89,10 +101,18 @@ export function useVisitSocialMedia() {
  * Kept for backward compatibility during migration
  */
 export function useConfirmSocialMedia() {
-  console.warn('[useConfirmSocialMedia] This endpoint is deprecated. Use useVerifySocialMedia with dwellTime instead.');
-  return useMutation<any, Error, { platform: SocialMediaPlatform; token: string }>({
+  console.warn(
+    '[useConfirmSocialMedia] This endpoint is deprecated. Use useVerifySocialMedia with dwellTime instead.'
+  );
+  return useMutation<
+    any,
+    Error,
+    { platform: SocialMediaPlatform; token: string }
+  >({
     mutationFn: async () => {
-      throw new Error('This endpoint is deprecated. Use useVerifySocialMedia instead.');
+      throw new Error(
+        'This endpoint is deprecated. Use useVerifySocialMedia instead.'
+      );
     },
   });
 }
@@ -104,7 +124,11 @@ export function useConfirmSocialMedia() {
 export function useUpdateProfilePicture(userId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<UpdateProfilePictureResponse, Error, UpdateProfilePictureRequest>({
+  return useMutation<
+    UpdateProfilePictureResponse,
+    Error,
+    UpdateProfilePictureRequest
+  >({
     mutationFn: async (data) => {
       const response = await apiRequest<UpdateProfilePictureResponse>(
         'patch',
@@ -114,8 +138,11 @@ export function useUpdateProfilePicture(userId: string) {
       return response;
     },
     onSuccess: async (data) => {
-      console.log('[useUpdateProfilePicture] Avatar updated successfully:', data.profilePicture);
-      
+      console.log(
+        '[useUpdateProfilePicture] Avatar updated successfully:',
+        data.profilePicture
+      );
+
       // Invalidate user data queries
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -151,7 +178,10 @@ export function useUploadToCloudinary() {
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'novunt_profiles');
+      formData.append(
+        'upload_preset',
+        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'novunt_profiles'
+      );
       formData.append('folder', 'novunt/avatars');
 
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
@@ -196,4 +226,3 @@ export function useCompleteAvatarUpload(userId: string) {
     },
   });
 }
-

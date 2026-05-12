@@ -113,6 +113,11 @@ export default function TransactionsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalReason, setApprovalReason] = useState('');
+  const [highValueConfirmPending, setHighValueConfirmPending] = useState<{
+    transactionId: string;
+    amount: number;
+    threshold: number;
+  } | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -203,7 +208,8 @@ export default function TransactionsPage() {
 
   const handleApproveWithdrawal = async (
     transactionId: string,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected',
+    confirmHighValue = false
   ) => {
     if (!canApprove || approvalLoading) return;
     setApprovalLoading(true);
@@ -211,7 +217,8 @@ export default function TransactionsPage() {
       const result = await adminService.approveWithdrawal(
         transactionId,
         status,
-        approvalReason.trim() || undefined
+        approvalReason.trim() || undefined,
+        confirmHighValue
       );
       const successMessage =
         (result as { message?: string })?.message ||
@@ -222,34 +229,51 @@ export default function TransactionsPage() {
       setDrawerOpen(false);
       setSelectedTxId(null);
       setApprovalReason('');
+      setHighValueConfirmPending(null);
       refetch();
     } catch (err: unknown) {
       const ax = err as {
         response?: {
           status?: number;
-          data?: { message?: string; error?: { code?: string } };
+          data?: {
+            message?: string;
+            code?: string;
+            error?: { code?: string };
+            amount?: number;
+            threshold?: number;
+          };
         };
         message?: string;
       };
       const statusCode = ax.response?.status;
-      const code = ax.response?.data?.error?.code;
+      const responseData = ax.response?.data;
+      const code = responseData?.code || responseData?.error?.code;
       const message =
-        ax.response?.data?.message ||
+        responseData?.message ||
         ax.message ||
         (status === 'approved'
           ? 'Failed to approve withdrawal'
           : 'Failed to reject withdrawal');
 
-      if (statusCode === 409 && code === 'ALREADY_PROCESSED') {
+      if (code === 'HIGH_VALUE_CONFIRMATION_REQUIRED') {
+        // Backend requires explicit confirmHighValue — show confirmation prompt
+        setHighValueConfirmPending({
+          transactionId,
+          amount: responseData?.amount ?? 0,
+          threshold: responseData?.threshold ?? 1000,
+        });
+      } else if (statusCode === 409 && code === 'ALREADY_PROCESSED') {
         toast.info('This withdrawal was already processed.');
         setDrawerOpen(false);
         setSelectedTxId(null);
         setApprovalReason('');
+        setHighValueConfirmPending(null);
         refetch();
       } else if (statusCode === 404) {
         toast.error(message);
         setDrawerOpen(false);
         setSelectedTxId(null);
+        setHighValueConfirmPending(null);
         refetch();
       } else {
         toast.error(message);
@@ -321,9 +345,21 @@ export default function TransactionsPage() {
         bgColor = 'bg-green-100 dark:bg-green-900/30';
         textColor = 'text-green-800 dark:text-green-400';
         break;
+      case 'confirmed':
+        bgColor = 'bg-teal-100 dark:bg-teal-900/30';
+        textColor = 'text-teal-800 dark:text-teal-400';
+        break;
+      case 'processing':
+        bgColor = 'bg-blue-100 dark:bg-blue-900/30';
+        textColor = 'text-blue-800 dark:text-blue-400';
+        break;
       case 'pending':
         bgColor = 'bg-amber-100 dark:bg-amber-900/30';
         textColor = 'text-amber-800 dark:text-amber-400';
+        break;
+      case 'requires_approval':
+        bgColor = 'bg-orange-100 dark:bg-orange-900/30';
+        textColor = 'text-orange-800 dark:text-orange-400';
         break;
       case 'failed':
         bgColor = 'bg-red-100 dark:bg-red-900/30';
@@ -564,8 +600,11 @@ export default function TransactionsPage() {
               }}
             >
               <option value="all">All Status</option>
-              <option value="completed">Completed</option>
+              <option value="requires_approval">Requires Approval</option>
               <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
               <option value="failed">Failed</option>
               <option value="cancelled">Cancelled</option>
             </select>
@@ -1171,7 +1210,10 @@ export default function TransactionsPage() {
         open={drawerOpen}
         onOpenChange={(open) => {
           setDrawerOpen(open);
-          if (!open) setApprovalReason('');
+          if (!open) {
+            setApprovalReason('');
+            setHighValueConfirmPending(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-2xl">
@@ -1275,7 +1317,9 @@ export default function TransactionsPage() {
 
               {/* Admin approval actions for pending withdrawals that require approval */}
               {(detailTx as any).requiresAdminApproval &&
-                (detailTx as any).status === 'pending' &&
+                ['pending', 'requires_approval'].includes(
+                  (detailTx as any).status
+                ) &&
                 String((detailTx as any).type).toLowerCase() === 'withdrawal' &&
                 canApprove && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
@@ -1302,34 +1346,73 @@ export default function TransactionsPage() {
                         disabled={approvalLoading}
                       />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleApproveWithdrawal(
-                            (detailTx as any).id ?? selectedTxId ?? '',
-                            'approved'
-                          )
-                        }
-                        disabled={approvalLoading}
-                        className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-                      >
-                        {approvalLoading ? 'Processing…' : 'Approve'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() =>
-                          handleApproveWithdrawal(
-                            (detailTx as any).id ?? selectedTxId ?? '',
-                            'rejected'
-                          )
-                        }
-                        disabled={approvalLoading}
-                      >
-                        Reject
-                      </Button>
-                    </div>
+                    {highValueConfirmPending &&
+                    highValueConfirmPending.transactionId ===
+                      ((detailTx as any).id ?? selectedTxId) ? (
+                      <div className="rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
+                        <p className="mb-2 text-xs font-semibold text-red-800 dark:text-red-300">
+                          ⚠ High-value withdrawal —{' '}
+                          {formatMoney(highValueConfirmPending.amount)} exceeds
+                          the {formatMoney(highValueConfirmPending.threshold)}{' '}
+                          threshold. Confirm you have reviewed this request.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleApproveWithdrawal(
+                                highValueConfirmPending.transactionId,
+                                'approved',
+                                true
+                              )
+                            }
+                            disabled={approvalLoading}
+                            className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+                          >
+                            {approvalLoading
+                              ? 'Processing…'
+                              : 'Confirm & Approve anyway'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setHighValueConfirmPending(null)}
+                            disabled={approvalLoading}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleApproveWithdrawal(
+                              (detailTx as any).id ?? selectedTxId ?? '',
+                              'approved'
+                            )
+                          }
+                          disabled={approvalLoading}
+                          className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                        >
+                          {approvalLoading ? 'Processing…' : 'Approve'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            handleApproveWithdrawal(
+                              (detailTx as any).id ?? selectedTxId ?? '',
+                              'rejected'
+                            )
+                          }
+                          disabled={approvalLoading}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 

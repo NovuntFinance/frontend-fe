@@ -54,7 +54,6 @@ export function RequirementSection({
     SocialMediaPlatform.INSTAGRAM,
     SocialMediaPlatform.YOUTUBE,
     SocialMediaPlatform.TIKTOK,
-    SocialMediaPlatform.TELEGRAM,
   ];
 
   const socialDetails = allPlatforms.map((platformName) => {

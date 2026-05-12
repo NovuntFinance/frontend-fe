@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaYoutube } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 
 const socialLinks = [
@@ -25,7 +25,6 @@ const socialLinks = [
     icon: FaYoutube,
     href: 'https://youtube.com/@novunthq?si=yWDR_Qv9RE9sIam4',
   },
-  { name: 'Telegram', icon: FaTelegram, href: 'https://t.me/novunt' },
 ];
 
 const footerLinks = [
