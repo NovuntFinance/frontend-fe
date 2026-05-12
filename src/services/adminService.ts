@@ -5,7 +5,10 @@ import { getApiV1BaseUrl } from '@/lib/admin-api-base';
 
 const API_BASE_URL = getApiV1BaseUrl();
 
-// 2FA Code Cache (valid for 85 seconds to match backend's ±2 time steps ~90-second window)
+// 2FA Code Cache — expires after 55 s.
+// Math: with server TOTP window:2 / step:30s, a code entered at the very last second
+// of its 30-second window is valid for exactly 61 more seconds on the server.
+// 55 s gives a 6-second buffer for network latency and clock micro-drift.
 interface Cached2FA {
   code: string;
   expiresAt: number;
@@ -30,8 +33,23 @@ function attach2FACodeToConfig(config: any, twoFACode: string) {
     config.data.twoFACode = twoFACode;
   } else if (config.data == null) {
     config.data = { twoFACode };
+  } else if (typeof config.data === 'string') {
+    // Axios serializes config.data to JSON before sending; on retry the body is
+    // already a string. Parse it, inject the new code, and re-stringify so the
+    // rest of the request body (reason, mode, etc.) is preserved correctly.
+    try {
+      const parsed = JSON.parse(config.data);
+      if (parsed && typeof parsed === 'object') {
+        parsed.twoFACode = twoFACode;
+        config.data = JSON.stringify(parsed);
+        return;
+      }
+    } catch {
+      // Not valid JSON — fall through to object-wrapper fallback
+    }
+    config.data = { value: config.data, twoFACode };
   } else {
-    // Fallback: wrap primitive/string payload
+    // Fallback: wrap any other primitive payload
     config.data = { value: config.data, twoFACode };
   }
 }
@@ -145,13 +163,12 @@ export const createAdminApi = (
 
             if (code && code.trim().length > 0) {
               twoFACode = code.trim();
-              // Cache for 85 seconds (matches backend's ±2 time steps ~90-second window)
               cached2FA = {
                 code: twoFACode,
-                expiresAt: Date.now() + 85 * 1000,
+                expiresAt: Date.now() + 55 * 1000,
               };
               console.log(
-                '[AdminService] Cached new 2FA code (valid for 85 seconds)'
+                '[AdminService] Cached new 2FA code (valid for 55 seconds)'
               );
             } else {
               console.warn(
@@ -222,12 +239,46 @@ export const createAdminApi = (
             window.location.href = '/admin/setup-2fa';
           }
         } else if (errorCode === '2FA_CODE_INVALID') {
-          // Clear cache on invalid code - user needs to enter new code
+          // Stale cached code — clear cache, strip the old code from the
+          // request body, and retry once so the interceptor re-prompts the admin.
           console.error(
-            '[AdminService] ❌ 2FA code invalid, clearing cache. Please enter a fresh code.'
+            '[AdminService] ❌ 2FA code invalid, clearing cache. Retrying with fresh code…'
           );
           cached2FA = null;
-          // The error will be thrown and handled by the component
+
+          if (originalRequest && !originalRequest._retry2FA) {
+            originalRequest._retry2FA = true;
+
+            // Remove the stale twoFACode from the body (data may already be a
+            // JSON string because axios serialises it before the request fires).
+            if (typeof originalRequest.data === 'string') {
+              try {
+                const body = JSON.parse(originalRequest.data);
+                if (body && typeof body === 'object') {
+                  delete body.twoFACode;
+                  originalRequest.data = JSON.stringify(body);
+                }
+              } catch {
+                /* not JSON — leave as-is */
+              }
+            } else if (
+              originalRequest.data &&
+              typeof originalRequest.data === 'object'
+            ) {
+              delete originalRequest.data.twoFACode;
+            }
+
+            // Also remove from headers if it was set there
+            if (originalRequest.headers?.['X-2FA-Code'])
+              delete originalRequest.headers['X-2FA-Code'];
+            if (originalRequest.headers?.['x-2fa-code'])
+              delete originalRequest.headers['x-2fa-code'];
+
+            // Re-submit through the full interceptor chain; the request interceptor
+            // will detect no twoFACode in the body and prompt for a fresh one.
+            return api(originalRequest);
+          }
+          // Already retried once — bubble the error up to the component.
         } else if (errorCode === '2FA_CODE_REQUIRED') {
           // Clear cache and retry once after prompting (only after backend explicitly demands it)
           cached2FA = null;
@@ -243,7 +294,7 @@ export const createAdminApi = (
               const twoFACode = code.trim();
               cached2FA = {
                 code: twoFACode,
-                expiresAt: Date.now() + 85 * 1000,
+                expiresAt: Date.now() + 55 * 1000,
               };
 
               attach2FACodeToConfig(originalRequest, twoFACode);
