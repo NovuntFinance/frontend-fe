@@ -177,22 +177,10 @@ const AdminChartSection = ({
             </button>
           </div>
 
-          <div className="flex overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-            {timeframeOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => onTimeframeChange(option.value)}
-                className={`px-3 py-1 text-sm ${
-                  timeframe === option.value
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                } ${option.value === '30d' ? 'border-x border-gray-200 dark:border-gray-700' : ''}`}
-                type="button"
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          {/* Timeframe badge — read-only display; controlled by the top bar */}
+          <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+            {timeframe.toUpperCase()}
+          </span>
         </div>
       </div>
 

@@ -517,49 +517,107 @@ export default function AdminOverviewPage() {
     URL.revokeObjectURL(url);
   };
 
+  const TIMEFRAMES: { value: AdminDashboardTimeframe; label: string }[] = [
+    { value: '24h', label: '24H' },
+    { value: '7d', label: '7D' },
+    { value: '30d', label: '30D' },
+    { value: '90d', label: '90D' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            Admin Dashboard
-          </h2>
-          {lastUpdatedLabel && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Updated {lastUpdatedLabel}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {error && (
-            <span className="text-sm text-red-600 dark:text-red-400">
-              Failed to load insights. Please retry.
-            </span>
-          )}
-          <button
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            type="button"
-            onClick={exportReport}
-            disabled={!data}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      {/* ── Sticky Top Control Bar ──────────────────────────────────── */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-gray-700 dark:bg-gray-900/90">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: title + last-updated */}
+          <div className="min-w-0">
+            <h2 className="truncate text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+              Admin Dashboard
+            </h2>
+            {lastUpdatedLabel && (
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                Updated {lastUpdatedLabel}
+                {isFetching && !isLoading && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-indigo-500">
+                    <svg
+                      className="h-3 w-3 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                      />
+                    </svg>
+                    Refreshing…
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+
+          {/* Right: timeframe pills + export */}
+          <div className="flex shrink-0 items-center gap-3">
+            {error && (
+              <span className="text-xs text-red-500 dark:text-red-400">
+                Failed to load. Please retry.
+              </span>
+            )}
+
+            {/* Timeframe pill group */}
+            <div className="flex items-center rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800">
+              {TIMEFRAMES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTimeframe(value)}
+                  className={[
+                    'min-w-[42px] rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-150',
+                    timeframe === value
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Export button */}
+            <button
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              type="button"
+              onClick={exportReport}
+              disabled={!data}
+              title="Export report as JSON"
             >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export Report
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export
+            </button>
+          </div>
         </div>
       </div>
 
