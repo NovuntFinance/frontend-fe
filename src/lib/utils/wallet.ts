@@ -139,8 +139,19 @@ export function maskWalletAddress(address: string): string {
  */
 export function formatTransactionType(
   type: string,
-  typeLabel?: string
+  typeLabel?: string,
+  status?: string
 ): string {
+  // Failed withdrawals must always show as "Failed Withdrawal", not just "Withdrawal"
+  if (type === 'withdrawal' && status === 'failed') {
+    return 'Failed Withdrawal';
+  }
+
+  // Fund returns from failed withdrawals
+  if (type === 'refund') {
+    return 'Funds Returned';
+  }
+
   // Always use "Daily ROS Payout" for ros_payout type, regardless of typeLabel
   if (type === 'ros_payout') {
     return 'Daily ROS Payout';
@@ -157,16 +168,10 @@ export function formatTransactionType(
 
   // Use typeLabel if provided (from API), but clean it up
   if (typeLabel) {
-    // Replace "Weekly ROS Payout" with "Daily ROS Payout"
     let label = typeLabel.replace(/Weekly ROS Payout/gi, 'Daily ROS Payout');
-
-    // Replace "Referral Bonus" with "Earning" to ensure consistency
     label = label.replace(/Referral Bonus/gi, 'Earning');
-
-    // Replace "REF: BONUS" or similar patterns with "Earning"
     label = label.replace(/REF:\s*BONUS/gi, 'Earning');
     label = label.replace(/REF\s*BONUS/gi, 'Earning');
-
     return label;
   }
 
@@ -184,14 +189,14 @@ export function formatTransactionType(
     stake_pool_payout: 'Stake Pool Payout',
     performance_pool_payout: 'Performance Pool Payout',
     premium_pool_payout: 'Premium Pool Payout',
-    registration_bonus: 'Registration Bonus', // Only this one shows as "Bonus"
-    referral_bonus: 'Earning', // Changed from "Referral Bonus" to "Earning"
+    registration_bonus: 'Registration Bonus',
+    referral_bonus: 'Earning',
     bonus_activation: 'Bonus Activation',
     ranking_bonus: 'Ranking Bonus',
     bonus: 'Bonus',
     fee: 'Fee',
     adjustment: 'Adjustment',
-    refund: 'Refund',
+    refund: 'Funds Returned',
   };
   return types[type] || type;
 }

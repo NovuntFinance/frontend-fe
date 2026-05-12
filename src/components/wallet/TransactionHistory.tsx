@@ -240,7 +240,8 @@ export function TransactionHistory({
     )
       return 'bonus';
     if (typeLower === 'fee') return 'fee';
-    if (typeLower === 'adjustment' || typeLower === 'refund') return 'system';
+    if (typeLower === 'adjustment') return 'system';
+    if (typeLower === 'refund') return 'incoming'; // Funds returned are inbound
 
     // PRIORITY 4: Check for P2P transfers based on fromUser/toUser
     // Only check this AFTER we've ruled out all transaction types
@@ -602,7 +603,7 @@ export function TransactionHistory({
           tx.toUser?.username,
           tx.fromUser?.name,
           tx.toUser?.name,
-          tx.typeLabel || formatTransactionType(tx.type),
+          tx.typeLabel || formatTransactionType(tx.type, undefined, tx.status),
           formatCurrency(tx.amount, { showCurrency: false }),
           String(tx.amount),
         ]
@@ -1266,7 +1267,8 @@ function CompactTransactionItem({
   const isNeutral = transaction.direction === 'neutral';
   const typeLabel = formatTransactionType(
     transaction.type,
-    transaction.typeLabel
+    transaction.typeLabel,
+    transaction.status
   );
   const amountStr = formatAmountWithDirection(
     transaction.amount,
@@ -1357,7 +1359,11 @@ function TransactionItem({
                 className="text-sm font-semibold sm:text-base"
                 style={{ color: 'var(--neu-text-primary)' }}
               >
-                {formatTransactionType(transaction.type, transaction.typeLabel)}
+                {formatTransactionType(
+                  transaction.type,
+                  transaction.typeLabel,
+                  transaction.status
+                )}
               </p>
               <span
                 className={`${neuStyles['neu-badge']} text-[10px] sm:text-xs`}
@@ -1591,8 +1597,15 @@ function getTransactionIcon(
       return <Gift className={iconClass} style={style} />;
     case 'fee':
       return <CreditCard className={iconClass} style={style} />;
-    case 'adjustment':
     case 'refund':
+      // Funds Returned — green inbound arrow
+      return (
+        <ArrowDownRight
+          className={iconClass}
+          style={{ color: 'var(--neu-success, #22c55e)' }}
+        />
+      );
+    case 'adjustment':
       return <RefreshCw className={iconClass} style={style} />;
   }
 
@@ -1800,7 +1813,8 @@ function TransactionReceipt({ transaction }: { transaction: Transaction }) {
                 label="Type"
                 value={formatTransactionType(
                   transaction.type,
-                  transaction.typeLabel
+                  transaction.typeLabel,
+                  transaction.status
                 )}
               />
               <DetailRow
