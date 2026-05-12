@@ -173,6 +173,15 @@ export default function AdminOverviewPage() {
     const netFlow24h = metrics.platform.netFlow24h ?? 0;
     const netFlowPeriod = metrics.platform.netFlowPeriod ?? 0;
 
+    const totalDeposited = metrics.platform.totalDepositedAllTime ?? 0;
+    const totalWithdrawn = metrics.platform.totalWithdrawnAllTime ?? 0;
+    const totalStaked = metrics.platform.totalStakedAllTime ?? 0;
+    const platformBalance = metrics.platform.totalBalance ?? 0;
+    const fundedWallet = metrics.platform.fundedWalletTotal ?? 0;
+    const earningWallet = metrics.platform.earningWalletTotal ?? 0;
+    const roiPaid = metrics.platform.totalPaidROI ?? 0;
+    const bonusesPaid = metrics.platform.totalBonusesPaid ?? 0;
+
     return [
       {
         id: 'total-users',
@@ -286,6 +295,85 @@ export default function AdminOverviewPage() {
           />
         ),
       },
+      // ── All-time financial overview ──────────────────────────────────────
+      {
+        id: 'total-deposited-alltime',
+        content: (
+          <AdminMetricCard
+            title="Total Deposited"
+            value={formatUSDT(totalDeposited)}
+            secondaryValue={`${metrics.platform.totalDepositCountAllTime ?? 0} confirmed deposits`}
+            tooltip="All-time sum of every confirmed or completed deposit transaction (transaction ledger, authoritative). Includes partial deposits."
+            icon="dollar"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'total-withdrawn-alltime',
+        content: (
+          <AdminMetricCard
+            title="Total Withdrawn"
+            value={formatUSDT(totalWithdrawn)}
+            secondaryValue="All-time successful withdrawals"
+            tooltip="All-time total withdrawn across all user accounts (wallet rollup)."
+            icon="wallet"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'total-staked-alltime',
+        content: (
+          <AdminMetricCard
+            title="Total Staked (All Time)"
+            value={formatUSDT(totalStaked)}
+            secondaryValue="Cumulative stake principal"
+            tooltip="All-time cumulative stake principal deposited into staking positions across all users (wallet rollup)."
+            icon="chart"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'platform-balance',
+        content: (
+          <AdminMetricCard
+            title="Platform Balance"
+            value={formatUSDT(platformBalance)}
+            secondaryValue={`Funded: ${formatUSDT(fundedWallet)} · Earning: ${formatUSDT(earningWallet)}`}
+            tooltip="Total funds currently held across all user wallets — funded wallet (available to stake/withdraw) plus earning wallet (ROS earnings)."
+            icon="wallet"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'roi-paid',
+        content: (
+          <AdminMetricCard
+            title="ROI Paid Out"
+            value={formatUSDT(roiPaid)}
+            secondaryValue={`Period: ${timeframeLabel}`}
+            tooltip="Total ROS payouts and pool distributions (premium, performance, rank, redistribution) paid out in the selected timeframe."
+            icon="money"
+            trend={getTrend(roiPaid)}
+          />
+        ),
+      },
+      {
+        id: 'bonuses-paid',
+        content: (
+          <AdminMetricCard
+            title="Bonuses Paid"
+            value={formatUSDT(bonusesPaid)}
+            secondaryValue={`Period: ${timeframeLabel} · Reg + Referral`}
+            tooltip="Total registration bonuses and referral bonuses paid out in the selected timeframe."
+            icon="shield"
+            trend={getTrend(bonusesPaid)}
+          />
+        ),
+      },
     ];
   }, [charts, metrics, timeframeLabel]);
 
@@ -364,10 +452,9 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* Metrics Cards Grid */}
+      {/* Live Metrics Grid (top 8 cards) */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {isLoading && metricCards.length === 0 ? (
-          // Skeleton loaders
           Array(8)
             .fill(0)
             .map((_, index) => (
@@ -377,15 +464,34 @@ export default function AdminOverviewPage() {
               />
             ))
         ) : metrics ? (
-          metricCards.map((card) => <div key={card.id}>{card.content}</div>)
+          metricCards
+            .slice(0, 8)
+            .map((card) => <div key={card.id}>{card.content}</div>)
         ) : (
-          <div className="col-span-3 py-12 text-center">
+          <div className="col-span-4 py-12 text-center">
             <p className="text-gray-500 dark:text-gray-400">
               Error loading metrics. Please try again.
             </p>
           </div>
         )}
       </div>
+
+      {/* All-Time Platform Financials */}
+      {metrics && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+              All-Time Platform Financials
+            </h3>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {metricCards.slice(8).map((card) => (
+              <div key={card.id}>{card.content}</div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Charts & Activity Section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
