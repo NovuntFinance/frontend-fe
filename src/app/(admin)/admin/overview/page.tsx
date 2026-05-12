@@ -173,20 +173,29 @@ export default function AdminOverviewPage() {
     const netFlow24h = metrics.platform.netFlow24h ?? 0;
     const netFlowPeriod = metrics.platform.netFlowPeriod ?? 0;
 
-    const totalDeposited = metrics.platform.totalDepositedAllTime ?? 0;
-    const totalWithdrawn = metrics.platform.totalWithdrawnAllTime ?? 0;
-    const totalStaked = metrics.platform.totalStakedAllTime ?? 0;
-    const platformBalance = metrics.platform.totalBalance ?? 0;
-    const fundedWallet = metrics.platform.fundedWalletTotal ?? 0;
-    const earningWallet = metrics.platform.earningWalletTotal ?? 0;
-    const roiPaid =
-      (metrics.platform as any).totalPaidROIAllTime ??
-      metrics.platform.totalPaidROI ??
-      0;
-    const bonusesPaid =
-      (metrics.platform as any).totalBonusesPaidAllTime ??
-      metrics.platform.totalBonusesPaid ??
-      0;
+    const p = metrics.platform as any;
+    const totalDeposited = p.totalDepositedAllTime ?? 0;
+    const totalDepositCount = p.totalDepositCountAllTime ?? 0;
+    const totalWithdrawn = p.totalWithdrawnAllTime ?? 0;
+    const netCapital = totalDeposited - totalWithdrawn;
+    const totalStaked = p.totalStakedAllTime ?? 0;
+    const totalReturnsEarned = p.totalReturnsEarned ?? 0;
+    const platformBalance = p.totalBalance ?? 0;
+    const fundedWallet = p.fundedWalletTotal ?? 0;
+    const earningWallet = p.earningWalletTotal ?? 0;
+    const rosPayouts =
+      p.rosPayoutsAllTime ?? p.totalPaidROIAllTime ?? p.totalPaidROI ?? 0;
+    const rosCount = p.rosPayoutsCountAllTime ?? 0;
+    const premiumPool = p.premiumPoolAllTime ?? 0;
+    const performancePool = p.performancePoolAllTime ?? 0;
+    const rankPool = p.rankPoolAllTime ?? 0;
+    const redistributionPool = p.redistributionPoolAllTime ?? 0;
+    const totalROI = p.totalPaidROIAllTime ?? p.totalPaidROI ?? 0;
+    const regBonus = p.registrationBonusPaidAllTime ?? 0;
+    const regBonusCount = p.registrationBonusCountAllTime ?? 0;
+    const referralBonus = p.referralBonusPaidAllTime ?? 0;
+    const referralBonusCount = p.referralBonusCountAllTime ?? 0;
+    const totalBonuses = p.totalBonusesPaidAllTime ?? p.totalBonusesPaid ?? 0;
 
     return [
       {
@@ -301,15 +310,15 @@ export default function AdminOverviewPage() {
           />
         ),
       },
-      // ── All-time financial overview ──────────────────────────────────────
+      // ── Capital Flow ─────────────────────────────────────────────────────
       {
         id: 'total-deposited-alltime',
         content: (
           <AdminMetricCard
             title="Total Deposited"
             value={formatUSDT(totalDeposited)}
-            secondaryValue={`${metrics.platform.totalDepositCountAllTime ?? 0} confirmed deposits`}
-            tooltip="All-time sum of every confirmed or completed deposit transaction (transaction ledger, authoritative). Includes partial deposits."
+            secondaryValue={`${totalDepositCount} confirmed deposits`}
+            tooltip="All-time sum of every confirmed deposit (transaction ledger — authoritative, includes partial deposits)."
             icon="dollar"
             trend="neutral"
           />
@@ -322,21 +331,48 @@ export default function AdminOverviewPage() {
             title="Total Withdrawn"
             value={formatUSDT(totalWithdrawn)}
             secondaryValue="All-time successful withdrawals"
-            tooltip="All-time total withdrawn across all user accounts (wallet rollup)."
+            tooltip="All-time total successfully withdrawn by users (wallet rollup)."
             icon="wallet"
             trend="neutral"
           />
         ),
       },
       {
+        id: 'net-capital',
+        content: (
+          <AdminMetricCard
+            title="Net Capital"
+            value={formatUSDT(netCapital)}
+            secondaryValue="Total Deposited − Total Withdrawn"
+            tooltip="Net capital remaining on the platform: all-time deposits minus all-time withdrawals."
+            icon="dollar"
+            trend={getTrend(netCapital)}
+          />
+        ),
+      },
+      // ── Staking ───────────────────────────────────────────────────────────
+      {
         id: 'total-staked-alltime',
         content: (
           <AdminMetricCard
             title="Total Staked (All Time)"
             value={formatUSDT(totalStaked)}
-            secondaryValue="Cumulative stake principal"
-            tooltip="All-time cumulative stake principal deposited into staking positions across all users (wallet rollup)."
+            secondaryValue={`${metrics.stakes.total} positions · TVL ${formatUSDT(tvl)}`}
+            tooltip="All-time total stake principal deposited across all positions (from Stake records — authoritative). TVL shows currently active amount."
             icon="chart"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'total-returns-earned',
+        content: (
+          <AdminMetricCard
+            title="Total Returns Earned"
+            value={formatUSDT(totalReturnsEarned)}
+            secondaryValue="Cumulative ROS earned by stakers"
+            tooltip="Total returns (ROS earnings) accumulated across all stake positions, as recorded in the Stake documents."
+            icon="money"
             trend="neutral"
           />
         ),
@@ -348,33 +384,87 @@ export default function AdminOverviewPage() {
             title="Platform Balance"
             value={formatUSDT(platformBalance)}
             secondaryValue={`Funded: ${formatUSDT(fundedWallet)} · Earning: ${formatUSDT(earningWallet)}`}
-            tooltip="Total funds currently held across all user wallets — funded wallet (available to stake/withdraw) plus earning wallet (ROS earnings)."
+            tooltip="Total funds currently held in all user wallets. Funded = available to stake/withdraw. Earning = accumulated ROS not yet withdrawn."
             icon="wallet"
             trend="neutral"
           />
         ),
       },
+      // ── ROI & Payouts ─────────────────────────────────────────────────────
       {
-        id: 'roi-paid',
+        id: 'ros-payouts',
         content: (
           <AdminMetricCard
-            title="ROI Paid Out"
-            value={formatUSDT(roiPaid)}
-            secondaryValue="All-time ROS + pool distributions"
-            tooltip="All-time total ROS payouts and pool distributions (premium, performance, rank, redistribution) paid out to users."
+            title="Daily ROS Paid Out"
+            value={formatUSDT(rosPayouts)}
+            secondaryValue={`${rosCount.toLocaleString()} daily distributions`}
+            tooltip="All-time total daily ROS (Return on Stake) payouts credited to user earning wallets."
             icon="money"
             trend="neutral"
           />
         ),
       },
       {
-        id: 'bonuses-paid',
+        id: 'premium-pool',
         content: (
           <AdminMetricCard
-            title="Bonuses Paid"
-            value={formatUSDT(bonusesPaid)}
-            secondaryValue="All-time · Registration + Referral"
-            tooltip="All-time total registration bonuses and referral bonuses paid out to users."
+            title="Premium Pool Paid"
+            value={formatUSDT(premiumPool)}
+            secondaryValue="All-time premium pool distributions"
+            tooltip="All-time total premium pool payouts distributed to qualified stakers."
+            icon="money"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'performance-pool',
+        content: (
+          <AdminMetricCard
+            title="Performance Pool Paid"
+            value={formatUSDT(performancePool)}
+            secondaryValue={`Rank: ${formatUSDT(rankPool)} · Redist: ${formatUSDT(redistributionPool)}`}
+            tooltip="All-time performance pool distributions. Subtitle shows rank pool and redistribution pool totals."
+            icon="money"
+            trend="neutral"
+          />
+        ),
+      },
+      // ── Bonuses ───────────────────────────────────────────────────────────
+      {
+        id: 'reg-bonus',
+        content: (
+          <AdminMetricCard
+            title="Registration Bonuses"
+            value={formatUSDT(regBonus)}
+            secondaryValue={`${regBonusCount.toLocaleString()} payouts`}
+            tooltip="All-time registration bonus payouts credited to qualifying users (10% of first stake)."
+            icon="shield"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'referral-bonus',
+        content: (
+          <AdminMetricCard
+            title="Referral Bonuses"
+            value={formatUSDT(referralBonus)}
+            secondaryValue={`${referralBonusCount.toLocaleString()} payouts`}
+            tooltip="All-time referral bonus payouts credited to users who referred new stakers."
+            icon="shield"
+            trend="neutral"
+          />
+        ),
+      },
+      {
+        id: 'total-bonuses',
+        content: (
+          <AdminMetricCard
+            title="Total Bonuses Paid"
+            value={formatUSDT(totalBonuses)}
+            secondaryValue="Registration + Referral combined"
+            tooltip="All-time total bonus payouts: registration bonuses plus referral bonuses."
             icon="shield"
             trend="neutral"
           />
@@ -482,19 +572,67 @@ export default function AdminOverviewPage() {
         )}
       </div>
 
-      {/* All-Time Platform Financials */}
+      {/* All-Time Platform Financials — 4 subsections */}
       {metrics && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-              All-Time Platform Financials
-            </h3>
-            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <div className="space-y-6">
+          {/* Capital Flow */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                Capital Flow
+              </h3>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {metricCards.slice(8, 11).map((card) => (
+                <div key={card.id}>{card.content}</div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {metricCards.slice(8).map((card) => (
-              <div key={card.id}>{card.content}</div>
-            ))}
+
+          {/* Staking */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                Staking
+              </h3>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {metricCards.slice(11, 14).map((card) => (
+                <div key={card.id}>{card.content}</div>
+              ))}
+            </div>
+          </div>
+
+          {/* ROI & Payouts */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                ROI &amp; Payouts
+              </h3>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {metricCards.slice(14, 17).map((card) => (
+                <div key={card.id}>{card.content}</div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bonuses */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                Bonuses
+              </h3>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {metricCards.slice(17).map((card) => (
+                <div key={card.id}>{card.content}</div>
+              ))}
+            </div>
           </div>
         </div>
       )}
