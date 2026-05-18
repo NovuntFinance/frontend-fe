@@ -32,7 +32,8 @@
     "test:api": "bash scripts/test-api-endpoints.sh",
     "test:auth": "node scripts/test-auth-flow.js",
     "verify:referral": "node scripts/verify-referral-logic.js",
-    "prepare": "husky install || true"
+    "prepare": "husky install || true",
+    "test:ci": "jest --forceExit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

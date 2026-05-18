@@ -14,6 +14,8 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   displayName: 'Novunt Frontend',
+  /** Omit DefaultReporter progress (strip-ansi / ansi-regex breakage on Node 22). */
+  reporters: ['<rootDir>/jest.summary-reporter.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
@@ -24,7 +26,8 @@ const customJestConfig = {
     // Handle CSS imports (without CSS modules)
     '^.+\\.(css|sass|scss)$': '<rootDir>/__mocks__/styleMock.js',
     // Handle image imports
-    '^.+\\.(jpg|jpeg|png|gif|webp|avif|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '^.+\\.(jpg|jpeg|png|gif|webp|avif|svg)$':
+      '<rootDir>/__mocks__/fileMock.js',
   },
   coveragePathIgnorePatterns: [
     '/node_modules/',
@@ -53,10 +56,7 @@ const customJestConfig = {
       statements: 50,
     },
   },
-  testMatch: [
-    '**/__tests__/**/*.[jt]s?(x)',
-    '**/?(*.)+(spec|test).[jt]s?(x)',
-  ],
+  testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

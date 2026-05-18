@@ -1,6 +1,6 @@
 /**
- * Large Withdrawal Confirmation Dialog
- * Shows confirmation modal for withdrawals exceeding $1,000
+ * Extra confirmation for withdrawals that use the admin-approval queue
+ * (typically at or above `instant_withdrawal_threshold`, e.g. 50 USDT).
  */
 
 import React, { useState } from 'react';
@@ -81,8 +81,8 @@ export function LargeWithdrawalDialog({
         onOpenChange(newOpen);
       }}
       type="warning"
-      title="Confirm Large Withdrawal"
-      description="You are about to withdraw a large amount. Please review the details carefully before confirming."
+      title="Confirm withdrawal — admin review"
+      description="This amount is queued for payout after admin approval. Review your details carefully, then type CONFIRM."
       details={details}
       confirmText="Proceed with Withdrawal"
       cancelText="Cancel"

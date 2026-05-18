@@ -505,9 +505,26 @@ export function useCreateWithdrawal() {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       queryClient.invalidateQueries({ queryKey: queryKeys.withdrawals });
 
-      const requiresApproval = response.data?.requiresApproval;
-      const estimatedTime =
-        response.data?.estimatedProcessingTime || '1-24 hours';
+      // api.post unwraps Envelope<{ data }> to inner body; tolerate nested `data` if not unwrapped.
+      const envelope = response as
+        | {
+            data?: {
+              requiresApproval?: boolean;
+              estimatedProcessingTime?: string;
+            };
+            requiresApproval?: boolean;
+            estimatedProcessingTime?: string;
+          }
+        | undefined;
+      const data =
+        envelope &&
+        typeof envelope.data === 'object' &&
+        envelope.data !== undefined
+          ? envelope.data
+          : envelope;
+
+      const requiresApproval = Boolean(data?.requiresApproval);
+      const estimatedTime = data?.estimatedProcessingTime || '1-24 hours';
 
       if (requiresApproval) {
         toast.success('Withdrawal submitted for approval', {

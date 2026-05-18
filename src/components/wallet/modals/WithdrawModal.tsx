@@ -48,7 +48,7 @@ type WithdrawStep = 'form' | 'confirm' | '2fa' | 'submitting' | 'success';
  * Step 1: Form (amount only; requires whitelisted address)
  * Step 2: Confirmation preview
  * Step 3: 2FA verification
- * Step 4: Success (pending admin approval)
+ * Step 4: Success (copy from API: instant vs admin queue)
  */
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { data: wallet, refetch } = useWalletBalance();
@@ -62,7 +62,10 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [emailOtp, setEmailOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
-  const [withdrawalId, setWithdrawalId] = useState('');
+  /** Set only on successful create — drives success copy without guessing from amount. */
+  const [completedRequiresApproval, setCompletedRequiresApproval] = useState<
+    boolean | null
+  >(null);
 
   // Modal states
   const [showLargeWithdrawalDialog, setShowLargeWithdrawalDialog] =
@@ -77,6 +80,15 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const amount = parseFloat(formData.amount) || 0;
   const fee = (amount * FEE_PERCENTAGE) / 100;
   const youReceive = amount - fee;
+
+  // Mirrors backend: instant payout only when instant is ON and amount < threshold (50 → admin queue).
+  const isInstantAmount =
+    withdrawalConfig.instantEnabled &&
+    amount < withdrawalConfig.instantThreshold;
+  /** Extra CONFIRM dialog: only widen ≥50 when instant is on — do not change behavior when instant is off (<50 untouched). */
+  const showLargeWithdrawalConfirmStep = withdrawalConfig.instantEnabled
+    ? amount >= withdrawalConfig.instantThreshold
+    : amount > withdrawalConfig.instantThreshold;
 
   const { openModal } = useUIStore();
   const { data: defaultAddressData, isLoading: defaultAddressLoading } =
@@ -94,6 +106,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setOtpSent(false);
       otpCooldown.resetCooldown();
       setError('');
+      setCompletedRequiresApproval(null);
       refetch();
     }
   }, [isOpen, refetch]);
@@ -142,7 +155,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
     setError('');
 
-    if (!skipDialogs && amount > withdrawalConfig.instantThreshold) {
+    if (!skipDialogs && showLargeWithdrawalConfirmStep) {
       setShowLargeWithdrawalDialog(true);
       return;
     }
@@ -157,8 +170,22 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         // walletAddress omitted - backend uses default whitelisted address
       });
 
-      const data = response?.data ?? response;
-      setWithdrawalId(data?.transactionId ?? '');
+      const envelope = response as
+        | {
+            data?: { requiresApproval?: boolean; transactionId?: string };
+            requiresApproval?: boolean;
+            transactionId?: string;
+          }
+        | undefined;
+      const data =
+        envelope && typeof envelope.data === 'object' && envelope.data !== null
+          ? envelope.data
+          : (envelope ?? {});
+      setCompletedRequiresApproval(
+        typeof data.requiresApproval === 'boolean'
+          ? data.requiresApproval
+          : !isInstantAmount
+      );
       setStep('success');
       refetch();
     } catch (err) {
@@ -420,7 +447,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   </div>
                 </div>
                 <p className="text-xs" style={{ color: NEU_TOKENS.white40 }}>
-                  Processing: 1–24 hours. Admin approval required.
+                  {isInstantAmount
+                    ? 'Typical processing: about 5–30 minutes once submitted.'
+                    : 'This amount waits in queue until an admin approves it (often within 24 hours).'}
                 </p>
                 <div className="flex gap-3 pt-2">
                   <Button
@@ -596,8 +625,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               Withdrawal submitted
             </h3>
             <p className="text-sm" style={{ color: NEU_TOKENS.white60 }}>
-              ${fmt4(youReceive)} USDT · Pending approval (1–24 hours).
-              You&apos;ll be notified when processed.
+              {completedRequiresApproval
+                ? `${fmt4(youReceive)} USDT · Submitted for admin review. You'll be emailed when it's approved and sent.`
+                : `${fmt4(youReceive)} USDT · Processing — usually a few minutes. You'll be notified when it completes.`}
             </p>
             <PrimaryButton onClick={onClose} className="mt-6">
               Done
