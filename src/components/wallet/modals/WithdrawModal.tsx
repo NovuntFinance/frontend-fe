@@ -142,7 +142,15 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     }
   };
 
-  const handleSubmit = async (skipDialogs = false) => {
+  const proceedFromConfirm = () => {
+    if (showLargeWithdrawalConfirmStep) {
+      setShowLargeWithdrawalDialog(true);
+      return;
+    }
+    setStep('2fa');
+  };
+
+  const handleSubmit = async () => {
     if (!validateForm()) return;
     if (!emailOtp || emailOtp.length !== 6) {
       setError('Enter the 6-digit email verification code');
@@ -154,11 +162,6 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     }
 
     setError('');
-
-    if (!skipDialogs && showLargeWithdrawalConfirmStep) {
-      setShowLargeWithdrawalDialog(true);
-      return;
-    }
 
     try {
       setStep('submitting');
@@ -461,7 +464,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <span style={{ color: NEU_TOKENS.white60 }}>Back</span>
                   </Button>
                   <PrimaryButton
-                    onClick={() => setStep('2fa')}
+                    onClick={proceedFromConfirm}
                     className="h-11 flex-1"
                   >
                     Continue
@@ -646,7 +649,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         requires2FA={true}
         onConfirm={() => {
           setShowLargeWithdrawalDialog(false);
-          handleSubmit(true); // Skip dialog check
+          setStep('2fa');
         }}
         onCancel={() => {
           setShowLargeWithdrawalDialog(false);

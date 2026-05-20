@@ -324,7 +324,7 @@ export function useSetDefaultWithdrawalAddress() {
     mutationFn: (payload: {
       address: string;
       network: 'BEP20';
-      twoFACode?: string;
+      twoFactorCode?: string; // Field name must match backend FINANCIAL_FIELDS.withdrawalAddress allowlist
       emailOtp?: string;
       turnstileToken?: string;
     }) => walletApi.setDefaultWithdrawalAddress(payload),

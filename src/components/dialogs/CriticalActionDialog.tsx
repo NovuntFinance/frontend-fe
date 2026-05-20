@@ -28,6 +28,10 @@ export interface CriticalActionDialogProps {
   onCancel?: () => void;
   showCancel?: boolean;
   children?: React.ReactNode;
+  /** Raise above neumorphic modals (BaseModal uses z-index 100). */
+  elevated?: boolean;
+  /** Disable the primary confirm button (still visible). */
+  confirmDisabled?: boolean;
 }
 
 const iconMap = {
@@ -64,10 +68,13 @@ export function CriticalActionDialog({
   onCancel,
   showCancel = true,
   children,
+  elevated = false,
+  confirmDisabled = false,
 }: CriticalActionDialogProps) {
   const Icon = iconMap[type];
   const iconColor = colorMap[type];
   const iconBg = bgMap[type];
+  const stackClass = elevated ? 'z-[120]' : undefined;
 
   const handleConfirm = () => {
     onConfirm?.();
@@ -81,7 +88,10 @@ export function CriticalActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={`sm:max-w-md${stackClass ? ` ${stackClass}` : ''}`}
+        overlayClassName={stackClass}
+      >
         <DialogHeader>
           <div className="flex items-start gap-4">
             <div className={`rounded-full p-3 ${iconBg}`}>
@@ -128,6 +138,7 @@ export function CriticalActionDialog({
             <Button
               type="button"
               onClick={handleConfirm}
+              disabled={confirmDisabled}
               className={`flex-1 ${
                 type === 'error' || type === 'warning'
                   ? 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'

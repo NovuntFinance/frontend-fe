@@ -182,7 +182,7 @@ export interface DefaultWithdrawalAddress {
 export interface SetDefaultAddressRequest {
   address: string;
   network: 'BEP20'; // MANDATORY: Must be BEP20 for compliance
-  twoFACode?: string; // Required for setting/updating address
+  twoFactorCode?: string; // Required for setting/updating address (must match backend FINANCIAL_FIELDS.withdrawalAddress allowlist)
   emailOtp?: string; // Required when CHANGING an existing address (not first-time set)
   turnstileToken?: string; // Cloudflare Turnstile token
 }
@@ -364,7 +364,8 @@ export const walletApi = {
   async setDefaultWithdrawalAddress(
     payload: SetDefaultAddressRequest
   ): Promise<DefaultWithdrawalAddress> {
-    const code = payload.twoFACode?.trim() || undefined;
+    // Read twoFactorCode (canonical field name matching backend FINANCIAL_FIELDS.withdrawalAddress)
+    const code = payload.twoFactorCode?.trim() || undefined;
     const body: Record<string, string> = {
       address: payload.address,
       network: payload.network,

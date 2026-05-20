@@ -74,6 +74,8 @@ export function LargeWithdrawalDialog({
   return (
     <CriticalActionDialog
       open={open}
+      elevated
+      confirmDisabled={!isConfirmed}
       onOpenChange={(newOpen) => {
         if (!newOpen) {
           setConfirmText('');
@@ -86,7 +88,7 @@ export function LargeWithdrawalDialog({
       details={details}
       confirmText="Proceed with Withdrawal"
       cancelText="Cancel"
-      onConfirm={isConfirmed ? handleConfirm : undefined}
+      onConfirm={handleConfirm}
       onCancel={handleCancel}
     >
       {/* Explicit Confirmation Input */}

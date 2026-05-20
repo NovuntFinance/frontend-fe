@@ -427,7 +427,9 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
 
       const response = await createWithdrawal.mutateAsync(withdrawalPayload);
 
-      setWithdrawalResult(response.data);
+      // Handle both wrapped { success, data: {...} } and unwrapped { transactionId, ... } responses
+      const result = (response as any)?.data ?? response;
+      setWithdrawalResult(result);
       setShowConfetti(true);
       setStep('success');
 
@@ -803,7 +805,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         const response = await setDefaultAddress.mutateAsync({
                           address: addressToSet,
                           network: 'BEP20', // Explicitly set BEP20
-                          twoFACode: setup2FACode, // 2FA code in request body
+                          twoFactorCode: setup2FACode, // 2FA code in request body (field name must match backend allowlist)
                         });
                         // Update cache immediately with response data if available
                         if (response?.data) {
