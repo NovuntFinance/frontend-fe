@@ -93,7 +93,7 @@ export function WithdrawalAddressManager() {
       {
         address: newAddress,
         network: 'BEP20',
-        twoFACode: twoFACode || undefined,
+        twoFactorCode: twoFACode || undefined,
         emailOtp: emailOtp || undefined,
         turnstileToken,
       },
