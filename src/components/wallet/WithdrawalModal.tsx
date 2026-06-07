@@ -685,7 +685,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                           const response = await setDefaultAddress.mutateAsync({
                             address: addressToSet,
                             network: 'BEP20', // Explicitly set BEP20
-                            twoFACode: code, // 2FA code in request body
+                            twoFactorCode: code, // 2FA code in request body (set-address endpoint expects twoFactorCode)
                           });
                           // Update cache immediately with response data if available
                           if (response?.data) {

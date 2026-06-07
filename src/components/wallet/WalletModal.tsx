@@ -116,7 +116,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
       {
         address: newAddress,
         network: 'BEP20',
-        twoFACode: code,
+        twoFactorCode: code,
       },
       {
         onSuccess: () => {
