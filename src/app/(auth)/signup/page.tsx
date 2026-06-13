@@ -146,13 +146,16 @@ function SignupPageContent() {
       try {
         const result = await authService.checkEmailDomain(domain);
         if (!result.valid) {
-          setError('email', {
-            type: 'manual',
-            message:
-              result.reason === 'DISPOSABLE_EMAIL'
-                ? 'Disposable or temporary email addresses are not allowed. Please use a permanent email.'
-                : 'This email domain cannot receive mail. Please use a valid email address.',
-          });
+          let message =
+            'This email domain cannot receive mail. Please use a valid email address.';
+          if (result.reason === 'DISPOSABLE_EMAIL') {
+            message =
+              'Disposable or temporary email addresses are not allowed. Please use a permanent email.';
+          } else if (result.reason === 'DOMAIN_NOT_ALLOWED') {
+            message =
+              'Please use a supported email provider (e.g. Gmail, Yahoo, Outlook, iCloud).';
+          }
+          setError('email', { type: 'manual', message });
         } else {
           // Only clear a domain-related manual error — leave Zod errors intact
           if (errors.email?.type === 'manual') {
