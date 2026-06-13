@@ -32,7 +32,10 @@ import { authService } from '@/lib/authService';
 import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { EmailExistsDialog } from '@/components/auth/EmailExistsDialog';
-// Turnstile disabled for signup - import removed
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import { toast } from '@/components/ui/enhanced-toast';
 import styles from '@/styles/auth.module.css';
 import { useAuthFooter } from '@/contexts/AuthFooterContext';
@@ -63,7 +66,9 @@ function SignupPageContent() {
     email: '',
     canResetPassword: false,
   });
-  // Turnstile disabled for signup - removed all Turnstile-related code
+  // Cloudflare Turnstile — token captured when the user passes the challenge.
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const {
     register,
@@ -202,6 +207,10 @@ function SignupPageContent() {
   // Handle form submission
   const onSubmit = async (data: SignupFormData) => {
     try {
+      // Turnstile token — required only when the widget is configured (site key set).
+      const tsToken =
+        turnstileToken || turnstileRef.current?.getToken() || undefined;
+
       const payload = {
         email: data.email.trim().toLowerCase(),
         password: data.password,
@@ -212,6 +221,7 @@ function SignupPageContent() {
         ...(data.referralCode?.trim()
           ? { referralCode: data.referralCode.trim() }
           : {}),
+        ...(tsToken ? { 'cf-turnstile-response': tsToken } : {}),
       };
 
       const required = ['firstName', 'lastName', 'email', 'username'] as const;
@@ -247,7 +257,9 @@ function SignupPageContent() {
     } catch (error: unknown) {
       console.error('[Signup Error]', error);
 
-      // Turnstile disabled for signup - removed error handling
+      // Turnstile tokens are single-use — reset the widget so the user can retry.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
 
       // Extract structured error
       let errorResponse: {
@@ -582,7 +594,13 @@ function SignupPageContent() {
                     )}
                   </motion.div>
 
-                  {/* Turnstile disabled for signup - removed widget */}
+                  {/* Cloudflare Turnstile — renders only when a site key is configured */}
+                  <TurnstileWidget
+                    widgetRef={turnstileRef}
+                    size="flexible"
+                    onToken={(token) => setTurnstileToken(token)}
+                    onError={() => setTurnstileToken(null)}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
