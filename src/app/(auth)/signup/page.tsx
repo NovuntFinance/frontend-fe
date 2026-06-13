@@ -124,6 +124,18 @@ function SignupPageContent() {
     if (emailDomainTimer.current) clearTimeout(emailDomainTimer.current);
 
     const email = (emailValue ?? '').trim();
+
+    // Instant client-side format check — show "email is not correct" before any network call.
+    // Standard email shape: something@something.tld
+    const formatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (email.length > 0 && !formatOk) {
+      setError('email', {
+        type: 'manual',
+        message: 'Email is not correct. Please enter a valid email address.',
+      });
+      return;
+    }
+
     const atIdx = email.lastIndexOf('@');
     // Need at least one char before '@' and a domain with a dot
     if (atIdx < 1) return;
@@ -137,7 +149,9 @@ function SignupPageContent() {
           setError('email', {
             type: 'manual',
             message:
-              'This email domain cannot receive mail. Please use a valid email address.',
+              result.reason === 'DISPOSABLE_EMAIL'
+                ? 'Disposable or temporary email addresses are not allowed. Please use a permanent email.'
+                : 'This email domain cannot receive mail. Please use a valid email address.',
           });
         } else {
           // Only clear a domain-related manual error — leave Zod errors intact
