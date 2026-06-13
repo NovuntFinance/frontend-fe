@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -13,7 +13,10 @@ import { useAuthStore } from '@/store/authStore';
 import { checkBackendHealth } from '@/lib/backendHealthCheck';
 import { NeuField, NeuPasswordField } from '@/components/auth/NeuField';
 import { TwoFactorInput } from '@/components/auth/TwoFactorInput';
-// Turnstile disabled for login - import removed
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from '@/components/auth/TurnstileWidget';
 import Loading from '@/components/ui/loading';
 import styles from '@/styles/auth.module.css';
 import { useAuthFooter } from '@/contexts/AuthFooterContext';
@@ -88,7 +91,9 @@ function LoginPageContent() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
   const { setFooterContent } = useAuthFooter();
-  // Turnstile disabled for login - removed all Turnstile-related code
+  // Cloudflare Turnstile — token captured when the user passes the challenge.
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const {
     register,
@@ -155,13 +160,15 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
-      // Turnstile disabled for login - removed token requirement
+      // Turnstile token — included only when the widget is configured (site key set).
+      const tsToken =
+        turnstileToken || turnstileRef.current?.getToken() || undefined;
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
       const loginPayload = {
         email: data.email.trim().toLowerCase(), // Normalize email
         password: data.password,
-        // Turnstile token removed - disabled for login
+        ...(tsToken ? { 'cf-turnstile-response': tsToken } : {}),
         // Don't send rememberMe - it's handled client-side
       };
 
@@ -229,6 +236,10 @@ function LoginPageContent() {
         setTimeout(() => checkAuthAndRedirect(0), 300);
       }
     } catch (error: unknown) {
+      // Turnstile tokens are single-use — reset the widget so the user can retry.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
+
       // Better error serialization
       let errorStr = '';
       let errorDetails: any = {};
@@ -673,7 +684,13 @@ function LoginPageContent() {
               </label>
             </div>
 
-            {/* Turnstile disabled for login - removed widget */}
+            {/* Cloudflare Turnstile — renders only when a site key is configured */}
+            <TurnstileWidget
+              widgetRef={turnstileRef}
+              size="flexible"
+              onToken={(token) => setTurnstileToken(token)}
+              onError={() => setTurnstileToken(null)}
+            />
           </div>
         </form>
       </div>
