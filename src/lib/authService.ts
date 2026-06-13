@@ -464,10 +464,12 @@ export const authService = {
    * 17. Check whether an email domain has valid MX records (can receive mail).
    * GET /better-auth/check-email-domain?domain=gmail.com [Public]
    */
-  checkEmailDomain: async (domain: string): Promise<{ valid: boolean }> => {
+  checkEmailDomain: async (
+    domain: string
+  ): Promise<{ valid: boolean; reason?: string }> => {
     const response = await api.get<{
       success: boolean;
-      data: { valid: boolean };
+      data: { valid: boolean; reason?: string };
     }>(`/better-auth/check-email-domain?domain=${encodeURIComponent(domain)}`);
     return response.data ?? { valid: true }; // fail-open on unexpected shape
   },
