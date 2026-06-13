@@ -98,24 +98,21 @@ export function TransactionHistory({
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [compactPage, setCompactPage] = useState(1);
 
-  // Separate filters: backend filters (search, date) vs client-side filters (category)
-  // We don't send category to backend because backend uses stored category which might be wrong
-  // When filtering by category, we fetch more transactions to ensure we get all matches
+  // Send ALL filters (category, search, date) to the BACKEND so it queries the full
+  // dataset and returns correctly-filtered, paginated results.
+  //
+  // Previously this stripped `category` and fetched limit:1000 to filter client-side.
+  // That broke for active users: the backend caps `limit` at 100, so for anyone with
+  // >100 transactions the requested category often fell entirely outside the returned
+  // window and the filter showed "No transactions match". The backend already supports
+  // category/search/date filtering against the whole DB, so we use it.
   const backendFilters = useMemo(() => {
-    const { category, ...rest } = filters;
-    // Compact variant: always fetch up to 1000 and paginate client-side for simple UI
+    // Compact variant paginates client-side over the filtered set, so fetch a generous
+    // page (backend caps at 100) of the already category-filtered results.
     if (variant === 'compact') {
-      return { ...rest, limit: 1000, page: 1 };
+      return { ...filters, limit: 100, page: 1 };
     }
-    // If filtering by category, increase limit to get all transactions for client-side filtering
-    if (category) {
-      return {
-        ...rest,
-        limit: 1000,
-        page: 1,
-      };
-    }
-    return rest;
+    return filters;
   }, [filters, variant]);
 
   const { data, isLoading, error, refetch } =
@@ -578,15 +575,11 @@ export function TransactionHistory({
       });
     }
 
-    // ALWAYS filter by category client-side (using our categorization logic)
-    // This ensures transfers, deposits, etc. are correctly identified
-    if (filters.category) {
-      const categoryFilter = filters.category.toLowerCase();
-      filtered = filtered.filter((tx) => {
-        const txCategory = getTransactionCategory(tx);
-        return txCategory === categoryFilter;
-      });
-    }
+    // Category filtering is done by the BACKEND (it queries the full dataset and
+    // handles nuances like "staking" including ROS/pool earnings). We intentionally
+    // do NOT re-filter by category client-side: doing so would wrongly drop
+    // backend-correct results (e.g. ROS payouts under the "staking" filter, whose
+    // own stored category is "earnings").
 
     // Also apply search filter client-side (backend might have already filtered, but we ensure consistency)
     if (filters.search) {
