@@ -171,6 +171,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
+        {/* Warm up the connection to Cloudflare Turnstile so the security widget
+            on login/signup loads fast even on slow networks. */}
+        <link
+          rel="preconnect"
+          href="https://challenges.cloudflare.com"
+          crossOrigin=""
+        />
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <OrganizationJsonLd />
         <WebApplicationJsonLd />
         <FAQPageJsonLd />
