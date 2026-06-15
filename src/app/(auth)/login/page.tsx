@@ -1,6 +1,12 @@
 'use client';
 
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -97,6 +103,12 @@ function LoginPageContent() {
   // Cloudflare Turnstile — token captured when the user passes the challenge.
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Stable callbacks so the memoized Turnstile widget doesn't remount on re-render.
+  const handleTurnstileToken = useCallback(
+    (token: string) => setTurnstileToken(token),
+    []
+  );
+  const handleTurnstileError = useCallback(() => setTurnstileToken(null), []);
 
   const {
     register,
@@ -702,8 +714,8 @@ function LoginPageContent() {
             <TurnstileWidget
               widgetRef={turnstileRef}
               size="flexible"
-              onToken={(token) => setTurnstileToken(token)}
-              onError={() => setTurnstileToken(null)}
+              onToken={handleTurnstileToken}
+              onError={handleTurnstileError}
             />
           </div>
         </form>

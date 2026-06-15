@@ -72,6 +72,14 @@ function SignupPageContent() {
   // Cloudflare Turnstile — token captured when the user passes the challenge.
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Stable callbacks so the Turnstile widget's props don't change on every
+  // re-render (which, combined with React.memo, prevents it from remounting and
+  // resetting mid-verification).
+  const handleTurnstileToken = useCallback(
+    (token: string) => setTurnstileToken(token),
+    []
+  );
+  const handleTurnstileError = useCallback(() => setTurnstileToken(null), []);
 
   const {
     register,
@@ -608,17 +616,23 @@ function SignupPageContent() {
                       </p>
                     )}
                   </motion.div>
-
-                  {/* Cloudflare Turnstile — renders only when a site key is configured */}
-                  <TurnstileWidget
-                    widgetRef={turnstileRef}
-                    size="flexible"
-                    onToken={(token) => setTurnstileToken(token)}
-                    onError={() => setTurnstileToken(null)}
-                  />
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Cloudflare Turnstile — rendered OUTSIDE AnimatePresence so step
+                animations / form re-renders never tear down and reset the widget
+                (which caused a verify→reset loop). Only shown on the final step. */}
+            {currentStep === STEPS.length && (
+              <div className="mt-4">
+                <TurnstileWidget
+                  widgetRef={turnstileRef}
+                  size="flexible"
+                  onToken={handleTurnstileToken}
+                  onError={handleTurnstileError}
+                />
+              </div>
+            )}
           </div>
         </form>
       </div>
