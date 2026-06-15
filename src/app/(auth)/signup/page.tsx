@@ -44,6 +44,9 @@ import onboardingStyles from '@/styles/onboarding.module.css';
 // Disable static generation
 export const dynamic = 'force-dynamic';
 
+// Turnstile is active when a site key is configured at build time.
+const TURNSTILE_ENABLED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 const STEPS = [
   { id: 1, title: 'Account Details', description: 'Set up your credentials' },
   { id: 2, title: 'Personal Info', description: 'Tell us about yourself' },
@@ -207,9 +210,21 @@ function SignupPageContent() {
   // Handle form submission
   const onSubmit = async (data: SignupFormData) => {
     try {
-      // Turnstile token — required only when the widget is configured (site key set).
+      // Turnstile token. When the widget is configured (site key present) we REQUIRE a
+      // token — otherwise the request goes out tokenless and the backend rejects it with
+      // a confusing "Verification failed". Block submit with a clear message instead.
       const tsToken =
         turnstileToken || turnstileRef.current?.getToken() || undefined;
+
+      if (TURNSTILE_ENABLED && !tsToken) {
+        toast.error('Security check not complete', {
+          description:
+            'Please wait for the "Verify you are human" check to finish (or tap it), then try again.',
+        });
+        // Nudge the widget to (re)run in case it errored/expired.
+        turnstileRef.current?.reset();
+        return;
+      }
 
       const payload = {
         email: data.email.trim().toLowerCase(),

@@ -22,6 +22,9 @@ import styles from '@/styles/auth.module.css';
 import { useAuthFooter } from '@/contexts/AuthFooterContext';
 import onboardingStyles from '@/styles/onboarding.module.css';
 
+// Turnstile is active when a site key is configured at build time.
+const TURNSTILE_ENABLED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 /**
  * Login Page - BetterAuth Aligned
  * Features:
@@ -160,9 +163,20 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('[Login Page] Submitting login form:', { email: data.email });
     try {
-      // Turnstile token — included only when the widget is configured (site key set).
+      // Turnstile token. When the widget is configured we REQUIRE a token; otherwise
+      // the request is sent tokenless and the backend rejects it with a confusing
+      // "Verification failed". Block submit with a clear message instead.
       const tsToken =
         turnstileToken || turnstileRef.current?.getToken() || undefined;
+
+      if (TURNSTILE_ENABLED && !tsToken) {
+        setError('root', {
+          message:
+            'Please wait for the "Verify you are human" check to finish, then try again.',
+        });
+        turnstileRef.current?.reset();
+        return;
+      }
       // Phase 1 API expects { email?, username?, password }
       // Strip out rememberMe since it's frontend-only
       const loginPayload = {
