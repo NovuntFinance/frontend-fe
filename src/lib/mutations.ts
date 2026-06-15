@@ -344,6 +344,9 @@ export function useSignup() {
       }
       // BetterAuth expects firstName/lastName directly (not fname/lname)
       // Phone number removed from registration — not sent
+      const turnstileToken =
+        credentials.turnstileToken ||
+        (credentials as any)['cf-turnstile-response'];
       const payload: RegisterRequest = {
         firstName,
         lastName,
@@ -354,9 +357,7 @@ export function useSignup() {
         ...(credentials.referralCode?.trim()
           ? { referralCode: credentials.referralCode.trim() }
           : {}),
-        ...(credentials.turnstileToken
-          ? { turnstileToken: credentials.turnstileToken }
-          : {}),
+        ...(turnstileToken ? { turnstileToken } : {}),
       };
 
       console.log('[useSignup] BetterAuth registration payload:', {
