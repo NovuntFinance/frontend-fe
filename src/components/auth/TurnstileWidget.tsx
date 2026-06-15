@@ -62,7 +62,7 @@ const SITE_KEY =
  * Loads the script once and renders the widget with explicit API.
  * Use widgetRef to get token on submit and reset on TURNSTILE_FAILED.
  */
-export function TurnstileWidget({
+function TurnstileWidgetComponent({
   widgetRef,
   onToken,
   onError,
@@ -316,3 +316,8 @@ export function TurnstileWidget({
     </div>
   );
 }
+
+// Memoized so the widget does NOT re-render (and reset mid-verification) when the
+// parent form re-renders for unrelated reasons (typing, validation, animations).
+// Relies on the parent passing STABLE callbacks (useCallback) and a stable widgetRef.
+export const TurnstileWidget = React.memo(TurnstileWidgetComponent);
