@@ -22,7 +22,9 @@ import {
 import {
   useDefaultWithdrawalAddress,
   useSetDefaultWithdrawalAddress,
+  useRequestAddressChangeOtp,
 } from '@/hooks/useWallet';
+import { useOtpCooldown } from '@/hooks/useOtpCooldown';
 import { toast } from '@/components/ui/enhanced-toast';
 import { copyToClipboard } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -57,10 +59,14 @@ interface WalletModalProps {
 export function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { data: addressData, isLoading } = useDefaultWithdrawalAddress();
   const { mutate: setAddress, isPending } = useSetDefaultWithdrawalAddress();
+  const requestOtp = useRequestAddressChangeOtp();
+  const otpCooldown = useOtpCooldown();
 
   const [isEditing, setIsEditing] = useState(false);
   const [newAddress, setNewAddress] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const savedAddress =
@@ -82,9 +88,26 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     if (!isOpen) {
       setIsEditing(false);
       setTwoFACode('');
+      setEmailOtp('');
+      setOtpSent(false);
+      otpCooldown.resetCooldown();
       if (savedAddress) setNewAddress(savedAddress);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, savedAddress]);
+
+  const handleRequestOtp = async () => {
+    try {
+      await requestOtp.mutateAsync(undefined);
+      setOtpSent(true);
+      otpCooldown.triggerCooldown({ waitSeconds: 60 });
+    } catch (err) {
+      const handled = otpCooldown.triggerCooldown(err);
+      if (!handled) {
+        toast.error('Failed to send verification code');
+      }
+    }
+  };
 
   const handleCopy = () => {
     if (savedAddress) {
@@ -112,16 +135,27 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
       });
       return;
     }
+    if (hasAddress && emailOtp.length !== 6) {
+      toast.error('Email code required', {
+        description:
+          'Please request an email verification code and enter it before updating your address.',
+      });
+      return;
+    }
     setAddress(
       {
         address: newAddress,
         network: 'BEP20',
         twoFactorCode: code,
+        ...(hasAddress ? { emailOtp } : {}),
       },
       {
         onSuccess: () => {
           setIsEditing(false);
           setTwoFACode('');
+          setEmailOtp('');
+          setOtpSent(false);
+          otpCooldown.resetCooldown();
         },
       }
     );
@@ -208,6 +242,58 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                 />
               </div>
             </div>
+
+            {/* Email OTP — required only when changing an existing address */}
+            {hasAddress && (
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="wallet-modal-email-otp"
+                  className="text-xs font-medium tracking-wider uppercase"
+                  style={{ color: NEU_TOKENS.white60 }}
+                >
+                  Email Verification Code
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="wallet-modal-email-otp"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="6-digit code"
+                    value={emailOtp}
+                    onChange={(e) =>
+                      setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    maxLength={6}
+                    className="neu-input h-11 w-32 border-0 text-center font-mono text-sm tracking-widest focus-visible:ring-0"
+                    style={insetStyle}
+                  />
+                  <button
+                    type="button"
+                    disabled={requestOtp.isPending || otpCooldown.isOnCooldown}
+                    onClick={handleRequestOtp}
+                    className="rounded-xl px-3 py-2 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                    style={{
+                      background: NEU_TOKENS.bg,
+                      color: NEU_TOKENS.accent,
+                      border: `1px solid ${NEU_TOKENS.border}`,
+                    }}
+                  >
+                    {requestOtp.isPending
+                      ? 'Sending...'
+                      : otpCooldown.isOnCooldown
+                        ? `Resend in ${otpCooldown.cooldownSeconds}s`
+                        : otpSent
+                          ? 'Resend Code'
+                          : 'Send Code'}
+                  </button>
+                </div>
+                {otpSent && (
+                  <p className="text-xs" style={{ color: NEU_TOKENS.white60 }}>
+                    Code sent to your email
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label
